@@ -1,0 +1,15 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colEvent { width: 300px; }
+.colActor { width: 168px; }
+.colTarget { width: 168px; }
+.colEntity { width: 186px; }
+.colWhen { width: 178px; }
+.colAction { width: 60px; }
+
+@media (max-width: 1279px) {
+  .colEvent { width: 240px; }
+  .colActor { width: 150px; }
+  .colWhen { width: 150px; }
+  .colAction { width: 48px; }
+}

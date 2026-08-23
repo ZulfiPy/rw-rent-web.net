@@ -104,8 +104,13 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
 ## Not in swagger (mock-only, marked `// FOLLOW-UP` in dto.ts)
 
 - `registrationDecisionReason` on the user read model
+- `createdAtUtc` on the user LIST projection — the Registrations queue's Registered column
 - Overview summary counts (four `PageSize=1` probes stand in, routed through `api/overview.ts`)
 - `upcomingCustomerDisplayName` / `upcomingPlannedStartAtUtc` on the vehicles list projection
+- No `GET /api/security-audit/{id}`: an audit entry is located in the first page of the unfiltered
+  list, so a deep link is best-effort
+- `GET /api/users` takes one `Status`, so “All lifecycle states” fans out into one request per state
+  and pages the merged result client-side
 
 ## Seed
 
@@ -118,10 +123,16 @@ rather than serve a half-populated list.
 ## State of the port
 
 Deliverable A is the api, error, formatting, permission and mock layers. Deliverable B ports the
-screens: **user directory** and **user record** (done, with their eleven actions) → Registrations →
-Security audit. The sidebar lists only screens that exist.
+screens: **user directory**, **user record** (with its eleven actions), **Registrations** and
+**Security audit** with its entry page. The sidebar lists only screens that exist.
 
 Every mutation runs through one dialog layer: `ui/Dialog` renders the failure envelope (field
-messages under inputs, validation message above the footer, amber stale banner with Refresh, red
-conflict, forbidden, session ended) and `app/useActionMutation` maps the rejection, exposes the
-field messages and invalidates the affected caches on success.
+messages under inputs, validation message above the footer, amber stale banner with Refresh — which
+disables the primary action until the form is re-seeded — red conflict, forbidden, session ended) and
+`app/useActionMutation` maps the rejection, exposes the field messages and invalidates the affected
+caches on success. Nothing is validated in the browser: a past role expiry is refused by the api
+boundary as `users.activation_role_expiry_invalid` and rendered under that role's expiry input.
+
+Audit payloads are parsed by `format/auditPayload.ts`, which follows the documented shape (flat
+PascalCase objects, changed keys only, `Roles` as an array of grants) and returns null for anything
+else — the entry page then shows the raw payload instead of guessing.

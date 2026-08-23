@@ -51,8 +51,21 @@ export function DialogNote({ icon = 'info', children }: { icon?: string; childre
   );
 }
 
+/** The informational banner a dialog opens with, when the operation needs one line of framing. */
+function InfoBanner({ title, body }: { title: string; body: string }) {
+  return (
+    <p className={styles.banner} data-tone="info">
+      <span data-icon aria-hidden="true" className={styles.bannerIcon}>info</span>
+      <span className={styles.bannerText}>
+        <strong className={styles.bannerTitle}>{title}</strong>
+        {body}
+      </span>
+    </p>
+  );
+}
+
 export function Dialog({
-  title, description, submitLabel, submitTone = 'primary', busy, failure, children,
+  title, description, submitLabel, submitTone = 'primary', busy, failure, children, info, footnote,
   onClose, onSubmit, onRefresh,
 }: {
   title: string;
@@ -62,6 +75,8 @@ export function Dialog({
   busy: boolean;
   failure: Failure | null;
   children?: ReactNode;
+  info?: { title: string; body: string };
+  footnote?: string;
   onClose: () => void;
   onSubmit: () => void;
   onRefresh?: () => void;
@@ -91,13 +106,21 @@ export function Dialog({
           className={styles.body}
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
         >
+          {info ? <InfoBanner title={info.title} body={info.body} /> : null}
           {children}
           {failure ? <FailureBanner failure={failure} onRefresh={onRefresh} /> : null}
+          {footnote ? <span className={styles.footnote}>{footnote}</span> : null}
         </form>
 
         <div className={styles.footer}>
           <Button label="Cancel" tone="ghost" onClick={onClose} />
-          <Button label={submitLabel} tone={submitTone} busy={busy} onClick={onSubmit} />
+          <Button
+            label={submitLabel}
+            tone={submitTone}
+            busy={busy}
+            blockedReason={failure?.kind === 'stale' ? 'Refresh to load the current values first.' : null}
+            onClick={onSubmit}
+          />
         </div>
       </div>
     </div>

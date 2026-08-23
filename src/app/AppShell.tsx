@@ -9,14 +9,16 @@ import styles from './AppShell.module.css';
 interface NavItem { to: string; label: string; icon: string; permission: Permission }
 
 /**
- * The sidebar carries only screens that exist. Registrations and Security audit join this list as
- * they land; a permission the persona lacks removes its item entirely rather than disabling it.
+ * The sidebar carries only screens that exist. A permission the persona lacks removes its item
+ * entirely rather than disabling it.
  */
 const NAV: Array<{ label: string; items: NavItem[] }> = [
   {
     label: 'Users & access',
     items: [
       { to: '/users', label: 'User directory', icon: 'group', permission: 'Users.ReadDirectory' },
+      { to: '/registrations', label: 'Registrations', icon: 'how_to_reg', permission: 'Users.ReviewRegistrations' },
+      { to: '/security-audit', label: 'Security audit', icon: 'policy', permission: 'SecurityAudit.ReadCompany' },
     ],
   },
 ];

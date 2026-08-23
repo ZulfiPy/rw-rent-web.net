@@ -1,0 +1,39 @@
+/* The prototype's fact grid: five cells across a panel, wrapping onto further rows. A cell can take
+   two columns or the whole row when its value is long. Phone stacks them. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border-top: 1px solid var(--line);
+}
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 11px 14px;
+  background: var(--surface);
+}
+.span2 { grid-column: span 2; }
+.full { grid-column: 1 / -1; }
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.value { font-size: 13px; color: var(--fg); text-wrap: pretty; }
+.mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-2); word-break: break-word; }
+.dim { color: var(--fg-4); }
+.hint { font-size: 11.5px; color: var(--fg-4); }
+.pre { white-space: pre-wrap; }
+
+@media (max-width: 1023px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .grid { grid-template-columns: 1fr; }
+  .span2, .full { grid-column: 1 / -1; }
+}

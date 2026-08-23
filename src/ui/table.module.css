@@ -1,5 +1,5 @@
 /* One table vocabulary for every list on every screen. Column widths stay with each screen. */
-.scroll { overflow-x: auto; }
+.scroll { overflow-x: auto; max-width: 100%; min-width: 0; }
 .table { width: 100%; }
 .th {
   padding: 10px 14px;
@@ -62,8 +62,10 @@
 .skeletonNarrow { width: 45%; }
 
 /* Column folding. `foldTablet` is gone for the whole tablet band; `foldNarrow` only in portrait. */
+.showTablet { display: none; }
 @media (max-width: 1279px) {
   .foldTablet { display: none; }
+  .showTablet { display: block; }
   .th, .td { padding-left: 10px; padding-right: 10px; }
 }
 @media (max-width: 1023px) {

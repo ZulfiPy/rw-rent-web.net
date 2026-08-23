@@ -1,0 +1,10 @@
+/* The shell every list screen uses: toolbar, rows, footer — one card, never wider than its column. */
+.panel {
+  min-width: 0;
+  max-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+}

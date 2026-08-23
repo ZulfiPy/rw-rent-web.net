@@ -170,5 +170,4 @@ export function eventLabel(type: string | null | undefined): string {
   return `${words(prefix as string)} · ${sentence(words(action))}`;
 }
 
-/** Audit payload keys are PascalCase; the parsed card shows them as words. */
-export const auditFieldLabel = (key: string) => sentence(words(key));
+/* Audit payload keys are PascalCase; auditFieldLabel in format/auditPayload.ts renders them. */

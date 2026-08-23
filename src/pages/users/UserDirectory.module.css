@@ -1,10 +1,3 @@
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: var(--sh-1);
-  overflow: hidden;
-}
 .table { min-width: 0; }
 .wide { width: auto; }
 .colPhone { width: 158px; }
@@ -14,12 +7,17 @@
 .colCompany { width: 150px; max-width: 150px; }
 .colAction { width: 64px; }
 
-/* Tablet: the email-ownership column folds and the fixed columns tighten, so the table fits
-   768–1279 in both orientations without a horizontal scrollbar. */
+/* Tablet landscape (1024–1279): email ownership folds and the fixed columns tighten.
+   Portrait (768–1023) folds Company as well — see foldNarrow on that column. */
 @media (max-width: 1279px) {
   .colPhone { width: 122px; }
   .colStatus { width: 138px; }
   .colRoles { width: 168px; }
   .colCompany { width: 116px; max-width: 116px; }
   .colAction { width: 48px; }
+}
+@media (max-width: 1023px) {
+  .colPhone { width: 116px; }
+  .colStatus { width: 132px; }
+  .colRoles { width: 152px; }
 }

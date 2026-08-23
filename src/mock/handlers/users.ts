@@ -37,6 +37,8 @@ const listItem = (u: ApplicationUserResponse): ApplicationUserListItemResponse =
   emailConfirmed: u.emailConfirmed,
   registrationExpiresAtUtc: u.registrationExpiresAtUtc ?? null,
   effectiveRoles: u.effectiveRoles,
+  // FOLLOW-UP field; see dto.ts. The Registrations queue reads it.
+  createdAtUtc: u.createdAtUtc,
 });
 
 const find = (ctx: Ctx): ApplicationUserResponse => {
@@ -118,7 +120,7 @@ route('POST', '/api/users/{userId}/activate', (ctx) => {
     if (!permission || !ctx.can(permission)) throw forbidden();
     // Stricter than Change expiry: an initial grant's expiry must be in the future.
     if (g.expiresAtUtc && new Date(g.expiresAtUtc).getTime() <= Date.now()) {
-      throw codedValidation('The expiry must be a future date.', 'users.activation_role_expiry_invalid');
+      throw codedValidation('Every role expiry must be in the future.', 'users.activation_role_expiry_invalid');
     }
   }
   if (u.status !== ApplicationUserStatus.PendingActivation) {

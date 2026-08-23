@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { getUser, listUsers } from '@/api/users';
 import { listRoleHistory } from '@/api/roles';
@@ -18,7 +18,9 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
+import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Panel } from '@/ui/Panel';
+import { HeaderFact, RecordHeader } from '@/ui/RecordHeader';
 import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
@@ -44,19 +46,7 @@ const sessionState = (s: SessionResponse) =>
       ? { label: 'Active', tone: 'ok' as const, dot: '50%' }
       : { label: 'Expired', tone: 'mute' as const, dot: '1px' };
 
-function Row({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
-  return (
-    <>
-      <div className={styles.rowLabel}>{label}</div>
-      <div className={styles.rowValue}>
-        {children}
-        {hint ? <span className={styles.hint}>{hint}</span> : null}
-      </div>
-    </>
-  );
-}
-
-function Fact({ label, value, mono }: { label: string; value: ReactNode; mono?: boolean }) {
+function CardFact({ label, value, mono }: { label: string; value: ReactNode; mono?: boolean }) {
   return (
     <span className={cards.fact}>
       <span className={cards.factLabel}>{label}</span>
@@ -119,17 +109,11 @@ export function UserRecord() {
     setParams(merged, { replace: true });
   };
 
-  const backLink = (
-    <Link to="/users" className={styles.back}>
-      <span data-icon aria-hidden="true" className={styles.backIcon}>arrow_back</span>User directory
-    </Link>
-  );
-
   if (user.isError) {
     const failure = toFailure(user.error);
     return (
       <div className={styles.page}>
-        {backLink}
+        <RecordHeader backTo="/users" backLabel="User directory" title="User" />
         <EmptyState
           icon={failure.kind === 'forbidden' ? 'lock' : 'person_off'}
           title="That user is not available"
@@ -172,32 +156,20 @@ export function UserRecord() {
 
   return (
     <div className={styles.page}>
-      {backLink}
-
-      <div className={styles.hero}>
-        <div className={styles.heroTop}>
-          <h1 className={styles.name}>{u ? `${u.firstName} ${u.lastName}` : 'User'}</h1>
-          {u ? (
-            <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
-              {USER_STATUS_LABEL[u.status]}
-            </Chip>
-          ) : null}
-        </div>
-        <div className={styles.facts}>
-          <div className={styles.fact}>
-            <span className={styles.factLabel}>Email</span>
-            <span className={styles.factValue}>{u?.email ?? EMPTY}</span>
-          </div>
-          <div className={styles.fact}>
-            <span className={styles.factLabel}>Effective roles</span>
-            <span className={styles.factValue}>{u ? rolesLabel(u.effectiveRoles) : EMPTY}</span>
-          </div>
-          <div className={styles.fact}>
-            <span className={styles.factLabel}>Phone</span>
-            <span className={styles.factMono}>{u?.phoneNumber ?? EMPTY}</span>
-          </div>
-        </div>
-      </div>
+      <RecordHeader
+        backTo="/users"
+        backLabel="User directory"
+        title={u ? `${u.firstName} ${u.lastName}` : 'User'}
+        chip={u ? (
+          <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
+            {USER_STATUS_LABEL[u.status]}
+          </Chip>
+        ) : null}
+      >
+        <HeaderFact label="Email" value={u?.email ?? EMPTY} />
+        <HeaderFact label="Effective roles" value={u ? rolesLabel(u.effectiveRoles) : EMPTY} />
+        <HeaderFact label="Phone" value={u?.phoneNumber ?? EMPTY} mono />
+      </RecordHeader>
 
       {guarded ? (
         <div className={styles.banner}>
@@ -237,19 +209,17 @@ export function UserRecord() {
               <Button label="Correct name" icon="shield" tone="warn" small onClick={() => setDialog({ kind: 'correct-name' })} />
             ) : undefined}
           >
-            <div className={styles.rows}>
-              <Row label="First name">{u?.firstName ?? EMPTY}</Row>
-              <Row label="Last name">{u?.lastName ?? EMPTY}</Row>
-              <Row label="Login email">{u?.email ?? EMPTY}</Row>
-              <Row label="Email ownership">{u ? (u.emailConfirmed ? 'Confirmed' : 'Not confirmed') : EMPTY}</Row>
-              <Row label="Phone"><span className={table.mono}>{u?.phoneNumber ?? EMPTY}</span></Row>
-              <Row label="Company">
-                <span className={u?.companyId ? '' : table.dim}>{u?.companyId ? companyName : 'Not assigned'}</span>
-              </Row>
-              <Row label="Security version" hint="Increments on credential and access changes.">
-                <span className={table.mono}>{u?.securityVersion ?? EMPTY}</span>
-              </Row>
-            </div>
+            <FactGrid>
+              <Fact label="First name">{u?.firstName ?? EMPTY}</Fact>
+              <Fact label="Last name">{u?.lastName ?? EMPTY}</Fact>
+              <Fact label="Login email">{u?.email ?? EMPTY}</Fact>
+              <Fact label="Email ownership">{u ? (u.emailConfirmed ? 'Confirmed' : 'Not confirmed') : EMPTY}</Fact>
+              <Fact label="Phone" mono>{u?.phoneNumber ?? EMPTY}</Fact>
+              <Fact label="Company" dim={!u?.companyId}>{u?.companyId ? companyName : 'Not assigned'}</Fact>
+              <Fact label="Security version" mono hint="Increments on credential and access changes.">
+                {u?.securityVersion ?? EMPTY}
+              </Fact>
+            </FactGrid>
           </Panel>
 
           <Panel
@@ -265,26 +235,26 @@ export function UserRecord() {
             }
             noteIcon={guarded ? 'admin_panel_settings' : 'lock'}
           >
-            <div className={styles.rows}>
-              <Row label="Status">
+            <FactGrid>
+              <Fact label="Status">
                 {u ? (
                   <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
                     {USER_STATUS_LABEL[u.status]}
                   </Chip>
                 ) : EMPTY}
-              </Row>
-              <Row label="Registered"><span className={table.mono}>{formatLocal(u?.createdAtUtc)}</span></Row>
-              <Row label="Registration expires">
-                {u?.registrationExpiresAtUtc
-                  ? <span className={table.mono}>{formatLocal(u.registrationExpiresAtUtc)}</span>
-                  : <span className={table.dim}>No expiry</span>}
-              </Row>
-              <Row label="Last updated">
-                {u?.updatedAtUtc
-                  ? <span className={table.mono}>{formatLocal(u.updatedAtUtc)}</span>
-                  : <span className={table.dim}>Never</span>}
-              </Row>
-            </div>
+              </Fact>
+              <Fact label="Registered" mono>{formatLocal(u?.createdAtUtc)}</Fact>
+              <Fact
+                label="Registration expires"
+                mono={!!u?.registrationExpiresAtUtc}
+                dim={!u?.registrationExpiresAtUtc}
+              >
+                {u?.registrationExpiresAtUtc ? formatLocal(u.registrationExpiresAtUtc) : 'No expiry'}
+              </Fact>
+              <Fact label="Last updated" mono={!!u?.updatedAtUtc} dim={!u?.updatedAtUtc}>
+                {u?.updatedAtUtc ? formatLocal(u.updatedAtUtc) : 'Never'}
+              </Fact>
+            </FactGrid>
           </Panel>
         </>
       ) : null}
@@ -322,15 +292,15 @@ export function UserRecord() {
                       <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
                     </div>
                     <div className={cards.facts}>
-                      <Fact label="Assigned" value={formatLocal(r.assignedAtUtc)} mono />
-                      <Fact label="Expires" value={r.expiresAtUtc ? formatLocal(r.expiresAtUtc) : 'No expiry'} mono={!!r.expiresAtUtc} />
-                      {r.revokedAtUtc ? <Fact label="Revoked" value={formatLocal(r.revokedAtUtc)} mono /> : null}
-                      {r.revocationReason ? <Fact label="Reason" value={r.revocationReason} /> : null}
+                      <CardFact label="Assigned" value={formatLocal(r.assignedAtUtc)} mono />
+                      <CardFact label="Expires" value={r.expiresAtUtc ? formatLocal(r.expiresAtUtc) : 'No expiry'} mono={!!r.expiresAtUtc} />
+                      {r.revokedAtUtc ? <CardFact label="Revoked" value={formatLocal(r.revokedAtUtc)} mono /> : null}
+                      {r.revocationReason ? <CardFact label="Reason" value={r.revocationReason} /> : null}
                     </div>
                     {roleActionable(r) ? (
                       <div className={cards.actions}>
-                        <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignment: r })} />
-                        <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignment: r })} />
+                        <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
+                        <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
                       </div>
                     ) : null}
                   </div>
@@ -385,8 +355,8 @@ export function UserRecord() {
                         <td className={table.td}>
                           {roleActionable(r) ? (
                             <span className={table.actionsCell}>
-                              <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignment: r })} />
-                              <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignment: r })} />
+                              <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
+                              <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
                             </span>
                           ) : null}
                         </td>
@@ -435,13 +405,13 @@ export function UserRecord() {
                       <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
                     </div>
                     <div className={cards.facts}>
-                      <Fact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
-                      <Fact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono />
-                      {s.revocationReason ? <Fact label="Reason" value={s.revocationReason} /> : null}
+                      <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
+                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono />
+                      {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} /> : null}
                     </div>
                     {s.isActive && canSessions ? (
                       <div className={cards.actions}>
-                        <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', session: s })} />
+                        <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
                       </div>
                     ) : null}
                   </div>
@@ -497,7 +467,7 @@ export function UserRecord() {
                         <td className={table.td}>
                           {s.isActive && canSessions ? (
                             <span className={table.actionsCell}>
-                              <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', session: s })} />
+                              <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
                             </span>
                           ) : null}
                         </td>
@@ -511,7 +481,15 @@ export function UserRecord() {
         </Panel>
       ) : null}
 
-      {u ? <UserDialogs state={dialog} user={u} onClose={() => setDialog(null)} /> : null}
+      {u ? (
+        <UserDialogs
+          state={dialog}
+          user={u}
+          roles={roles.data?.items ?? []}
+          sessions={sessions.data?.items ?? []}
+          onClose={() => setDialog(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -23,9 +23,9 @@ export type UserDialogState =
   | { kind: 'suspend' }
   | { kind: 'restore' }
   | { kind: 'role-grant' }
-  | { kind: 'role-expiry'; assignment: RoleAssignmentResponse }
-  | { kind: 'role-revoke'; assignment: RoleAssignmentResponse }
-  | { kind: 'session-revoke'; session: SessionResponse }
+  | { kind: 'role-expiry'; assignmentId: string }
+  | { kind: 'role-revoke'; assignmentId: string }
+  | { kind: 'session-revoke'; sessionId: string }
   | { kind: 'session-revoke-all' };
 
 /** Every user mutation touches the record, the audit trail, and usually roles or sessions. */
@@ -107,7 +107,10 @@ const ACTIVATION_ROLES: Array<[ApplicationUserRole, Permission]> = [
 function Activate({ user, onClose }: Common) {
   const { can } = useAccess();
   // role → the expiry date the reviewer typed; a role absent from the map is not being granted.
-  const [picked, setPicked] = useState<Record<number, string>>({});
+  // Viewer starts selected: it is the grant almost every activation makes.
+  const [picked, setPicked] = useState<Record<number, string>>(
+    () => (can('Users.ActivateViewer') ? { [ApplicationUserRole.Viewer]: '' } : {}),
+  );
   const m = useActionMutation({
     op: 'user-activate',
     mutationFn: () => activateUser(user.id, {
@@ -127,40 +130,57 @@ function Activate({ user, onClose }: Common) {
     return next;
   });
 
+  // The backend refuses a past expiry with one code and does not say which grant failed, so the
+  // message appears under every role expiry that is set. Nothing is validated in the browser.
   const expiryError = m.fields['roles[].expiresAtUtc'];
 
   return (
     <Dialog
       title="Activate registration"
-      description={`Grant ${user.firstName} ${user.lastName} one or more roles. The activation is audited with the roles granted.`}
-      submitLabel="Activate"
+      description={`Assigns the Company, Active status and initial roles to ${user.firstName} ${user.lastName}.`}
+      submitLabel="Activate account"
       busy={m.busy}
       failure={m.failure}
+      info={{
+        title: 'One atomic operation',
+        body: 'Company assignment, Active status and every selected role grant are applied together, or not at all.',
+      }}
+      footnote="System Administrator can never be granted here."
       onClose={onClose}
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <Field label="Roles" group error={m.fields['roles']}>
+      <Field label="Initial roles" group error={m.fields['roles']}>
         <span className={f.choices}>
           {ACTIVATION_ROLES.filter(([, permission]) => can(permission)).map(([role]) => {
             const checked = role in picked;
+            const date = picked[role] ?? '';
             return (
               <span key={role} className={f.choice} data-checked={checked}>
                 <input type="checkbox" checked={checked} onChange={() => toggle(role)} />
                 <span className={f.choiceBody}>
                   <span className={f.choiceRow}>{ROLE_LABEL[role]}</span>
                   {checked ? (
-                    <span className={f.choiceExpiry}>
-                      Expires
-                      <input
-                        type="date"
-                        className={f.date}
-                        data-invalid={!!expiryError}
-                        value={picked[role] ?? ''}
-                        onChange={(e) => setPicked((prev) => ({ ...prev, [role]: e.target.value }))}
-                      />
-                      {picked[role] ? '' : 'no expiry'}
-                    </span>
+                    <>
+                      <span className={f.choiceExpiry}>
+                        Expires
+                        <input
+                          type="date"
+                          className={f.date}
+                          data-invalid={!!(expiryError && date)}
+                          aria-label={`${ROLE_LABEL[role]} expiry`}
+                          value={date}
+                          onChange={(e) => setPicked((prev) => ({ ...prev, [role]: e.target.value }))}
+                        />
+                        {date ? null : 'no expiry'}
+                      </span>
+                      {expiryError && date ? (
+                        <span className={f.error}>
+                          <span data-icon aria-hidden="true" className={f.errorIcon}>error</span>
+                          {expiryError}
+                        </span>
+                      ) : null}
+                    </>
                   ) : null}
                 </span>
               </span>
@@ -168,7 +188,6 @@ function Activate({ user, onClose }: Common) {
           })}
         </span>
       </Field>
-      {expiryError ? <DialogNote icon="error">{expiryError}</DialogNote> : null}
       <DialogNote>
         An expiry date is the last valid day: access ends at the end of that day, Europe/Tallinn.
       </DialogNote>
@@ -404,23 +423,42 @@ function SessionRevokeAll({ user, onClose }: Common) {
   );
 }
 
-export function UserDialogs({ state, user, onClose }: {
+/**
+ * The record page opens these by id, not by object: after a stale Refresh the fresh row arrives as a
+ * prop, and the changed key remounts the dialog so its inputs re-seed from the current values.
+ */
+export function UserDialogs({ state, user, roles, sessions, onClose }: {
   state: UserDialogState | null;
   user: ApplicationUserResponse;
+  roles: RoleAssignmentResponse[];
+  sessions: SessionResponse[];
   onClose: () => void;
 }) {
   if (!state) return null;
+  const seed = `${user.updatedAtUtc ?? ''}|${user.securityVersion}`;
+
   switch (state.kind) {
-    case 'correct-name': return <CorrectName user={user} onClose={onClose} />;
-    case 'activate': return <Activate user={user} onClose={onClose} />;
+    case 'correct-name': return <CorrectName key={seed} user={user} onClose={onClose} />;
+    case 'activate': return <Activate key={seed} user={user} onClose={onClose} />;
     case 'reject': return <Decision user={user} onClose={onClose} kind="reject" />;
     case 'reopen': return <Decision user={user} onClose={onClose} kind="reopen" />;
     case 'suspend': return <Lifecycle user={user} onClose={onClose} kind="suspend" />;
     case 'restore': return <Lifecycle user={user} onClose={onClose} kind="restore" />;
     case 'role-grant': return <RoleGrant user={user} onClose={onClose} />;
-    case 'role-expiry': return <RoleExpiry user={user} onClose={onClose} assignment={state.assignment} />;
-    case 'role-revoke': return <RoleRevoke user={user} onClose={onClose} assignment={state.assignment} />;
-    case 'session-revoke': return <SessionRevoke user={user} onClose={onClose} session={state.session} />;
+    case 'role-expiry': {
+      const assignment = roles.find((r) => r.id === state.assignmentId);
+      return assignment
+        ? <RoleExpiry key={`${assignment.id}|${assignment.expiresAtUtc ?? ''}`} user={user} onClose={onClose} assignment={assignment} />
+        : null;
+    }
+    case 'role-revoke': {
+      const assignment = roles.find((r) => r.id === state.assignmentId);
+      return assignment ? <RoleRevoke user={user} onClose={onClose} assignment={assignment} /> : null;
+    }
+    case 'session-revoke': {
+      const session = sessions.find((s) => s.id === state.sessionId);
+      return session ? <SessionRevoke user={user} onClose={onClose} session={session} /> : null;
+    }
     case 'session-revoke-all': return <SessionRevokeAll user={user} onClose={onClose} />;
   }
 }

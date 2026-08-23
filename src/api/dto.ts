@@ -216,6 +216,10 @@ export interface ApplicationUserListItemResponse {
   registrationExpiresAtUtc?: Instant | null;
   /** Current unrevoked, unexpired roles; effective only while the user is Active. */
   effectiveRoles: ApplicationUserRole[];
+  // FOLLOW-UP: not in swagger — the registration timestamp. The Registrations queue's Registered
+  // column and its "submitted N days ago" reading depend on it, and the list projection is the only
+  // call that screen makes. Served by the mock only.
+  createdAtUtc?: Instant;
 }
 
 export interface ApplicationUserResponse extends ApplicationUserListItemResponse {

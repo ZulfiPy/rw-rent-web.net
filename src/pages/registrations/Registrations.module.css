@@ -1,0 +1,15 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colPhone { width: 150px; }
+.colEmail { width: 170px; }
+.colWhen { width: 150px; }
+.colExpires { width: 150px; }
+.colStatus { width: 166px; }
+.colActions { width: 210px; }
+
+@media (max-width: 1279px) {
+  .colEmail { width: 140px; }
+  .colWhen { width: 128px; }
+  .colStatus { width: 138px; }
+  .colActions { width: 176px; }
+}

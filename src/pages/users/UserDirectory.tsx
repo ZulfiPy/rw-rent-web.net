@@ -18,6 +18,7 @@ import { Pagination } from '@/ui/Pagination';
 import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
+import list from '@/ui/list.module.css';
 import table from '@/ui/table.module.css';
 import styles from './UserDirectory.module.css';
 
@@ -43,7 +44,10 @@ function SkeletonRows() {
       {[0, 1, 2, 3, 4].map((i) => (
         <tr key={i} className={table.row}>
           {[0, 1, 2, 3, 4, 5, 6].map((c) => (
-            <td key={c} className={`${table.td} ${c === 3 ? table.foldTablet : ''}`}>
+            <td
+              key={c}
+              className={`${table.td} ${c === 3 ? table.foldTablet : ''} ${c === 5 ? table.foldNarrow : ''}`}
+            >
               <div className={`${table.skeleton} ${c === 0 ? table.skeletonWide : table.skeletonNarrow}`} />
             </td>
           ))}
@@ -101,7 +105,7 @@ export function UserDirectory() {
         description="Admitted Company users and, for reviewers, registration lifecycle records."
       />
 
-      <section className={styles.panel}>
+      <section className={list.panel}>
         <div className={filters.toolbar}>
           <SearchInput
             value={search}
@@ -179,7 +183,7 @@ export function UserDirectory() {
                       <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                       <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldTablet}`}>Email</th>
                       <th scope="col" className={`${table.th} ${styles.colRoles}`}>Effective roles</th>
-                      <th scope="col" className={`${table.th} ${styles.colCompany}`}>Company</th>
+                      <th scope="col" className={`${table.th} ${styles.colCompany} ${table.foldNarrow}`}>Company</th>
                       <th scope="col" className={`${table.th} ${styles.colAction}`}>
                         <span className={table.srOnly}>Open record</span>
                       </th>
@@ -212,7 +216,7 @@ export function UserDirectory() {
                             {isProtected(u) ? <span className={table.sub}>Protected account</span> : null}
                           </span>
                         </td>
-                        <td className={`${table.td} ${u.companyId ? '' : table.dim}`}>
+                        <td className={`${table.td} ${table.foldNarrow} ${u.companyId ? '' : table.dim}`}>
                           <span className={table.oneLine} title={u.companyId ? companyName : 'Not assigned'}>
                             {u.companyId ? companyName : 'Not assigned'}
                           </span>

@@ -46,6 +46,9 @@
 .banner[data-tone='bad'] .bannerIcon { color: var(--bad); }
 .banner[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); }
 .banner[data-tone='warn'] .bannerIcon { color: var(--warn); }
+.banner[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); }
+.banner[data-tone='info'] .bannerIcon { color: var(--info); }
+.footnote { font-size: 11.5px; color: var(--fg-4); }
 
 .note {
   display: flex;

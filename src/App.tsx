@@ -4,6 +4,9 @@ import { useCompanyName } from './app/useCompanyName';
 import { useAccess } from './permissions/usePermissions';
 import { UserDirectory } from './pages/users/UserDirectory';
 import { UserRecord } from './pages/users/UserRecord';
+import { Registrations } from './pages/registrations/Registrations';
+import { SecurityAudit } from './pages/audit/SecurityAudit';
+import { AuditEntry } from './pages/audit/AuditEntry';
 import { DevPanel } from './dev/DevPanel';
 import styles from './App.module.css';
 
@@ -40,6 +43,9 @@ export function App() {
           <Route element={<AppShell companyName={companyName} />}>
             <Route path="/users" element={<UserDirectory />} />
             <Route path="/users/:userId" element={<UserRecord />} />
+            <Route path="/registrations" element={<Registrations />} />
+            <Route path="/security-audit" element={<SecurityAudit />} />
+            <Route path="/security-audit/:entryId" element={<AuditEntry />} />
             <Route path="*" element={<Navigate to="/users" replace />} />
           </Route>
         </Routes>
