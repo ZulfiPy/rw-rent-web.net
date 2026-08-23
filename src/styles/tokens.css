@@ -1,0 +1,44 @@
+/* Ported verbatim from the reviewed prototype. Dark is the default; [data-theme="light"] overrides.
+   Components read these variables through CSS Modules — no token values are repeated in TS. */
+:root {
+  --font-display: 'Michroma', 'Geist', sans-serif;
+  --font-sans: 'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+  --canvas: #0A0A0B; --rail: #0C0C0E; --surface: #131316; --surface-2: #191A1D; --surface-3: #212226; --inset: #0F0F11;
+  --line: rgba(255,255,255,.075); --line-2: rgba(255,255,255,.13); --line-3: rgba(255,255,255,.22);
+  --fg: #F1F1F2; --fg-2: #AFAFB6; --fg-3: #8F8F97; --fg-4: #7F7F88;
+  --brand: #F22244;
+  --accent: #FF4864; --accent-2: #FF8095; --accent-soft: rgba(255,72,100,.14); --accent-line: rgba(255,72,100,.36);
+  --ok: #54B87E; --ok-soft: rgba(84,184,126,.13); --ok-line: rgba(84,184,126,.32);
+  --info: #6FA8E0; --info-soft: rgba(111,168,224,.13); --info-line: rgba(111,168,224,.32);
+  --warn: #DCB63F; --warn-soft: rgba(220,182,63,.12); --warn-line: rgba(220,182,63,.3);
+  --bad: #DB7E6B; --bad-solid: #A32A22; --bad-soft: rgba(219,126,107,.15); --bad-line: rgba(219,126,107,.36);
+  --mute: #94949D; --mute-soft: rgba(138,138,147,.12); --mute-line: rgba(138,138,147,.26);
+  --btn: #ECECEE; --btn-fg: #0B0B0C; --btn-hover: #FFFFFF;
+  --focus: #8FC0F0; --ring: rgba(143,192,240,.2);
+  --sh-1: 0 1px 2px rgba(0,0,0,.45);
+  --sh-2: 0 10px 28px -10px rgba(0,0,0,.65);
+  --sh-3: 0 28px 70px -18px rgba(0,0,0,.8);
+  --grid: rgba(255,255,255,.05);
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --canvas: #ECECE8; --rail: #FFFFFF; --surface: #FFFFFF; --surface-2: #F4F4F0; --surface-3: #E7E7E1; --inset: #F4F4F0;
+  --line: rgba(18,18,22,.11); --line-2: rgba(18,18,22,.17); --line-3: rgba(18,18,22,.3);
+  --fg: #17171A; --fg-2: #4A4A54; --fg-3: #66666F; --fg-4: #6E6E78;
+  --brand: #E01B3C;
+  --accent: #D01234; --accent-2: #A50E28; --accent-soft: rgba(208,18,52,.08); --accent-line: rgba(208,18,52,.26);
+  --ok: #1F6B44; --ok-soft: rgba(46,128,85,.1); --ok-line: rgba(46,128,85,.28);
+  --info: #1F5691; --info-soft: rgba(42,107,173,.1); --info-line: rgba(42,107,173,.26);
+  --warn: #7A5A0A; --warn-soft: rgba(154,116,19,.1); --warn-line: rgba(154,116,19,.26);
+  --bad: #B02A1E; --bad-solid: #8E1B16; --bad-soft: rgba(176,42,30,.08); --bad-line: rgba(176,42,30,.26);
+  --mute: #5A5A64; --mute-soft: rgba(110,110,120,.09); --mute-line: rgba(110,110,120,.24);
+  --btn: #1A1A1E; --btn-fg: #FAFAF9; --btn-hover: #000000;
+  --focus: #2A6BAD; --ring: rgba(42,107,173,.18);
+  --sh-1: 0 1px 2px rgba(20,20,25,.06);
+  --sh-2: 0 8px 24px -10px rgba(20,20,25,.14);
+  --sh-3: 0 24px 60px -18px rgba(20,20,25,.2);
+  --grid: rgba(18,18,22,.05);
+  color-scheme: light;
+}
