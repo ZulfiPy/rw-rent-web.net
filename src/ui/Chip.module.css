@@ -1,0 +1,20 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--fg-2);
+}
+.dot { width: 6px; height: 6px; flex: none; background: currentColor; }
+
+.chip[data-tone='ok'] { color: var(--ok); background: var(--ok-soft); border-color: var(--ok-line); }
+.chip[data-tone='info'] { color: var(--info); background: var(--info-soft); border-color: var(--info-line); }
+.chip[data-tone='warn'] { color: var(--warn); background: var(--warn-soft); border-color: var(--warn-line); }
+.chip[data-tone='bad'] { color: var(--bad); background: var(--bad-soft); border-color: var(--bad-line); }
+.chip[data-tone='mute'] { color: var(--mute); background: var(--mute-soft); border-color: var(--mute-line); }
+.chip[data-tone='plain'] { color: var(--fg-2); background: transparent; border-color: var(--line-2); }

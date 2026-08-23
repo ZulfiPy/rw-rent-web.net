@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import './handlers';
 import { auditDelta, payloadJson, writeAudit } from './audit';
 import { getStore, resetStore } from './store';
+import { isSessionActive } from './security';
 import { createMockTransport } from './transport';
 import { ID } from './ids';
 import { installTransport } from '@/api';
@@ -50,7 +51,7 @@ describe('delta rules', () => {
     const before = store.audit.length;
     const row = writeAudit(store, {
       eventType: 'ApplicationUser.NameCorrected',
-      actorUserId: ID.users.principal,
+      actorUserId: ID.users.u2,
       before: { LastName: 'Same' },
       after: { LastName: 'Same' },
     });
@@ -61,7 +62,7 @@ describe('delta rules', () => {
   test('a one-sided payload is never deltaed', () => {
     const row = writeAudit(getStore(), {
       eventType: 'RoleAssignment.Granted',
-      actorUserId: ID.users.principal,
+      actorUserId: ID.users.u2,
       after: { Role: 'Viewer', ExpiresAtUtc: null },
     });
     expect(row?.beforeJson).toBeNull();
@@ -71,7 +72,7 @@ describe('delta rules', () => {
 
 describe('mutations write the payloads the reviewed prototype shows', () => {
   test('activation is after-only, with Roles as an array of grants', async () => {
-    await activateUser(ID.users.pendingConfirmed, {
+    await activateUser(ID.users.u6, {
       roles: [{ role: ApplicationUserRole.Viewer, expiresAtUtc: null }],
     });
     const row = latest('Registration.Activated');
@@ -85,7 +86,7 @@ describe('mutations write the payloads the reviewed prototype shows', () => {
   });
 
   test('rejection records the typed reason and the status delta only', async () => {
-    await rejectRegistration(ID.users.pendingConfirmed, { reason: 'No employment relationship.' });
+    await rejectRegistration(ID.users.u6, { reason: 'No employment relationship.' });
     const row = latest('Registration.Rejected');
     expect(row?.reason).toBe('No employment relationship.');
     expect(parse(row?.beforeJson)).toEqual({ Status: 'PendingActivation' });
@@ -93,16 +94,16 @@ describe('mutations write the payloads the reviewed prototype shows', () => {
   });
 
   test('reopening a confirmed registration leaves the expiry null on both sides', async () => {
-    await rejectRegistration(ID.users.pendingConfirmed, { reason: 'Rejected in error.' });
-    await reopenRegistration(ID.users.pendingConfirmed, { reason: 'Rejected in error.' });
+    await rejectRegistration(ID.users.u6, { reason: 'Rejected in error.' });
+    await reopenRegistration(ID.users.u6, { reason: 'Rejected in error.' });
     const row = latest('Registration.Reopened');
     expect(parse(row?.beforeJson)).toEqual({ Status: 'RegistrationRejected' });
     expect(parse(row?.afterJson)).toEqual({ Status: 'PendingActivation' });
   });
 
   test('reopening an unconfirmed registration records the new seven-day deadline', async () => {
-    await rejectRegistration(ID.users.pendingUnconfirmed, { reason: 'Submitted by mistake.' });
-    await reopenRegistration(ID.users.pendingUnconfirmed, { reason: 'Applicant asked to continue.' });
+    await rejectRegistration(ID.users.u8, { reason: 'Submitted by mistake.' });
+    await reopenRegistration(ID.users.u8, { reason: 'Applicant asked to continue.' });
     const row = latest('Registration.Reopened');
     const after = parse(row?.afterJson);
     expect(after.Status).toBe('PendingActivation');
@@ -112,19 +113,19 @@ describe('mutations write the payloads the reviewed prototype shows', () => {
   test('suspension audits the status change and revokes sessions without extra audit rows', async () => {
     const rows = () => getStore().audit.length;
     const before = rows();
-    await suspendUser(ID.users.fleet);
+    await suspendUser(ID.users.u4);
     expect(rows()).toBe(before + 1);
     const row = latest('ApplicationUser.Suspended');
     expect(row?.reason).toBeNull();
     expect(parse(row?.beforeJson)).toEqual({ Status: 'Active' });
-    const sessions = getStore().sessions.filter((s) => s.applicationUserId === ID.users.fleet);
+    const sessions = getStore().sessions.filter((s) => s.applicationUserId === ID.users.u4);
     expect(sessions.some((s) => s.revocationReason === 'Account suspended')).toBe(true);
   });
 
   test('a role revocation records RevokedAtUtc on both sides and nothing else', async () => {
-    const history = await listRoleHistory(ID.users.fleet, { PageSize: 100 });
+    const history = await listRoleHistory(ID.users.u4, { PageSize: 100 });
     const row = history.items.find((r) => r.isEffective && r.role === ApplicationUserRole.FleetManager);
-    await revokeRole(ID.users.fleet, row?.id as string, { reason: 'Left the fleet team.' });
+    await revokeRole(ID.users.u4, row?.id as string, { reason: 'Left the fleet team.' });
     const entry = latest('RoleAssignment.Revoked');
     expect(entry?.reason).toBe('Left the fleet team.');
     expect(parse(entry?.beforeJson)).toEqual({ RevokedAtUtc: null });
@@ -134,8 +135,8 @@ describe('mutations write the payloads the reviewed prototype shows', () => {
   });
 
   test('an explicit session revocation does write its own row', async () => {
-    const session = getStore().sessions.find((s) => s.applicationUserId === ID.users.fleet && s.isActive);
-    await revokeUserSession(ID.users.fleet, session?.id as string);
+    const session = getStore().sessions.find((s) => s.applicationUserId === ID.users.u4 && isSessionActive(s));
+    await revokeUserSession(ID.users.u4, session?.id as string);
     const row = latest('Session.RevokedByAdministrator');
     expect(row?.entityType).toBe('Session');
     expect(row?.beforeJson).toBeNull();

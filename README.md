@@ -23,10 +23,13 @@ src/
     transport.ts  the Transport interface + installTransport()
     http.ts       Phase 3 target: cookie auth + antiforgery header
     queryKeys.ts  TanStack Query keys, one factory per resource
+  app/            shell, sidebar, bootstrap
+  pages/          one folder per screen
+  ui/             chips, filters, pagination, empty and problem states
   format/         datetime.ts (Europe/Tallinn + UTC), labels.ts (labels by raw value)
   permissions/    permission strings, can(), actionState(), AccessProvider
   mock/           in-memory store, route table, audit writer, failure simulator
-  dev/            PROTOTYPE panel state (dev-only)
+  dev/            PROTOTYPE panel (dev-only)
   styles/         tokens.css ported from the prototype + base resets
 ```
 
@@ -61,6 +64,17 @@ actions; an action the persona can never hold is hidden, and only a state-blocke
 could otherwise perform is disabled with its reason (`actionState`). The mock enforces the same
 permissions, so an over-offered action returns 403.
 
+**Sessions.** `isActive` and `isCurrent` are computed on every read, never stored: active means not
+revoked AND the idle deadline ahead AND the absolute deadline ahead; current means the row is the
+session that authenticated the request, and it is self-view-only — an administrator listing another
+user's sessions never receives it. The store holds `SessionRecord` (the response minus those two) so
+a stale flag cannot disagree with the deadlines.
+
+**Query types.** Query DTOs are type aliases rather than interfaces, which is what lets `UsersQuery`
+reach `Transport.request` with its own property types intact. `AssertQuery` in `api/client.ts` lists
+every one of them, so redeclaring one as an interface fails there instead of at each call site. The
+mock matches paths and query keys case-insensitively, as ASP.NET binds them.
+
 **Failures.** One envelope module. Two 400 shapes: a filter-level rejection carries `errors` keyed by
 FluentValidation's PascalCase property path, indices included (`Reason`, `Roles[0].Role`), normalised
 to the JSON names the inputs use; a service-level validation refusal carries `code` + `detail`
@@ -81,8 +95,16 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
 - Overview summary counts (four `PageSize=1` probes stand in, routed through `api/overview.ts`)
 - `upcomingCustomerDisplayName` / `upcomingPlannedStartAtUtc` on the vehicles list projection
 
+## Seed
+
+`src/mock/seed.ts` is the reviewed prototype's `DB`: the same eleven people, their registration
+states, fifteen sessions and thirteen audit rows, with the prototype's identifiers preserved as the
+keys of `src/mock/ids.ts` (`u4` is Dita Smite in both). Fleet rows — vehicles, customers, drivers,
+assignments, authorizations, interruptions — arrive with their screens; until then those routes 404
+rather than serve a half-populated list.
+
 ## State of the port
 
-Deliverable A (this commit) is the api, error, formatting, permission and mock layers, plus a smoke
-screen at `/`. Deliverable B ports the pages and dialogs screen by screen; the mock's fleet
-handlers and the full version-tagged seed land with them.
+Deliverable A is the api, error, formatting, permission and mock layers. Deliverable B ports the
+screens: **user directory** (done) → user record (Account / Roles / Sessions) → Registrations →
+Security audit. The sidebar lists only screens that exist.

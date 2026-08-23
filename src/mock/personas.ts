@@ -48,13 +48,13 @@ export interface Persona {
   role: RoleName;
 }
 
+/** The prototype's four personas, plus the no-permission state it reaches through Access pending. */
 export const PERSONAS: Persona[] = [
-  { id: 'u1', userId: ID.users.sysadmin, role: 'SystemAdministrator' },
-  { id: 'u2', userId: ID.users.principal, role: 'CompanyPrincipal' },
-  { id: 'u4', userId: ID.users.fleet, role: 'FleetManager' },
-  { id: 'u5', userId: ID.users.viewer, role: 'Viewer' },
-  // The "active with no permissions" state routes to Access pending.
-  { id: 'u0', userId: ID.users.viewer, role: 'Viewer' },
+  { id: 'u1', userId: ID.users.u1, role: 'SystemAdministrator' },
+  { id: 'u2', userId: ID.users.u2, role: 'CompanyPrincipal' },
+  { id: 'u4', userId: ID.users.u4, role: 'FleetManager' },
+  { id: 'u5', userId: ID.users.u5, role: 'Viewer' },
+  { id: 'u0', userId: ID.users.u5, role: 'Viewer' },
 ];
 
 export const personaById = (id: string): Persona =>

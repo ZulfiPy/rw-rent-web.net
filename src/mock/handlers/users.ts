@@ -12,7 +12,8 @@ import { revokeSessionsFor } from '../security';
 import { forbidden, notFound, route, type Ctx } from '../transport';
 import { codedValidation, conflict, fieldError, requireReason, requireText } from '../validate';
 
-const LIFECYCLE = [
+/** Registration lifecycle states, as a list of the enum's own type: `includes` takes any status. */
+const LIFECYCLE: ApplicationUserStatus[] = [
   ApplicationUserStatus.PendingActivation,
   ApplicationUserStatus.RegistrationRejected,
   ApplicationUserStatus.RegistrationExpired,

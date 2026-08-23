@@ -3,9 +3,9 @@ import './handlers';
 import { createMockTransport } from './transport';
 import { resetStore } from './store';
 import { ID } from './ids';
-import { installTransport, transport } from '@/api/transport';
+import { installTransport, transport, type Query } from '@/api/transport';
 import { setDevState } from '@/dev/devState';
-import type { PagedResponse, UserListItemResponse } from '@/api/dto';
+import type { ApplicationUserListItemResponse, PagedResponse } from '@/api/dto';
 
 beforeEach(() => {
   resetStore();
@@ -13,13 +13,13 @@ beforeEach(() => {
   installTransport(createMockTransport());
 });
 
-const users = (query: Record<string, unknown>) =>
-  transport().request<PagedResponse<UserListItemResponse>>('GET', '/api/users', { query: query as never });
+const users = (query: Query) =>
+  transport().request<PagedResponse<ApplicationUserListItemResponse>>('GET', '/api/users', { query });
 
 /** ASP.NET binds route literals and query keys case-insensitively; the mock has to agree. */
 describe('binding', () => {
   test('a differently cased path segment still matches its route', async () => {
-    const page = await transport().request<PagedResponse<UserListItemResponse>>('GET', '/API/Users', {
+    const page = await transport().request<PagedResponse<ApplicationUserListItemResponse>>('GET', '/API/Users', {
       query: { PageSize: 1 },
     });
     expect(page.items.length).toBe(1);
@@ -37,7 +37,7 @@ describe('binding', () => {
   });
 
   test('a route parameter is read from the path as given', async () => {
-    const user = await transport().request<{ id: string }>('GET', `/api/users/${ID.users.fleet}`);
-    expect(user.id).toBe(ID.users.fleet);
+    const user = await transport().request<{ id: string }>('GET', `/api/users/${ID.users.u4}`);
+    expect(user.id).toBe(ID.users.u4);
   });
 });

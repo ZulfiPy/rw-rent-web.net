@@ -7,17 +7,84 @@ export const newUuid = (): string =>
         return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
       });
 
-/** Fixed ids so seed rows can reference each other and tests can name them. */
+/**
+ * Fixed ids for the ported prototype seed. Keys are the prototype's own identifiers so a row here
+ * can be checked against `DB` in RW-Rent.dc.html by name; values are uuids because that is what the
+ * API returns. The trailing block of each uuid repeats the number, so a row stays recognisable in a
+ * payload or a URL.
+ *
+ *   u1  Arturs Veidenbaums    System Administrator, protected
+ *   u2  Signe Priede          Company Principal
+ *   u3  Karlis Zvaigzne       Fleet Manager
+ *   u4  Dita Smite            Fleet Manager + Viewer, the name-correction and role-history subject
+ *   u5  Toms Rudzitis         Viewer, activated from a registration
+ *   u6  Liga Brice            Pending activation, email confirmed
+ *   u7  Gatis Lapsa           Pending activation, email confirmed
+ *   u8  Zane Upite            Pending activation, email NOT confirmed, registration window open
+ *   u9  Imants Gailis         Registration rejected
+ *   u10 Baiba Krastina        Registration expired
+ *   u11 Raivis Dumins         Suspended, sessions revoked
+ */
 export const ID = {
   company: '0b3c9f42-1d58-4a7e-9c30-6f21b8e47d05',
   users: {
-    sysadmin: 'a1f0c8d3-4b27-4e95-8d61-30c7f2a95b18',
-    principal: 'b2e1d9c4-5a38-4f06-9e72-41d8a3b06c29',
-    fleet: 'c3d2ea05-6b49-4017-8f83-52e9b4c17d3a',
-    viewer: 'd4e3fb16-7c5a-4128-90f4-63fac5d28e4b',
-    pendingConfirmed: 'e5f40c27-8d6b-4239-a105-740bd6e39f5c',
-    pendingUnconfirmed: 'f6051d38-9e7c-434a-b216-851ce7f40a6d',
-    rejected: '07162e49-af8d-445b-c327-962df8051b7e',
-    suspended: '18273f5a-b09e-456c-d438-a73e09162c8f',
+    u1: '9f2b7c41-0001-4a10-8b01-000000000001',
+    u2: '9f2b7c41-0002-4a10-8b01-000000000002',
+    u3: '9f2b7c41-0003-4a10-8b01-000000000003',
+    u4: '9f2b7c41-0004-4a10-8b01-000000000004',
+    u5: '9f2b7c41-0005-4a10-8b01-000000000005',
+    u6: '9f2b7c41-0006-4a10-8b01-000000000006',
+    u7: '9f2b7c41-0007-4a10-8b01-000000000007',
+    u8: '9f2b7c41-0008-4a10-8b01-000000000008',
+    u9: '9f2b7c41-0009-4a10-8b01-000000000009',
+    u10: '9f2b7c41-0010-4a10-8b01-000000000010',
+    u11: '9f2b7c41-0011-4a10-8b01-000000000011',
+  },
+  sessions: {
+    s1: '7c3d9e52-0001-4b20-9c02-000000000001',
+    s2: '7c3d9e52-0002-4b20-9c02-000000000002',
+    s3: '7c3d9e52-0003-4b20-9c02-000000000003',
+    s4: '7c3d9e52-0004-4b20-9c02-000000000004',
+    s5: '7c3d9e52-0005-4b20-9c02-000000000005',
+    s6: '7c3d9e52-0006-4b20-9c02-000000000006',
+    s7: '7c3d9e52-0007-4b20-9c02-000000000007',
+    s8: '7c3d9e52-0008-4b20-9c02-000000000008',
+    s9: '7c3d9e52-0009-4b20-9c02-000000000009',
+    s10: '7c3d9e52-0010-4b20-9c02-000000000010',
+    s11: '7c3d9e52-0011-4b20-9c02-000000000011',
+    s12: '7c3d9e52-0012-4b20-9c02-000000000012',
+    s13: '7c3d9e52-0013-4b20-9c02-000000000013',
+    s14: '7c3d9e52-0014-4b20-9c02-000000000014',
+    s15: '7c3d9e52-0015-4b20-9c02-000000000015',
+  },
+  roles: {
+    r1: '5a8f1d63-0001-4c30-8d03-000000000001',
+    r2: '5a8f1d63-0002-4c30-8d03-000000000002',
+    r3: '5a8f1d63-0003-4c30-8d03-000000000003',
+    /** The prototype's r3b: an expired Viewer grant that was never revoked. */
+    r3b: '5a8f1d63-0031-4c30-8d03-000000000031',
+    r4: '5a8f1d63-0004-4c30-8d03-000000000004',
+    r5: '5a8f1d63-0005-4c30-8d03-000000000005',
+    r6: '5a8f1d63-0006-4c30-8d03-000000000006',
+  },
+  audit: {
+    g1: '3e6a2f74-0001-4d40-9e04-000000000001',
+    g2: '3e6a2f74-0002-4d40-9e04-000000000002',
+    g3: '3e6a2f74-0003-4d40-9e04-000000000003',
+    g4: '3e6a2f74-0004-4d40-9e04-000000000004',
+    g5: '3e6a2f74-0005-4d40-9e04-000000000005',
+    g6: '3e6a2f74-0006-4d40-9e04-000000000006',
+    g7: '3e6a2f74-0007-4d40-9e04-000000000007',
+    g8: '3e6a2f74-0008-4d40-9e04-000000000008',
+    g9: '3e6a2f74-0009-4d40-9e04-000000000009',
+    g10: '3e6a2f74-0010-4d40-9e04-000000000010',
+    g11: '3e6a2f74-0011-4d40-9e04-000000000011',
+    g12: '3e6a2f74-0012-4d40-9e04-000000000012',
+    g13: '3e6a2f74-0013-4d40-9e04-000000000013',
+  },
+  /** Referenced by audit rows only; the records themselves arrive with the fleet surfaces. */
+  entities: {
+    a1: '2d7b5c86-0001-4f60-9a06-000000000001',
+    z2: '8b4e6d97-0002-4a70-8b07-000000000002',
   },
 } as const;

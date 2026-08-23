@@ -106,9 +106,16 @@ export interface PagedResponse<T> {
   totalPages: number;
 }
 
-/** Shared query base. Server binds these names as written. SortBy/SortDirection are accepted
- *  but documented as ignored on users, sessions, roles and security-audit. */
-export interface PagedQuery {
+/**
+ * Shared query base. Server binds these names as written. SortBy/SortDirection are accepted but
+ * documented as ignored on users, sessions, roles and security-audit.
+ *
+ * Every query DTO is a type ALIAS, not an interface: TypeScript gives an object type alias an
+ * implicit index signature, which is what lets UsersQuery reach the transport's Query without
+ * widening a single property. Declaring one as an interface breaks every call site — src/api/client
+ * pins that down with AssertQuery.
+ */
+export type PagedQuery = {
   PageNumber?: number;
   PageSize?: number;
   Search?: string;
@@ -220,7 +227,7 @@ export interface ApplicationUserResponse extends ApplicationUserListItemResponse
   registrationDecisionReason?: string | null;
 }
 
-export interface UsersQuery extends PagedQuery {
+export type UsersQuery = PagedQuery & {
   Status?: ApplicationUserStatus;
   Role?: ApplicationUserRole;
 }
@@ -270,7 +277,7 @@ export interface SessionResponse {
   isActive: boolean;
 }
 
-export interface SessionsQuery extends PagedQuery { IncludeEnded?: boolean }
+export type SessionsQuery = PagedQuery & { IncludeEnded?: boolean }
 export interface SessionRevocationResponse { currentSessionRevoked: boolean; revokedCount: number }
 
 /* security audit -------------------------------------------------------- */
@@ -291,7 +298,7 @@ export interface SecurityAuditResponse {
   afterJson?: string | null;
 }
 
-export interface SecurityAuditQuery extends PagedQuery {
+export type SecurityAuditQuery = PagedQuery & {
   CompanyId?: Uuid;
   TargetUserId?: Uuid;
   /** Exact, case-sensitive. */
@@ -369,7 +376,7 @@ export interface CreateVehicleRequest {
 }
 export type UpdateVehicleRequest = CreateVehicleRequest;
 
-export interface VehiclesQuery extends PagedQuery {
+export type VehiclesQuery = PagedQuery & {
   BodyType?: BodyType;
   GearboxType?: GearboxType;
   FuelType?: FuelType;
@@ -423,7 +430,7 @@ export interface CreateCustomerRequest {
 /** type is immutable; the remaining fields must stay coherent with it. */
 export type UpdateCustomerRequest = Omit<CreateCustomerRequest, 'type'>;
 
-export interface CustomersQuery extends PagedQuery { Type?: CustomerType; IsActive?: boolean }
+export type CustomersQuery = PagedQuery & { Type?: CustomerType; IsActive?: boolean }
 
 /* drivers --------------------------------------------------------------- */
 
@@ -463,7 +470,7 @@ export interface CreateDriverRequest {
 }
 export type UpdateDriverRequest = CreateDriverRequest;
 
-export interface DriversQuery extends PagedQuery { IsActive?: boolean }
+export type DriversQuery = PagedQuery & { IsActive?: boolean }
 
 /* rental assignments ---------------------------------------------------- */
 
@@ -489,7 +496,7 @@ export interface RentalAssignmentResponse extends RentalAssignmentListItemRespon
   interruptions: AssignmentInterruptionResponse[];
 }
 
-export interface RentalAssignmentsQuery extends PagedQuery {
+export type RentalAssignmentsQuery = PagedQuery & {
   CustomerId?: Uuid;
   VehicleId?: Uuid;
   Status?: AssignmentStatus;
@@ -567,7 +574,7 @@ export interface AssignmentDriverAuthorizationResponse {
   updatedAtUtc?: Instant | null;
 }
 
-export interface AuthorizationsQuery extends PagedQuery {
+export type AuthorizationsQuery = PagedQuery & {
   AuthorizationType?: AssignmentDriverAuthorizationType;
   DriverId?: Uuid;
   IsOpen?: boolean;
@@ -619,7 +626,7 @@ export interface AssignmentInterruptionResponse {
   updatedAtUtc?: Instant | null;
 }
 
-export interface InterruptionsQuery extends PagedQuery {
+export type InterruptionsQuery = PagedQuery & {
   Reason?: InterruptionReason;
   BillingImpact?: BillingImpact;
   IsOpen?: boolean;

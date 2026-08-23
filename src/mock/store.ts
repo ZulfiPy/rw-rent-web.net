@@ -1,20 +1,24 @@
 import type {
   ApplicationUserResponse, AssignmentDriverAuthorizationResponse, AssignmentInterruptionResponse,
   CompanyResponse, CustomerResponse, DriverResponse, RentalAssignmentResponse,
-  RoleAssignmentResponse, SecurityAuditResponse, SessionResponse,
-  SystemAdministratorTransferResponse, VehicleResponse,
+  RoleAssignmentResponse, SecurityAuditResponse, SystemAdministratorTransferResponse, Uuid,
+  VehicleResponse,
 } from '@/api/dto';
+import type { SessionRecord } from './security';
 import { seed } from './seed';
 
 /** Tagged so a stale shape is never read back. Bumped whenever the seed changes meaningfully. */
-export const SEED_VERSION = 'rwrent-19';
+export const SEED_VERSION = 'rwrent-20';
 
 export interface MockStore {
   version: string;
   company: CompanyResponse | null;
   users: ApplicationUserResponse[];
   roles: RoleAssignmentResponse[];
-  sessions: SessionResponse[];
+  /** Rows carry no isActive/isCurrent — see SessionRecord. */
+  sessions: SessionRecord[];
+  /** userId → the session that authenticates that persona's requests. */
+  currentSessionByUserId: Record<Uuid, Uuid>;
   audit: SecurityAuditResponse[];
   vehicles: VehicleResponse[];
   customers: CustomerResponse[];

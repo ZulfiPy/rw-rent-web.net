@@ -1,36 +1,31 @@
-import type { SessionResponse, SessionRevocationResponse, SessionsQuery } from '@/api/dto';
+import type { SessionRevocationResponse, SessionsQuery, Uuid } from '@/api/dto';
 import { writeAudit } from '../audit';
 import { byDesc, page } from '../paging';
+import { currentSessionIdFor, isSessionActive, sessionView } from '../security';
 import { notFound, route, type Ctx } from '../transport';
 import { conflict } from '../validate';
 
-const ended = (s: SessionResponse) =>
-  !s.isActive || !!s.revokedAtUtc || new Date(s.idleExpiresAtUtc).getTime() <= Date.now();
-
-/** isCurrent is self-view-only: an administrator viewing another user never sees the concept. */
-const forOther = (s: SessionResponse): SessionResponse => ({ ...s, isCurrent: false });
-
-const rowsFor = (ctx: Ctx, userId: string, hideCurrent: boolean) => {
+/** isActive and isCurrent are computed here, per request, never read from the row. */
+const rowsFor = (ctx: Ctx, userId: Uuid, selfView: boolean) => {
   const q = ctx.query as SessionsQuery;
   const includeEnded = String(q.IncludeEnded ?? 'false') === 'true';
   const rows = ctx.store.sessions
     .filter((s) => s.applicationUserId === userId)
-    .filter((s) => includeEnded || !ended(s))
-    .map((s) => (hideCurrent ? forOther(s) : s))
+    .map((s) => sessionView(ctx.store, s, selfView))
+    .filter((s) => includeEnded || s.isActive)
     .sort(byDesc((s) => s.lastSeenAtUtc));
   return page(rows, q);
 };
 
-route('GET', '/api/me/sessions', (ctx) => rowsFor(ctx, ctx.me.id, false));
+route('GET', '/api/me/sessions', (ctx) => rowsFor(ctx, ctx.me.id, true));
 
-route('GET', '/api/users/{userId}/sessions', (ctx) => rowsFor(ctx, ctx.params.userId as string, true),
+route('GET', '/api/users/{userId}/sessions', (ctx) => rowsFor(ctx, ctx.params.userId as string, false),
   ['Users.ReadDirectory', 'Sessions.ManageOrdinaryCompanyUsers']);
 
-const revokeOne = (ctx: Ctx, userId: string, audited: boolean) => {
+const revokeOne = (ctx: Ctx, userId: Uuid, audited: boolean) => {
   const s = ctx.store.sessions.find((x) => x.id === ctx.params.sessionId && x.applicationUserId === userId);
   if (!s) throw notFound('That session was not found.');
-  if (ended(s)) throw conflict('That session has already ended.', 'sessions.already_ended');
-  s.isActive = false;
+  if (!isSessionActive(s)) throw conflict('That session has already ended.', 'sessions.already_ended');
   s.revokedAtUtc = new Date().toISOString();
   s.revocationReason = audited ? 'Revoked by an administrator' : 'Signed out from another session';
   if (audited) {
@@ -54,10 +49,10 @@ route('DELETE', '/api/users/{userId}/sessions/{sessionId}', (ctx) => {
 
 route('POST', '/api/me/sessions/revoke-others', (ctx): SessionRevocationResponse => {
   const now = new Date().toISOString();
+  const currentId = currentSessionIdFor(ctx.store, ctx.me.id);
   let revokedCount = 0;
   for (const s of ctx.store.sessions) {
-    if (s.applicationUserId !== ctx.me.id || !s.isActive || s.isCurrent) continue;
-    s.isActive = false;
+    if (s.applicationUserId !== ctx.me.id || !isSessionActive(s) || s.id === currentId) continue;
     s.revokedAtUtc = now;
     s.revocationReason = 'Signed out from another session';
     revokedCount += 1;
@@ -68,12 +63,14 @@ route('POST', '/api/me/sessions/revoke-others', (ctx): SessionRevocationResponse
 route('POST', '/api/users/{userId}/sessions/revoke-all', (ctx): SessionRevocationResponse => {
   const userId = ctx.params.userId as string;
   const now = new Date().toISOString();
+  const callerSessionId = currentSessionIdFor(ctx.store, ctx.me.id);
   let revokedCount = 0;
   let currentSessionRevoked = false;
   for (const s of ctx.store.sessions) {
-    if (s.applicationUserId !== userId || !s.isActive) continue;
-    if (s.isCurrent) currentSessionRevoked = true;
-    s.isActive = false;
+    if (s.applicationUserId !== userId || !isSessionActive(s)) continue;
+    // True only when the caller signed themselves out: it reports the CALLER's session, not the
+    // target's, and an administrator revoking someone else's sessions keeps their own.
+    if (s.id === callerSessionId) currentSessionRevoked = true;
     s.revokedAtUtc = now;
     s.revocationReason = 'Revoked by an administrator';
     revokedCount += 1;

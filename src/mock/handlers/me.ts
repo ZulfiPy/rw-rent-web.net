@@ -3,7 +3,7 @@ import type {
   ProfileSecurityChangeResponse, RequestOwnEmailChange, UpdateOwnPhoneRequest,
 } from '@/api/dto';
 import { writeAudit } from '../audit';
-import { revokeSessionsFor } from '../security';
+import { currentSessionIdFor, revokeSessionsFor } from '../security';
 import { notFound, route, type Ctx } from '../transport';
 import { fieldError, requireText } from '../validate';
 
@@ -15,7 +15,8 @@ const self = (ctx: Ctx) => {
 
 const authentication = (ctx: Ctx): LoginResponse => {
   const u = self(ctx);
-  const current = ctx.store.sessions.find((s) => s.applicationUserId === u.id && s.isCurrent);
+  const currentId = currentSessionIdFor(ctx.store, u.id);
+  const current = ctx.store.sessions.find((s) => s.id === currentId);
   return {
     userId: u.id,
     sessionId: current?.id ?? '',
