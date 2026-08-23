@@ -68,7 +68,19 @@ permissions, so an over-offered action returns 403.
 revoked AND the idle deadline ahead AND the absolute deadline ahead; current means the row is the
 session that authenticated the request, and it is self-view-only — an administrator listing another
 user's sessions never receives it. The store holds `SessionRecord` (the response minus those two) so
-a stale flag cannot disagree with the deadlines.
+a stale flag cannot disagree with the deadlines. The revoke endpoints take no reason: a single
+revocation stamps the session “Revoked by administrator”, a forced sign-out stamps “Forced logout by
+administrator”, and both audit entries carry neither a reason nor a payload — single revocation names
+the session, forced sign-out names the user.
+
+**Tiers.** Three, as in the prototype: phone below 768 (cards instead of tables, sidebar behind a
+menu button), tablet 768–1279 in both orientations (icon rail, folded columns, tighter cells),
+desktop from 1280 (expanded rail, every column). Column folding is CSS — `foldTablet` and
+`foldNarrow` in `ui/table.module.css`; only the structural switches (table → cards, rail → drawer)
+read `useTier()`. No page body is ever wider than the viewport.
+
+**Type.** Mono is for machine values only — identifiers, phone numbers, timestamps, counts, IP
+addresses. Emails, names, reasons and sublabels such as “Protected account” are sans secondary text.
 
 **Query types.** Query DTOs are type aliases rather than interfaces, which is what lets `UsersQuery`
 reach `Transport.request` with its own property types intact. `AssertQuery` in `api/client.ts` lists
@@ -106,5 +118,10 @@ rather than serve a half-populated list.
 ## State of the port
 
 Deliverable A is the api, error, formatting, permission and mock layers. Deliverable B ports the
-screens: **user directory** (done) → user record (Account / Roles / Sessions) → Registrations →
+screens: **user directory** and **user record** (done, with their eleven actions) → Registrations →
 Security audit. The sidebar lists only screens that exist.
+
+Every mutation runs through one dialog layer: `ui/Dialog` renders the failure envelope (field
+messages under inputs, validation message above the footer, amber stale banner with Refresh, red
+conflict, forbidden, session ended) and `app/useActionMutation` maps the rejection, exposes the
+field messages and invalidates the affected caches on success.

@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listUsers } from '@/api/users';
 import {
@@ -7,31 +7,31 @@ import {
   type ApplicationUserListItemResponse, type UsersQuery,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { NO_ROLE_LABEL, ROLE_LABEL, USER_STATUS_LABEL } from '@/format';
+import { rolesLabel, ROLE_LABEL, USER_STATUS_LABEL } from '@/format';
 import { useCompanyName } from '@/app/useCompanyName';
+import { useTier } from '@/app/useViewport';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
+import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
+import table from '@/ui/table.module.css';
 import styles from './UserDirectory.module.css';
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 
 const STATUS_OPTIONS: FilterOption[] = [
-  { value: '', label: 'All statuses' },
+  { value: '', label: 'Any status' },
   ...Object.values(ApplicationUserStatus).map((s) => ({ value: String(s), label: USER_STATUS_LABEL[s] })),
 ];
 
 const ROLE_OPTIONS: FilterOption[] = [
-  { value: '', label: 'All roles' },
+  { value: '', label: 'Any role' },
   ...Object.values(ApplicationUserRole).map((r) => ({ value: String(r), label: ROLE_LABEL[r] })),
 ];
-
-const rolesOf = (u: ApplicationUserListItemResponse) =>
-  u.effectiveRoles.length ? u.effectiveRoles.map((r) => ROLE_LABEL[r]).join(', ') : NO_ROLE_LABEL;
 
 /** The System Administrator account cannot be renamed, suspended or role-edited. */
 const isProtected = (u: ApplicationUserListItemResponse) =>
@@ -41,10 +41,10 @@ function SkeletonRows() {
   return (
     <>
       {[0, 1, 2, 3, 4].map((i) => (
-        <tr key={i} className={styles.row}>
-          {[0, 1, 2, 3, 4, 5].map((c) => (
-            <td key={c} className={styles.td}>
-              <div className={`${styles.skeleton} ${c === 0 ? styles.skeletonWide : styles.skeletonNarrow}`} />
+        <tr key={i} className={table.row}>
+          {[0, 1, 2, 3, 4, 5, 6].map((c) => (
+            <td key={c} className={`${table.td} ${c === 3 ? table.foldTablet : ''}`}>
+              <div className={`${table.skeleton} ${c === 0 ? table.skeletonWide : table.skeletonNarrow}`} />
             </td>
           ))}
         </tr>
@@ -56,11 +56,13 @@ function SkeletonRows() {
 export function UserDirectory() {
   const [params, setParams] = useSearchParams();
   const companyName = useCompanyName();
+  const phone = useTier() === 'phone';
 
   const search = params.get('search') ?? '';
   const status = params.get('status') ?? '';
   const role = params.get('role') ?? '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
+  const pageSize = Number(params.get('size') ?? DEFAULT_PAGE_SIZE);
 
   const patch = (next: Record<string, string>) => {
     const merged = new URLSearchParams(params);
@@ -75,7 +77,7 @@ export function UserDirectory() {
 
   const query: UsersQuery = {
     PageNumber: pageNumber,
-    PageSize: PAGE_SIZE,
+    PageSize: pageSize,
     ...(search ? { Search: search } : {}),
     ...(status ? { Status: Number(status) as ApplicationUserStatus } : {}),
     ...(role ? { Role: Number(role) as ApplicationUserRole } : {}),
@@ -90,6 +92,7 @@ export function UserDirectory() {
   const page = users.data;
   const failure = users.error ? toFailure(users.error) : null;
   const isFiltered = search !== '' || status !== '' || role !== '';
+  const countLabel = page ? `${page.totalCount} record${page.totalCount === 1 ? '' : 's'}` : '';
 
   return (
     <>
@@ -108,15 +111,16 @@ export function UserDirectory() {
           <SelectFilter
             value={status}
             options={STATUS_OPTIONS}
-            label="Filter by status"
+            label="Status"
             onChange={(next) => patch({ status: next })}
           />
           <SelectFilter
             value={role}
             options={ROLE_OPTIONS}
-            label="Filter by effective role"
+            label="Role"
             onChange={(next) => patch({ role: next })}
           />
+          <span className={filters.count}>{countLabel}</span>
         </div>
 
         {failure ? (
@@ -132,55 +136,102 @@ export function UserDirectory() {
           />
         ) : (
           <>
-            <div className={styles.scroll}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th scope="col" className={`${styles.th} ${styles.wide}`}>User</th>
-                    <th scope="col" className={`${styles.th} ${styles.colPhone}`}>Phone</th>
-                    <th scope="col" className={`${styles.th} ${styles.colStatus}`}>Status</th>
-                    <th scope="col" className={`${styles.th} ${styles.colEmail}`}>Email</th>
-                    <th scope="col" className={`${styles.th} ${styles.colRoles}`}>Effective roles</th>
-                    <th scope="col" className={`${styles.th} ${styles.colCompany}`}>Company</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.isPending ? <SkeletonRows /> : null}
-                  {page?.items.map((u) => (
-                    <tr key={u.id} className={styles.row}>
-                      <td className={styles.td}>
-                        <span className={styles.stack}>
-                          <span className={styles.name}>{u.firstName} {u.lastName}</span>
-                          <span className={styles.sub}>{u.email}</span>
+            {phone ? (
+              <div className={cards.cards}>
+                {page?.items.map((u) => (
+                  <Link key={u.id} to={`/users/${u.id}`} className={`${cards.card} ${cards.cardLink}`}>
+                    <div className={cards.head}>
+                      <span className={cards.heading}>
+                        <span className={cards.title}>{u.firstName} {u.lastName}</span>
+                        <span className={cards.sub}>{u.email}</span>
+                      </span>
+                      <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
+                        {USER_STATUS_LABEL[u.status]}
+                      </Chip>
+                    </div>
+                    <div className={cards.facts}>
+                      <span className={cards.fact}>
+                        <span className={cards.factLabel}>Email</span>
+                        <span className={cards.factValue}>{u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}</span>
+                      </span>
+                      <span className={cards.fact}>
+                        <span className={cards.factLabel}>Phone</span>
+                        <span className={cards.factMono}>{u.phoneNumber}</span>
+                      </span>
+                      <span className={cards.fact}>
+                        <span className={cards.factLabel}>Effective roles</span>
+                        <span className={cards.factValue}>
+                          {rolesLabel(u.effectiveRoles)}
+                          {isProtected(u) ? ' · Protected account' : ''}
                         </span>
-                      </td>
-                      <td className={`${styles.td} ${styles.mono}`}>{u.phoneNumber}</td>
-                      <td className={styles.td}>
-                        <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
-                          {USER_STATUS_LABEL[u.status]}
-                        </Chip>
-                      </td>
-                      <td className={styles.td}>
-                        <Chip tone={u.emailConfirmed ? 'ok' : 'warn'} dot={u.emailConfirmed ? '50%' : '2px'}>
-                          {u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}
-                        </Chip>
-                      </td>
-                      <td className={styles.td}>
-                        <span className={styles.stack}>
-                          <span className={u.effectiveRoles.length ? styles.roles : styles.none}>
-                            {rolesOf(u)}
-                          </span>
-                          {isProtected(u) ? <span className={styles.sub}>Protected account</span> : null}
-                        </span>
-                      </td>
-                      <td className={`${styles.td} ${u.companyId ? '' : styles.none}`}>
-                        {u.companyId ? companyName : 'Not assigned'}
-                      </td>
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className={table.scroll}>
+                <table className={`${table.table} ${styles.table}`}>
+                  <thead>
+                    <tr>
+                      <th scope="col" className={`${table.th} ${styles.wide}`}>User</th>
+                      <th scope="col" className={`${table.th} ${styles.colPhone}`}>Phone</th>
+                      <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
+                      <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldTablet}`}>Email</th>
+                      <th scope="col" className={`${table.th} ${styles.colRoles}`}>Effective roles</th>
+                      <th scope="col" className={`${table.th} ${styles.colCompany}`}>Company</th>
+                      <th scope="col" className={`${table.th} ${styles.colAction}`}>
+                        <span className={table.srOnly}>Open record</span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.isPending ? <SkeletonRows /> : null}
+                    {page?.items.map((u) => (
+                      <tr key={u.id} className={table.row}>
+                        <td className={table.td}>
+                          <span className={table.stack}>
+                            <span className={table.name}>{u.firstName} {u.lastName}</span>
+                            <span className={table.sub}>{u.email}</span>
+                          </span>
+                        </td>
+                        <td className={`${table.td} ${table.mono}`}>{u.phoneNumber}</td>
+                        <td className={table.td}>
+                          <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
+                            {USER_STATUS_LABEL[u.status]}
+                          </Chip>
+                        </td>
+                        <td className={`${table.td} ${table.foldTablet}`}>
+                          <Chip tone={u.emailConfirmed ? 'ok' : 'warn'} dot={u.emailConfirmed ? '50%' : '2px'}>
+                            {u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}
+                          </Chip>
+                        </td>
+                        <td className={`${table.td} ${table.wrap}`}>
+                          <span className={table.stack}>
+                            <span className={u.effectiveRoles.length ? '' : table.dim}>{rolesLabel(u.effectiveRoles)}</span>
+                            {isProtected(u) ? <span className={table.sub}>Protected account</span> : null}
+                          </span>
+                        </td>
+                        <td className={`${table.td} ${u.companyId ? '' : table.dim}`}>
+                          <span className={table.oneLine} title={u.companyId ? companyName : 'Not assigned'}>
+                            {u.companyId ? companyName : 'Not assigned'}
+                          </span>
+                        </td>
+                        <td className={table.td}>
+                          <Link
+                            to={`/users/${u.id}`}
+                            className={table.link}
+                            aria-label={`Open the record for ${u.firstName} ${u.lastName}`}
+                          >
+                            <span data-icon aria-hidden="true">chevron_right</span>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {page && page.items.length === 0 ? (
               <EmptyState
@@ -195,7 +246,11 @@ export function UserDirectory() {
             ) : null}
 
             {page ? (
-              <Pagination page={page} noun={['user', 'users']} onPage={(n) => patch({ page: String(n) })} />
+              <Pagination
+                page={page}
+                onPage={(n) => patch({ page: String(n) })}
+                onPageSize={(size) => patch({ size: String(size) })}
+              />
             ) : null}
           </>
         )}

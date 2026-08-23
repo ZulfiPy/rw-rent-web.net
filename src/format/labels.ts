@@ -12,7 +12,27 @@ export const ROLE_LABEL: Record<ApplicationUserRole, string> = {
   [ApplicationUserRole.FleetManager]: 'Fleet Manager',
   [ApplicationUserRole.Viewer]: 'Viewer',
 };
-export const NO_ROLE_LABEL = 'No effective role';
+export const NO_ROLE_LABEL = 'None';
+
+const ROLE_RANK: Record<ApplicationUserRole, number> = {
+  [ApplicationUserRole.SystemAdministrator]: 4,
+  [ApplicationUserRole.CompanyPrincipal]: 3,
+  [ApplicationUserRole.FleetManager]: 2,
+  [ApplicationUserRole.Viewer]: 1,
+};
+
+/** Every effective role, in the order the API returns them. */
+export const rolesLabel = (roles: readonly ApplicationUserRole[]): string =>
+  roles.length ? roles.map((r) => ROLE_LABEL[r]).join(', ') : NO_ROLE_LABEL;
+
+/** The highest role held — what the account is, in one word, for the sidebar footer. */
+export const primaryRoleLabel = (roles: readonly ApplicationUserRole[]): string => {
+  const top = roles.reduce<ApplicationUserRole | null>(
+    (best, r) => (best === null || ROLE_RANK[r] > ROLE_RANK[best] ? r : best),
+    null,
+  );
+  return top === null ? NO_ROLE_LABEL : ROLE_LABEL[top];
+};
 
 export const USER_STATUS_LABEL: Record<ApplicationUserStatus, string> = {
   [ApplicationUserStatus.PendingActivation]: 'Pending activation',

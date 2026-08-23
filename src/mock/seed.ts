@@ -162,7 +162,7 @@ export function seed(): MockStore {
     session(ID.sessions.s8, ID.users.u5, [-1.6, -0.4, 1.6, 10.4], 'Chrome 128 · Android 15', '194.8.44.12'),
     session(ID.sessions.s11, ID.users.u5, [-6.2, -1.1, 0.9, 5.8], 'Edge 127 · Windows 11', '194.8.44.12'),
     session(ID.sessions.s9, ID.users.u11, [-24 * 5 - 1, -24 * 5 - 0.4, -24 * 5 + 1.6, -24 * 5 + 11], 'Firefox 130 · Ubuntu 24.04', '159.148.22.4', {
-      atHours: -24 * 5 + 0.2, reason: 'Revoked by an administrator',
+      atHours: -24 * 5 + 0.2, reason: 'Revoked by administrator',
     }),
   ];
 
@@ -209,11 +209,11 @@ export function seed(): MockStore {
       afterJson: payloadJson({ Status: 'Suspended' }),
     },
     {
-      // The prototype carried an IsActive delta here. isActive is computed per request, so there is
-      // no such column to record; the row keeps its reason and the revocation lives on the session.
+      // The revoke endpoints take no reason and the entry records no payload: isActive is computed,
+      // and the fixed revocation reason lives on the session row.
       id: ID.audit.g5, eventType: 'Session.RevokedByAdministrator', actorUserId: ID.users.u2,
       occurredAtUtc: at(-24 * 5 + 0.2), companyId: ID.company, targetUserId: ID.users.u11,
-      entityType: 'Session', entityId: ID.sessions.s9, reason: 'Suspension follow-up.',
+      entityType: 'Session', entityId: ID.sessions.s9, reason: null,
       beforeJson: null, afterJson: null,
     },
     {

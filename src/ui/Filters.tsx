@@ -41,21 +41,31 @@ export function SearchInput({ value, placeholder, onChange, delay = 250 }: {
 
 export interface FilterOption { value: string; label: string }
 
+/**
+ * The prototype's filter control: the chosen value reads as "Status · Active", so the control says
+ * what it filters even when nothing is set. The native select sits transparent on top, which keeps
+ * the platform picker on touch devices.
+ */
 export function SelectFilter({ value, options, label, onChange }: {
   value: string;
   options: FilterOption[];
   label: string;
   onChange: (next: string) => void;
 }) {
+  const current = options.find((o) => o.value === value)?.label ?? options[0]?.label ?? '';
   return (
-    <select
-      className={styles.select}
-      data-set={value !== ''}
-      value={value}
-      aria-label={label}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    <span className={styles.select} data-set={value !== ''}>
+      <span className={styles.selectLabel}>{label} ·</span>
+      <span className={styles.selectValue}>{current}</span>
+      <span data-icon aria-hidden="true" className={styles.selectIcon}>expand_more</span>
+      <select
+        className={styles.nativeSelect}
+        value={value}
+        aria-label={`Filter by ${label.toLowerCase()}`}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </span>
   );
 }

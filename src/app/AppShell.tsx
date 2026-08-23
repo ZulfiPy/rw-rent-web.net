@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
+import { primaryRoleLabel } from '@/format/labels';
+import { useTier } from './useViewport';
 import styles from './AppShell.module.css';
 
 interface NavItem { to: string; label: string; icon: string; permission: Permission }
@@ -42,54 +44,96 @@ function useTheme() {
 
 export function AppShell({ companyName }: { companyName: string }) {
   const { me, can } = useAccess();
+  const tier = useTier();
   const [theme, setTheme] = useTheme();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => setDrawerOpen(false), [location.pathname, location.search]);
 
   const groups = NAV
     .map((g) => ({ ...g, items: g.items.filter((i) => can(i.permission)) }))
     .filter((g) => g.items.length > 0);
 
-  return (
-    <div className={styles.shell}>
-      <aside className={styles.rail}>
-        <div className={styles.brand}>
-          <span className={styles.mark}>RW-Rent</span>
-          <span className={styles.company}>{companyName}</span>
-        </div>
+  const icons = tier === 'tablet';
+  const roleLabel = me ? primaryRoleLabel(me.roles) : '';
 
-        <nav className={styles.nav} aria-label="Sections">
-          {groups.map((group) => (
-            <div key={group.label} className={styles.group}>
-              <span className={styles.groupLabel}>{group.label}</span>
-              {group.items.map((item) => (
-                <NavLink key={item.to} to={item.to} className={styles.item}>
-                  <span data-icon aria-hidden="true" className={styles.itemIcon}>{item.icon}</span>
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </nav>
+  const rail = (
+    <aside className={styles.rail} data-mode={icons ? 'icons' : undefined}>
+      <div className={styles.brand}>
+        <span className={styles.mark}>{icons ? 'RW' : 'RW-Rent'}</span>
+        <span className={styles.company}>{companyName}</span>
+      </div>
 
-        <div className={styles.identity}>
-          <span className={styles.who}>
-            <span className={styles.name}>{me ? `${me.firstName} ${me.lastName}` : '—'}</span>
-            <span className={styles.mail}>{me?.email ?? ''}</span>
-          </span>
+      <nav className={styles.nav} aria-label="Sections">
+        {groups.map((group) => (
+          <div key={group.label} className={styles.group}>
+            <span className={styles.groupLabel}>{group.label}</span>
+            {group.items.map((item) => (
+              <NavLink key={item.to} to={item.to} className={styles.item} title={item.label}>
+                <span data-icon aria-hidden="true" className={styles.itemIcon}>{item.icon}</span>
+                <span className={styles.itemLabel}>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className={styles.identity}>
+        <span className={styles.who}>
+          <span className={styles.name}>{me ? `${me.firstName} ${me.lastName}` : '—'}</span>
+          <span className={styles.role}>{roleLabel}</span>
+        </span>
+        <button
+          type="button"
+          className={styles.theme}
+          title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          <span data-icon aria-hidden="true">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+          <span className={styles.themeLabel}>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</span>
+        </button>
+      </div>
+    </aside>
+  );
+
+  if (tier === 'phone') {
+    return (
+      <div className={styles.shell}>
+        <header className={styles.topbar}>
           <button
             type="button"
-            className={styles.theme}
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className={styles.menu}
+            aria-label="Open navigation"
+            onClick={() => setDrawerOpen(true)}
           >
-            <span data-icon aria-hidden="true">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
-            {theme === 'dark' ? 'Light theme' : 'Dark theme'}
+            <span data-icon aria-hidden="true">menu</span>
           </button>
-        </div>
-      </aside>
+          <span className={styles.topbarBrand}>
+            <span className={styles.mark}>RW-Rent</span>
+            <span className={styles.company}>{companyName}</span>
+          </span>
+        </header>
 
-      <div className={styles.main}>
-        <div className={styles.content}>
-          <Outlet />
+        {drawerOpen ? (
+          <>
+            <div className={styles.scrim} onClick={() => setDrawerOpen(false)} />
+            <div className={styles.drawer}>{rail}</div>
+          </>
+        ) : null}
+
+        <div className={styles.main}>
+          <div className={styles.content}><Outlet /></div>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.shell}>
+      {rail}
+      <div className={styles.main}>
+        <div className={styles.content}><Outlet /></div>
       </div>
     </div>
   );

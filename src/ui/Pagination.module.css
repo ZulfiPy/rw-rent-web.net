@@ -1,13 +1,28 @@
 .bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding: 12px 16px;
   border-top: 1px solid var(--line);
 }
-.count { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-3); }
-.pager { display: flex; align-items: center; gap: 8px; }
+.range { font-size: 12.5px; color: var(--fg-3); }
+.perPage { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fg-3); }
+.sizeBox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+}
+.sizeValue { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); }
+.sizeIcon { font-size: 15px; color: var(--fg-3); }
+.nativeSelect { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; cursor: pointer; }
+
+.pager { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .step {
   display: flex;
   align-items: center;
@@ -22,3 +37,9 @@
 .step:hover:not(:disabled) { border-color: var(--line-3); color: var(--fg); }
 .step:disabled { opacity: .4; cursor: not-allowed; }
 .page { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-3); }
+
+@media (max-width: 767px) {
+  .bar { padding: 12px; }
+  .pager { margin-left: 0; flex: 1 1 100%; justify-content: space-between; }
+  .stepLabel { display: none; }
+}

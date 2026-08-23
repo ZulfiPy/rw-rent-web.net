@@ -3,6 +3,7 @@ import { AppShell } from './app/AppShell';
 import { useCompanyName } from './app/useCompanyName';
 import { useAccess } from './permissions/usePermissions';
 import { UserDirectory } from './pages/users/UserDirectory';
+import { UserRecord } from './pages/users/UserRecord';
 import { DevPanel } from './dev/DevPanel';
 import styles from './App.module.css';
 
@@ -38,6 +39,7 @@ export function App() {
         <Routes>
           <Route element={<AppShell companyName={companyName} />}>
             <Route path="/users" element={<UserDirectory />} />
+            <Route path="/users/:userId" element={<UserRecord />} />
             <Route path="*" element={<Navigate to="/users" replace />} />
           </Route>
         </Routes>
