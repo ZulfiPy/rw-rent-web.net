@@ -144,11 +144,11 @@ export function AssignmentRecord() {
         backTo="/rental-assignments"
         backLabel="Rental assignments"
         title={a?.vehiclePlateNumber ?? 'Rental assignment'}
-        chip={a ? (
-          <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
-            {ASSIGNMENT_STATUS_LABEL[a.status]}
-          </Chip>
-        ) : undefined}
+        badges={a ? [{
+          label: ASSIGNMENT_STATUS_LABEL[a.status],
+          tone: ASSIGNMENT_STATUS_TONE[a.status],
+          dot: ASSIGNMENT_STATUS_DOT[a.status],
+        }] : undefined}
       >
         <HeaderFact
           label="Vehicle"

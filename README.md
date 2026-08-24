@@ -23,17 +23,28 @@ substituting something plausible.
 
 **Known deviations, deliberate:**
 
-- The page header (breadcrumbs, title, page actions) is still a block inside the scroll column; the
-  prototype has it as a sticky bar above the scroll area with `18px 26px` padding. Being fixed in the
-  screen-by-screen pass.
+- **Recent security activity is newest first.** The prototype shows `db.audit.slice(0, 5)` in seed
+  order, which is not time-ordered (15 Jul sits between 13 Aug and 19 Aug) and contradicts the card's
+  own title. The React card sorts by `occurredAtUtc` descending.
+- **The metric grid never leaves one card alone.** The prototype's `repeat(auto-fit, minmax(212px,
+  1fr))` fits five cards at 1440 and strands the sixth on its own row; when the last row would hold
+  exactly one card the column count drops by one (four and two). Cards keep the prototype's 212px
+  minimum track, and at widths where nothing would be stranded the layout is the prototype's.
+- **Needs attention group ordering.** Group order is the prototype's (registrations, then open
+  interruptions, then handovers inside three days). Within a group the prototype walks its in-memory
+  collections in seed order, which the API cannot express — registrations are ordered by most recent
+  activity and interruptions by oldest open, the directions that reproduce the prototype's rendered
+  list. The panel keeps the prototype's "Sorted by how long the record has been waiting" subtitle.
 - Column folding: the prototype folds only in its tight band (768–1023, and to 1280 for Vehicles).
   The delivered lists fold at 1279 as well, which is why the collapsed rail's extra width is not yet
-  used. Being fixed in the same pass.
+  used. Being fixed in the screen-by-screen pass.
 - Company profile and System Administrator are in the prototype's Administration group but have no
   React screen yet, so they are not in the rail: a nav item that silently redirects is worse than one
   that is not there. They arrive with their screens.
 - Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
   screen; the authentication screens are Phase 3, so the mock ends the persona's session instead.
+- A record's state chip is in the shell's header bar next to the title (the prototype's
+  `pageBadges`); the record's own fact row keeps the headline facts below it.
 
 ## Layout
 
@@ -96,6 +107,13 @@ a stale flag cannot disagree with the deadlines. The revoke endpoints take no re
 revocation stamps the session “Revoked by administrator”, a forced sign-out stamps “Forced logout by
 administrator”, and both audit entries carry neither a reason nor a payload — single revocation names
 the session, forced sign-out names the user.
+
+**Layout.** The shell is the prototype's: a rail (246px expanded, 64px collapsed, a 272px overlay
+below 1024), a `flex: none` header bar carrying the breadcrumb, title, badges and description
+(`18px 26px`, `14px 16px` narrow, 24px/19px title), and a scroll area whose inner column is the only
+centred max-width block (`none` until 1800, then 1680; padding `22px 26px 40px`, `22px 18px 40px`
+below 1280, `16px` narrow). A screen declares its header through `usePageHeader` — `ui/PageHeader`
+for a list, `ui/RecordHeader` for a record — and renders only its body.
 
 **Tiers.** Three, as in the prototype: phone below 768 (cards instead of tables, sidebar behind a
 menu button), tablet 768–1279 in both orientations (icon rail, folded columns, tighter cells),

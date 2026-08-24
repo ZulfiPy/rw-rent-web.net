@@ -53,6 +53,19 @@ export function formatUtc(iso: string | null | undefined): string {
 export const formatUtcLabelled = (iso: string | null | undefined) =>
   iso ? `${formatUtc(iso)} UTC` : EMPTY;
 
+/**
+ * "24 Aug, 05:22" — the humanized UTC shape the prototype uses where a card's subtitle has already
+ * declared the zone. The year appears only when it is not the current one.
+ */
+export function formatUtcHuman(iso: string | null | undefined): string {
+  if (!iso) return EMPTY;
+  const d = parse(iso);
+  const year = d.getUTCFullYear();
+  const stamp = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  const suffix = year === new Date().getUTCFullYear() ? '' : ` ${year}`;
+  return `${stamp}${suffix}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
+
 /** "+03:00" for the given instant in Europe/Tallinn. */
 export function zoneOffset(at: Date): string {
   const name = new Intl.DateTimeFormat('en-GB', { timeZone: TIME_ZONE, timeZoneName: 'longOffset' })

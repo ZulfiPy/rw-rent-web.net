@@ -19,10 +19,7 @@ export interface QueueItem {
   title: string;
   sub: string;
   when: string;
-  /** Omitted while the record screen it would open does not exist yet. */
-  to?: string;
-  /** Sort key: how long the record has been waiting. */
-  since: string;
+  to: string;
 }
 
 const PAGE = { PageSize: 100 } as const;
@@ -84,23 +81,37 @@ export function useOpenWork() {
 
   const items: QueueItem[] = [];
 
-  for (const u of registrations.data?.items ?? []) {
-    if (!u.emailConfirmed) continue;
+  /**
+   * Group order and within-group order are the prototype's rendered order: registrations, then open
+   * interruptions, then imminent handovers. The prototype walks its in-memory collections, which the
+   * API cannot express — so each group is ordered by the timestamp its rows are read against, in the
+   * direction that reproduces the prototype's list (registrations newest activity first,
+   * interruptions oldest open first).
+   */
+  const pending = (registrations.data?.items ?? [])
+    .filter((u) => u.emailConfirmed)
+    .map((u) => ({ u, at: u.updatedAtUtc ?? u.createdAtUtc ?? '' }))
+    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+
+  for (const { u, at } of pending) {
     items.push({
       id: `reg-${u.id}`,
       icon: 'how_to_reg',
       tone: 'warn',
       title: `${u.firstName} ${u.lastName} — awaiting activation`,
       sub: `Email confirmed · ${u.email} · no roles assigned yet`,
-      when: relative(u.createdAtUtc),
+      when: relative(at),
       to: `/users/${u.id}`,
-      since: u.createdAtUtc,
     });
   }
 
+  const openRows: Array<{ a: RentalAssignmentListItemResponse; int: AssignmentInterruptionResponse }> = [];
   activeRows.forEach((a: RentalAssignmentListItemResponse, i) => {
-    const rows: AssignmentInterruptionResponse[] = interruptions[i]?.data?.items ?? [];
-    for (const int of rows) {
+    for (const int of interruptions[i]?.data?.items ?? []) openRows.push({ a, int });
+  });
+  openRows
+    .sort((x, y) => (x.int.startedAtUtc < y.int.startedAtUtc ? -1 : x.int.startedAtUtc > y.int.startedAtUtc ? 1 : 0))
+    .forEach(({ a, int }) => {
       items.push({
         id: `int-${int.id}`,
         icon: 'pause_circle',
@@ -108,10 +119,9 @@ export function useOpenWork() {
         title: `Open interruption — ${INTERRUPTION_REASON_LABEL[int.reason]}`,
         sub: `${a.vehiclePlateNumber} · ${a.customerDisplayName} · ${BILLING_IMPACT_LABEL[int.billingImpact]}`,
         when: relative(int.startedAtUtc),
-        since: int.startedAtUtc,
+        to: `/rental-assignments/${a.id}?tab=interruptions`,
       });
-    }
-  });
+    });
 
   plannedRows.forEach((a, i) => {
     const start = a.plannedStartAtUtc;
@@ -124,11 +134,10 @@ export function useOpenWork() {
       title: `Planned handover — ${a.vehiclePlateNumber}`,
       sub: `${a.customerDisplayName}${covered ? ' · driver authorized' : ' · no authorized driver yet'}`,
       when: relative(start),
-      since: start,
+      to: `/rental-assignments/${a.id}`,
     });
   });
 
-  items.sort((a, b) => (a.since < b.since ? -1 : a.since > b.since ? 1 : 0));
   // The prototype's queueModel caps the queue at seven rows; both surfaces show the same list.
   const capped = items.slice(0, 7);
 

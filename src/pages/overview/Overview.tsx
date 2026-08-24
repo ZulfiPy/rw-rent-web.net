@@ -5,15 +5,29 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { AssignmentStatus, type VehicleListItemResponse } from '@/api/dto';
-import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcLabelled } from '@/format';
+import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
+import { useElementWidth } from '@/app/useElementWidth';
 import { PageHeader } from '@/ui/PageHeader';
-import type { Tone } from '@/ui/status';
 import { useOpenWork } from './useOpenWork';
 import { INSURANCE, SAMPLE_CHIP, TASKS, type SampleRow } from './sample';
 import styles from './Overview.module.css';
 
 const PICK = { PageSize: 100 } as const;
+const CARD_MIN = 212;
+const CARD_GAP = 14;
+
+/**
+ * How many columns the metric grid takes. `auto-fit` would fit five cards at 1440 and leave the
+ * sixth alone on a second row, so when the last row would hold exactly one card the count drops by
+ * one — four and two rather than five and one. Cards never go below the prototype's 212px track.
+ */
+function metricColumns(width: number, count: number): number {
+  if (!width || !count) return 0;
+  const fit = Math.max(1, Math.floor((width + CARD_GAP) / (CARD_MIN + CARD_GAP)));
+  if (count <= fit) return count;
+  return fit > 1 && count % fit === 1 ? fit - 1 : fit;
+}
 
 interface Metric {
   key: string;
@@ -144,22 +158,33 @@ export function Overview() {
     };
   });
 
-  const activity = (audit.data?.items ?? []).slice(0, 5).map((a) => ({
+  // Newest first, explicitly: the card's title promises recency (see README's deviation note).
+  const activity = (audit.data?.items ?? [])
+    .slice()
+    .sort((x, y) => (x.occurredAtUtc < y.occurredAtUtc ? 1 : x.occurredAtUtc > y.occurredAtUtc ? -1 : 0))
+    .slice(0, 5)
+    .map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),
-    when: formatUtcLabelled(a.occurredAtUtc),
+    when: formatUtcHuman(a.occurredAtUtc),
     tint: /Failed|Suspend/.test(a.eventType)
       ? 'var(--bad)'
       : /Correct/.test(a.eventType) ? 'var(--warn)' : 'var(--accent)',
   }));
 
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const [gridRef, gridWidth] = useElementWidth<HTMLDivElement>();
+  const cols = metricColumns(gridWidth, cards.length);
 
   return (
     <>
       <PageHeader title="Overview" description="Your fleet, rentals, and pending work at a glance." />
 
-      <div className={styles.metrics}>
+      <div
+        ref={gridRef}
+        className={styles.metrics}
+        style={cols ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined}
+      >
         {cards.map((m) => (
           <Link key={m.key} to={m.to} className={styles.card}>
             <span className={styles.cardHead}>

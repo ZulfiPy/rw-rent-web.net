@@ -43,7 +43,9 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
      */
     refresh: () => {
       void (async () => {
-        await Promise.all(invalidate.map((queryKey) => queryClient.refetchQueries({ queryKey })));
+        // allSettled, not all: a refetch that itself fails must not leave the dialog stuck on the
+        // stale banner with the typed values still in place.
+        await Promise.allSettled(invalidate.map((queryKey) => queryClient.refetchQueries({ queryKey })));
         setFailure(null);
         reseed();
       })();

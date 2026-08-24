@@ -6,7 +6,6 @@ import { listUsers } from '@/api/users';
 import type { Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { diffRows, entityLabel, eventLabel, formatUtc } from '@/format';
-import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Panel } from '@/ui/Panel';
@@ -70,7 +69,7 @@ export function AuditEntry() {
         backTo="/security-audit"
         backLabel="Security audit"
         title={entry ? eventLabel(entry.eventType) : 'Audit entry'}
-        chip={<Chip tone="mute" dot="2px">Audit entry</Chip>}
+        badges={[{ label: 'Audit entry', tone: 'mute', dot: '2px' }]}
       />
 
       <Panel title="Event" description="All times UTC.">

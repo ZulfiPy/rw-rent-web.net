@@ -160,11 +160,11 @@ export function UserRecord() {
         backTo="/users"
         backLabel="User directory"
         title={u ? `${u.firstName} ${u.lastName}` : 'User'}
-        chip={u ? (
-          <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
-            {USER_STATUS_LABEL[u.status]}
-          </Chip>
-        ) : null}
+        badges={u ? [{
+          label: USER_STATUS_LABEL[u.status],
+          tone: USER_STATUS_TONE[u.status],
+          dot: USER_STATUS_DOT[u.status],
+        }] : undefined}
       >
         <HeaderFact label="Email" value={u?.email ?? EMPTY} />
         <HeaderFact label="Effective roles" value={u ? rolesLabel(u.effectiveRoles) : EMPTY} />

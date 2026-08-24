@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { logout } from '@/api/auth';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
 import { primaryRoleLabel } from '@/format/labels';
 import { useOpenWork } from '@/pages/overview/useOpenWork';
+import { Chip } from '@/ui/Chip';
+import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
 import { useRailMode } from './useViewport';
 import styles from './AppShell.module.css';
 
@@ -60,6 +62,32 @@ const NAV: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
 ];
+
+/** The prototype's breadcrumb row: a single crumb carries a leading chevron. */
+function Breadcrumb({ crumbs }: { crumbs: PageHeaderModel['crumbs'] }) {
+  const last = crumbs.length - 1;
+  return (
+    <nav aria-label="Breadcrumb" className={styles.crumbs}>
+      {crumbs.map((c, i) => (
+        <span key={`${c.label}-${i}`} className={styles.crumb}>
+          {crumbs.length === 1 ? (
+            <span data-icon aria-hidden="true" className={styles.crumbSep}>chevron_right</span>
+          ) : null}
+          {i === last ? (
+            <span aria-current="page" className={styles.crumbLast}>{c.label}</span>
+          ) : c.to ? (
+            <Link to={c.to} className={styles.crumbLink}>{c.label}</Link>
+          ) : (
+            <span className={styles.crumbPlain}>{c.label}</span>
+          )}
+          {i === last ? null : (
+            <span data-icon aria-hidden="true" className={styles.crumbSep}>chevron_right</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 const THEME_KEY = 'rwrent.theme';
 const NAV_KEY = 'rwrent.nav';
@@ -243,22 +271,40 @@ export function AppShell({ companyName }: { companyName: string }) {
       {narrow && drawerOpen ? <div className={styles.scrim} onClick={() => setDrawerOpen(false)} /> : null}
       {narrow ? <div className={styles.drawer} data-open={drawerOpen}>{rail}</div> : rail}
 
-      <div className={styles.main}>
-        {narrow ? (
-          <header className={styles.topbar}>
-            <button type="button" className={styles.menu} aria-label="Open navigation" onClick={() => setDrawerOpen(true)}>
-              <span data-icon aria-hidden="true">menu</span>
-            </button>
-            <span className={styles.topbarBrand}>
-              <span className={styles.mark}>RW-Rent</span>
-              <span className={styles.company}>{companyName}</span>
-            </span>
-          </header>
-        ) : null}
-        <div className={styles.scroll}>
-          <div className={styles.content}><Outlet /></div>
-        </div>
-      </div>
+      <PageHeaderProvider>
+        {(header) => (
+          <div className={styles.main}>
+            <header className={styles.headerBar}>
+              <div className={styles.crumbRow}>
+                {narrow ? (
+                  <button type="button" className={styles.menu} aria-label="Open navigation" onClick={() => setDrawerOpen(true)}>
+                    <span data-icon aria-hidden="true">menu</span>
+                  </button>
+                ) : null}
+                {header ? <Breadcrumb crumbs={header.crumbs} /> : null}
+              </div>
+              {header ? (
+                <div className={styles.titleBlock}>
+                  <div className={styles.titleLine}>
+                    <h1 className={styles.h1} data-mono={header.mono ? 'true' : undefined}>{header.title}</h1>
+                    {header.badges?.length ? (
+                      <span className={styles.badges}>
+                        {header.badges.map((b) => (
+                          <Chip key={b.label} tone={b.tone} dot={b.dot}>{b.label}</Chip>
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
+                  {header.description ? <p className={styles.headerDesc}>{header.description}</p> : null}
+                </div>
+              ) : null}
+            </header>
+            <div className={styles.scroll}>
+              <div className={styles.content}><Outlet /></div>
+            </div>
+          </div>
+        )}
+      </PageHeaderProvider>
     </div>
   );
 }
