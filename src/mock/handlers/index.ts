@@ -7,3 +7,4 @@ import './sessions';
 import './securityAudit';
 import './companies';
 import './fleet';
+import './auth';

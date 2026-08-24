@@ -1,19 +1,35 @@
-/* `100%`, never `100vw`: the viewport unit includes the scrollbar gutter, which is where the last
-   few pixels of sideways scroll used to come from. Clipping lives on .main so the phone drawer and
-   its scrim (fixed, siblings of .main) are unaffected. */
-.shell { display: flex; min-height: 100vh; width: 100%; max-width: 100%; }
+/* Ported from the prototype's rail: 246px expanded, 64px collapsed, a 272px overlay below 1024. */
+.shell { display: flex; height: 100vh; overflow: hidden; }
 
 .rail {
   display: flex;
   flex-direction: column;
-  gap: 22px;
   flex: none;
-  width: 236px;
-  padding: 18px 14px;
+  width: 246px;
+  height: 100vh;
   background: var(--rail);
   border-right: 1px solid var(--line);
+  transition: width .16s ease;
 }
-.brand { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 0; min-width: 0; }
+.rail[data-mode='collapsed'] { width: 64px; }
+.rail[data-mode='drawer'] { width: 272px; height: auto; min-height: 100%; }
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px 14px;
+  min-height: 60px;
+  background: var(--rail);
+  border-bottom: 1px solid var(--line);
+}
+.rail[data-mode='collapsed'] .head { justify-content: center; padding: 16px 0; }
+.logo { width: 26px; height: 27px; flex: none; display: block; fill: var(--brand); }
+.brand { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .mark {
   font-family: 'Poppins', var(--font-sans);
   font-weight: 600;
@@ -22,96 +38,178 @@
   color: var(--fg);
   white-space: nowrap;
 }
-.company { font-size: 11px; color: var(--fg-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company { font-size: 11px; color: var(--fg-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg-2);
+  font-size: 18px;
+}
+.close:hover { background: var(--surface-2); color: var(--fg); }
 
-.nav { display: flex; flex-direction: column; gap: 18px; flex: 1; }
-.group { display: flex; flex-direction: column; gap: 4px; }
+.nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 14px 10px 10px; }
+.rail[data-mode='collapsed'] .nav { padding: 14px 0 10px; overflow-y: hidden; }
+.rail[data-mode='drawer'] .nav { flex: none; }
+
+.group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
 .groupLabel {
-  padding: 0 8px 2px;
-  font-family: var(--font-mono);
+  padding: 0 10px 7px;
   font-size: 10.5px;
-  letter-spacing: .14em;
+  font-weight: 500;
+  letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--fg-4);
-}
-.item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 9px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--fg-2);
-  text-decoration: none;
   white-space: nowrap;
 }
-.item:hover { background: var(--surface-2); color: var(--fg); text-decoration: none; }
-.item[aria-current='page'] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--fg); }
-.itemIcon { font-size: 18px; flex: none; }
+.rule { height: 1px; background: var(--line); margin: 2px 8px 8px; }
 
-.identity {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-.who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.name { font-size: 12.5px; font-weight: 600; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.role { font-size: 11.5px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.theme {
+.item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 8px;
-  background: transparent;
-  border: 1px solid var(--line-2);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--fg-2);
-}
-.theme:hover { border-color: var(--line-3); color: var(--fg); }
-
-.main { flex: 1; min-width: 0; max-width: 100%; display: flex; flex-direction: column; overflow-x: clip; }
-.content {
-  flex: 1;
+  gap: 11px;
   width: 100%;
-  min-width: 0;
-  max-width: 1320px;
-  padding: 26px 28px 48px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--fg-2);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 450;
+  text-decoration: none;
+  transition: background .12s, color .12s;
 }
-/* Every list panel is a flex child; without this they take their table's width and the document
-   grows past the viewport instead of the table scrolling inside its own container. */
-.content > * { min-width: 0; max-width: 100%; }
+.item:hover { background: var(--surface-2); color: var(--fg); text-decoration: none; }
+.item[aria-current='page'] {
+  background: var(--surface-2);
+  color: var(--fg);
+  border-color: var(--line-2);
+  font-weight: 600;
+}
+.rail[data-mode='collapsed'] .item {
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin: 0 auto;
+  padding: 0;
+}
+.itemIcon { font-size: 19px; flex: none; }
+.itemLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+}
+/* The active marker sits outside the item, level with its middle. */
+.mark2 { display: none; }
+.item[aria-current='page'] .mark2 {
+  display: block;
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 18px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+.rail[data-mode='collapsed'] .item[aria-current='page'] .mark2 { left: -12.5px; }
 
-/* Tablet, both orientations: the rail keeps its icons and loses its labels. */
-.rail[data-mode='icons'] { width: 64px; padding: 18px 8px; align-items: center; }
-.rail[data-mode='icons'] .brand { padding: 4px 0 0; align-items: center; }
-.rail[data-mode='icons'] .company,
-.rail[data-mode='icons'] .groupLabel,
-.rail[data-mode='icons'] .itemLabel,
-.rail[data-mode='icons'] .who,
-.rail[data-mode='icons'] .themeLabel { display: none; }
-.rail[data-mode='icons'] .mark { font-size: 13px; }
-.rail[data-mode='icons'] .nav { align-self: stretch; }
-.rail[data-mode='icons'] .item { justify-content: center; padding: 9px 0; }
-.rail[data-mode='icons'] .identity { align-items: center; padding: 8px; }
-.rail[data-mode='icons'] .theme { padding: 6px; }
+.foot {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rail[data-mode='collapsed'] .foot { padding: 10px 0; align-items: center; }
 
-/* Phone: the rail becomes a drawer behind the top bar's menu button. */
+.util {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--fg-2);
+  text-align: left;
+  font-size: 13.5px;
+}
+.util:hover { background: var(--surface-2); color: var(--fg); }
+.rail[data-mode='collapsed'] .util { justify-content: center; width: 38px; height: 38px; padding: 0; }
+.utilIcon { font-size: 19px; flex: none; }
+.utilLabel { flex: 1; white-space: nowrap; }
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.name { font-size: 13px; font-weight: 500; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.role { font-size: 11px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signOut:hover { background: var(--bad-soft); color: var(--bad); }
+.toggle { margin-top: 3px; border-color: var(--line); color: var(--fg-3); font-size: 13px; }
+
+/* Below 1024 the rail becomes an overlay drawer behind the top bar's menu button. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, .55);
+  backdrop-filter: blur(2px);
+}
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: var(--sh-3);
+  transform: translateX(-100%);
+  transition: transform .2s ease;
+}
+.drawer[data-open='true'] { transform: translateX(0); }
+
+.main { flex: 1; min-width: 0; max-width: 100%; display: flex; flex-direction: column; overflow: hidden; }
 .topbar {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  flex: none;
+  padding: 14px 16px;
+  min-height: 60px;
   background: var(--rail);
   border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
-  z-index: 20;
 }
 .menu {
   display: flex;
@@ -124,24 +222,27 @@
   font-size: 19px;
 }
 .topbarBrand { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-.scrim { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, .55); }
-.drawer {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 31;
-  width: min(272px, 82vw);
-  overflow-y: auto;
-  box-shadow: var(--sh-3);
-  animation: rwSlide .16s ease-out;
+
+.scroll { flex: 1; min-height: 0; overflow-y: auto; background: var(--canvas); }
+.content {
+  padding: 22px 26px 40px;
+  max-width: none;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
 }
-.drawer .rail { width: 100%; min-height: 100%; }
+/* Every page block is a flex child; without this a table takes its own width and the document grows. */
+.content > * { min-width: 0; max-width: 100%; }
 
 @media (max-width: 1279px) {
-  .content { padding: 22px 20px 40px; }
+  .content { padding: 22px 18px 40px; }
 }
-@media (max-width: 767px) {
-  .shell { flex-direction: column; }
-  .content { padding: 16px 12px 36px; }
+@media (max-width: 1023px) {
+  .content { padding: 16px; }
+}
+@media (min-width: 1800px) {
+  .content { max-width: 1680px; }
 }

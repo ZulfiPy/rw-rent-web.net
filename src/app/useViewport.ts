@@ -16,6 +16,9 @@ const PHONE = '(max-width: 767px)';
 const DESKTOP = '(min-width: 1280px)';
 const NARROW = '(max-width: 1023px)';
 
+/** The prototype's rail states: overlay below 1024, icons to 1279, expanded from 1280. */
+export type RailMode = 'drawer' | 'collapsed' | 'expanded';
+
 const subscribe = (onChange: () => void) => {
   const queries = [window.matchMedia(PHONE), window.matchMedia(DESKTOP)];
   queries.forEach((q) => q.addEventListener('change', onChange));
@@ -45,4 +48,10 @@ const readNarrow = () => typeof window !== 'undefined' && window.matchMedia(NARR
  */
 export function useNarrow(): boolean {
   return useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
+}
+
+export function useRailMode(): RailMode {
+  const narrow = useNarrow();
+  const tier = useTier();
+  return narrow ? 'drawer' : tier === 'desktop' ? 'expanded' : 'collapsed';
 }

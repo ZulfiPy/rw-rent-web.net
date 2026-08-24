@@ -129,10 +129,22 @@ export function useOpenWork() {
   });
 
   items.sort((a, b) => (a.since < b.since ? -1 : a.since > b.since ? 1 : 0));
+  // The prototype's queueModel caps the queue at seven rows; both surfaces show the same list.
+  const capped = items.slice(0, 7);
 
   const isPending =
     (mayReview && registrations.isPending) ||
     (mayReadAssignments && (active.isPending || planned.isPending));
 
-  return { items, openInterruptions, isPending, mayReadInterruptions: can('Interruptions.Read') };
+  return {
+    items: capped,
+    openInterruptions,
+    isPending,
+    mayReadInterruptions: can('Interruptions.Read'),
+    /** The sidebar's Registrations badge: confirmed registrations waiting for a decision. */
+    pendingRegistrations: (registrations.data?.items ?? []).filter((u) => u.emailConfirmed).length,
+    /** Denominators the Overview's metric cards show next to their counts. */
+    activeAssignments: activeRows.length,
+    plannedAssignments: plannedRows.length,
+  };
 }

@@ -11,6 +11,30 @@ npm test           # dto/mock round-trip, formatting, permission gate, error map
 npm run typecheck
 ```
 
+## Porting rule
+
+Every screen is transcribed from `RW-Rent.dc.html`, not rebuilt from memory: same panels, same
+grouping, same spacing scale, same icons, same copy, same per-role variants. A CSS Module carries the
+prototype's literal values (14px gutters, 14px panel radius, 17px panel padding, 13.5px row titles),
+and a screen's data model follows the prototype's model function — `metricsModel`, `queueModel`,
+`navModel`, `simpleModel` — rather than an equivalent invented here. Where the prototype and swagger
+disagree, the disagreement is written down (see the follow-ups above) instead of being resolved by
+substituting something plausible.
+
+**Known deviations, deliberate:**
+
+- The page header (breadcrumbs, title, page actions) is still a block inside the scroll column; the
+  prototype has it as a sticky bar above the scroll area with `18px 26px` padding. Being fixed in the
+  screen-by-screen pass.
+- Column folding: the prototype folds only in its tight band (768–1023, and to 1280 for Vehicles).
+  The delivered lists fold at 1279 as well, which is why the collapsed rail's extra width is not yet
+  used. Being fixed in the same pass.
+- Company profile and System Administrator are in the prototype's Administration group but have no
+  React screen yet, so they are not in the rail: a nav item that silently redirects is worse than one
+  that is not there. They arrive with their screens.
+- Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
+  screen; the authentication screens are Phase 3, so the mock ends the persona's session instead.
+
 ## Layout
 
 ```

@@ -1,5 +1,4 @@
-.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-
+/* Ported from the prototype's Overview: metric grid, three-column panel grid, 14px gutters. */
 .metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
@@ -10,84 +9,166 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 15px 16px;
+  gap: 14px;
+  padding: 16px 17px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--sh-1);
-  color: inherit;
-  text-decoration: none;
-  min-width: 0;
-}
-.card:hover { border-color: var(--line-3); text-decoration: none; }
-
-.head { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--line-2);
-  border-radius: 8px;
-  background: var(--surface-3);
-  color: var(--fg-2);
-  font-size: 17px;
-}
-.icon[data-tone='ok'] { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); }
-.icon[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); color: var(--info); }
-.icon[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
-.icon[data-tone='bad'] { background: var(--bad-soft); border-color: var(--bad-line); color: var(--bad); }
-.label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--fg-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.value { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.count {
-  font-family: var(--font-mono);
-  font-size: 27px;
-  font-weight: 500;
-  letter-spacing: -.02em;
+  text-align: left;
   color: var(--fg);
+  text-decoration: none;
+  transition: border-color .14s, background .14s;
 }
-.unit { font-size: 12px; color: var(--fg-4); text-wrap: pretty; }
+.card:hover { border-color: var(--line-2); background: var(--surface-2); text-decoration: none; }
+.cardHead { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--fg-2); }
+.cardIcon { font-size: 17px; }
+.cardLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cardValue { display: flex; align-items: baseline; gap: 8px; }
+.count { font-family: var(--font-display); font-size: 30px; line-height: 1; color: var(--fg); }
+.unit { font-size: 12px; color: var(--fg-3); }
+.cardFoot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg-3); }
+.cardArrow { font-size: 15px; margin-left: auto; color: var(--fg-4); }
 
-/* The queue panel reuses the list card's shell, with a header that carries the full-queue link. */
+.grid { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; min-width: 0; }
+.column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+@media (min-width: 1400px) {
+  .grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(290px, .95fr); }
+}
+
 .panel {
-  min-width: 0;
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: var(--sh-1);
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: var(--sh-1);
+  min-width: 0;
 }
+.pad { padding: 16px 17px; }
 .panelHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 14px 17px;
   border-bottom: 1px solid var(--line);
 }
 .heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.titleRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .title { margin: 0; font-size: 14px; font-weight: 600; color: var(--fg); }
-.desc { margin: 0; font-size: 12.5px; color: var(--fg-3); text-wrap: pretty; }
-.more {
-  display: flex;
+.desc { margin: 0; font-size: 12.5px; color: var(--fg-3); }
+.count2 { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); white-space: nowrap; }
+.sample {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  flex: none;
-  font-size: 12.5px;
-  color: var(--fg-2);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .02em;
+  color: var(--fg-3);
   white-space: nowrap;
 }
-.more:hover { color: var(--fg); }
-.moreIcon { font-size: 16px; }
+
+/* Queue, task and case rows share one row shape; only the queue's is a link. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 17px;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  min-width: 0;
+}
+.row:last-child { border-bottom: none; }
+.link:hover { background: var(--surface-2); text-decoration: none; }
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--surface-3);
+  border: 1px solid var(--line-2);
+  color: var(--fg-2);
+  font-size: 17px;
+}
+.tile[data-tone='ok'] { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); }
+.tile[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); color: var(--info); }
+.tile[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+.tile[data-tone='bad'] { background: var(--bad-soft); border-color: var(--bad-line); color: var(--bad); }
+.rowText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rowTitle { font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowSub { font-size: 12.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowMeta { display: flex; align-items: center; gap: 10px; flex: none; }
+.when { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+.chevron { font-size: 17px; color: var(--fg-4); }
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 44px 24px;
+  text-align: center;
+}
+.emptyShort { padding: 38px 24px; }
+.emptyIcon { font-size: 26px; color: var(--ok); }
+.emptyTitle { font-size: 13.5px; font-weight: 500; }
+.emptyBody { margin: 0; max-width: 36ch; font-size: 12.5px; color: var(--fg-3); }
+
+/* Assignment mix */
+.mixHead { display: flex; flex-direction: column; gap: 3px; margin-bottom: 15px; }
+.bar { display: flex; height: 9px; border-radius: 5px; overflow: hidden; background: var(--surface-3); gap: 2px; }
+.slice { border-radius: 3px; }
+.legend { display: flex; flex-direction: column; gap: 9px; margin-top: 15px; }
+.legendRow { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.dot { width: 9px; height: 9px; flex: none; }
+.legendLabel { flex: 1; color: var(--fg-2); }
+.legendCount { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); }
+
+/* Recent security activity */
+.activityHead { display: flex; flex-direction: column; gap: 3px; margin-bottom: 13px; }
+.locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.lockedIcon { font-size: 17px; color: var(--fg-3); flex: none; }
+.lockedBody { margin: 0; font-size: 12.5px; color: var(--fg-3); }
+.activity { display: flex; flex-direction: column; gap: 2px; }
+.activityRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--fg);
+  width: 100%;
+  text-decoration: none;
+}
+.activityRow:hover { background: var(--surface-2); text-decoration: none; }
+.activityDot { width: 5px; height: 5px; flex: none; margin-top: 7px; border-radius: 1px; }
+.activityText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.activityEvent { font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.activityWhen { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }

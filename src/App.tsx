@@ -9,6 +9,7 @@ import { SecurityAudit } from './pages/audit/SecurityAudit';
 import { AuditEntry } from './pages/audit/AuditEntry';
 import { Overview } from './pages/overview/Overview';
 import { NeedsAttention } from './pages/overview/NeedsAttention';
+import { InsuranceCases, Tasks } from './pages/simple/Placeholders';
 import { Assignments } from './pages/fleet/Assignments';
 import { AssignmentRecord } from './pages/fleet/AssignmentRecord';
 import { Vehicles } from './pages/fleet/Vehicles';
@@ -50,6 +51,8 @@ export function App() {
           <Route element={<AppShell companyName={companyName} />}>
             <Route path="/overview" element={<Overview />} />
             <Route path="/needs-attention" element={<NeedsAttention />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/insurance-cases" element={<InsuranceCases />} />
             <Route path="/rental-assignments" element={<Assignments />} />
             <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
             <Route path="/vehicles" element={<Vehicles />} />
