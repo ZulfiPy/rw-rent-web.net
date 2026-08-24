@@ -7,6 +7,13 @@ import { UserRecord } from './pages/users/UserRecord';
 import { Registrations } from './pages/registrations/Registrations';
 import { SecurityAudit } from './pages/audit/SecurityAudit';
 import { AuditEntry } from './pages/audit/AuditEntry';
+import { Overview } from './pages/overview/Overview';
+import { NeedsAttention } from './pages/overview/NeedsAttention';
+import { Assignments } from './pages/fleet/Assignments';
+import { AssignmentRecord } from './pages/fleet/AssignmentRecord';
+import { Vehicles } from './pages/fleet/Vehicles';
+import { Customers } from './pages/fleet/Customers';
+import { Drivers } from './pages/fleet/Drivers';
 import { DevPanel } from './dev/DevPanel';
 import styles from './App.module.css';
 
@@ -41,12 +48,19 @@ export function App() {
       ) : (
         <Routes>
           <Route element={<AppShell companyName={companyName} />}>
+            <Route path="/overview" element={<Overview />} />
+            <Route path="/needs-attention" element={<NeedsAttention />} />
+            <Route path="/rental-assignments" element={<Assignments />} />
+            <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
+            <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/drivers" element={<Drivers />} />
             <Route path="/users" element={<UserDirectory />} />
             <Route path="/users/:userId" element={<UserRecord />} />
             <Route path="/registrations" element={<Registrations />} />
             <Route path="/security-audit" element={<SecurityAudit />} />
             <Route path="/security-audit/:entryId" element={<AuditEntry />} />
-            <Route path="*" element={<Navigate to="/users" replace />} />
+            <Route path="*" element={<Navigate to="/overview" replace />} />
           </Route>
         </Routes>
       )}

@@ -1,0 +1,18 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colType { width: 132px; }
+.colPhone { width: 150px; }
+.colDriver { width: 148px; }
+.colState { width: 124px; }
+
+@media (max-width: 1279px) {
+  .colType { width: 126px; }
+  .colDriver { width: 136px; }
+  .colState { width: 118px; }
+}
+/* Portrait: phone moves into the name stack and the driver link folds away. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colType { width: 122px; }
+  .colState { width: 114px; }
+}

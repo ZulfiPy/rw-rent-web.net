@@ -9,7 +9,7 @@ import {
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { formatLocal, relative, USER_STATUS_LABEL } from '@/format';
-import { useTier } from '@/app/useViewport';
+import { useNarrow, useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -56,6 +56,9 @@ export function Registrations() {
   const [params, setParams] = useSearchParams();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
+  // Portrait tablet: the row's buttons keep their icons and drop their labels, which is what lets
+  // the actions column fit next to a folded table. Phone cards keep the labels.
+  const compact = useNarrow() && !phone;
   const [dialog, setDialog] = useState<{ userId: string; state: UserDialogState } | null>(null);
 
   const search = params.get('search') ?? '';
@@ -109,13 +112,13 @@ export function Registrations() {
   const rowActions = (u: ApplicationUserListItemResponse) => (
     <>
       {u.status === ApplicationUserStatus.PendingActivation && u.emailConfirmed && can('Users.ReviewRegistrations') ? (
-        <Button label="Activate" icon="how_to_reg" tone="primary" small onClick={() => setDialog({ userId: u.id, state: { kind: 'activate' } })} />
+        <Button label="Activate" icon="how_to_reg" tone="primary" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'activate' } })} />
       ) : null}
       {u.status === ApplicationUserStatus.PendingActivation && can('Users.ManageRegistrations') ? (
-        <Button label="Reject" icon="person_off" tone="danger" small onClick={() => setDialog({ userId: u.id, state: { kind: 'reject' } })} />
+        <Button label="Reject" icon="person_off" tone="danger" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reject' } })} />
       ) : null}
       {u.status === ApplicationUserStatus.RegistrationRejected && can('Users.ManageRegistrations') ? (
-        <Button label="Reopen" icon="restart_alt" small onClick={() => setDialog({ userId: u.id, state: { kind: 'reopen' } })} />
+        <Button label="Reopen" icon="restart_alt" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reopen' } })} />
       ) : null}
     </>
   );
@@ -206,7 +209,7 @@ export function Registrations() {
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.wide}`}>Applicant</th>
                   <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldTablet}`}>Phone</th>
-                  <th scope="col" className={`${table.th} ${styles.colEmail}`}>Email ownership</th>
+                  <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldNarrow}`}>Email ownership</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Registered</th>
                   <th scope="col" className={`${table.th} ${styles.colExpires} ${table.foldTablet}`}>Expires</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
@@ -221,11 +224,14 @@ export function Registrations() {
                     <td className={table.td}>
                       <span className={table.stack}>
                         <Link to={`/users/${u.id}`} className={table.name}>{u.firstName} {u.lastName}</Link>
-                        <span className={table.sub}>{u.email}</span>
+                        <span className={`${table.sub} ${table.oneLine}`} title={u.email}>{u.email}</span>
+                        <span className={`${table.sub} ${table.showNarrow}`}>
+                          {u.emailConfirmed ? 'Email confirmed' : 'Email not confirmed'}
+                        </span>
                       </span>
                     </td>
                     <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>{u.phoneNumber}</td>
-                    <td className={table.td}>
+                    <td className={`${table.td} ${table.foldNarrow}`}>
                       <Chip tone={u.emailConfirmed ? 'ok' : 'warn'} dot={u.emailConfirmed ? '50%' : '2px'}>
                         {u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}
                       </Chip>

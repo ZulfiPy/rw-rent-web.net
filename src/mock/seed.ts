@@ -3,6 +3,7 @@ import {
   type Instant, type RoleAssignmentResponse, type SecurityAuditResponse, type Uuid,
 } from '@/api/dto';
 import { ID } from './ids';
+import { fleet } from './seedFleet';
 import { payloadJson } from './audit';
 import type { SessionRecord } from './security';
 import type { MockStore } from './store';
@@ -13,8 +14,7 @@ import type { MockStore } from './store';
  * numbers, and a session's isActive/isCurrent are gone because the API computes them per request.
  *
  * Rows the fleet surfaces own (vehicles, customers, drivers, assignments, authorizations,
- * interruptions) arrive with those screens; until then their routes 404 rather than serve a
- * half-populated list.
+ * interruptions) live in `seedFleet.ts` and are spread in below.
  */
 
 const H = 3_600_000;
@@ -290,12 +290,7 @@ export function seed(): MockStore {
     sessions,
     currentSessionByUserId,
     audit,
-    vehicles: [],
-    customers: [],
-    drivers: [],
-    assignments: [],
-    authorizations: [],
-    interruptions: [],
+    ...fleet(),
     transfers: [],
   };
 }

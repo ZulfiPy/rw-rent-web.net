@@ -25,3 +25,5 @@
 .button[data-tone='ghost']:hover:not(:disabled) { color: var(--fg); background: var(--surface-2); }
 
 .small { padding: 5px 9px; font-size: 12px; }
+.iconOnly { gap: 0; padding: 9px; }
+.iconOnly.small { padding: 8px; }

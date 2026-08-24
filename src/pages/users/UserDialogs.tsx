@@ -9,6 +9,7 @@ import { revokeAllUserSessions, revokeUserSession } from '@/api/sessions';
 import { endOfDayLocal, toDateOnlyLocal } from '@/format';
 import { ROLE_LABEL } from '@/format/labels';
 import { useActionMutation } from '@/app/useActionMutation';
+import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
 import { Dialog, DialogNote } from '@/ui/Dialog';
@@ -104,13 +105,17 @@ const ACTIVATION_ROLES: Array<[ApplicationUserRole, Permission]> = [
   [ApplicationUserRole.CompanyPrincipal, 'Users.ActivateCompanyPrincipal'],
 ];
 
+/** role → the expiry date the reviewer typed. A role absent from the map is not being granted. */
+type ExpiryDrafts = Partial<Record<ApplicationUserRole, string>>;
+
+/** Viewer starts selected: it is the grant almost every activation makes. */
+function initialDrafts(canGrantViewer: boolean): ExpiryDrafts {
+  return canGrantViewer ? { [ApplicationUserRole.Viewer]: '' } : {};
+}
+
 function Activate({ user, onClose }: Common) {
   const { can } = useAccess();
-  // role → the expiry date the reviewer typed; a role absent from the map is not being granted.
-  // Viewer starts selected: it is the grant almost every activation makes.
-  const [picked, setPicked] = useState<Record<number, string>>(
-    () => (can('Users.ActivateViewer') ? { [ApplicationUserRole.Viewer]: '' } : {}),
-  );
+  const [picked, setPicked] = useState<ExpiryDrafts>(() => initialDrafts(can('Users.ActivateViewer')));
   const m = useActionMutation({
     op: 'user-activate',
     mutationFn: () => activateUser(user.id, {
@@ -124,9 +129,15 @@ function Activate({ user, onClose }: Common) {
   });
 
   const toggle = (role: ApplicationUserRole) => setPicked((prev) => {
-    const next = { ...prev };
+    const next: ExpiryDrafts = { ...prev };
     if (role in next) delete next[role];
     else next[role] = '';
+    return next;
+  });
+
+  const setDraft = (role: ApplicationUserRole, value: string) => setPicked((prev) => {
+    const next: ExpiryDrafts = { ...prev };
+    next[role] = value;
     return next;
   });
 
@@ -170,7 +181,7 @@ function Activate({ user, onClose }: Common) {
                           data-invalid={!!(expiryError && date)}
                           aria-label={`${ROLE_LABEL[role]} expiry`}
                           value={date}
-                          onChange={(e) => setPicked((prev) => ({ ...prev, [role]: e.target.value }))}
+                          onChange={(e) => setDraft(role, e.target.value)}
                         />
                         {date ? null : 'no expiry'}
                       </span>
@@ -425,16 +436,26 @@ function SessionRevokeAll({ user, onClose }: Common) {
 
 /**
  * The record page opens these by id, not by object: after a stale Refresh the fresh row arrives as a
- * prop, and the changed key remounts the dialog so its inputs re-seed from the current values.
+ * prop, and `ReseedScope` remounts the dialog so its inputs re-seed from the current values.
  */
-export function UserDialogs({ state, user, roles, sessions, onClose }: {
+export function UserDialogs({ state, ...rest }: DialogsProps) {
+  if (!state) return null;
+  return (
+    <ReseedScope>
+      <Current state={state} {...rest} />
+    </ReseedScope>
+  );
+}
+
+interface DialogsProps {
   state: UserDialogState | null;
   user: ApplicationUserResponse;
   roles: RoleAssignmentResponse[];
   sessions: SessionResponse[];
   onClose: () => void;
-}) {
-  if (!state) return null;
+}
+
+function Current({ state, user, roles, sessions, onClose }: Omit<DialogsProps, 'state'> & { state: UserDialogState }) {
   const seed = `${user.updatedAtUtc ?? ''}|${user.securityVersion}`;
 
   switch (state.kind) {

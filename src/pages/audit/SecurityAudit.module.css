@@ -7,9 +7,22 @@
 .colWhen { width: 178px; }
 .colAction { width: 60px; }
 
+/* Each sub-line is bound to the fold that removes its column, so a value is never in two places:
+   the target under the actor once TARGET is gone, the reason under the event once REASON is gone. */
+.targetLine, .reasonLine { display: none; }
+
 @media (max-width: 1279px) {
   .colEvent { width: 240px; }
   .colActor { width: 150px; }
   .colWhen { width: 150px; }
   .colAction { width: 48px; }
+  .targetLine { display: block; }
+}
+
+/* Portrait (768–1023): entity and reason fold; the event column absorbs the remainder and carries
+   the reason. Fixed layout holds the table inside the card. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colEvent { width: auto; }
+  .reasonLine { display: block; }
 }

@@ -683,9 +683,11 @@ export interface AcceptSystemAdministratorTransferRequest { token: string; passw
 
 // FOLLOW-UP: not in swagger — the Overview summary counts. v1 derives them from four
 // PageSize=1 probes (see api/overview.ts); a real summary endpoint replaces that one file.
+// A count the persona may not read is null, not 0: the card is left out rather than shown empty.
 export interface OverviewSummary {
-  activeAssignments: number;
-  plannedAssignments: number;
-  availableVehicles: number;
-  pendingRegistrations: number;
+  activeAssignments: number | null;
+  plannedAssignments: number | null;
+  /** Active in the fleet. Availability needs the assignments a vehicle is held by — derived per screen. */
+  activeVehicles: number | null;
+  pendingRegistrations: number | null;
 }

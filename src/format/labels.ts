@@ -130,6 +130,12 @@ export const ENTITY_LABEL: Record<string, string> = {
 export const entityLabel = (t?: string | null) => (t ? ENTITY_LABEL[t] ?? t : '—');
 
 /**
+ * A list cell never carries a full GUID: eight characters are enough to recognise a row and to
+ * match it against the entry page, which shows the identifier in full.
+ */
+export const shortId = (id?: string | null) => (id ? id.slice(0, 8) : '—');
+
+/**
  * Every event type the API can emit, in prefix groups. The Event type filter is driven by this
  * catalog, not by the rows on the page. A third entry overrides the display prefix where the API
  * name and the product word differ.

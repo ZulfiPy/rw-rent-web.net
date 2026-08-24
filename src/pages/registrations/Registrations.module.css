@@ -7,9 +7,20 @@
 .colStatus { width: 166px; }
 .colActions { width: 210px; }
 
+/* Tablet landscape (1024–1279): phone and expiry fold, expiry returns under Registered. */
 @media (max-width: 1279px) {
   .colEmail { width: 140px; }
   .colWhen { width: 128px; }
   .colStatus { width: 138px; }
   .colActions { width: 176px; }
+}
+
+/* Portrait (768–1023): email ownership folds into the applicant stack and the row's buttons go
+   icon-only. Fixed layout then holds the table to the card — Applicant absorbs the remainder and a
+   long address ellipsises rather than widening the table. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colWhen { width: 132px; }
+  .colStatus { width: 138px; }
+  .colActions { width: 100px; }
 }

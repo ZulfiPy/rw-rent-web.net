@@ -78,6 +78,20 @@ export function toDateOnlyLocal(iso: string | null | undefined): string {
 /** The backend's "must be in the future" check, applied to the resolved instant. */
 export const isFuture = (iso: string, now: Date = new Date()) => parse(iso).getTime() > now.getTime();
 
+/** yyyy-MM-ddTHH:mm in Europe/Tallinn — seeds a datetime-local input from a stored instant. */
+export function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const f = zoned(parse(iso));
+  return `${f.year}-${pad(f.month)}-${pad(f.day)}T${pad(f.hour)}:${pad(f.minute)}`;
+}
+
+/** The instant a datetime-local value names in Europe/Tallinn, with its offset written out. */
+export function fromLocalInput(value: string): string {
+  if (!value) return '';
+  const offset = zoneOffset(new Date(`${value.slice(0, 10)}T12:00:00Z`));
+  return `${value}:00.000${offset}`;
+}
+
 export function relative(iso: string | null | undefined, now: Date = new Date()): string {
   if (!iso) return EMPTY;
   const ms = now.getTime() - parse(iso).getTime();

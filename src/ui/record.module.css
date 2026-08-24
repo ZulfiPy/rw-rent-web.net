@@ -1,0 +1,45 @@
+/* The record shell every detail screen shares: page stack, state banner, tab strip. */
+.page { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  border-radius: 11px;
+}
+.banner[data-tone='bad'] { background: var(--bad-soft); border-color: var(--bad-line); }
+.banner[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); }
+.bannerIcon { flex: none; font-size: 19px; color: var(--warn); }
+.banner[data-tone='bad'] .bannerIcon { color: var(--bad); }
+.banner[data-tone='info'] .bannerIcon { color: var(--info); }
+.bannerTitle { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--fg); }
+.bannerBody { margin: 0; font-size: 12.5px; color: var(--fg-2); text-wrap: pretty; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 9px 12px;
+  margin-bottom: -1px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  color: var(--fg-3);
+}
+.tab:hover { color: var(--fg-2); }
+.tab[aria-selected='true'] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabIcon { font-size: 17px; }
+.count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}

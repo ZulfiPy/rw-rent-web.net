@@ -1,0 +1,14 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colPhone { width: 168px; }
+.colState { width: 124px; }
+
+@media (max-width: 1279px) {
+  .colPhone { width: 152px; }
+  .colState { width: 118px; }
+}
+/* Portrait: the number moves into the name stack. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colState { width: 114px; }
+}

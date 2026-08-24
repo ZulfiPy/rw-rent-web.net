@@ -196,7 +196,7 @@ export function UserDirectory() {
                         <td className={table.td}>
                           <span className={table.stack}>
                             <span className={table.name}>{u.firstName} {u.lastName}</span>
-                            <span className={table.sub}>{u.email}</span>
+                            <span className={`${table.sub} ${table.oneLine}`} title={u.email}>{u.email}</span>
                           </span>
                         </td>
                         <td className={`${table.td} ${table.mono}`}>{u.phoneNumber}</td>

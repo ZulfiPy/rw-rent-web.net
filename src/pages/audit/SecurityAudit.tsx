@@ -5,7 +5,7 @@ import { listSecurityAudit } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import type { SecurityAuditQuery, Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { AUDIT_EVENT_TYPES, entityLabel, eventLabel, formatUtc } from '@/format';
+import { AUDIT_EVENT_TYPES, entityLabel, eventLabel, formatUtc, shortId } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
@@ -164,7 +164,7 @@ export function SecurityAudit() {
                   <th scope="col" className={`${table.th} ${styles.colActor}`}>Actor</th>
                   <th scope="col" className={`${table.th} ${styles.colTarget} ${table.foldTablet}`}>Target</th>
                   <th scope="col" className={`${table.th} ${styles.colEntity} ${table.foldNarrow}`}>Entity</th>
-                  <th scope="col" className={`${table.th} ${styles.wide}`}>Reason</th>
+                  <th scope="col" className={`${table.th} ${styles.wide} ${table.foldNarrow}`}>Reason</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Occurred (UTC)</th>
                   <th scope="col" className={`${table.th} ${styles.colAction}`}>
                     <span className={table.srOnly}>Open entry</span>
@@ -175,12 +175,17 @@ export function SecurityAudit() {
                 {page?.items.map((a) => (
                   <tr key={a.id} className={table.row}>
                     <td className={`${table.td} ${table.wrap}`}>
-                      <span className={table.name}>{eventLabel(a.eventType)}</span>
+                      <span className={table.stack}>
+                        <span className={table.name}>{eventLabel(a.eventType)}</span>
+                        <span className={`${table.sub} ${styles.reasonLine} ${a.reason ? '' : table.dim}`}>
+                          {a.reason ?? 'No reason recorded'}
+                        </span>
+                      </span>
                     </td>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
                         <span>{nameOf(a.actorUserId, 'System')}</span>
-                        <span className={`${table.sub} ${table.showTablet}`}>
+                        <span className={`${table.sub} ${styles.targetLine}`}>
                           {a.targetUserId ? `on ${nameOf(a.targetUserId, 'Unknown')}` : 'Not user-scoped'}
                         </span>
                       </span>
@@ -191,10 +196,12 @@ export function SecurityAudit() {
                     <td className={`${table.td} ${table.foldNarrow}`}>
                       <span className={table.stack}>
                         <span>{entityLabel(a.entityType)}</span>
-                        {a.entityId ? <span className={`${table.subMono} ${table.oneLine}`}>{a.entityId}</span> : null}
+                        {a.entityId ? (
+                          <span className={table.subMono} title={a.entityId}>{shortId(a.entityId)}</span>
+                        ) : null}
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.wrap} ${a.reason ? '' : table.dim}`}>
+                    <td className={`${table.td} ${table.wrap} ${table.foldNarrow} ${a.reason ? '' : table.dim}`}>
                       {a.reason ?? 'No reason recorded'}
                     </td>
                     <td className={`${table.td} ${table.mono}`}>{formatUtc(a.occurredAtUtc)}</td>

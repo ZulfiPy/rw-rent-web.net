@@ -61,8 +61,10 @@
 .skeletonWide { width: 70%; }
 .skeletonNarrow { width: 45%; }
 
-/* Column folding. `foldTablet` is gone for the whole tablet band; `foldNarrow` only in portrait. */
-.showTablet { display: none; }
+/* Column folding. `foldTablet` is gone for the whole tablet band; `foldNarrow` only in portrait.
+   Each `show*` utility pairs with the fold at the same breakpoint: what leaves a column of its own
+   arrives as a sub-line in the column that stays. */
+.showTablet, .showNarrow { display: none; }
 @media (max-width: 1279px) {
   .foldTablet { display: none; }
   .showTablet { display: block; }
@@ -70,4 +72,8 @@
 }
 @media (max-width: 1023px) {
   .foldNarrow { display: none; }
+  .showNarrow { display: block; }
+  /* Portrait runs fixed layout (per screen), so a long value ellipsises inside its cell instead of
+     widening the table past the card. */
+  .td, .th { overflow: hidden; text-overflow: ellipsis; }
 }

@@ -6,13 +6,30 @@ import { primaryRoleLabel } from '@/format/labels';
 import { useTier } from './useViewport';
 import styles from './AppShell.module.css';
 
-interface NavItem { to: string; label: string; icon: string; permission: Permission }
+/** A nav item with no permission is open to every signed-in persona (the overview pair). */
+interface NavItem { to: string; label: string; icon: string; permission?: Permission }
 
 /**
  * The sidebar carries only screens that exist. A permission the persona lacks removes its item
  * entirely rather than disabling it.
  */
 const NAV: Array<{ label: string; items: NavItem[] }> = [
+  {
+    label: 'Overview',
+    items: [
+      { to: '/overview', label: 'Overview', icon: 'space_dashboard' },
+      { to: '/needs-attention', label: 'Needs attention', icon: 'flag' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { to: '/rental-assignments', label: 'Rental assignments', icon: 'assignment', permission: 'RentalAssignments.Read' },
+      { to: '/vehicles', label: 'Vehicles', icon: 'directions_car', permission: 'Vehicles.Read' },
+      { to: '/customers', label: 'Customers', icon: 'badge', permission: 'Customers.Read' },
+      { to: '/drivers', label: 'Drivers', icon: 'id_card', permission: 'Drivers.Read' },
+    ],
+  },
   {
     label: 'Users & access',
     items: [
@@ -54,7 +71,7 @@ export function AppShell({ companyName }: { companyName: string }) {
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search]);
 
   const groups = NAV
-    .map((g) => ({ ...g, items: g.items.filter((i) => can(i.permission)) }))
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || can(i.permission)) }))
     .filter((g) => g.items.length > 0);
 
   const icons = tier === 'tablet';

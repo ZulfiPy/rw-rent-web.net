@@ -1,0 +1,36 @@
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.wide { width: auto; }
+.coverage, .interruptions, .history { min-width: 0; }
+
+.colAuth { width: 230px; }
+.colWhen { width: 150px; }
+.colReason { width: 220px; }
+.colPeriod { width: 200px; }
+.colBilling { width: 150px; }
+.colActions { width: 190px; }
+.colEvent { width: 300px; }
+.colActor { width: 180px; }
+.colUtc { width: 180px; }
+
+@media (max-width: 1279px) {
+  .colAuth { width: 190px; }
+  .colWhen { width: 140px; }
+  .colReason { width: 190px; }
+  .colPeriod { width: 176px; }
+  .colBilling { width: 136px; }
+  .colActions { width: 160px; }
+  .colEvent { width: 260px; }
+  .colUtc { width: 150px; }
+}
+
+/* Portrait: stop reason, billing and the note live in the stack next to them; the row's buttons go
+   icon-only and fixed layout holds each table inside its panel. */
+@media (max-width: 1023px) {
+  .coverage, .interruptions, .history { table-layout: fixed; }
+  .colAuth { width: 150px; }
+  .colWhen { width: 136px; }
+  .colPeriod { width: 150px; }
+  .colActions { width: 108px; }
+  .colUtc { width: 146px; }
+}

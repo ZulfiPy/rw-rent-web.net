@@ -1,9 +1,9 @@
-// Importing a handler module registers its routes. Deliverable B adds the fleet resources
-// (vehicles, customers, drivers, rental assignments, authorizations, interruptions) and the
-// authentication family; an unregistered route deliberately 404s until then.
+// Importing a handler module registers its routes. The authentication family and the fleet write
+// routes arrive with their screens; an unregistered route deliberately 404s until then.
 import './me';
 import './users';
 import './roles';
 import './sessions';
 import './securityAudit';
 import './companies';
+import './fleet';

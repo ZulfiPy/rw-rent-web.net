@@ -1,0 +1,18 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colVin { width: 190px; }
+.colYear { width: 76px; }
+.colSpec { width: 104px; }
+.colState { width: 176px; }
+
+@media (max-width: 1279px) {
+  .colYear { width: 70px; }
+  .colSpec { width: 98px; }
+  .colState { width: 164px; }
+}
+/* Portrait: VIN, fuel and body are gone; the plate stack carries the spec line. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colYear { width: 68px; }
+  .colState { width: 160px; }
+}

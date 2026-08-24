@@ -14,6 +14,7 @@ export type Tier = 'phone' | 'tablet' | 'desktop';
 
 const PHONE = '(max-width: 767px)';
 const DESKTOP = '(min-width: 1280px)';
+const NARROW = '(max-width: 1023px)';
 
 const subscribe = (onChange: () => void) => {
   const queries = [window.matchMedia(PHONE), window.matchMedia(DESKTOP)];
@@ -29,4 +30,19 @@ const read = (): Tier => {
 
 export function useTier(): Tier {
   return useSyncExternalStore(subscribe, read, () => 'desktop' as Tier);
+}
+
+const subscribeNarrow = (onChange: () => void) => {
+  const q = window.matchMedia(NARROW);
+  q.addEventListener('change', onChange);
+  return () => q.removeEventListener('change', onChange);
+};
+const readNarrow = () => typeof window !== 'undefined' && window.matchMedia(NARROW).matches;
+
+/**
+ * Portrait and below (< 1024): the band where a table has room for four columns, not seven. Only
+ * for the parts CSS cannot fold — a row's buttons dropping their labels for their icons.
+ */
+export function useNarrow(): boolean {
+  return useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
 }

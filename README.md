@@ -76,11 +76,16 @@ the session, forced sign-out names the user.
 **Tiers.** Three, as in the prototype: phone below 768 (cards instead of tables, sidebar behind a
 menu button), tablet 768–1279 in both orientations (icon rail, folded columns, tighter cells),
 desktop from 1280 (expanded rail, every column). Column folding is CSS — `foldTablet` and
-`foldNarrow` in `ui/table.module.css`; only the structural switches (table → cards, rail → drawer)
-read `useTier()`. No page body is ever wider than the viewport.
+`foldNarrow` in `ui/table.module.css`; only the structural switches (table → cards, rail → drawer,
+row buttons going icon-only) read `useTier()` / `useNarrow()`. Portrait tables run `table-layout:
+fixed`, so a long value ellipsises inside its cell instead of widening the table: no page body is
+ever wider than the viewport, at any tier. Every value a fold removes reappears as a sub-line in a
+column that stays, bound to the same breakpoint as the fold.
 
 **Type.** Mono is for machine values only — identifiers, phone numbers, timestamps, counts, IP
 addresses. Emails, names, reasons and sublabels such as “Protected account” are sans secondary text.
+A list cell shows an identifier shortened to eight characters with the full value in its tooltip; the
+record page shows it in full.
 
 **Query types.** Query DTOs are type aliases rather than interfaces, which is what lets `UsersQuery`
 reach `Transport.request` with its own property types intact. `AssertQuery` in `api/client.ts` lists
@@ -96,6 +101,22 @@ path or code names an input, otherwise a form-level message above the footer. 40
 action should not have been offered; 401 → sign-in. The failure simulator lives at the mock transport
 boundary and throws the same envelopes.
 
+**Business rules.** `contract/business_rules.md` is enforced at the mock boundary, never in a
+component: coverage before activation (ASSIGN-012), no ending while an interruption is open
+(INTERRUPT-011), Active → Cancelled only as a mistaken activation with no handover, no interruption
+and a note (ASSIGN-013), named and collective authorizations mutually exclusive (AUTH-003), the
+collective form for business customers only (AUTH-009), no standalone stop of the last coverage on an
+active assignment (AUTH-007), a required note on every interruption (INTERRUPT-006), and interruption
+windows inside the assignment's actual period (INTERRUPT-012). Each refusal carries a `code`, and
+`api/codes.ts` routes the ones that name an input to that input; the rest are form-level messages.
+
+**Privileged corrections.** Only `PrivilegedCorrections.Execute` sees the Corrections tab. Every
+correction sends the last-read `concurrencyToken`, requires a reason of 3–1000 characters, and writes
+one append-only audit entry — `RentalAssignment.TimelineCorrected`, `RentalAssignment.PartiesCorrected`,
+`DriverAuthorization.Corrected`, `Interruption.Corrected` — whose payload carries changed keys only,
+PascalCase names, enum values as names and timestamps with an explicit offset. A successful
+correction rotates the token, so the same payload cannot be replayed.
+
 **Stale records.** The concurrency refusal is contractual on every audited resource — users, roles,
 customers, drivers, vehicles, companies, profile, corrections, rental assignments, authorizations,
 interruptions and system administrator — so the banner and its Refresh are wired on all of them. The
@@ -105,33 +126,68 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
 
 - `registrationDecisionReason` on the user read model
 - `createdAtUtc` on the user LIST projection — the Registrations queue's Registered column
-- Overview summary counts (four `PageSize=1` probes stand in, routed through `api/overview.ts`)
+- Overview summary counts (four `PageSize=1` probes stand in, routed through `api/overview.ts`; a
+  count the persona may not read comes back null and its card is left out)
 - `upcomingCustomerDisplayName` / `upcomingPlannedStartAtUtc` on the vehicles list projection
+- No vehicle availability field: In use / Reserved / Available is derived per screen from the open
+  assignments the persona can read, so a Viewer without `RentalAssignments.Read` sees only whether a
+  vehicle is in the fleet
+- Interruptions and authorizations are assignment-scoped, so the open-work queue fans out one
+  request per open assignment; a company-wide `GET /api/interruptions?IsOpen=true` would collapse it
 - No `GET /api/security-audit/{id}`: an audit entry is located in the first page of the unfiltered
   list, so a deep link is best-effort
 - `GET /api/users` takes one `Status`, so “All lifecycle states” fans out into one request per state
   and pages the merged result client-side
 
+## Asks for the backend
+
+Two contract changes the ported screens want. Both have an interim behaviour in the mock, so nothing
+is blocked — but both are visible in the UI as a compromise.
+
+**`createdAtUtc` on the user list projection.** The Registrations queue sorts and shows *Registered*,
+which only the read model carries today. Interim: the mock's list projection adds the field, so the
+column works in mock mode and would be empty against the real API.
+
+**`GET /api/security-audit/{id}`.** An audit entry has its own page and its own URL. Interim: the
+entry is located in the first page of the unfiltered list (`PageSize=100`), so a deep link is
+best-effort — an entry older than that window renders “That entry is not available”, and opening the
+row from the list is the reliable path. A by-id read makes the link exact and drops the 100-row
+fetch behind every entry page.
+
 ## Seed
 
 `src/mock/seed.ts` is the reviewed prototype's `DB`: the same eleven people, their registration
 states, fifteen sessions and thirteen audit rows, with the prototype's identifiers preserved as the
-keys of `src/mock/ids.ts` (`u4` is Dita Smite in both). Fleet rows — vehicles, customers, drivers,
-assignments, authorizations, interruptions — arrive with their screens; until then those routes 404
-rather than serve a half-populated list.
+keys of `src/mock/ids.ts` (`u4` is Dita Smite in both). `src/mock/seedFleet.ts` carries the fleet the
+same way — ten vehicles, eight customers, seven drivers, twelve assignments, six authorizations and
+four interruptions, `v7` and `a1` naming the same rows as in the prototype. Two things are computed
+rather than stored: an assignment's `customerDisplayName` / `vehiclePlateNumber` resolve from the
+customer and vehicle rows, and its authorizations and interruptions are composed per read.
 
 ## State of the port
 
 Deliverable A is the api, error, formatting, permission and mock layers. Deliverable B ports the
 screens: **user directory**, **user record** (with its eleven actions), **Registrations** and
-**Security audit** with its entry page. The sidebar lists only screens that exist.
+**Security audit** with its entry page, then **Overview**, **Needs attention** and the fleet lists —
+**rental assignments**, **vehicles**, **customers**, **drivers**. The sidebar lists only screens that
+exist.
+
+The **rental assignment record** is the first fleet record: summary, authorized drivers,
+interruptions, and a corrections tab for System Administrator. Its writes are the assignment
+lifecycle (edit, activate, end, the ASSIGN-013 mistaken-activation cancel), authorization start and
+stop with same-operation replacement, interruption create / edit / end, and the four privileged
+corrections — timeline, parties, authorization, interruption. Vehicle, customer and driver records,
+and the create dialogs on each list, are the next delivery.
 
 Every mutation runs through one dialog layer: `ui/Dialog` renders the failure envelope (field
 messages under inputs, validation message above the footer, amber stale banner with Refresh — which
 disables the primary action until the form is re-seeded — red conflict, forbidden, session ended) and
 `app/useActionMutation` maps the rejection, exposes the field messages and invalidates the affected
-caches on success. Nothing is validated in the browser: a past role expiry is refused by the api
-boundary as `users.activation_role_expiry_invalid` and rendered under that role's expiry input.
+caches on success. Refresh refetches what the dialog is editing and then remounts it through
+`app/reseed.tsx`, so every input is re-seeded from the record that came back and anything typed
+against the stale copy is discarded. Nothing is validated in the browser: a past role expiry is
+refused by the api boundary as `users.activation_role_expiry_invalid` and rendered under that role's
+expiry input.
 
 Audit payloads are parsed by `format/auditPayload.ts`, which follows the documented shape (flat
 PascalCase objects, changed keys only, `Roles` as an array of grants) and returns null for anything

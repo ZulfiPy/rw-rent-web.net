@@ -1,0 +1,18 @@
+.table { min-width: 0; }
+.wide { width: auto; }
+.colVehicle { width: 116px; }
+.colStatus { width: 146px; }
+.colWhen { width: 158px; }
+.colAction { width: 60px; }
+
+@media (max-width: 1279px) {
+  .colVehicle { width: 112px; }
+  .colStatus { width: 138px; }
+  .colWhen { width: 144px; }
+  .colAction { width: 48px; }
+}
+/* Portrait: Planned end folds under Planned start, and fixed layout holds the table to the card. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .colWhen { width: 140px; }
+}

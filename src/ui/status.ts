@@ -1,4 +1,4 @@
-import { ApplicationUserStatus } from '@/api/dto';
+import { ApplicationUserStatus, AssignmentStatus } from '@/api/dto';
 
 export type Tone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'plain';
 
@@ -21,4 +21,19 @@ export const USER_STATUS_DOT: Record<ApplicationUserStatus, string> = {
   [ApplicationUserStatus.Suspended]: '50% 50% 50% 0',
   [ApplicationUserStatus.RegistrationRejected]: '1px',
   [ApplicationUserStatus.RegistrationExpired]: '1px',
+};
+
+/** An assignment's four states carry the same shape language: running, closed, withdrawn, ahead. */
+export const ASSIGNMENT_STATUS_TONE: Record<AssignmentStatus, Tone> = {
+  [AssignmentStatus.Active]: 'ok',
+  [AssignmentStatus.Ended]: 'mute',
+  [AssignmentStatus.Cancelled]: 'mute',
+  [AssignmentStatus.Planned]: 'info',
+};
+
+export const ASSIGNMENT_STATUS_DOT: Record<AssignmentStatus, string> = {
+  [AssignmentStatus.Active]: '50%',
+  [AssignmentStatus.Ended]: '1px',
+  [AssignmentStatus.Cancelled]: '50% 50% 50% 0',
+  [AssignmentStatus.Planned]: '2px',
 };

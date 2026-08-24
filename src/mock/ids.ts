@@ -25,6 +25,24 @@ export const newUuid = (): string =>
  *   u10 Baiba Krastina        Registration expired
  *   u11 Raivis Dumins         Suspended, sessions revoked
  */
+/** Referenced by audit rows and by the fleet seed; kept so both name the same row. */
+const A1 = '2d7b5c86-0001-4f60-9a06-000000000001';
+const Z2 = '8b4e6d97-0002-4a70-8b07-000000000002';
+
+/**
+ * One uuid per prototype key, in the key order given: the row's ordinal is repeated in the last
+ * block, so `v7` stays recognisable in a payload or a URL. Literal keys, so a lookup is a known
+ * property rather than an index read.
+ */
+const fleetIds = <K extends string>(keys: readonly K[], head: string): Record<K, string> => {
+  const out = {} as Record<K, string>;
+  keys.forEach((key, i) => {
+    const nn = String(i + 1).padStart(4, '0');
+    out[key] = `${head}-${nn}-4${head.slice(0, 3)}-9${head.slice(0, 3)}-${nn.padStart(12, '0')}`;
+  });
+  return out;
+};
+
 export const ID = {
   company: '0b3c9f42-1d58-4a7e-9c30-6f21b8e47d05',
   users: {
@@ -82,9 +100,19 @@ export const ID = {
     g12: '3e6a2f74-0012-4d40-9e04-000000000012',
     g13: '3e6a2f74-0013-4d40-9e04-000000000013',
   },
-  /** Referenced by audit rows only; the records themselves arrive with the fleet surfaces. */
+  /** Referenced by audit rows only; the records themselves live in the maps below. */
   entities: {
-    a1: '2d7b5c86-0001-4f60-9a06-000000000001',
-    z2: '8b4e6d97-0002-4a70-8b07-000000000002',
+    a1: A1,
+    z2: Z2,
   },
+  /* Fleet rows, ported from the prototype's DB with its own keys. */
+  vehicles: fleetIds(['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10'], '1a5c8e30'),
+  customers: fleetIds(['cu1', 'cu2', 'cu3', 'cu4', 'cu5', 'cu6', 'cu7', 'cu8'], '4d9f2a61'),
+  drivers: fleetIds(['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'], '6e1b3f72'),
+  assignments: {
+    ...fleetIds(['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'a11', 'a12'], '2d7b5c86'),
+    a1: A1,
+  },
+  authorizations: { ...fleetIds(['z1', 'z2', 'z3', 'z4', 'z5', 'z6'], '8b4e6d97'), z2: Z2 },
+  interruptions: fleetIds(['i1', 'i2', 'i3', 'i4'], '9c5f7e08'),
 } as const;

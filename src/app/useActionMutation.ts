@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fieldMessages, toFailure, type Failure } from '@/api/problem';
+import { useReseed } from './reseed';
 
 /**
  * One mutation, wired the way every dialog needs it: the rejection becomes a Failure (with the op's
@@ -14,6 +15,7 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
   onDone: () => void;
 }) {
   const queryClient = useQueryClient();
+  const reseed = useReseed();
   const [failure, setFailure] = useState<Failure | null>(null);
 
   const mutation = useMutation({
@@ -34,10 +36,17 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
     busy: mutation.isPending,
     failure,
     fields: failure ? fieldMessages(failure) : {},
-    /** The stale banner's Refresh: reload what the dialog is editing, keep the dialog open. */
+    /**
+     * The stale banner's Refresh: reload what the dialog is editing, keep the dialog open, and
+     * re-seed it from what came back. The refetch is awaited before the remount, so the inputs are
+     * built from the fresh record rather than the copy the refusal was raised against.
+     */
     refresh: () => {
-      setFailure(null);
-      void Promise.all(invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+      void (async () => {
+        await Promise.all(invalidate.map((queryKey) => queryClient.refetchQueries({ queryKey })));
+        setFailure(null);
+        reseed();
+      })();
     },
   };
 }

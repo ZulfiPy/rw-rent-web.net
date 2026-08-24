@@ -17,6 +17,9 @@
   .colAction { width: 48px; }
 }
 @media (max-width: 1023px) {
+  /* Fixed layout is what guarantees the table cannot exceed the card: User takes the remainder and
+     long names, addresses and role lists ellipsise inside their cells. */
+  .table { table-layout: fixed; }
   .colPhone { width: 116px; }
   .colStatus { width: 132px; }
   .colRoles { width: 152px; }
