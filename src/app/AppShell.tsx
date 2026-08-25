@@ -61,6 +61,13 @@ const NAV: Array<{ label: string; items: NavItem[] }> = [
       { to: '/security-audit', label: 'Security audit', icon: 'policy', permission: 'SecurityAudit.ReadCompany' },
     ],
   },
+  {
+    label: 'Administration',
+    items: [
+      { to: '/company', label: 'Company profile', icon: 'apartment', permission: 'Company.Read' },
+      { to: '/system-administrator', label: 'System Administrator', icon: 'admin_panel_settings', permission: 'SystemAdministration.Transfer' },
+    ],
+  },
 ];
 
 /**

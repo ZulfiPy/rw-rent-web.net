@@ -56,6 +56,9 @@
   border-bottom: 1px solid var(--line);
 }
 .heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* The prototype gives the heading that carries the sample chip one more pixel of gap (3px), since
+   the chip row is taller than a bare title. */
+.heading[data-chip='true'] { gap: 3px; }
 .titleRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .title { margin: 0; font-size: 14px; font-weight: 600; color: var(--fg); }
 .desc { margin: 0; font-size: 12.5px; color: var(--fg-3); }

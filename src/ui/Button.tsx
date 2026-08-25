@@ -6,7 +6,7 @@ export type ButtonTone = 'default' | 'primary' | 'danger' | 'warn' | 'ghost';
  * `blockedReason` is the disable-with-reason case: an action the persona holds the permission for
  * but the record's state refuses. An action they can never perform is not rendered at all.
  */
-export function Button({ label, icon, tone = 'default', small, compact, blockedReason, busy, onClick, type = 'button' }: {
+export function Button({ label, icon, tone = 'default', small, compact, blockedReason, hint, busy, onClick, type = 'button' }: {
   label: string;
   icon?: string;
   tone?: ButtonTone;
@@ -14,6 +14,8 @@ export function Button({ label, icon, tone = 'default', small, compact, blockedR
   /** Icon only, label on the element: for a row of actions in a folded table cell. */
   compact?: boolean;
   blockedReason?: string | null;
+  /** A tooltip on an action that stays available — the prototype's tip without the refusal. */
+  hint?: string;
   busy?: boolean;
   onClick?: () => void;
   type?: 'button' | 'submit';
@@ -27,7 +29,7 @@ export function Button({ label, icon, tone = 'default', small, compact, blockedR
       className={`${styles.button} ${small ? styles.small : ''} ${iconOnly ? styles.iconOnly : ''}`}
       disabled={disabled}
       aria-label={iconOnly ? label : undefined}
-      title={blockedReason ?? (iconOnly ? label : undefined)}
+      title={blockedReason ?? hint ?? (iconOnly ? label : undefined)}
       onClick={onClick}
     >
       {icon ? <span data-icon aria-hidden="true" className={styles.icon}>{icon}</span> : null}

@@ -18,6 +18,8 @@ import { Customers } from './pages/fleet/Customers';
 import { CustomerRecord } from './pages/fleet/CustomerRecord';
 import { Drivers } from './pages/fleet/Drivers';
 import { DriverRecord } from './pages/fleet/DriverRecord';
+import { CompanyProfile } from './pages/admin/CompanyProfile';
+import { SystemAdministrator } from './pages/admin/SystemAdministrator';
 import { DevPanel } from './dev/DevPanel';
 import styles from './App.module.css';
 
@@ -67,6 +69,8 @@ export function App() {
             <Route path="/users" element={<UserDirectory />} />
             <Route path="/users/:userId" element={<UserRecord />} />
             <Route path="/registrations" element={<Registrations />} />
+            <Route path="/company" element={<CompanyProfile />} />
+            <Route path="/system-administrator" element={<SystemAdministrator />} />
             <Route path="/security-audit" element={<SecurityAudit />} />
             <Route path="/security-audit/:entryId" element={<AuditEntry />} />
             <Route path="*" element={<Navigate to="/overview" replace />} />

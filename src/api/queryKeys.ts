@@ -50,4 +50,5 @@ export const qk = {
   },
   transfers: ['system-administrator', 'transfers'] as const,
   overview: ['overview'] as const,
+  overviewActivity: ['overview', 'security-activity'] as const,
 };

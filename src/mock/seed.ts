@@ -291,6 +291,16 @@ export function seed(): MockStore {
     currentSessionByUserId,
     audit,
     ...fleet(),
-    transfers: [],
+    /** The prototype's one open transfer: u1 hands over to u2, initiated 6h ago, 18h left. */
+    transfers: [{
+      id: ID.transfers.tr1,
+      currentAdministratorUserId: ID.users.u1,
+      targetUserId: ID.users.u2,
+      initiatedAtUtc: at(-6),
+      expiresAtUtc: at(18),
+      cancelledAtUtc: null,
+      acceptedAtUtc: null,
+      isRecovery: false,
+    }],
   };
 }

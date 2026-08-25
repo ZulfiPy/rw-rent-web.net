@@ -1,0 +1,17 @@
+/* The transfers table: the prototype's fixed column widths. */
+.transfers { min-width: 0; }
+.colTarget { width: auto; }
+.colUtc { width: 180px; }
+.colState { width: 150px; }
+.colActions { width: 220px; }
+
+@media (max-width: 1279px) {
+  .colUtc { width: 160px; }
+  .colActions { width: 190px; }
+}
+@media (max-width: 1023px) {
+  .transfers { table-layout: fixed; }
+  .colUtc { width: 146px; }
+  .colState { width: 140px; }
+  .colActions { width: 108px; }
+}

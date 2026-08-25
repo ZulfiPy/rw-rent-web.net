@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
-import { listSecurityAudit } from '@/api/securityAudit';
+import { getRecentSecurityActivity } from '@/api/overview';
 import { AssignmentStatus, type VehicleListItemResponse } from '@/api/dto';
 import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
@@ -71,8 +71,8 @@ export function Overview() {
     enabled: mayReadVehicles,
   });
   const audit = useQuery({
-    queryKey: qk.audit.list({ PageSize: 5 }),
-    queryFn: () => listSecurityAudit({ PageSize: 5 }),
+    queryKey: qk.overviewActivity,
+    queryFn: getRecentSecurityActivity,
     enabled: mayReadAudit,
   });
 
@@ -143,12 +143,8 @@ export function Overview() {
     };
   });
 
-  // Newest first, explicitly: the card's title promises recency (see README's deviation note).
-  const activity = (audit.data?.items ?? [])
-    .slice()
-    .sort((x, y) => (x.occurredAtUtc < y.occurredAtUtc ? 1 : x.occurredAtUtc > y.occurredAtUtc ? -1 : 0))
-    .slice(0, 5)
-    .map((a) => ({
+  // The prototype's card: the audit store's first five rows, in stored order (see api/overview.ts).
+  const activity = (audit.data?.items ?? []).map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),
     when: formatUtcHuman(a.occurredAtUtc),
@@ -276,7 +272,7 @@ export function Overview() {
 
           <section className={styles.panel}>
             <div className={styles.panelHead}>
-              <div className={styles.heading}>
+              <div className={styles.heading} data-chip="true">
                 <div className={styles.titleRow}>
                   <h2 className={styles.title}>Unresolved insurance cases</h2>
                   <span className={styles.sample}>{SAMPLE_CHIP}</span>

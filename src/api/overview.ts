@@ -1,7 +1,11 @@
+import { get } from './client';
 import { listAssignments } from './rentalAssignments';
 import { listUsers } from './users';
 import { listVehicles } from './vehicles';
-import { ApplicationUserStatus, AssignmentStatus, type OverviewSummary } from './dto';
+import {
+  ApplicationUserStatus, AssignmentStatus,
+  type OverviewSummary, type SecurityAuditResponse,
+} from './dto';
 
 /**
  * FOLLOW-UP: no summary endpoint. Four PageSize=1 probes read totalCount — constant work, and one
@@ -27,3 +31,11 @@ export async function getOverviewSummary(): Promise<OverviewSummary> {
     pendingRegistrations: pending ?? null,
   };
 }
+
+/**
+ * FOLLOW-UP: no endpoint. The Overview's activity card shows the audit store's first five rows in
+ * stored order (the prototype's `db.audit.slice(0, 5)`), which the paged, time-ordered
+ * `GET /api/security-audit` cannot express. Mock-only until the backend exposes the card's feed.
+ */
+export const getRecentSecurityActivity = () =>
+  get<{ items: SecurityAuditResponse[] }>('/api/overview/security-activity');

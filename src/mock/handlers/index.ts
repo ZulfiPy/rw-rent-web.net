@@ -6,5 +6,6 @@ import './roles';
 import './sessions';
 import './securityAudit';
 import './companies';
+import './systemAdministrator';
 import './fleet';
 import './auth';

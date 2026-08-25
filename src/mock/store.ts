@@ -8,7 +8,7 @@ import type { SessionRecord } from './security';
 import { seed } from './seed';
 
 /** Tagged so a stale shape is never read back. Bumped whenever the seed changes meaningfully. */
-export const SEED_VERSION = 'rwrent-21';
+export const SEED_VERSION = 'rwrent-22';
 
 export interface MockStore {
   version: string;

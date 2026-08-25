@@ -1,4 +1,4 @@
-import { post } from './client';
+import { get, post } from './client';
 import type {
   AcceptSystemAdministratorTransferRequest, CancelSystemAdministratorTransferRequest,
   InitiateSystemAdministratorTransferRequest, ResendSystemAdministratorTransferRequest,
@@ -15,3 +15,11 @@ export const cancelTransfer = (transferId: Uuid, body: CancelSystemAdministrator
   post<SystemAdministratorTransferResponse>(`${base}/${transferId}/cancel`, body);
 export const acceptTransfer = (body: AcceptSystemAdministratorTransferRequest) =>
   post<void>(`${base}/accept`, body);
+
+/**
+ * FOLLOW-UP: not in swagger. Initiate, resend, cancel and accept exist; there is no read, and the
+ * reviewed screen lists every transfer with its state. Mock-only until the backend exposes one —
+ * this single function is what the wiring phase repoints.
+ */
+export const listTransfers = () =>
+  get<{ items: SystemAdministratorTransferResponse[] }>(base);

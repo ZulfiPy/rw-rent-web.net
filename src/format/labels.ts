@@ -126,6 +126,7 @@ export const ENTITY_LABEL: Record<string, string> = {
   Company: 'Company',
   Vehicle: 'Vehicle',
   Customer: 'Customer',
+  SystemAdministratorTransfer: 'System Administrator transfer',
 };
 export const entityLabel = (t?: string | null) => (t ? ENTITY_LABEL[t] ?? t : '—');
 

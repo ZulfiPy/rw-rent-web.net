@@ -115,4 +115,5 @@ export const ID = {
   },
   authorizations: { ...fleetIds(['z1', 'z2', 'z3', 'z4', 'z5', 'z6'], '8b4e6d97'), z2: Z2 },
   interruptions: fleetIds(['i1', 'i2', 'i3', 'i4'], '9c5f7e08'),
+  transfers: fleetIds(['tr1'], '7f2d4a19'),
 } as const;

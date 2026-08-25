@@ -23,18 +23,12 @@ substituting something plausible.
 
 **Known deviations, deliberate:**
 
-- **Recent security activity is newest first.** The prototype shows `db.audit.slice(0, 5)` in seed
-  order, which is not time-ordered (15 Jul sits between 13 Aug and 19 Aug) and contradicts the card's
-  own title. The React card sorts by `occurredAtUtc` descending.
 - **Needs attention group ordering.** Group order is the prototype's (registrations, then open
   interruptions, then handovers inside three days). Within a group the prototype walks its in-memory
   collections in seed order, which the API cannot express — registrations are ordered by registration
   instant, newest first, and interruptions by oldest open, the directions that reproduce the
   prototype's rendered list. The panel keeps the prototype's "Sorted by how long the record has been
   waiting" subtitle.
-- Company profile and System Administrator are in the prototype's Administration group but have no
-  React screen yet, so they are not in the rail: a nav item that silently redirects is worse than one
-  that is not there. They arrive with their screens.
 - **Fleet writes are not audited.** Vehicle, customer and driver edits are outside the backend's
   audited set (security events, role and registration transitions, privileged corrections), so no
   entry is written for them. The driver record's audit panel therefore usually holds only the
@@ -170,6 +164,8 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
 
 ## Not in swagger (mock-only, marked `// FOLLOW-UP` in dto.ts)
 
+- The Overview's Recent security activity feed (`api/overview.ts` → `GET /api/overview/security-activity`)
+- Reading System Administrator transfers (`listTransfers()` → `GET /api/system-administrator/transfers`)
 - `registrationDecisionReason` on the user read model
 - `createdAtUtc` on the user LIST projection — the Registrations queue's Registered column
 - Overview summary counts (four `PageSize=1` probes stand in, routed through `api/overview.ts`; a
@@ -193,6 +189,12 @@ is blocked — but both are visible in the UI as a compromise.
 **`createdAtUtc` on the user list projection.** The Registrations queue sorts and shows *Registered*,
 which only the read model carries today. Interim: the mock's list projection adds the field, so the
 column works in mock mode and would be empty against the real API.
+
+**The Recent security activity card.** The prototype's card is `db.audit.slice(0, 5)`: the audit
+store's first five rows in stored order, which is not time-ordered. `GET /api/security-audit` pages
+newest first and cannot express stored order, so the card reads a mock-only
+`GET /api/overview/security-activity` through `api/overview.ts` and renders exactly the reviewed
+list. Wiring phase: point that one function at whatever the backend exposes for the card.
 
 **`GET /api/security-audit/{id}`.** An audit entry has its own page and its own URL. Interim: the
 entry is located in the first page of the unfiltered list (`PageSize=100`), so a deep link is
@@ -224,12 +226,17 @@ lifecycle (edit, activate, end, the ASSIGN-013 mistaken-activation cancel), auth
 stop with same-operation replacement, interruption create / edit / end, and the four privileged
 corrections — timeline, parties, authorization, interruption.
 
+**Company profile** and the **System Administrator** console complete the rail's Administration
+group: the Company's legal identity, address and record panels with its edit and delete writes and
+its first-run setup state, and the protected transfer of the single administrator account —
+initiate, rotate and resend, cancel, each password- or reason-confirmed and audited.
+
 The **vehicle**, **customer** and **driver** records follow: specifications, identity, contact and
 driver-link panels, the rental history and authorization-period tables in the prototype's order, and
 the record's own writes — edit, activate, deactivate, and create from each list header. A
 deactivation that the record's own state refuses is disabled with the prototype's reason, and the
 confirmation lists what holds it (each planned or active assignment, or each open named-driver
-authorization). **Company profile** and the **System Administrator** console are the next delivery.
+authorization).
 
 Every mutation runs through one dialog layer: `ui/Dialog` renders the failure envelope (field
 messages under inputs, validation message above the footer, amber stale banner with Refresh — which
