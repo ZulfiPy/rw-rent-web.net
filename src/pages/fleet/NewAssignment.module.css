@@ -1,0 +1,106 @@
+/* The prototype's driver-coverage picker: a shaded box inside the "Who will drive?" section. */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 13px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.pickerLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.pickerRow { display: flex; gap: 8px; align-items: stretch; }
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+}
+.search:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px var(--ring); }
+.searchIcon { flex: none; font-size: 16px; color: var(--fg-3); }
+.searchValue {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.searchCaret { flex: none; font-size: 17px; color: var(--fg-3); }
+/* The real control sits transparent over the row, as in the prototype. */
+.searchSelect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  cursor: pointer;
+}
+.add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 9px 14px;
+  background: var(--surface-2);
+  color: var(--fg);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.add:hover:not(:disabled) { border-color: var(--line-3); }
+.add:disabled { opacity: .45; cursor: not-allowed; }
+.addIcon { font-size: 16px; }
+
+.chosen { display: flex; flex-direction: column; gap: 6px; }
+.chosenRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.chosenIcon { flex: none; font-size: 16px; color: var(--fg-3); }
+.chosenBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.chosenName { font-size: 13px; color: var(--fg); }
+.chosenSub { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+.remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--fg-3);
+  font-size: 16px;
+}
+.remove:hover { color: var(--bad); border-color: var(--bad-line); }
+
+.pickerEmpty { font-size: 12.5px; color: var(--warn); }
+.pickerHint { font-size: 12px; line-height: 1.45; color: var(--fg-3); }
+
+/* A choice the customer or the assignment refuses, with the prototype's reason beneath it. */
+.choiceReason { display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--fg-4); }
+.choiceReasonIcon { flex: none; font-size: 14px; margin-top: 1px; }
+.choiceHint { font-size: 12px; color: var(--fg-3); text-wrap: pretty; }

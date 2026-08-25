@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
@@ -9,6 +10,7 @@ import { toFailure } from '@/api/problem';
 import { ASSIGNMENT_STATUS_LABEL, formatLocal, relative } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
+import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { SelectFilter, type FilterOption } from '@/ui/Filters';
@@ -19,6 +21,7 @@ import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
 import table from '@/ui/table.module.css';
+import { NewAssignmentDialog } from './NewAssignment';
 import styles from './Assignments.module.css';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -37,6 +40,8 @@ export function Assignments() {
   const [params, setParams] = useSearchParams();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
+  const canManage = can('RentalAssignments.Manage');
+  const [creating, setCreating] = useState(false);
 
   const status = params.get('status') ?? '';
   const customer = params.get('customer') ?? '';
@@ -91,6 +96,10 @@ export function Assignments() {
       <PageHeader
         title="Rental assignments"
         description="Every vehicle handover, its authorized drivers and its interruptions."
+        actionsKey={String(canManage)}
+        actions={canManage ? (
+          <Button label="New assignment" icon="add" tone="primary" onClick={() => setCreating(true)} />
+        ) : undefined}
       />
 
       <section className={list.panel}>
@@ -278,6 +287,8 @@ export function Assignments() {
           />
         ) : null}
       </section>
+
+      <NewAssignmentDialog open={creating} onClose={() => setCreating(false)} />
     </>
   );
 }

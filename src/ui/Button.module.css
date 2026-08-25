@@ -22,8 +22,11 @@
 .button[data-tone='danger']:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); }
 .button[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
 .button[data-tone='warn']:hover:not(:disabled) { border-color: var(--warn); color: var(--warn); }
-.button[data-tone='ghost'] { background: transparent; border-color: transparent; color: var(--fg-3); }
-.button[data-tone='ghost']:hover:not(:disabled) { color: var(--fg); background: var(--surface-2); }
+/* The prototype's dialog-footer Cancel: outlined, transparent, never filled. */
+.button[data-tone='ghost'] { background: transparent; }
+.button[data-tone='ghost']:hover:not(:disabled) { background: var(--surface-3); }
+.button[data-tone='danger-solid'] { background: var(--bad-solid); border-color: transparent; color: #FFFFFF; }
+.button[data-tone='danger-solid']:hover:not(:disabled) { filter: brightness(1.08); color: #FFFFFF; }
 
 .small { gap: 7px; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; }
 .small .icon { font-size: 16px; }

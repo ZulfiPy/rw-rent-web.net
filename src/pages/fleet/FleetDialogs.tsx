@@ -48,11 +48,12 @@ const BODY_TYPES = Object.values(BodyType);
 const GEARBOXES = Object.values(GearboxType);
 const FUELS = Object.values(FuelType);
 
-function Text({ label, value, error, hint, optional, mono, maxLength, type = 'text', onChange }: {
+function Text({ label, value, error, hint, required, optional, mono, maxLength, type = 'text', onChange }: {
   label: string;
   value: string;
   error?: string | undefined;
   hint?: string;
+  required?: boolean;
   optional?: boolean;
   mono?: boolean;
   maxLength?: number;
@@ -60,7 +61,7 @@ function Text({ label, value, error, hint, optional, mono, maxLength, type = 'te
   onChange: (next: string) => void;
 }) {
   return (
-    <Field label={label} error={error} hint={hint} optional={optional}>
+    <Field label={label} error={error} hint={hint} required={required} optional={optional}>
       <input
         type={type}
         className={`${f.control} ${mono ? f.mono : ''}`}
@@ -73,16 +74,17 @@ function Text({ label, value, error, hint, optional, mono, maxLength, type = 'te
   );
 }
 
-function EnumSelect<T extends number>({ label, value, options, labels, error, onChange }: {
+function EnumSelect<T extends number>({ label, value, options, labels, error, required, onChange }: {
   label: string;
   value: T;
   options: readonly T[];
   labels: Record<T, string>;
   error?: string | undefined;
+  required?: boolean;
   onChange: (next: T) => void;
 }) {
   return (
-    <Field label={label} error={error}>
+    <Field label={label} error={error} required={required}>
       <select
         className={f.control}
         data-invalid={!!error}
@@ -159,9 +161,10 @@ function VehicleForm({ vehicle, onClose }: { vehicle: VehicleResponse | null; on
       onRefresh={m.refresh}
     >
       <Section title="Identification">
-        <Text label="Plate number" value={plateNumber} error={m.fields.plateNumber} mono maxLength={20} onChange={setPlate} />
+        <Text label="Plate number" required value={plateNumber} error={m.fields.plateNumber} mono maxLength={20} onChange={setPlate} />
         <Text
           label="VIN code"
+          required
           value={vinCode}
           error={m.fields.vinCode}
           hint="Exactly as issued; maximum 17 characters."
@@ -171,15 +174,15 @@ function VehicleForm({ vehicle, onClose }: { vehicle: VehicleResponse | null; on
         />
       </Section>
       <Section title="Vehicle">
-        <Text label="Make" value={make} error={m.fields.make} maxLength={100} onChange={setMake} />
-        <Text label="Model" value={model} error={m.fields.model} maxLength={100} onChange={setModel} />
-        <Text label="Manufacturing year" value={year} error={m.fields.year} hint="1900 or later." type="number" onChange={setYear} />
-        <Text label="Colour" value={color} error={m.fields.color} maxLength={50} onChange={setColor} />
+        <Text label="Make" required value={make} error={m.fields.make} maxLength={100} onChange={setMake} />
+        <Text label="Model" required value={model} error={m.fields.model} maxLength={100} onChange={setModel} />
+        <Text label="Manufacturing year" required value={year} error={m.fields.year} hint="1900 or later." type="number" onChange={setYear} />
+        <Text label="Colour" required value={color} error={m.fields.color} maxLength={50} onChange={setColor} />
       </Section>
       <Section title="Specification" cols={3}>
-        <EnumSelect label="Body type" value={bodyType} options={BODY_TYPES} labels={BODY_TYPE_LABEL} error={m.fields.bodyType} onChange={setBody} />
-        <EnumSelect label="Gearbox" value={gearboxType} options={GEARBOXES} labels={GEARBOX_LABEL} error={m.fields.gearboxType} onChange={setGearbox} />
-        <EnumSelect label="Fuel" value={fuelType} options={FUELS} labels={FUEL_LABEL} error={m.fields.fuelType} onChange={setFuel} />
+        <EnumSelect label="Body type" required value={bodyType} options={BODY_TYPES} labels={BODY_TYPE_LABEL} error={m.fields.bodyType} onChange={setBody} />
+        <EnumSelect label="Gearbox" required value={gearboxType} options={GEARBOXES} labels={GEARBOX_LABEL} error={m.fields.gearboxType} onChange={setGearbox} />
+        <EnumSelect label="Fuel" required value={fuelType} options={FUELS} labels={FUEL_LABEL} error={m.fields.fuelType} onChange={setFuel} />
       </Section>
     </Dialog>
   );
@@ -253,6 +256,7 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
         ) : (
           <EnumSelect
             label="Customer type"
+            required
             value={type}
             options={Object.values(CustomerType)}
             labels={CUSTOMER_TYPE_LABEL}
@@ -264,22 +268,22 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
 
       {business ? (
         <Section title="Business identity">
-          <Text label="Business name" value={companyName} error={m.fields.companyName} maxLength={200} onChange={setCompany} />
-          <Text label="Registration code" value={registrationCode} error={m.fields.registrationCode} mono maxLength={50} onChange={setRegCode} />
+          <Text label="Business name" required value={companyName} error={m.fields.companyName} maxLength={200} onChange={setCompany} />
+          <Text label="Registration code" required value={registrationCode} error={m.fields.registrationCode} mono maxLength={50} onChange={setRegCode} />
         </Section>
       ) : (
         <Section title="Personal identity" note="Provide at least one of personal identifier or date of birth.">
-          <Text label="First name" value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
-          <Text label="Last name" value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
+          <Text label="First name" required value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
+          <Text label="Last name" required value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
           <Text label="Personal identifier" value={personalId} error={m.fields.personalId} optional mono maxLength={50} onChange={setPersonalId} />
           <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" onChange={setDob} />
         </Section>
       )}
 
       <Section title="Contact">
-        <Text label="Email" value={email} error={m.fields.email} type="email" maxLength={254} onChange={setEmail} />
-        <Text label="Phone number" value={phoneNumber} error={m.fields.phoneNumber} type="tel" maxLength={30} onChange={setPhone} />
-        <Field label="Address" error={m.fields.address}>
+        <Text label="Email" required value={email} error={m.fields.email} type="email" maxLength={254} onChange={setEmail} />
+        <Text label="Phone number" required value={phoneNumber} error={m.fields.phoneNumber} type="tel" maxLength={30} onChange={setPhone} />
+        <Field label="Address" required error={m.fields.address}>
           <textarea
             className={f.control}
             data-invalid={!!m.fields.address}
@@ -367,18 +371,18 @@ function DriverForm({ driver, onClose }: { driver: DriverResponse | null; onClos
       onRefresh={m.refresh}
     >
       <Section title="Identity" note="Provide at least one of personal identifier or date of birth.">
-        <Text label="First name" value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
-        <Text label="Last name" value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
+        <Text label="First name" required value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
+        <Text label="Last name" required value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
         <Text label="Personal identifier" value={personalId} error={m.fields.personalId} optional mono maxLength={50} onChange={setPersonalId} />
         <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" onChange={setDob} />
       </Section>
       <Section title="Licence" cols={1}>
-        <Text label="Driver licence number" value={driverLicenseNumber} error={m.fields.driverLicenseNumber} mono maxLength={50} onChange={setLicence} />
+        <Text label="Driver licence number" required value={driverLicenseNumber} error={m.fields.driverLicenseNumber} mono maxLength={50} onChange={setLicence} />
       </Section>
       <Section title="Contact">
-        <Text label="Email" value={email} error={m.fields.email} type="email" maxLength={254} onChange={setEmail} />
-        <Text label="Phone number" value={phoneNumber} error={m.fields.phoneNumber} type="tel" maxLength={30} onChange={setPhone} />
-        <Field label="Address" error={m.fields.address}>
+        <Text label="Email" required value={email} error={m.fields.email} type="email" maxLength={254} onChange={setEmail} />
+        <Text label="Phone number" required value={phoneNumber} error={m.fields.phoneNumber} type="tel" maxLength={30} onChange={setPhone} />
+        <Field label="Address" required error={m.fields.address}>
           <textarea
             className={f.control}
             data-invalid={!!m.fields.address}
@@ -459,7 +463,7 @@ function Toggle({ kind, id, label, isActive, blockers, onClose }: {
       width={480}
       description={`${label} ${isActive ? 'will stop being selectable for new assignments.' : 'becomes selectable again.'}`}
       submitLabel={isActive ? 'Deactivate' : 'Activate'}
-      submitTone={isActive ? 'danger' : 'primary'}
+      submitTone={isActive ? 'danger-solid' : 'primary'}
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}

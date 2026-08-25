@@ -43,7 +43,7 @@ function ReasonField({ value, error, onChange, label = 'Reason' }: {
   label?: string;
 }) {
   return (
-    <Field label={label} hint={REASON_HINT} error={error}>
+    <Field label={label} required hint={REASON_HINT} error={error}>
       <textarea
         className={f.control}
         data-invalid={!!error}
@@ -81,7 +81,7 @@ function CorrectName({ user, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <Field label="First name" error={m.fields['firstName']}>
+      <Field label="First name" required error={m.fields['firstName']}>
         <input
           className={f.control}
           data-invalid={!!m.fields['firstName']}
@@ -89,7 +89,7 @@ function CorrectName({ user, onClose }: Common) {
           onChange={(e) => setFirstName(e.target.value)}
         />
       </Field>
-      <Field label="Last name" error={m.fields['lastName']}>
+      <Field label="Last name" required error={m.fields['lastName']}>
         <input
           className={f.control}
           data-invalid={!!m.fields['lastName']}
@@ -234,7 +234,8 @@ function Decision({ user, onClose, kind }: Common & { kind: 'reject' | 'reopen' 
         ? 'The applicant is told their registration was not approved. The reason stays internal.'
         : 'The registration returns to pending. An unconfirmed email gets a fresh seven-day window.'}
       submitLabel={reject ? 'Reject' : 'Reopen'}
-      submitTone={reject ? 'danger' : 'primary'}
+      submitIcon={reject ? 'person_off' : undefined}
+      submitTone={reject ? 'danger-solid' : 'primary'}
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
@@ -263,7 +264,8 @@ function Lifecycle({ user, onClose, kind }: Common & { kind: 'suspend' | 'restor
       width={suspend ? 520 : 480}
       description={`${user.firstName} ${user.lastName} · ${user.email}`}
       submitLabel={suspend ? 'Suspend' : 'Restore'}
-      submitTone={suspend ? 'danger' : 'primary'}
+      submitIcon={suspend ? 'lock_person' : undefined}
+      submitTone={suspend ? 'danger-solid' : 'primary'}
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
@@ -384,7 +386,8 @@ function RoleRevoke({ user, onClose, assignment }: Common & { assignment: RoleAs
       width={520}
       description={`${ROLE_LABEL[assignment.role]} · granted to ${user.firstName} ${user.lastName}`}
       submitLabel="Revoke role"
-      submitTone="danger"
+      submitIcon="remove_moderator"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
@@ -415,7 +418,8 @@ function SessionRevoke({ user, onClose, session }: Common & { session: SessionRe
       width={460}
       description={session.deviceDescription ?? 'This session'}
       submitLabel="Revoke session"
-      submitTone="danger"
+      submitIcon="no_accounts"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
@@ -446,7 +450,8 @@ function SessionRevokeAll({ user, onClose }: Common) {
       width={500}
       description={`Every active session for ${user.firstName} ${user.lastName} ends.`}
       submitLabel="Force sign out"
-      submitTone="danger"
+      submitIcon="no_accounts"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}

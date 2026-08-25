@@ -1,6 +1,6 @@
 import styles from './Button.module.css';
 
-export type ButtonTone = 'default' | 'primary' | 'danger' | 'warn' | 'ghost';
+export type ButtonTone = 'default' | 'primary' | 'danger' | 'danger-solid' | 'warn' | 'ghost';
 
 /**
  * `blockedReason` is the disable-with-reason case: an action the persona holds the permission for
@@ -8,7 +8,7 @@ export type ButtonTone = 'default' | 'primary' | 'danger' | 'warn' | 'ghost';
  */
 export function Button({ label, icon, tone = 'default', small, compact, blockedReason, hint, busy, onClick, type = 'button' }: {
   label: string;
-  icon?: string;
+  icon?: string | undefined;
   tone?: ButtonTone;
   small?: boolean;
   /** Icon only, label on the element: for a row of actions in a folded table cell. */

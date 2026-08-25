@@ -8,8 +8,10 @@ export { styles as fieldStyles };
  * wrapper from a label to a plain group, for fields that hold several controls — a label may only
  * name one.
  */
-export function Field({ label, optional, hint, error, group, children }: {
+export function Field({ label, required, optional, hint, error, group, children }: {
   label: string;
+  /** The prototype's gray tag beside the label. */
+  required?: boolean;
   optional?: boolean;
   hint?: string;
   error?: string | undefined;
@@ -19,7 +21,9 @@ export function Field({ label, optional, hint, error, group, children }: {
   const body = (
     <>
       <span className={styles.label}>
-        {label}{optional ? <span className={styles.optional}> · optional</span> : null}
+        <span>{label}</span>
+        {required ? <span className={styles.required}>required</span> : null}
+        {optional ? <span className={styles.optional}>· optional</span> : null}
       </span>
       {children}
       {hint ? <span className={styles.hint}>{hint}</span> : null}

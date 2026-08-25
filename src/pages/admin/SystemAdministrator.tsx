@@ -44,7 +44,7 @@ function PasswordField({ value, error, onChange }: {
   onChange: (next: string) => void;
 }) {
   return (
-    <Field label="Your current password" error={error}>
+    <Field label="Your current password" required error={error}>
       <input
         type="password"
         className={f.control}
@@ -88,7 +88,7 @@ function Initiate({ onClose }: { onClose: () => void }) {
       onRefresh={m.refresh}
     >
       <div className={dialogStyles.grid} data-cols="1">
-        <Field label="Target account email" error={m.fields.targetEmail}>
+        <Field label="Target account email" required error={m.fields.targetEmail}>
           <input
             type="email"
             className={f.control}
@@ -99,7 +99,7 @@ function Initiate({ onClose }: { onClose: () => void }) {
           />
         </Field>
         <PasswordField value={currentPassword} error={m.fields.currentPassword} onChange={setPassword} />
-        <Field label="Reason" hint={REASON_HINT} error={m.fields.reason}>
+        <Field label="Reason" required hint={REASON_HINT} error={m.fields.reason}>
           <textarea
             className={f.control}
             data-invalid={!!m.fields.reason}
@@ -161,7 +161,8 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
       width={520}
       description="Withdraws the pending transfer and invalidates its token."
       submitLabel="Cancel transfer"
-      submitTone="danger"
+      submitIcon="cancel"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
@@ -169,7 +170,7 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
       onRefresh={m.refresh}
     >
       <div className={dialogStyles.grid} data-cols="1">
-        <Field label="Reason" hint={REASON_HINT} error={m.fields.reason}>
+        <Field label="Reason" required error={m.fields.reason}>
           <textarea
             className={f.control}
             data-invalid={!!m.fields.reason}

@@ -68,8 +68,8 @@ function InfoBanner({ title, body }: { title: string; body: string }) {
 export type DialogTone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'accent';
 
 export function Dialog({
-  title, description, icon, tone = 'accent', width = 560, submitLabel, submitTone = 'primary', busy,
-  failure, children, info, footnote, onClose, onSubmit, onRefresh,
+  title, description, icon, tone = 'accent', width = 560, submitLabel, submitIcon, submitTone = 'primary',
+  submitBlocked, busy, failure, children, info, footnote, onClose, onSubmit, onRefresh,
 }: {
   title: string;
   description?: string;
@@ -78,7 +78,11 @@ export function Dialog({
   /** The prototype gives each dialog its own width; 560 is its default. */
   width?: number;
   submitLabel: string;
+  /** The prototype gives its destructive footer actions a leading icon. */
+  submitIcon?: string | undefined;
   submitTone?: ButtonTone;
+  /** The prototype's disable-with-reason on a footer action the form's own state refuses. */
+  submitBlocked?: string | null;
   busy: boolean;
   failure: Failure | null;
   children?: ReactNode;
@@ -127,9 +131,12 @@ export function Dialog({
           <Button label="Cancel" tone="ghost" onClick={onClose} />
           <Button
             label={submitLabel}
+            icon={submitIcon}
             tone={submitTone}
             busy={busy}
-            blockedReason={failure?.kind === 'stale' ? 'Refresh to load the current values first.' : null}
+            blockedReason={failure?.kind === 'stale'
+              ? 'Refresh to load the current values first.'
+              : submitBlocked ?? null}
             onClick={onSubmit}
           />
         </div>

@@ -1,6 +1,7 @@
 .field { display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 12.5px; color: var(--fg-2); }
-.optional { color: var(--fg-4); }
+.label { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--fg-2); }
+.required { font-size: 11px; font-weight: 400; color: var(--fg-4); }
+.optional { font-weight: 400; color: var(--fg-4); }
 .control {
   padding: 8px 11px;
   background: var(--inset);

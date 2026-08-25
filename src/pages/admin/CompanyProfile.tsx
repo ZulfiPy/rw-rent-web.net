@@ -65,16 +65,16 @@ function CompanyForm({ company, onClose }: { company: CompanyResponse | null; on
       <div className={dialogStyles.section}>
         <p className={dialogStyles.sectionTitle}>Legal identity</p>
         <div className={dialogStyles.grid} data-cols="2">
-          <Field label="Company name" error={m.fields.name}>
+          <Field label="Company name" required error={m.fields.name}>
             <input className={f.control} data-invalid={!!m.fields.name} maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label="Registration number" error={m.fields.registrationNumber}>
+          <Field label="Registration number" required error={m.fields.registrationNumber}>
             <input className={`${f.control} ${f.mono}`} data-invalid={!!m.fields.registrationNumber} maxLength={50} value={registrationNumber} onChange={(e) => setReg(e.target.value)} />
           </Field>
           <Field label="VAT number" optional error={m.fields.vatNumber}>
             <input className={`${f.control} ${f.mono}`} data-invalid={!!m.fields.vatNumber} maxLength={50} value={vatNumber} onChange={(e) => setVat(e.target.value)} />
           </Field>
-          <Field label="Email" error={m.fields.email}>
+          <Field label="Email" required error={m.fields.email}>
             <input type="email" className={f.control} data-invalid={!!m.fields.email} maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
           <Field label="Phone number" optional error={m.fields.phoneNumber}>
@@ -85,7 +85,7 @@ function CompanyForm({ company, onClose }: { company: CompanyResponse | null; on
       <div className={dialogStyles.section}>
         <p className={dialogStyles.sectionTitle}>Address</p>
         <div className={dialogStyles.grid} data-cols="1">
-          <Field label="Legal address" error={m.fields.legalAddress}>
+          <Field label="Legal address" required error={m.fields.legalAddress}>
             <textarea className={f.control} data-invalid={!!m.fields.legalAddress} rows={2} maxLength={2000} value={legalAddress} onChange={(e) => setAddress(e.target.value)} />
           </Field>
         </div>
@@ -110,7 +110,8 @@ function DeleteCompany({ company, onClose }: { company: CompanyResponse; onClose
       width={520}
       description="Only possible while the Company is completely unreferenced."
       submitLabel="Delete Company"
-      submitTone="danger"
+      submitIcon="delete"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       info={{

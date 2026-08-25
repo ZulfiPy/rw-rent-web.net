@@ -61,7 +61,7 @@ function ReasonField({ value, error, onChange }: {
   onChange: (next: string) => void;
 }) {
   return (
-    <Field label="Reason" hint={REASON_HINT} error={error}>
+    <Field label="Reason" required hint={REASON_HINT} error={error}>
       <textarea
         className={f.control}
         data-invalid={!!error}
@@ -73,16 +73,17 @@ function ReasonField({ value, error, onChange }: {
   );
 }
 
-function DateTimeField({ label, value, error, hint, optional, onChange }: {
+function DateTimeField({ label, value, error, hint, required, optional, onChange }: {
   label: string;
   value: string;
   error?: string | undefined;
   hint?: string;
+  required?: boolean;
   optional?: boolean;
   onChange: (next: string) => void;
 }) {
   return (
-    <Field label={label} error={error} hint={hint} optional={optional}>
+    <Field label={label} error={error} hint={hint} required={required} optional={optional}>
       <input
         type="datetime-local"
         className={f.control}
@@ -94,16 +95,17 @@ function DateTimeField({ label, value, error, hint, optional, onChange }: {
   );
 }
 
-function EnumSelect<T extends number>({ label, value, options, labels, error, onChange }: {
+function EnumSelect<T extends number>({ label, value, options, labels, error, required, onChange }: {
   label: string;
   value: T;
   options: readonly T[];
   labels: Record<T, string>;
   error?: string | undefined;
+  required?: boolean;
   onChange: (next: T) => void;
 }) {
   return (
-    <Field label={label} error={error}>
+    <Field label={label} error={error} required={required}>
       <select
         className={f.control}
         data-invalid={!!error}
@@ -159,14 +161,14 @@ function Edit({ assignment: a, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <Field label="Customer" error={m.fields['customerId']}>
+      <Field label="Customer" required error={m.fields['customerId']}>
         <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
             <option key={c.id} value={c.id}>{c.displayName}{c.isActive ? '' : ' · inactive'}</option>
           ))}
         </select>
       </Field>
-      <Field label="Vehicle" error={m.fields['vehicleId']}>
+      <Field label="Vehicle" required error={m.fields['vehicleId']}>
         <select className={f.control} data-invalid={!!m.fields['vehicleId']} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
           {(vehicles.data?.items ?? []).map((v) => (
             <option key={v.id} value={v.id}>{v.plateNumber} · {v.make} {v.model}</option>
@@ -222,7 +224,7 @@ function Activate({ assignment: a, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <DateTimeField label="Actual start" value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      <DateTimeField label="Actual start" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
       <DialogNote icon={open.length ? 'group' : 'group_off'}>
         {open.length
           ? `Currently authorized: ${open.map((z) => (z.authorizationType === AssignmentDriverAuthorizationType.BusinessCustomerDrivers ? 'Company-authorized drivers' : 'a named driver')).join(', ')}. A valid authorization already exists, so none is created here.`
@@ -257,7 +259,7 @@ function End({ assignment: a, onClose }: Common) {
       onRefresh={m.refresh}
       footnote={openInts.length ? 'End the open interruption before ending this assignment.' : undefined}
     >
-      <DateTimeField label="Closed at" value={closedAt} error={m.fields['closedAtUtc']} onChange={setClosedAt} />
+      <DateTimeField label="Closed at" required value={closedAt} error={m.fields['closedAtUtc']} onChange={setClosedAt} />
       {openInts.length ? (
         <DialogNote icon="pause_circle">
           {openInts.length > 1
@@ -299,14 +301,15 @@ function Cancel({ assignment: a, onClose }: Common) {
         ? 'The planned rental is withdrawn. Cancelled is final.'
         : 'Only a mistaken activation may be cancelled — the vehicle must never have left the office.'}
       submitLabel="Cancel assignment"
-      submitTone="danger"
+      submitIcon="cancel"
+      submitTone="danger-solid"
       busy={m.busy}
       failure={m.failure}
       onClose={onClose}
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <DateTimeField label="Closed at" value={closedAt} error={m.fields['closedAtUtc']} onChange={setClosedAt} />
+      <DateTimeField label="Closed at" required value={closedAt} error={m.fields['closedAtUtc']} onChange={setClosedAt} />
       {wasPlanned ? null : (
         <Field label="Mistaken activation" group>
           <span className={f.choices}>
@@ -323,7 +326,7 @@ function Cancel({ assignment: a, onClose }: Common) {
         label={wasPlanned ? 'Cancellation note' : 'What happened'}
         hint={wasPlanned ? 'Kept with the record as a separate value.' : 'Required: the correction records why the activation was wrong.'}
         error={m.fields['note']}
-        optional={wasPlanned}
+        required
       >
         <textarea className={f.control} data-invalid={!!m.fields['note']} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
@@ -384,7 +387,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
         onChange={setType}
       />
       {collective ? null : (
-        <Field label="Driver" error={m.fields['driverId']}>
+        <Field label="Driver" required error={m.fields['driverId']}>
           <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (
@@ -393,9 +396,10 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
           </select>
         </Field>
       )}
-      <DateTimeField label="Authorized from" value={from} error={m.fields['authorizedFromUtc']} onChange={setFrom} />
+      <DateTimeField label="Authorized from" required value={from} error={m.fields['authorizedFromUtc']} onChange={setFrom} />
       <Field
         label="Note"
+        required={collective}
         optional={!collective}
         hint={collective ? 'Required: describe the agreed collective coverage.' : undefined}
         error={m.fields['note']}
@@ -461,9 +465,10 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <DateTimeField label="Stopped at" value={stoppedAt} error={m.fields['stoppedAtUtc']} onChange={setStoppedAt} />
+      <DateTimeField label="Stopped at" required value={stoppedAt} error={m.fields['stoppedAtUtc']} onChange={setStoppedAt} />
       <EnumSelect
         label="Stop reason"
+        required
         value={reason}
         options={STOP_REASONS}
         labels={STOP_REASON_LABEL}
@@ -472,6 +477,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       />
       <Field
         label="Reason details"
+        required={reason === AuthorizationStopReason.Other}
         optional={reason !== AuthorizationStopReason.Other}
         hint={reason === AuthorizationStopReason.Other ? 'Required when the reason is Other.' : undefined}
         error={m.fields['note']}
@@ -501,6 +507,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
         <>
           <EnumSelect
             label="Replacement authorization"
+            required
             value={replacementType}
             options={businessCustomer
               ? [AssignmentDriverAuthorizationType.NamedDriver, AssignmentDriverAuthorizationType.BusinessCustomerDrivers]
@@ -510,7 +517,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
             onChange={setReplacementType}
           />
           {collectiveReplacement ? null : (
-            <Field label="Replacement driver" error={m.fields['driverId']}>
+            <Field label="Replacement driver" required error={m.fields['driverId']}>
               <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
                 <option value="">Select a driver</option>
                 {(drivers.data?.items ?? []).map((d) => (
@@ -521,6 +528,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
           )}
           <Field
             label="Replacement note"
+            required={collectiveReplacement}
             optional={!collectiveReplacement}
             hint={collectiveReplacement ? 'Required: describe the agreed collective coverage.' : undefined}
           >
@@ -580,6 +588,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
     >
       <EnumSelect
         label="Authorization"
+        required
         value={type}
         options={businessCustomer
           ? [AssignmentDriverAuthorizationType.NamedDriver, AssignmentDriverAuthorizationType.BusinessCustomerDrivers]
@@ -589,7 +598,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
         onChange={setType}
       />
       {collective ? null : (
-        <Field label="Driver" error={m.fields['driverId']}>
+        <Field label="Driver" required error={m.fields['driverId']}>
           <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (
@@ -674,7 +683,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       onRefresh={m.refresh}
       footnote="An interruption belongs to the assignment as a whole. It stops no authorization and changes no status."
     >
-      <DateTimeField label="Started at" value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      <DateTimeField label="Started at" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
       <DateTimeField
         label="Ended at"
         value={endedAt}
@@ -685,6 +694,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       />
       <EnumSelect
         label="Reason"
+        required
         value={reasonCode}
         options={INTERRUPTION_REASONS}
         labels={INTERRUPTION_REASON_LABEL}
@@ -693,6 +703,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       />
       <EnumSelect
         label="Billing impact"
+        required
         value={billing}
         options={BILLING_IMPACTS}
         labels={BILLING_IMPACT_LABEL}
@@ -701,6 +712,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       />
       <Field
         label="Note"
+        required
         hint={reasonCode === InterruptionReason.Other
           ? 'Required: explain the reason the predefined values do not cover.'
           : 'Required: every interruption carries a note.'}
@@ -738,7 +750,7 @@ function InterruptionEnd({ assignment: a, onClose, interruption: i }: Common & {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <DateTimeField label="Ended at" value={endedAt} error={m.fields['endedAtUtc']} onChange={setEndedAt} />
+      <DateTimeField label="Ended at" required value={endedAt} error={m.fields['endedAtUtc']} onChange={setEndedAt} />
       <DialogNote icon="play_circle">
         Ending the interruption returns the assignment to normal use. The assignment itself can only
         be ended once every interruption is closed.

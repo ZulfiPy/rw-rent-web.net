@@ -35,6 +35,9 @@ substituting something plausible.
   creation; where the trail has no stored `Driver.Created`, the panel synthesizes the row from
   `createdAtUtc`. The prototype attributes that synthetic row to a seeded creator, which no API
   field carries — the port shows the actor as "Not recorded".
+- **The driver picker's sub-line is the email.** The prototype's named-driver picker labels each
+  chosen driver with their licence number; the driver list projection carries no licence, and the
+  picker reads one list rather than one record per driver, so the row's sub-line is the email.
 - **The identifier row's copy has no toast.** The prototype confirms a copied identifier with a
   toast; there is no toast surface in the port, so the button reports "Copied" itself for two seconds.
 - Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
@@ -231,6 +234,12 @@ group: the Company's legal identity, address and record panels with its edit and
 its first-run setup state, and the protected transfer of the single administrator account —
 initiate, rotate and resend, cancel, each password- or reason-confirmed and audited.
 
+**New rental assignment** is the assignments list's own write: the prototype's 700px create dialog —
+parties, the initial lifecycle state, the timeline that state implies, the driver-coverage block with
+its three modes and named-driver picker, and the assignment note. A Planned assignment may be saved
+without a driver; an Active one may not, and the footer says so before the button refuses. The
+created record opens on success, as in the prototype.
+
 The **vehicle**, **customer** and **driver** records follow: specifications, identity, contact and
 driver-link panels, the rental history and authorization-period tables in the prototype's order, and
 the record's own writes — edit, activate, deactivate, and create from each list header. A
@@ -257,10 +266,6 @@ else — the entry page then shows the raw payload instead of guessing.
 Found in the four-viewport re-audit and deliberately left for a next pass, so nothing here is a
 silent divergence:
 
-- **New rental assignment.** The prototype's assignments header carries `New assignment` opening a
-  700px create dialog (parties, initial status, timeline, driver coverage, note). The api
-  (`createAssignment`), mock handler, failure map and validation codes are all in place; only the
-  header action and the dialog are missing.
 - **Clear filters.** The prototype shows a `Clear filters` button in the list toolbar while a search
   term is set, resetting search and every filter. No list page offers it yet.
 - **More filters row.** The prototype opens the extra filters as a shaded grid below the toolbar with
