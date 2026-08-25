@@ -49,6 +49,9 @@ function CompanyForm({ company, onClose }: { company: CompanyResponse | null; on
   return (
     <Dialog
       title={editing ? 'Edit Company profile' : 'Create operating Company'}
+      icon="apartment"
+      tone="accent"
+      width={640}
       description={editing
         ? undefined
         : 'There is exactly one operating Company. Setup completes once the first non-expiring Company Principal is activated.'}
@@ -102,6 +105,9 @@ function DeleteCompany({ company, onClose }: { company: CompanyResponse; onClose
   return (
     <Dialog
       title="Delete Company"
+      icon="delete"
+      tone="bad"
+      width={520}
       description="Only possible while the Company is completely unreferenced."
       submitLabel="Delete Company"
       submitTone="danger"

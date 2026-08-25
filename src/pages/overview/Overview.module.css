@@ -94,8 +94,7 @@
   border-top: none;
   min-width: 0;
 }
-.row:last-child { border-bottom: none; }
-.link:hover { background: var(--surface-2); text-decoration: none; }
+.link:hover { background: var(--surface-2); color: var(--fg); text-decoration: none; }
 .tile {
   display: flex;
   align-items: center;

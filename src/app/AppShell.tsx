@@ -324,7 +324,7 @@ export function AppShell({ companyName }: { companyName: string }) {
                       {header.badges?.length ? (
                         <span className={styles.badges}>
                           {header.badges.map((b) => (
-                            <Chip key={b.label} tone={b.tone} dot={b.dot}>{b.label}</Chip>
+                            <Chip key={b.label} tone={b.tone} dot={b.dot} size="badge">{b.label}</Chip>
                           ))}
                         </span>
                       ) : null}

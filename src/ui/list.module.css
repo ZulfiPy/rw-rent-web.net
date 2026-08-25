@@ -4,7 +4,7 @@
   max-width: 100%;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--sh-1);
   overflow: hidden;
 }

@@ -1,19 +1,20 @@
+/* Two sizes, both the prototype's: the page-header action, and the panel/row action (`small`). */
 .button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
+  gap: 8px;
+  padding: 9px 14px;
   border: 1px solid var(--line-2);
   border-radius: 9px;
   background: var(--surface-2);
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--fg-2);
   white-space: nowrap;
 }
 .button:hover:not(:disabled) { border-color: var(--line-3); color: var(--fg); }
 .button:disabled { opacity: .45; cursor: not-allowed; }
-.icon { font-size: 17px; }
+.icon { font-size: 18px; }
 
 .button[data-tone='primary'] { background: var(--btn); border-color: transparent; color: var(--btn-fg); }
 .button[data-tone='primary']:hover:not(:disabled) { background: var(--btn-hover); color: var(--btn-fg); }
@@ -24,6 +25,19 @@
 .button[data-tone='ghost'] { background: transparent; border-color: transparent; color: var(--fg-3); }
 .button[data-tone='ghost']:hover:not(:disabled) { color: var(--fg); background: var(--surface-2); }
 
-.small { padding: 5px 9px; font-size: 12px; }
-.iconOnly { gap: 0; padding: 9px; }
-.iconOnly.small { padding: 8px; }
+.small { gap: 7px; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; }
+.small .icon { font-size: 16px; }
+
+/* A folded row's actions: the prototype's 36px ghost square, tinted only on hover. */
+.button.iconOnly {
+  gap: 0;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+}
+.button.iconOnly:hover:not(:disabled) { background: var(--surface-3); border-color: var(--line-2); }
+.button.iconOnly .icon { font-size: 17px; }
+.button.iconOnly.small { width: 32px; height: 32px; }

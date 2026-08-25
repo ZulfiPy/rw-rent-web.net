@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { qk } from '@/api';
 import { listUsers } from '@/api/users';
 import {
@@ -8,7 +7,7 @@ import {
 } from '@/api/systemAdministrator';
 import { ApplicationUserRole, type SystemAdministratorTransferResponse, type Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { formatUtc } from '@/format';
+import { formatUtcLabelled } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useNarrow } from '@/app/useViewport';
@@ -73,6 +72,9 @@ function Initiate({ onClose }: { onClose: () => void }) {
   return (
     <Dialog
       title="Transfer System Administrator"
+      icon="admin_panel_settings"
+      tone="warn"
+      width={580}
       description="Names another confirmed account as the next System Administrator."
       submitLabel="Initiate transfer"
       busy={m.busy}
@@ -124,6 +126,9 @@ function Resend({ transferId, onClose }: { transferId: Uuid; onClose: () => void
   return (
     <Dialog
       title="Rotate and resend"
+      icon="forward_to_inbox"
+      tone="info"
+      width={480}
       description="Issues a fresh single-use token and invalidates the previous one."
       submitLabel="Rotate and resend"
       busy={m.busy}
@@ -151,6 +156,9 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
   return (
     <Dialog
       title="Cancel transfer"
+      icon="cancel"
+      tone="bad"
+      width={520}
       description="Withdraws the pending transfer and invalidates its token."
       submitLabel="Cancel transfer"
       submitTone="danger"
@@ -207,7 +215,6 @@ export function SystemAdministrator() {
     ? `${admin.firstName} ${admin.lastName}`
     : me ? `${me.firstName} ${me.lastName}` : '—';
   const adminEmail = admin?.email ?? me?.email ?? '—';
-  const adminId = admin?.id ?? me?.id ?? null;
   const person = (id: Uuid) => people.find((u) => u.id === id) ?? null;
 
   const state = (t: SystemAdministratorTransferResponse) => (t.acceptedAtUtc
@@ -239,15 +246,9 @@ export function SystemAdministrator() {
         noteIcon="terminal"
       >
         <FactGrid>
-          <Fact label="Name">
-            {adminId && can('Users.ReadDirectory')
-              ? <Link to={`/users/${adminId}`}>{adminName}</Link>
-              : adminName}
-          </Fact>
+          <Fact label="Name">{adminName}</Fact>
           <Fact label="Email">{adminEmail}</Fact>
-          <Fact label="Since" mono={!!admin?.createdAtUtc} dim>
-            {admin?.createdAtUtc ? formatUtc(admin.createdAtUtc) : 'Not recorded'}
-          </Fact>
+          <Fact label="Since" mono dim>{formatUtcLabelled(admin?.createdAtUtc)}</Fact>
         </FactGrid>
       </Panel>
 
@@ -299,13 +300,13 @@ export function SystemAdministrator() {
                           </span>
                           <span className={table.sub}>{target?.email ?? ''}</span>
                           <span className={`${table.subMono} ${table.showTablet}`}>
-                            expires {formatUtc(t.expiresAtUtc)}
+                            expires {formatUtcLabelled(t.expiresAtUtc)}
                           </span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.mono}`}>{formatUtc(t.initiatedAtUtc)}</td>
+                      <td className={`${table.td} ${table.mono}`}>{formatUtcLabelled(t.initiatedAtUtc)}</td>
                       <td className={`${table.td} ${table.mono} ${table.dim} ${table.foldTablet}`}>
-                        {formatUtc(t.expiresAtUtc)}
+                        {formatUtcLabelled(t.expiresAtUtc)}
                       </td>
                       <td className={table.td}>
                         <Chip tone={s.tone} dot={s.dot}>{s.label}</Chip>

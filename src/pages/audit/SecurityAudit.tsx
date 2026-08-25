@@ -99,7 +99,7 @@ export function SecurityAudit() {
             aria-expanded={more}
             onClick={() => patch({ more: more ? '' : '1', ...(more ? { target: '' } : {}) })}
           >
-            <span data-icon aria-hidden="true">tune</span>More filters
+            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>More filters
           </button>
           {more ? (
             <SelectFilter

@@ -69,6 +69,9 @@ function CorrectName({ user, onClose }: Common) {
   return (
     <Dialog
       title="Correct name"
+      icon="shield"
+      tone="warn"
+      width={560}
       description="A privileged correction. The recorded name changes and the reason is audited."
       submitLabel="Save correction"
       submitTone="warn"
@@ -148,6 +151,9 @@ function Activate({ user, onClose }: Common) {
   return (
     <Dialog
       title="Activate registration"
+      icon="how_to_reg"
+      tone="ok"
+      width={600}
       description={`Assigns the Company, Active status and initial roles to ${user.firstName} ${user.lastName}.`}
       submitLabel="Activate account"
       busy={m.busy}
@@ -221,6 +227,9 @@ function Decision({ user, onClose, kind }: Common & { kind: 'reject' | 'reopen' 
   return (
     <Dialog
       title={reject ? 'Reject registration' : 'Reopen registration'}
+      icon={reject ? 'person_off' : 'restart_alt'}
+      tone={reject ? 'bad' : 'info'}
+      width={540}
       description={reject
         ? 'The applicant is told their registration was not approved. The reason stays internal.'
         : 'The registration returns to pending. An unconfirmed email gets a fresh seven-day window.'}
@@ -249,6 +258,9 @@ function Lifecycle({ user, onClose, kind }: Common & { kind: 'suspend' | 'restor
   return (
     <Dialog
       title={suspend ? 'Suspend account' : 'Restore account'}
+      icon={suspend ? 'lock_person' : 'lock_open'}
+      tone={suspend ? 'bad' : 'ok'}
+      width={suspend ? 520 : 480}
       description={`${user.firstName} ${user.lastName} · ${user.email}`}
       submitLabel={suspend ? 'Suspend' : 'Restore'}
       submitTone={suspend ? 'danger' : 'primary'}
@@ -288,6 +300,9 @@ function RoleGrant({ user, onClose }: Common) {
   return (
     <Dialog
       title="Grant role"
+      icon="add_moderator"
+      tone="ok"
+      width={520}
       description="The grant is audited with its expiry. Granting a role the user already holds is refused."
       submitLabel="Grant role"
       busy={m.busy}
@@ -328,6 +343,9 @@ function RoleExpiry({ user, onClose, assignment }: Common & { assignment: RoleAs
   return (
     <Dialog
       title="Change expiry"
+      icon="schedule"
+      tone="info"
+      width={480}
       description={`${ROLE_LABEL[assignment.role]} · granted to ${user.firstName} ${user.lastName}`}
       submitLabel="Save expiry"
       busy={m.busy}
@@ -361,6 +379,9 @@ function RoleRevoke({ user, onClose, assignment }: Common & { assignment: RoleAs
   return (
     <Dialog
       title="Revoke role"
+      icon="remove_moderator"
+      tone="bad"
+      width={520}
       description={`${ROLE_LABEL[assignment.role]} · granted to ${user.firstName} ${user.lastName}`}
       submitLabel="Revoke role"
       submitTone="danger"
@@ -389,6 +410,9 @@ function SessionRevoke({ user, onClose, session }: Common & { session: SessionRe
   return (
     <Dialog
       title="Revoke session"
+      icon="no_accounts"
+      tone="bad"
+      width={460}
       description={session.deviceDescription ?? 'This session'}
       submitLabel="Revoke session"
       submitTone="danger"
@@ -417,6 +441,9 @@ function SessionRevokeAll({ user, onClose }: Common) {
   return (
     <Dialog
       title="Force sign out"
+      icon="no_accounts"
+      tone="bad"
+      width={500}
       description={`Every active session for ${user.firstName} ${user.lastName} ends.`}
       submitLabel="Force sign out"
       submitTone="danger"

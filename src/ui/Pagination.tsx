@@ -35,24 +35,26 @@ export function Pagination<T>({ page, onPage, onPageSize }: {
         </span>
       </label>
 
+      <div className={styles.spacer} />
+
       <div className={styles.pager}>
         <button
           type="button"
           className={styles.step}
+          aria-label="Previous page"
           onClick={() => onPage(pageNumber - 1)}
           disabled={pageNumber <= 1}
         >
           <span data-icon aria-hidden="true">chevron_left</span>
-          <span className={styles.stepLabel}>Previous</span>
         </button>
         <span className={styles.page}>{pageNumber} / {totalPages}</span>
         <button
           type="button"
           className={styles.step}
+          aria-label="Next page"
           onClick={() => onPage(pageNumber + 1)}
           disabled={pageNumber >= totalPages}
         >
-          <span className={styles.stepLabel}>Next</span>
           <span data-icon aria-hidden="true">chevron_right</span>
         </button>
       </div>

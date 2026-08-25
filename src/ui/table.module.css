@@ -16,7 +16,6 @@
 }
 .right { text-align: right; }
 .row { border-bottom: 1px solid var(--line); }
-.row:last-child { border-bottom: none; }
 .row:hover { background: var(--surface-2); }
 .td { padding: 11px 14px; vertical-align: middle; font-size: 13px; color: var(--fg-2); }
 .stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -70,12 +69,12 @@
 @media (max-width: 1279px) {
   .foldWide { display: none; }
   .showWide { display: block; }
-  .tightWide .th, .tightWide .td { padding-left: 10px; padding-right: 10px; }
+  .tightWide .th, .tightWide .td { padding: 9px; }
 }
 @media (max-width: 1023px) {
   .foldTablet, .foldNarrow { display: none; }
   .showTablet, .showNarrow { display: block; }
-  .th, .td { padding-left: 10px; padding-right: 10px; }
+  .th, .td { padding: 9px; }
   /* Portrait runs fixed layout (per screen), so a long value ellipsises inside its cell instead of
      widening the table past the card. */
   .td, .th { overflow: hidden; text-overflow: ellipsis; }

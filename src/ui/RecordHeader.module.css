@@ -45,11 +45,12 @@
 @media (max-width: 1279px) {
   .facts { flex: 1 1 100%; }
 }
-/* Card tier: actions go full width and each button fills its row. */
-@media (max-width: 1023px) {
+/* Card tier: actions go full width, each button fills its row, facts drop to two up. */
+@media (max-width: 767px) {
   .heroActions { width: 100%; }
   .heroActions > * { flex: 1 1 100%; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 767px) {
+@media (max-width: 639px) {
   .facts { grid-template-columns: 1fr; }
 }

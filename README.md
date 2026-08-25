@@ -251,3 +251,23 @@ expiry input.
 Audit payloads are parsed by `format/auditPayload.ts`, which follows the documented shape (flat
 PascalCase objects, changed keys only, `Roles` as an array of grants) and returns null for anything
 else — the entry page then shows the raw payload instead of guessing.
+
+## Known gaps against the prototype
+
+Found in the four-viewport re-audit and deliberately left for a next pass, so nothing here is a
+silent divergence:
+
+- **New rental assignment.** The prototype's assignments header carries `New assignment` opening a
+  700px create dialog (parties, initial status, timeline, driver coverage, note). The api
+  (`createAssignment`), mock handler, failure map and validation codes are all in place; only the
+  header action and the dialog are missing.
+- **Clear filters.** The prototype shows a `Clear filters` button in the list toolbar while a search
+  term is set, resetting search and every filter. No list page offers it yet.
+- **More filters row.** The prototype opens the extra filters as a shaded grid below the toolbar with
+  a label above each control; the port appends them into the toolbar as more chips. Vehicles' two
+  extra filters (gearbox, manufacturing year) are not ported at all.
+- **Dialog field grids.** The prototype groups dialog fields into labelled sections, two columns
+  where the section says so; the port stacks every field in one column.
+- **Panel-table row actions** are the prototype's transparent, tone-coloured buttons at wide widths
+  in the prototype and tone-filled here; and adjacent record panels sit 16px apart instead of 14px
+  (the port has one page stack where the prototype has a stack plus an inner panel grid).

@@ -147,6 +147,9 @@ function VehicleForm({ vehicle, onClose }: { vehicle: VehicleResponse | null; on
   return (
     <Dialog
       title={editing ? 'Edit vehicle' : 'Add vehicle'}
+      icon="directions_car"
+      tone="accent"
+      width={620}
       description="All fields are required."
       submitLabel={editing ? 'Save changes' : 'Create vehicle'}
       busy={m.busy}
@@ -231,6 +234,9 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
   return (
     <Dialog
       title={editing ? 'Edit customer' : 'Add customer'}
+      icon="contacts"
+      tone="accent"
+      width={640}
       description="Identity fields depend on the customer type."
       submitLabel={editing ? 'Save changes' : 'Create customer'}
       busy={m.busy}
@@ -350,6 +356,9 @@ function DriverForm({ driver, onClose }: { driver: DriverResponse | null; onClos
   return (
     <Dialog
       title={editing ? 'Edit driver' : 'Add driver'}
+      icon="badge"
+      tone="accent"
+      width={620}
       submitLabel={editing ? 'Save changes' : 'Create driver'}
       busy={m.busy}
       failure={m.failure}
@@ -445,6 +454,9 @@ function Toggle({ kind, id, label, isActive, blockers, onClose }: {
   return (
     <Dialog
       title={`${isActive ? 'Deactivate' : 'Activate'} ${kind}`}
+      icon={isActive ? 'toggle_off' : 'toggle_on'}
+      tone={isActive ? 'bad' : 'ok'}
+      width={480}
       description={`${label} ${isActive ? 'will stop being selectable for new assignments.' : 'becomes selectable again.'}`}
       submitLabel={isActive ? 'Deactivate' : 'Activate'}
       submitTone={isActive ? 'danger' : 'primary'}

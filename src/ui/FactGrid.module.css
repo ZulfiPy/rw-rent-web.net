@@ -1,39 +1,45 @@
-/* The prototype's fact grid: five cells across a panel, wrapping onto further rows. A cell can take
-   two columns or the whole row when its value is long. Phone stacks them. */
+/* The prototype's fact grid: auto-fit tracks of at least 210px, so three facts fill the panel
+   rather than leaving empty tracks. A cell can take two columns or the whole row when its value is
+   long. Two up below 1024, stacked below 640. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1px;
   background: var(--line);
-  border-top: 1px solid var(--line);
 }
 .cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
-  padding: 11px 14px;
+  padding: 13px 17px;
   background: var(--surface);
 }
 .span2 { grid-column: span 2; }
 .full { grid-column: 1 / -1; }
 .label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .12em;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--fg-4);
 }
-.value { font-size: 13px; color: var(--fg); text-wrap: pretty; }
-.mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-2); word-break: break-word; }
-.dim { color: var(--fg-4); }
+.value { font-size: 13.5px; color: var(--fg); white-space: pre-line; word-break: break-word; text-wrap: pretty; }
+.mono {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--fg);
+  white-space: pre-line;
+  word-break: break-word;
+}
+.dim { color: var(--fg-3); }
 .hint { font-size: 11.5px; color: var(--fg-4); }
 .pre { white-space: pre-wrap; }
 
 @media (max-width: 1023px) {
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 767px) {
+@media (max-width: 639px) {
   .grid { grid-template-columns: 1fr; }
   .span2, .full { grid-column: 1 / -1; }
 }

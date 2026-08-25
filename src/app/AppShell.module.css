@@ -295,7 +295,7 @@
   .content { padding: 16px; }
 }
 /* Phone: the prototype turns the header row into a column, so actions sit under the title. */
-@media (max-width: 767px) {
+@media (max-width: 639px) {
   .headerRow { flex-direction: column; gap: 12px; }
   .titleBlock { min-width: 0; }
 }

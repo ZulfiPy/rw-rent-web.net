@@ -148,6 +148,9 @@ function Edit({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="Edit assignment"
+      icon="edit"
+      tone="accent"
+      width={680}
       description="Planned dates, the parties and the note. Actual handover and closure are lifecycle events."
       submitLabel="Save changes"
       busy={m.busy}
@@ -205,6 +208,8 @@ function Activate({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="Activate assignment"
+      icon="play_circle"
+      tone="ok"
       description={`The vehicle is handed over to ${a.customerDisplayName}.`}
       submitLabel="Activate"
       busy={m.busy}
@@ -240,6 +245,9 @@ function End({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="End assignment"
+      icon="stop_circle"
+      tone="mute"
+      width={520}
       description="Closes the assignment. Open driver authorizations are stopped by the backend."
       submitLabel="End assignment"
       busy={m.busy}
@@ -285,6 +293,8 @@ function Cancel({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="Cancel assignment"
+      icon="cancel"
+      tone="bad"
       description={wasPlanned
         ? 'The planned rental is withdrawn. Cancelled is final.'
         : 'Only a mistaken activation may be cancelled — the vehicle must never have left the office.'}
@@ -352,6 +362,9 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
   return (
     <Dialog
       title="Add authorized driver"
+      icon="person_add"
+      tone="ok"
+      width={660}
       description="Authorization is explicit history: it never follows the customer automatically."
       submitLabel="Authorize"
       busy={m.busy}
@@ -436,6 +449,9 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
   return (
     <Dialog
       title="Stop authorization"
+      icon="person_remove"
+      tone="warn"
+      width={600}
       description="Stopping records the period; it never reopens and never changes the assignment."
       submitLabel="Stop authorization"
       submitTone="warn"
@@ -549,6 +565,9 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
   return (
     <Dialog
       title="Correct authorization"
+      icon="shield"
+      tone="warn"
+      width={580}
       description="A privileged correction of coverage history. The record is never deleted or reopened."
       submitLabel="Save correction"
       submitTone="warn"
@@ -642,6 +661,9 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
   return (
     <Dialog
       title={correct ? 'Correct interruption' : interruption ? 'Edit interruption' : historic ? 'Record past interruption' : 'Record interruption'}
+      icon={correct ? 'shield' : 'pause_circle'}
+      tone={correct ? 'warn' : 'accent'}
+      width={640}
       description="A period where normal use paused. The billing impact is recorded per interruption."
       submitLabel={correct ? 'Save correction' : interruption ? 'Save changes' : 'Record interruption'}
       submitTone={correct ? 'warn' : 'primary'}
@@ -705,6 +727,9 @@ function InterruptionEnd({ assignment: a, onClose, interruption: i }: Common & {
   return (
     <Dialog
       title="End interruption"
+      icon="play_circle"
+      tone="ok"
+      width={460}
       description={INTERRUPTION_REASON_LABEL[i.reason]}
       submitLabel="End interruption"
       busy={m.busy}
@@ -746,6 +771,9 @@ function CorrectParties({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="Correct parties"
+      icon="shield"
+      tone="warn"
+      width={620}
       description="Repairs a wrongly recorded customer or vehicle. Overlap, eligibility and coverage rules still apply."
       submitLabel="Save correction"
       submitTone="warn"
@@ -801,6 +829,9 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
   return (
     <Dialog
       title="Correct timeline"
+      icon="shield"
+      tone="warn"
+      width={680}
       description="Repairs wrongly recorded planned or actual timestamps. Status is never assigned here."
       submitLabel="Save correction"
       submitTone="warn"

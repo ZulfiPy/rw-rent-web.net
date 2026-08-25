@@ -47,7 +47,7 @@ export function RecordHeader({
 
   return (
     <div className={styles.hero}>
-      {chip ? <Chip tone={chip.tone} dot={chip.dot}>{chip.label}</Chip> : null}
+      {chip ? <Chip tone={chip.tone} dot={chip.dot} size="hero">{chip.label}</Chip> : null}
       {children ? <div className={styles.facts}>{children}</div> : null}
       {actions ? <div className={styles.heroActions}>{actions}</div> : null}
     </div>

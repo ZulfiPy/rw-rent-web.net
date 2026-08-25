@@ -15,7 +15,10 @@ export function EmptyState({ icon, title, body, code, onRetry }: {
       <p className={styles.body}>{body}</p>
       {code ? <p className={styles.code}>{code}</p> : null}
       {onRetry ? (
-        <button type="button" className={styles.retry} onClick={onRetry}>Try again</button>
+        <button type="button" className={styles.retry} onClick={onRetry}>
+          <span data-icon aria-hidden="true" className={styles.retryIcon}>refresh</span>
+          Try again
+        </button>
       ) : null}
     </div>
   );

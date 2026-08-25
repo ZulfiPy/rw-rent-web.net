@@ -64,12 +64,19 @@ function InfoBanner({ title, body }: { title: string; body: string }) {
   );
 }
 
+/** The prototype's dialog tones, driving the tinted glyph in the header. */
+export type DialogTone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'accent';
+
 export function Dialog({
-  title, description, submitLabel, submitTone = 'primary', busy, failure, children, info, footnote,
-  onClose, onSubmit, onRefresh,
+  title, description, icon, tone = 'accent', width = 560, submitLabel, submitTone = 'primary', busy,
+  failure, children, info, footnote, onClose, onSubmit, onRefresh,
 }: {
   title: string;
   description?: string;
+  icon?: string;
+  tone?: DialogTone;
+  /** The prototype gives each dialog its own width; 560 is its default. */
+  width?: number;
   submitLabel: string;
   submitTone?: ButtonTone;
   busy: boolean;
@@ -91,8 +98,11 @@ export function Dialog({
 
   return (
     <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={styles.panel} role="dialog" aria-modal="true" aria-label={title}>
+      <div className={styles.panel} style={{ maxWidth: width }} role="dialog" aria-modal="true" aria-label={title}>
         <div className={styles.head}>
+          {icon ? (
+            <span data-icon aria-hidden="true" className={styles.headIcon} data-tone={tone}>{icon}</span>
+          ) : null}
           <div className={styles.heading}>
             <h2 className={styles.title}>{title}</h2>
             {description ? <p className={styles.desc}>{description}</p> : null}
@@ -109,10 +119,11 @@ export function Dialog({
           {info ? <InfoBanner title={info.title} body={info.body} /> : null}
           {children}
           {failure ? <FailureBanner failure={failure} onRefresh={onRefresh} /> : null}
-          {footnote ? <span className={styles.footnote}>{footnote}</span> : null}
         </form>
 
         <div className={styles.footer}>
+          {footnote ? <span className={styles.footnote}>{footnote}</span> : null}
+          <span className={styles.spacer} />
           <Button label="Cancel" tone="ghost" onClick={onClose} />
           <Button
             label={submitLabel}
