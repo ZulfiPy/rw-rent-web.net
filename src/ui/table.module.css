@@ -61,18 +61,21 @@
 .skeletonWide { width: 70%; }
 .skeletonNarrow { width: 45%; }
 
-/* Column folding. `foldTablet` is gone for the whole tablet band; `foldNarrow` only in portrait.
+/* Column folding, in the prototype's bands. `isTightTable()` is 768–1023: below 768 a list is
+   cards, above 1023 every column fits. Two lists opt into a wider band (the prototype's
+   `tightMax:1280` on Vehicles and Security audit) with `foldWide` + `tightWide`.
    Each `show*` utility pairs with the fold at the same breakpoint: what leaves a column of its own
    arrives as a sub-line in the column that stays. */
-.showTablet, .showNarrow { display: none; }
+.showTablet, .showNarrow, .showWide { display: none; }
 @media (max-width: 1279px) {
-  .foldTablet { display: none; }
-  .showTablet { display: block; }
-  .th, .td { padding-left: 10px; padding-right: 10px; }
+  .foldWide { display: none; }
+  .showWide { display: block; }
+  .tightWide .th, .tightWide .td { padding-left: 10px; padding-right: 10px; }
 }
 @media (max-width: 1023px) {
-  .foldNarrow { display: none; }
-  .showNarrow { display: block; }
+  .foldTablet, .foldNarrow { display: none; }
+  .showTablet, .showNarrow { display: block; }
+  .th, .td { padding-left: 10px; padding-right: 10px; }
   /* Portrait runs fixed layout (per screen), so a long value ellipsises inside its cell instead of
      widening the table past the card. */
   .td, .th { overflow: hidden; text-overflow: ellipsis; }

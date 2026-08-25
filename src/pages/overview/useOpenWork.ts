@@ -85,12 +85,13 @@ export function useOpenWork() {
    * Group order and within-group order are the prototype's rendered order: registrations, then open
    * interruptions, then imminent handovers. The prototype walks its in-memory collections, which the
    * API cannot express — so each group is ordered by the timestamp its rows are read against, in the
-   * direction that reproduces the prototype's list (registrations newest activity first,
-   * interruptions oldest open first).
+   * direction that reproduces the prototype's list (registrations by registration instant, newest
+   * first; interruptions oldest open first). A pending registration has no later activity, and the
+   * list projection carries no `updatedAtUtc` anyway.
    */
   const pending = (registrations.data?.items ?? [])
     .filter((u) => u.emailConfirmed)
-    .map((u) => ({ u, at: u.updatedAtUtc ?? u.createdAtUtc ?? '' }))
+    .map((u) => ({ u, at: u.createdAtUtc ?? '' }))
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
 
   for (const { u, at } of pending) {

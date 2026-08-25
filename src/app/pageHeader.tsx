@@ -14,6 +14,17 @@ export interface PageHeaderModel {
   /** Machine values (a plate number) are set in mono, as in the prototype's `titleMono`. */
   mono?: boolean | undefined;
   badges?: Array<{ label: string; tone: Tone; dot: string }> | undefined;
+  /** The prototype's `code`: one mono line under the title (personal identifier, licence number). */
+  code?: string | undefined;
+  /** The prototype's `pageId` row: the record's identifier with a copy button. */
+  pageId?: string | undefined;
+  /**
+   * The screen's primary actions, at the bar's trailing edge. Because the model is stored on an
+   * effect, `actionsKey` must name everything variable about them (labels, blocked reasons) —
+   * without it a changed action set would keep rendering the copy captured on the first pass.
+   */
+  actions?: ReactNode;
+  actionsKey?: string | undefined;
 }
 
 interface Store {
@@ -39,7 +50,10 @@ export function PageHeaderProvider({ children }: { children: (header: PageHeader
 
 export function usePageHeader(model: PageHeaderModel) {
   const { setHeader } = useContext(HeaderContext);
-  const key = JSON.stringify([model.crumbs, model.title, model.description, model.mono, model.badges]);
+  const key = JSON.stringify([
+    model.crumbs, model.title, model.description, model.mono, model.badges, model.code,
+    model.pageId, model.actionsKey,
+  ]);
   useEffect(() => {
     setHeader(model);
     // The serialized model is the dependency: a new object with identical content is not a change.

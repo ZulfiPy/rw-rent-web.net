@@ -1,24 +1,55 @@
-.facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px 20px;
-  min-width: 0;
-  padding: 13px 16px;
+/* The prototype's hero band: state chip, headline facts, lifecycle actions, one row. */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 17px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--sh-1);
 }
-.fact { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  flex: 1 1 auto;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+.heroActions { display: flex; flex-wrap: wrap; gap: 8px; width: auto; }
+
+.fact { display: flex; flex-direction: column; align-self: flex-start; gap: 1px; min-width: 0; }
 .factLabel {
-  font-family: var(--font-mono);
   font-size: 10.5px;
-  letter-spacing: .12em;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--fg-4);
 }
-.factValue { font-size: 13px; color: var(--fg); text-wrap: pretty; }
-.factMono { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-2); }
+/* The value block keeps its height whether or not the fact carries a sub-line, so the row's
+   baselines hold across facts. */
+.factBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 1px;
+  min-width: 0;
+  min-height: 32px;
+}
+.factValue { font-size: 13px; color: var(--fg); min-width: 0; overflow-wrap: anywhere; }
+.factMono { font-family: var(--font-mono); font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
+.factSub { font-size: 11.5px; color: var(--fg-3); }
 
+/* Tablet: the facts grid takes its own line above the actions, so it is never squeezed out. */
+@media (max-width: 1279px) {
+  .facts { flex: 1 1 100%; }
+}
+/* Card tier: actions go full width and each button fills its row. */
+@media (max-width: 1023px) {
+  .heroActions { width: 100%; }
+  .heroActions > * { flex: 1 1 100%; }
+}
 @media (max-width: 767px) {
   .facts { grid-template-columns: 1fr; }
 }

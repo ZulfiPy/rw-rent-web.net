@@ -1,0 +1,33 @@
+/* Shared column widths for the fleet records' history tables. The prototype's fixed layouts. */
+.history, .assignments, .audit { min-width: 0; }
+
+.colCustomer { width: 290px; }
+.colPlate { width: 190px; }
+.colStatus { width: 132px; }
+.colWhen { width: 150px; }
+.colType { width: 150px; }
+.colCoverage { width: auto; min-width: 190px; }
+.colLicence { width: 170px; }
+.colReason { width: auto; min-width: 200px; }
+.colEvent { width: 150px; }
+.colActor { width: 190px; }
+.colUtc { width: 170px; }
+.colChanged { width: auto; min-width: 260px; }
+
+@media (max-width: 1279px) {
+  .colCustomer { width: 220px; }
+  .colPlate { width: 160px; }
+  .colStatus { width: 124px; }
+  .colWhen { width: 140px; }
+  .colLicence { width: 150px; }
+  .colUtc { width: 150px; }
+}
+
+/* Portrait: fixed layout keeps each table inside its panel; folded columns move into the stack. */
+@media (max-width: 1023px) {
+  .history, .assignments, .audit { table-layout: fixed; }
+  .colCustomer { width: 170px; }
+  .colPlate { width: 140px; }
+  .colWhen { width: 136px; }
+  .colUtc { width: 146px; }
+}

@@ -10,6 +10,8 @@
   color: var(--fg);
 }
 .control:focus { outline: none; border-color: var(--line-3); }
+/* The prototype's `mono:true` inputs: plate numbers, VIN, identifiers, licence numbers. */
+.mono { font-family: var(--font-mono); }
 .control[data-invalid='true'] { border-color: var(--bad-line); background: var(--bad-soft); }
 textarea.control { min-height: 76px; resize: vertical; }
 .hint { font-size: 11.5px; color: var(--fg-4); }

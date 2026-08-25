@@ -26,25 +26,29 @@ substituting something plausible.
 - **Recent security activity is newest first.** The prototype shows `db.audit.slice(0, 5)` in seed
   order, which is not time-ordered (15 Jul sits between 13 Aug and 19 Aug) and contradicts the card's
   own title. The React card sorts by `occurredAtUtc` descending.
-- **The metric grid never leaves one card alone.** The prototype's `repeat(auto-fit, minmax(212px,
-  1fr))` fits five cards at 1440 and strands the sixth on its own row; when the last row would hold
-  exactly one card the column count drops by one (four and two). Cards keep the prototype's 212px
-  minimum track, and at widths where nothing would be stranded the layout is the prototype's.
 - **Needs attention group ordering.** Group order is the prototype's (registrations, then open
   interruptions, then handovers inside three days). Within a group the prototype walks its in-memory
-  collections in seed order, which the API cannot express — registrations are ordered by most recent
-  activity and interruptions by oldest open, the directions that reproduce the prototype's rendered
-  list. The panel keeps the prototype's "Sorted by how long the record has been waiting" subtitle.
-- Column folding: the prototype folds only in its tight band (768–1023, and to 1280 for Vehicles).
-  The delivered lists fold at 1279 as well, which is why the collapsed rail's extra width is not yet
-  used. Being fixed in the screen-by-screen pass.
+  collections in seed order, which the API cannot express — registrations are ordered by registration
+  instant, newest first, and interruptions by oldest open, the directions that reproduce the
+  prototype's rendered list. The panel keeps the prototype's "Sorted by how long the record has been
+  waiting" subtitle.
 - Company profile and System Administrator are in the prototype's Administration group but have no
   React screen yet, so they are not in the rail: a nav item that silently redirects is worse than one
   that is not there. They arrive with their screens.
+- **Fleet writes are not audited.** Vehicle, customer and driver edits are outside the backend's
+  audited set (security events, role and registration transitions, privileged corrections), so no
+  entry is written for them. The driver record's audit panel therefore usually holds only the
+  creation; where the trail has no stored `Driver.Created`, the panel synthesizes the row from
+  `createdAtUtc`. The prototype attributes that synthetic row to a seeded creator, which no API
+  field carries — the port shows the actor as "Not recorded".
+- **The identifier row's copy has no toast.** The prototype confirms a copied identifier with a
+  toast; there is no toast surface in the port, so the button reports "Copied" itself for two seconds.
 - Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
   screen; the authentication screens are Phase 3, so the mock ends the persona's session instead.
-- A record's state chip is in the shell's header bar next to the title (the prototype's
-  `pageBadges`); the record's own fact row keeps the headline facts below it.
+- A record's state badges are in the shell's header bar next to the title (the prototype's
+  `pageBadges`), along with the record's identifier row and its actions. The assignment and user
+  records keep the prototype's hero band below the bar: its state chip, headline facts and lifecycle
+  buttons in one row. Vehicle, customer and driver records have no hero band, as in the prototype.
 
 ## Layout
 
@@ -218,8 +222,14 @@ The **rental assignment record** is the first fleet record: summary, authorized 
 interruptions, and a corrections tab for System Administrator. Its writes are the assignment
 lifecycle (edit, activate, end, the ASSIGN-013 mistaken-activation cancel), authorization start and
 stop with same-operation replacement, interruption create / edit / end, and the four privileged
-corrections — timeline, parties, authorization, interruption. Vehicle, customer and driver records,
-and the create dialogs on each list, are the next delivery.
+corrections — timeline, parties, authorization, interruption.
+
+The **vehicle**, **customer** and **driver** records follow: specifications, identity, contact and
+driver-link panels, the rental history and authorization-period tables in the prototype's order, and
+the record's own writes — edit, activate, deactivate, and create from each list header. A
+deactivation that the record's own state refuses is disabled with the prototype's reason, and the
+confirmation lists what holds it (each planned or active assignment, or each open named-driver
+authorization). **Company profile** and the **System Administrator** console are the next delivery.
 
 Every mutation runs through one dialog layer: `ui/Dialog` renders the failure envelope (field
 messages under inputs, validation message above the footer, amber stale banner with Refresh — which

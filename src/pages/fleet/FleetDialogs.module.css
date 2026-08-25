@@ -1,0 +1,51 @@
+/* The prototype's dialog sections: an uppercase label with a rule, then the field grid. */
+.section { display: flex; flex-direction: column; gap: 12px; }
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+  white-space: nowrap;
+}
+.sectionTitle::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.grid { display: grid; gap: 13px; }
+.grid[data-cols='1'] { grid-template-columns: 1fr; }
+.grid[data-cols='2'] { grid-template-columns: 1fr 1fr; }
+.grid[data-cols='3'] { grid-template-columns: 1fr 1fr 1fr; }
+/* A textarea always takes the full row, as it does in the prototype's `span:'1 / -1'`. */
+.grid > label:has(textarea) { grid-column: 1 / -1; }
+
+/* Phone: the dialog is a sheet and every field takes the width. */
+@media (max-width: 767px) {
+  .grid[data-cols='2'], .grid[data-cols='3'] { grid-template-columns: 1fr; }
+}
+
+/** A value the operation cannot change — the customer type on edit, an inapplicable driver link. */
+.static {
+  margin: 0;
+  padding: 8px 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+.consequences {
+  margin: 0;
+  padding: 13px 15px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.consequence { font-size: 12.5px; color: var(--fg-2); text-wrap: pretty; }

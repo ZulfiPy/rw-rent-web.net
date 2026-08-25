@@ -13,8 +13,11 @@ import { InsuranceCases, Tasks } from './pages/simple/Placeholders';
 import { Assignments } from './pages/fleet/Assignments';
 import { AssignmentRecord } from './pages/fleet/AssignmentRecord';
 import { Vehicles } from './pages/fleet/Vehicles';
+import { VehicleRecord } from './pages/fleet/VehicleRecord';
 import { Customers } from './pages/fleet/Customers';
+import { CustomerRecord } from './pages/fleet/CustomerRecord';
 import { Drivers } from './pages/fleet/Drivers';
+import { DriverRecord } from './pages/fleet/DriverRecord';
 import { DevPanel } from './dev/DevPanel';
 import styles from './App.module.css';
 
@@ -56,8 +59,11 @@ export function App() {
             <Route path="/rental-assignments" element={<Assignments />} />
             <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
             <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/vehicles/:vehicleId" element={<VehicleRecord />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/customers/:customerId" element={<CustomerRecord />} />
             <Route path="/drivers" element={<Drivers />} />
+            <Route path="/drivers/:driverId" element={<DriverRecord />} />
             <Route path="/users" element={<UserDirectory />} />
             <Route path="/users/:userId" element={<UserRecord />} />
             <Route path="/registrations" element={<Registrations />} />

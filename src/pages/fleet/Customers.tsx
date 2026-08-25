@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listCustomers } from '@/api/customers';
 import { CustomerType, type CustomersQuery } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { CUSTOMER_TYPE_LABEL } from '@/format';
 import { useTier } from '@/app/useViewport';
+import { useAccess } from '@/permissions/usePermissions';
+import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { SelectFilter, type FilterOption } from '@/ui/Filters';
@@ -15,6 +18,7 @@ import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
 import table from '@/ui/table.module.css';
+import { FleetDialogs, type FleetDialogState } from './FleetDialogs';
 import styles from './Customers.module.css';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -33,7 +37,10 @@ const STATE_OPTIONS: FilterOption[] = [
 
 export function Customers() {
   const [params, setParams] = useSearchParams();
+  const { can } = useAccess();
   const phone = useTier() === 'phone';
+  const canManage = can('Customers.Manage');
+  const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
   const type = params.get('type') ?? '';
   const active = params.get('active') ?? '';
@@ -72,6 +79,10 @@ export function Customers() {
       <PageHeader
         title="Customers"
         description="Who rents: businesses under a framework agreement and private individuals."
+        actionsKey={String(canManage)}
+        actions={canManage ? (
+          <Button label="Add customer" icon="add" tone="primary" onClick={() => setDialog({ kind: 'customer-create' })} />
+        ) : undefined}
       />
 
       <section className={list.panel}>
@@ -108,7 +119,7 @@ export function Customers() {
               <div key={c.id} className={cards.card}>
                 <div className={cards.head}>
                   <span className={cards.heading}>
-                    <span className={cards.title}>{c.displayName}</span>
+                    <Link to={`/customers/${c.id}`} className={cards.title}>{c.displayName}</Link>
                     <span className={cards.sub}>{CUSTOMER_TYPE_LABEL[c.type]}</span>
                   </span>
                   <Chip tone={c.isActive ? 'ok' : 'mute'} dot={c.isActive ? '50%' : '1px'}>
@@ -149,7 +160,7 @@ export function Customers() {
                   <tr key={c.id} className={table.row}>
                     <td className={table.td}>
                       <span className={table.stack}>
-                        <span className={`${table.name} ${table.oneLine}`} title={c.displayName}>{c.displayName}</span>
+                        <Link to={`/customers/${c.id}`} className={`${table.name} ${table.oneLine}`} title={c.displayName}>{c.displayName}</Link>
                         <span className={`${table.sub} ${table.oneLine}`} title={c.email}>{c.email}</span>
                         <span className={`${table.sub} ${table.showTablet}`}>{c.phoneNumber}</span>
                       </span>
@@ -183,6 +194,8 @@ export function Customers() {
           />
         ) : null}
       </section>
+
+      <FleetDialogs state={dialog} onClose={() => setDialog(null)} />
     </>
   );
 }

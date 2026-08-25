@@ -157,12 +157,12 @@ export function SecurityAudit() {
           </div>
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.table}`}>
+            <table className={`${table.table} ${table.tightWide} ${styles.table}`}>
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colEvent}`}>Event</th>
                   <th scope="col" className={`${table.th} ${styles.colActor}`}>Actor</th>
-                  <th scope="col" className={`${table.th} ${styles.colTarget} ${table.foldTablet}`}>Target</th>
+                  <th scope="col" className={`${table.th} ${styles.colTarget} ${table.foldWide}`}>Target</th>
                   <th scope="col" className={`${table.th} ${styles.colEntity} ${table.foldNarrow}`}>Entity</th>
                   <th scope="col" className={`${table.th} ${styles.wide} ${table.foldNarrow}`}>Reason</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Occurred (UTC)</th>
@@ -190,7 +190,7 @@ export function SecurityAudit() {
                         </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldTablet} ${a.targetUserId ? '' : table.dim}`}>
+                    <td className={`${table.td} ${table.foldWide} ${a.targetUserId ? '' : table.dim}`}>
                       {a.targetUserId ? nameOf(a.targetUserId, 'Unknown') : 'Not user-scoped'}
                     </td>
                     <td className={`${table.td} ${table.foldNarrow}`}>

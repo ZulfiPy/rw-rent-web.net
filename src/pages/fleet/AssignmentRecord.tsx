@@ -143,41 +143,44 @@ export function AssignmentRecord() {
       <RecordHeader
         backTo="/rental-assignments"
         backLabel="Rental assignments"
-        title={a?.vehiclePlateNumber ?? 'Rental assignment'}
-        badges={a ? [{
+        title="Rental assignment"
+        pageId={a?.id}
+        chip={a ? {
           label: ASSIGNMENT_STATUS_LABEL[a.status],
           tone: ASSIGNMENT_STATUS_TONE[a.status],
           dot: ASSIGNMENT_STATUS_DOT[a.status],
-        }] : undefined}
+        } : undefined}
+        actions={a && canManage ? (
+          <>
+            {planned ? (
+              <Button label="Activate" icon="play_circle" tone="primary" small onClick={() => setDialog({ kind: 'activate' })} />
+            ) : null}
+            {active ? (
+              <Button
+                label="End assignment"
+                icon="stop_circle"
+                tone="primary"
+                small
+                blockedReason={openInts.length ? 'End the open interruption before ending this assignment.' : null}
+                onClick={() => setDialog({ kind: 'end' })}
+              />
+            ) : null}
+            {planned || active ? (
+              <Button label="Cancel" icon="cancel" tone="danger" small onClick={() => setDialog({ kind: 'cancel' })} />
+            ) : null}
+          </>
+        ) : undefined}
       >
         <HeaderFact
           label="Vehicle"
-          value={vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : '—'}
+          value={a?.vehiclePlateNumber ?? '—'}
+          sub={vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : null}
+          mono
         />
         <HeaderFact label="Customer" value={a?.customerDisplayName ?? '—'} />
         <HeaderFact label="Open authorizations" value={String(openAuths.length)} mono />
         <HeaderFact label="Open interruptions" value={String(openInts.length)} mono />
       </RecordHeader>
-
-      {a && canManage ? (
-        <div className={styles.actions}>
-          {planned ? (
-            <Button label="Activate" icon="play_circle" tone="primary" onClick={() => setDialog({ kind: 'activate' })} />
-          ) : null}
-          {active ? (
-            <Button
-              label="End assignment"
-              icon="stop_circle"
-              tone="primary"
-              blockedReason={openInts.length ? 'End the open interruption before ending this assignment.' : null}
-              onClick={() => setDialog({ kind: 'end' })}
-            />
-          ) : null}
-          {planned || active ? (
-            <Button label="Cancel" icon="cancel" tone="danger" onClick={() => setDialog({ kind: 'cancel' })} />
-          ) : null}
-        </div>
-      ) : null}
 
       {openInts.length ? (
         <RecordBanner

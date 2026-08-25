@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
@@ -11,6 +12,7 @@ import { toFailure } from '@/api/problem';
 import { BODY_TYPE_LABEL, FUEL_LABEL, formatLocal } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
+import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { SelectFilter, type FilterOption } from '@/ui/Filters';
@@ -21,6 +23,7 @@ import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
 import table from '@/ui/table.module.css';
+import { FleetDialogs, type FleetDialogState } from './FleetDialogs';
 import styles from './Vehicles.module.css';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -47,6 +50,8 @@ export function Vehicles() {
   const [params, setParams] = useSearchParams();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
+  const canManage = can('Vehicles.Manage');
+  const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
   const body = params.get('body') ?? '';
   const fuel = params.get('fuel') ?? '';
@@ -123,6 +128,10 @@ export function Vehicles() {
       <PageHeader
         title="Vehicles"
         description="The fleet, what each vehicle is, and whether it is free to hand over."
+        actionsKey={String(canManage)}
+        actions={canManage ? (
+          <Button label="Add vehicle" icon="add" tone="primary" onClick={() => setDialog({ kind: 'vehicle-create' })} />
+        ) : undefined}
       />
 
       <section className={list.panel}>
@@ -162,7 +171,7 @@ export function Vehicles() {
                 <div key={v.id} className={cards.card}>
                   <div className={cards.head}>
                     <span className={cards.heading}>
-                      <span className={cards.title}>{v.plateNumber}</span>
+                      <Link to={`/vehicles/${v.id}`} className={cards.title}>{v.plateNumber}</Link>
                       <span className={cards.sub}>{v.make} {v.model} · {v.year}</span>
                     </span>
                     <Chip tone={a.tone} dot={a.dot}>{a.label}</Chip>
@@ -193,14 +202,14 @@ export function Vehicles() {
           </div>
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.table}`}>
+            <table className={`${table.table} ${table.tightWide} ${styles.table}`}>
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.wide}`}>Vehicle</th>
-                  <th scope="col" className={`${table.th} ${styles.colVin} ${table.foldTablet}`}>VIN</th>
+                  <th scope="col" className={`${table.th} ${styles.colVin} ${table.foldWide}`}>VIN</th>
                   <th scope="col" className={`${table.th} ${styles.colYear}`}>Year</th>
                   <th scope="col" className={`${table.th} ${styles.colSpec} ${table.foldNarrow}`}>Body</th>
-                  <th scope="col" className={`${table.th} ${styles.colSpec} ${table.foldTablet}`}>Fuel</th>
+                  <th scope="col" className={`${table.th} ${styles.colSpec} ${table.foldWide}`}>Fuel</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>Availability</th>
                 </tr>
               </thead>
@@ -211,11 +220,11 @@ export function Vehicles() {
                     <tr key={v.id} className={table.row}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <span className={table.name}>{v.plateNumber}</span>
+                          <Link to={`/vehicles/${v.id}`} className={`${table.name} ${table.mono}`}>{v.plateNumber}</Link>
                           <span className={`${table.sub} ${table.oneLine}`} title={`${v.make} ${v.model}`}>
                             {v.make} {v.model}
                           </span>
-                          <span className={`${table.sub} ${table.showTablet}`}>
+                          <span className={`${table.sub} ${table.showWide}`}>
                             {FUEL_LABEL[v.fuelType]}
                           </span>
                           <span className={`${table.sub} ${table.showNarrow}`}>
@@ -223,10 +232,10 @@ export function Vehicles() {
                           </span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>{v.vinCode}</td>
+                      <td className={`${table.td} ${table.mono} ${table.foldWide}`}>{v.vinCode}</td>
                       <td className={`${table.td} ${table.mono}`}>{v.year}</td>
                       <td className={`${table.td} ${table.foldNarrow}`}>{BODY_TYPE_LABEL[v.bodyType]}</td>
-                      <td className={`${table.td} ${table.foldTablet}`}>{FUEL_LABEL[v.fuelType]}</td>
+                      <td className={`${table.td} ${table.foldWide}`}>{FUEL_LABEL[v.fuelType]}</td>
                       <td className={table.td}>
                         <span className={table.stack}>
                           <Chip tone={a.tone} dot={a.dot}>{a.label}</Chip>
@@ -251,6 +260,8 @@ export function Vehicles() {
           />
         ) : null}
       </section>
+
+      <FleetDialogs state={dialog} onClose={() => setDialog(null)} />
     </>
   );
 }

@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listDrivers } from '@/api/drivers';
 import type { DriversQuery } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { useTier } from '@/app/useViewport';
+import { useAccess } from '@/permissions/usePermissions';
+import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import { SelectFilter, type FilterOption } from '@/ui/Filters';
@@ -14,6 +17,7 @@ import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
 import table from '@/ui/table.module.css';
+import { FleetDialogs, type FleetDialogState } from './FleetDialogs';
 import styles from './Drivers.module.css';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -26,7 +30,10 @@ const STATE_OPTIONS: FilterOption[] = [
 
 export function Drivers() {
   const [params, setParams] = useSearchParams();
+  const { can } = useAccess();
   const phone = useTier() === 'phone';
+  const canManage = can('Drivers.Manage');
+  const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
   const active = params.get('active') ?? '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
@@ -62,6 +69,10 @@ export function Drivers() {
       <PageHeader
         title="Drivers"
         description="People who may be authorized to drive a rented vehicle. A licence is checked before a handover."
+        actionsKey={String(canManage)}
+        actions={canManage ? (
+          <Button label="Add driver" icon="add" tone="primary" onClick={() => setDialog({ kind: 'driver-create' })} />
+        ) : undefined}
       />
 
       <section className={list.panel}>
@@ -97,7 +108,7 @@ export function Drivers() {
               <div key={d.id} className={cards.card}>
                 <div className={cards.head}>
                   <span className={cards.heading}>
-                    <span className={cards.title}>{d.firstName} {d.lastName}</span>
+                    <Link to={`/drivers/${d.id}`} className={cards.title}>{d.firstName} {d.lastName}</Link>
                     <span className={cards.sub}>{d.email}</span>
                   </span>
                   <Chip tone={d.isActive ? 'ok' : 'mute'} dot={d.isActive ? '50%' : '1px'}>
@@ -128,7 +139,7 @@ export function Drivers() {
                   <tr key={d.id} className={table.row}>
                     <td className={table.td}>
                       <span className={table.stack}>
-                        <span className={table.name}>{d.firstName} {d.lastName}</span>
+                        <Link to={`/drivers/${d.id}`} className={table.name}>{d.firstName} {d.lastName}</Link>
                         <span className={`${table.sub} ${table.oneLine}`} title={d.email}>{d.email}</span>
                         <span className={`${table.sub} ${table.showNarrow}`}>{d.phoneNumber}</span>
                       </span>
@@ -154,6 +165,8 @@ export function Drivers() {
           />
         ) : null}
       </section>
+
+      <FleetDialogs state={dialog} onClose={() => setDialog(null)} />
     </>
   );
 }

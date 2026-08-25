@@ -63,8 +63,34 @@ const NAV: Array<{ label: string; items: NavItem[] }> = [
   },
 ];
 
-/** The prototype's breadcrumb row: a single crumb carries a leading chevron. */
-function Breadcrumb({ crumbs }: { crumbs: PageHeaderModel['crumbs'] }) {
+/**
+ * The prototype's identifier row: the record's own id and a copy button. The prototype confirms the
+ * copy with a toast; there is no toast surface here, so the button says so itself.
+ */
+function HeaderId({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    void navigator.clipboard?.writeText(value)
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => setCopied(false));
+  };
+  return (
+    <div className={styles.idRow}>
+      <span className={styles.idValue}>{value}</span>
+      <button type="button" className={styles.idCopy} title="Copy identifier" onClick={copy}>
+        <span data-icon aria-hidden="true" className={styles.idCopyIcon}>
+          {copied ? 'check' : 'content_copy'}
+        </span>
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+    </div>
+  );
+}
+
+/** The prototype's breadcrumb row: a single crumb carries a leading chevron. */function Breadcrumb({ crumbs }: { crumbs: PageHeaderModel['crumbs'] }) {
   const last = crumbs.length - 1;
   return (
     <nav aria-label="Breadcrumb" className={styles.crumbs}>
@@ -284,18 +310,23 @@ export function AppShell({ companyName }: { companyName: string }) {
                 {header ? <Breadcrumb crumbs={header.crumbs} /> : null}
               </div>
               {header ? (
-                <div className={styles.titleBlock}>
-                  <div className={styles.titleLine}>
-                    <h1 className={styles.h1} data-mono={header.mono ? 'true' : undefined}>{header.title}</h1>
-                    {header.badges?.length ? (
-                      <span className={styles.badges}>
-                        {header.badges.map((b) => (
-                          <Chip key={b.label} tone={b.tone} dot={b.dot}>{b.label}</Chip>
-                        ))}
-                      </span>
-                    ) : null}
+                <div className={styles.headerRow}>
+                  <div className={styles.titleBlock}>
+                    <div className={styles.titleLine}>
+                      <h1 className={styles.h1} data-mono={header.mono ? 'true' : undefined}>{header.title}</h1>
+                      {header.badges?.length ? (
+                        <span className={styles.badges}>
+                          {header.badges.map((b) => (
+                            <Chip key={b.label} tone={b.tone} dot={b.dot}>{b.label}</Chip>
+                          ))}
+                        </span>
+                      ) : null}
+                    </div>
+                    {header.code ? <p className={styles.headerCode}>{header.code}</p> : null}
+                    {header.description ? <p className={styles.headerDesc}>{header.description}</p> : null}
+                    {header.pageId ? <HeaderId value={header.pageId} /> : null}
                   </div>
-                  {header.description ? <p className={styles.headerDesc}>{header.description}</p> : null}
+                  {header.actions ? <div className={styles.headerActions}>{header.actions}</div> : null}
                 </div>
               ) : null}
             </header>

@@ -6,28 +6,35 @@ import {
   type CancelRentalAssignmentRequest, type CorrectDriverAuthorizationRequest,
   type CorrectInterruptionRequest, type CorrectRentalAssignmentPartiesRequest,
   type CorrectRentalAssignmentTimelineRequest, type CreateAssignmentInterruptionRequest,
-  type CreateRentalAssignmentRequest, type CustomerListItemResponse, type CustomerResponse,
-  type CustomersQuery, type DriverListItemResponse, type DriversQuery,
+  type CreateCustomerRequest, type CreateDriverRequest, type CreateRentalAssignmentRequest,
+  type CustomerListItemResponse, type CustomerResponse,
+  type CreateVehicleRequest, type CustomersQuery, type DriverListItemResponse, type DriverResponse,
+  type DriversQuery,
   type EndAssignmentInterruptionRequest, type EndRentalAssignmentRequest,
   type InitialAuthorizationRequest, type InterruptionsQuery,
   type RentalAssignmentListItemResponse, type RentalAssignmentResponse,
   type RentalAssignmentsQuery, type StartAssignmentDriverAuthorizationRequest,
   type StopAssignmentDriverAuthorizationRequest, type UpdateRentalAssignmentRequest,
-  type VehicleListItemResponse, type VehiclesQuery,
+  type UpdateVehicleRequest, type VehicleListItemResponse, type VehicleResponse,
+  type VehiclesQuery,
 } from '@/api/dto';
 import { writeAudit, type Payload } from '../audit';
 import { newUuid } from '../ids';
 import { byAsc, byDesc, page } from '../paging';
 import { displayNameOf } from '../seedFleet';
 import { notFound, route, type Ctx } from '../transport';
-import { codedValidation, conflict, requireReason, requireText, staleConflict } from '../validate';
+import {
+  codedValidation, conflict, fieldError, requireReason, requireText, staleConflict,
+} from '../validate';
 
 /**
- * Fleet reads. Mutations arrive with the record screens; until then a write route 404s rather than
- * accept a change no screen can show.
+ * Fleet reads and writes. Every projection is computed per request from the stored rows — a list
+ * item never carries a copy of something the record owns.
  *
- * Every projection is computed per request from the stored rows — a list item never carries a copy
- * of something the record owns.
+ * Vehicle, customer and driver writes are not audited: the backend audits security events, role and
+ * registration transitions and privileged corrections, not ordinary fleet edits. What those writes
+ * do carry is the refusal shape the record screens are built against — duplicate identifiers as
+ * field errors, an in-progress assignment as a 409.
  */
 
 const bool = (v: unknown) => String(v) === 'true';
@@ -936,3 +943,269 @@ route('PUT', '/api/rental-assignments/{assignmentId}/interruptions/{interruption
   });
   return i;
 }, ['PrivilegedCorrections.Execute']);
+
+/* vehicle, customer and driver writes ------------------------------------ */
+
+const trimmed = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+/** The prototype's identity rule for a private customer and for every driver. */
+const assertIdentityProof = (personalId: unknown, dateOfBirth: unknown) => {
+  if (!trimmed(personalId) && !trimmed(dateOfBirth)) {
+    throw fieldError({
+      personalId: ['Provide at least one of personal identifier or date of birth.'],
+    });
+  }
+};
+
+/** A planned or active assignment holds the vehicle or the customer. */
+const heldByAssignment = (ctx: Ctx, field: 'vehicleId' | 'customerId', id: string) =>
+  ctx.store.assignments.some(
+    (a) => a[field] === id
+      && (a.status === AssignmentStatus.Active || a.status === AssignmentStatus.Planned),
+  );
+
+route('POST', '/api/vehicles', (ctx) => {
+  const body = ctx.body as CreateVehicleRequest;
+  const vehicle = writeVehicle(ctx, body, null);
+  const created: VehicleResponse = {
+    id: newUuid(),
+    ...vehicle,
+    isActive: true,
+    createdAtUtc: nowIso(),
+    updatedAtUtc: null,
+  };
+  ctx.store.vehicles.push(created);
+  return created;
+}, ['Vehicles.Manage']);
+
+route('PUT', '/api/vehicles/{id}', (ctx) => {
+  const found = ctx.store.vehicles.find((v) => v.id === ctx.params.id);
+  if (!found) throw notFound('Vehicle not found.');
+  Object.assign(found, writeVehicle(ctx, ctx.body as UpdateVehicleRequest, found.id), {
+    updatedAtUtc: nowIso(),
+  });
+  return found;
+}, ['Vehicles.Manage']);
+
+function writeVehicle(ctx: Ctx, body: CreateVehicleRequest, exceptId: string | null) {
+  const plateNumber = requireText(body.plateNumber, 'plateNumber', 'Plate number', 20);
+  const vinCode = requireText(body.vinCode, 'vinCode', 'VIN code', 17);
+  const make = requireText(body.make, 'make', 'Make', 100);
+  const model = requireText(body.model, 'model', 'Model', 100);
+  const color = requireText(body.color, 'color', 'Colour', 50);
+  const year = Number(body.year);
+  if (!Number.isInteger(year) || year < 1900) {
+    throw fieldError({ year: ['Manufacturing year must be 1900 or later.'] });
+  }
+  const clash = (pick: (v: VehicleResponse) => string, value: string) =>
+    ctx.store.vehicles.some((v) => v.id !== exceptId && same(pick(v), value));
+  if (clash((v) => v.vinCode, vinCode)) {
+    throw fieldError({ vinCode: ['Another vehicle is already registered with this VIN code.'] });
+  }
+  if (clash((v) => v.plateNumber, plateNumber)) {
+    throw fieldError({ plateNumber: ['Another vehicle already uses this plate number.'] });
+  }
+  return {
+    plateNumber,
+    vinCode,
+    make,
+    model,
+    year,
+    bodyType: body.bodyType,
+    gearboxType: body.gearboxType,
+    fuelType: body.fuelType,
+    color,
+  };
+}
+
+route('POST', '/api/vehicles/{id}/activate', (ctx) => {
+  const found = ctx.store.vehicles.find((v) => v.id === ctx.params.id);
+  if (!found) throw notFound('Vehicle not found.');
+  found.isActive = true;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Vehicles.Manage']);
+
+route('POST', '/api/vehicles/{id}/deactivate', (ctx) => {
+  const found = ctx.store.vehicles.find((v) => v.id === ctx.params.id);
+  if (!found) throw notFound('Vehicle not found.');
+  if (heldByAssignment(ctx, 'vehicleId', found.id)) {
+    throw conflict(
+      'The vehicle is on a planned or active assignment and cannot be deactivated.',
+      'vehicles.assignment_in_progress',
+    );
+  }
+  found.isActive = false;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Vehicles.Manage']);
+
+function writeCustomer(ctx: Ctx, body: CreateCustomerRequest, type: CustomerType, exceptId: string | null) {
+  const business = type === CustomerType.Business;
+  const address = requireText(body.address, 'address', 'Address', 500);
+  const email = requireText(body.email, 'email', 'Email', 254);
+  const phoneNumber = requireText(body.phoneNumber, 'phoneNumber', 'Phone number', 30);
+
+  if (ctx.store.customers.some((c) => c.id !== exceptId && same(c.email, email))) {
+    throw fieldError({ email: ['That email address is already used by another customer.'] });
+  }
+
+  const driverId = trimmed(body.driverId) || null;
+  if (business && driverId) {
+    throw fieldError({ driverId: ['A business customer cannot be linked to a driver record.'] });
+  }
+  if (driverId) {
+    if (!ctx.store.drivers.some((d) => d.id === driverId)) {
+      throw fieldError({ driverId: ['That driver record does not exist.'] });
+    }
+    if (ctx.store.customers.some((c) => c.id !== exceptId && c.driverId === driverId)) {
+      throw fieldError({ driverId: ['That driver record is already linked to another customer.'] });
+    }
+  }
+
+  if (business) {
+    return {
+      firstName: null,
+      lastName: null,
+      personalId: null,
+      dateOfBirth: null,
+      companyName: requireText(body.companyName, 'companyName', 'Business name', 200),
+      registrationCode: requireText(body.registrationCode, 'registrationCode', 'Registration code', 50),
+      address,
+      email,
+      phoneNumber,
+      driverId: null,
+    };
+  }
+
+  assertIdentityProof(body.personalId, body.dateOfBirth);
+  return {
+    firstName: requireText(body.firstName, 'firstName', 'First name', 100),
+    lastName: requireText(body.lastName, 'lastName', 'Last name', 100),
+    personalId: trimmed(body.personalId) || null,
+    dateOfBirth: trimmed(body.dateOfBirth) || null,
+    companyName: null,
+    registrationCode: null,
+    address,
+    email,
+    phoneNumber,
+    driverId,
+  };
+}
+
+route('POST', '/api/customers', (ctx) => {
+  const body = ctx.body as CreateCustomerRequest;
+  const created: CustomerResponse = {
+    id: newUuid(),
+    type: body.type,
+    ...writeCustomer(ctx, body, body.type, null),
+    isActive: true,
+    createdAtUtc: nowIso(),
+    updatedAtUtc: null,
+  };
+  ctx.store.customers.push(created);
+  return created;
+}, ['Customers.Manage']);
+
+route('PUT', '/api/customers/{id}', (ctx) => {
+  const found = ctx.store.customers.find((c) => c.id === ctx.params.id);
+  if (!found) throw notFound('Customer not found.');
+  const body = ctx.body as CreateCustomerRequest;
+  Object.assign(found, writeCustomer(ctx, body, found.type, found.id), { updatedAtUtc: nowIso() });
+  return found;
+}, ['Customers.Manage']);
+
+route('POST', '/api/customers/{id}/activate', (ctx) => {
+  const found = ctx.store.customers.find((c) => c.id === ctx.params.id);
+  if (!found) throw notFound('Customer not found.');
+  found.isActive = true;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Customers.Manage']);
+
+route('POST', '/api/customers/{id}/deactivate', (ctx) => {
+  const found = ctx.store.customers.find((c) => c.id === ctx.params.id);
+  if (!found) throw notFound('Customer not found.');
+  if (heldByAssignment(ctx, 'customerId', found.id)) {
+    throw conflict(
+      'The customer has a planned or active assignment and cannot be deactivated.',
+      'customers.assignment_in_progress',
+    );
+  }
+  found.isActive = false;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Customers.Manage']);
+
+function writeDriver(ctx: Ctx, body: CreateDriverRequest, exceptId: string | null) {
+  const driverLicenseNumber = requireText(
+    body.driverLicenseNumber, 'driverLicenseNumber', 'Driver licence number', 50,
+  );
+  if (ctx.store.drivers.some(
+    (d) => d.id !== exceptId && same(d.driverLicenseNumber, driverLicenseNumber),
+  )) {
+    throw fieldError({ driverLicenseNumber: ['Another driver already holds this licence number.'] });
+  }
+  assertIdentityProof(body.personalId, body.dateOfBirth);
+  return {
+    firstName: requireText(body.firstName, 'firstName', 'First name', 100),
+    lastName: requireText(body.lastName, 'lastName', 'Last name', 100),
+    personalId: trimmed(body.personalId) || null,
+    dateOfBirth: trimmed(body.dateOfBirth) || null,
+    address: requireText(body.address, 'address', 'Address', 500),
+    email: requireText(body.email, 'email', 'Email', 254),
+    phoneNumber: requireText(body.phoneNumber, 'phoneNumber', 'Phone number', 30),
+    driverLicenseNumber,
+  };
+}
+
+route('POST', '/api/drivers', (ctx) => {
+  const created: DriverResponse = {
+    id: newUuid(),
+    ...writeDriver(ctx, ctx.body as CreateDriverRequest, null),
+    isActive: true,
+    createdAtUtc: nowIso(),
+    updatedAtUtc: null,
+  };
+  ctx.store.drivers.push(created);
+  return created;
+}, ['Drivers.Manage']);
+
+route('PUT', '/api/drivers/{id}', (ctx) => {
+  const found = ctx.store.drivers.find((d) => d.id === ctx.params.id);
+  if (!found) throw notFound('Driver not found.');
+  Object.assign(found, writeDriver(ctx, ctx.body as CreateDriverRequest, found.id), {
+    updatedAtUtc: nowIso(),
+  });
+  return found;
+}, ['Drivers.Manage']);
+
+route('POST', '/api/drivers/{id}/activate', (ctx) => {
+  const found = ctx.store.drivers.find((d) => d.id === ctx.params.id);
+  if (!found) throw notFound('Driver not found.');
+  found.isActive = true;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Drivers.Manage']);
+
+route('POST', '/api/drivers/{id}/deactivate', (ctx) => {
+  const found = ctx.store.drivers.find((d) => d.id === ctx.params.id);
+  if (!found) throw notFound('Driver not found.');
+  /** AUTH-007: an open named-driver authorization on an active assignment holds the driver. */
+  const held = ctx.store.authorizations.some((z) => {
+    if (z.stoppedAtUtc || z.driverId !== found.id) return false;
+    if (z.authorizationType !== AssignmentDriverAuthorizationType.NamedDriver) return false;
+    const a = ctx.store.assignments.find((x) => x.id === z.rentalAssignmentId);
+    return !!a && a.status === AssignmentStatus.Active;
+  });
+  if (held) {
+    throw conflict(
+      'The driver holds an open authorization on an active assignment and cannot be deactivated.',
+      'drivers.authorization_open',
+    );
+  }
+  found.isActive = false;
+  found.updatedAtUtc = nowIso();
+  return found;
+}, ['Drivers.Manage']);

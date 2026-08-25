@@ -7,9 +7,10 @@ import { installTransport, transport } from '@/api/transport';
 import { setDevState } from '@/dev/devState';
 import {
   AssignmentDriverAuthorizationType, AssignmentStatus, AuthorizationStopReason,
-  BillingImpact, InterruptionReason,
+  BillingImpact, CustomerType, InterruptionReason,
   type AssignmentDriverAuthorizationResponse, type AssignmentInterruptionResponse,
-  type RentalAssignmentResponse,
+  type CustomerResponse, type DriverResponse, type RentalAssignmentResponse,
+  type VehicleResponse,
 } from '@/api/dto';
 
 /** u1 is the System Administrator: the only persona that may execute a privileged correction. */
@@ -242,5 +243,117 @@ describe('privileged corrections', () => {
       },
     ));
     expect(refused.problem?.code).toBe('assignment_interruptions.ended_before_start');
+  });
+});
+
+describe('fleet record writes', () => {
+  const V = ID.vehicles;
+  const D = ID.drivers;
+  const vehicle = (id: string) => transport().request<VehicleResponse>('GET', `/api/vehicles/${id}`, {});
+  const driver = (id: string) => transport().request<DriverResponse>('GET', `/api/drivers/${id}`, {});
+  const customer = (id: string) => transport().request<CustomerResponse>('GET', `/api/customers/${id}`, {});
+
+  test('a vehicle is created active and readable by its own id', async () => {
+    const created = await post<VehicleResponse>('/api/vehicles', {
+      plateNumber: '999 ZZZ',
+      vinCode: 'WVWZZZ1KZBW999999',
+      make: 'Skoda',
+      model: 'Octavia',
+      year: 2024,
+      bodyType: 2,
+      gearboxType: 2,
+      fuelType: 2,
+      color: 'Grey',
+    });
+    expect(created.isActive).toBe(true);
+    expect(created.updatedAtUtc).toBeNull();
+    expect((await vehicle(created.id)).plateNumber).toBe('999 ZZZ');
+  });
+
+  test('a duplicate VIN comes back on the vinCode input, not as a banner', async () => {
+    const first = await vehicle(V.v1);
+    const second = await vehicle(V.v2);
+    const refused = await failure(() => put(`/api/vehicles/${second.id}`, { ...second, vinCode: first.vinCode }));
+    expect(refused.status).toBe(400);
+    expect(refused.problem?.errors?.['VinCode']?.[0]).toContain('already registered');
+  });
+
+  test('a manufacturing year before 1900 is refused on its own input', async () => {
+    const v = await vehicle(V.v1);
+    const refused = await failure(() => put(`/api/vehicles/${v.id}`, { ...v, year: 1899 }));
+    expect(refused.problem?.errors?.['Year']?.[0]).toContain('1900 or later');
+  });
+
+  test('a vehicle on a planned or active assignment cannot be deactivated', async () => {
+    const held = getStore().assignments.find(
+      (a) => a.status === AssignmentStatus.Active || a.status === AssignmentStatus.Planned,
+    );
+    const refused = await failure(() => post(`/api/vehicles/${held?.vehicleId}/deactivate`, {}));
+    expect(refused.status).toBe(409);
+    expect(refused.problem?.code).toBe('vehicles.assignment_in_progress');
+    expect((await vehicle(String(held?.vehicleId))).isActive).toBe(true);
+  });
+
+  test('a business customer cannot be linked to a driver record', async () => {
+    const biz = getStore().customers.find((c) => c.type === CustomerType.Business);
+    const c = await customer(String(biz?.id));
+    const refused = await failure(() => put(`/api/customers/${c.id}`, { ...c, driverId: D.d1 }));
+    expect(refused.problem?.errors?.['DriverId']?.[0]).toContain('business customer');
+  });
+
+  test('a private customer needs a personal identifier or a date of birth', async () => {
+    const priv = getStore().customers.find((c) => c.type === CustomerType.PrivateIndividual);
+    const c = await customer(String(priv?.id));
+    const refused = await failure(() => put(
+      `/api/customers/${c.id}`,
+      { ...c, personalId: '', dateOfBirth: null },
+    ));
+    expect(refused.problem?.errors?.['PersonalId']?.[0]).toContain('at least one');
+  });
+
+  test('a duplicate licence number comes back on the licence input', async () => {
+    const first = await driver(D.d1);
+    const second = await driver(D.d2);
+    const refused = await failure(() => put(
+      `/api/drivers/${second.id}`,
+      { ...second, driverLicenseNumber: first.driverLicenseNumber },
+    ));
+    expect(refused.problem?.errors?.['DriverLicenseNumber']?.[0]).toContain('already holds');
+  });
+
+  test('a driver named on an active assignment cannot be deactivated (AUTH-007)', async () => {
+    const store = getStore();
+    const open = store.authorizations.find((z) => {
+      if (z.stoppedAtUtc || z.authorizationType !== AssignmentDriverAuthorizationType.NamedDriver) return false;
+      const a = store.assignments.find((x) => x.id === z.rentalAssignmentId);
+      return !!a && a.status === AssignmentStatus.Active;
+    });
+    const refused = await failure(() => post(`/api/drivers/${open?.driverId}/deactivate`, {}));
+    expect(refused.status).toBe(409);
+    expect(refused.problem?.code).toBe('drivers.authorization_open');
+    expect((await driver(String(open?.driverId))).isActive).toBe(true);
+  });
+
+  test('deactivating an unheld driver changes no authorization', async () => {
+    const store = getStore();
+    const free = store.drivers.find((d) => !store.authorizations.some(
+      (z) => z.driverId === d.id && !z.stoppedAtUtc,
+    ));
+    const before = store.authorizations
+      .filter((z) => z.driverId === free?.id)
+      .map((z) => `${z.id}:${z.stoppedAtUtc}:${z.stopReason}`);
+    const after = await post<DriverResponse>(`/api/drivers/${free?.id}/deactivate`, {});
+    expect(after.isActive).toBe(false);
+    expect(after.updatedAtUtc).not.toBeNull();
+    expect(store.authorizations
+      .filter((z) => z.driverId === free?.id)
+      .map((z) => `${z.id}:${z.stoppedAtUtc}:${z.stopReason}`)).toEqual(before);
+  });
+
+  test('a fleet edit writes no audit entry', async () => {
+    const before = getStore().audit.length;
+    const v = await vehicle(V.v1);
+    await put(`/api/vehicles/${v.id}`, { ...v, color: 'Midnight blue' });
+    expect(getStore().audit.length).toBe(before);
   });
 });
