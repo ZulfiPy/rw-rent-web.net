@@ -44,6 +44,9 @@
 .table[data-panel] .name { font-size: 13px; font-weight: 450; }
 .table[data-panel] .sub { font-size: 11.5px; }
 .table[data-panel] .mono { font-size: 13px; }
+/* Two timestamps of equal standing keep the list vocabulary's 12.5px/400, as the prototype's
+   transfers table does. */
+.table[data-panel] .instant { font-size: 12.5px; font-weight: 400; color: var(--fg-3); }
 
 .link {
   display: flex;

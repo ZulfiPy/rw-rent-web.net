@@ -40,19 +40,19 @@ substituting something plausible.
   picker reads one list rather than one record per driver, so the row's sub-line is the email.
 - **The identifier row's copy has no toast.** The prototype confirms a copied identifier with a
   toast; there is no toast surface in the port, so the button reports "Copied" itself for two seconds.
-- **Both transfer instants read alike.** The prototype's transfers table renders INITIATED (UTC) in
-  the full foreground and EXPIRES (UTC) dimmed, which reads as an accident rather than a rule: two
-  timestamps of equal standing in adjacent columns. Both cells here take the lighter of the two
-  treatments (mono, `--fg-3`). The rest of that table is the prototype's panel-table vocabulary
-  transcribed exactly — sans headers at 11px/.05em/600 on `--inset` over 9px 16px, 11px 16px cells,
-  a 13px/450 row title with an 11.5px sub-line, and the header of each column left-aligned over it,
-  the actions column right.
 - Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
   screen; the authentication screens are Phase 3, so the mock ends the persona's session instead.
 - A record's state badges are in the shell's header bar next to the title (the prototype's
   `pageBadges`), along with the record's identifier row and its actions. The assignment and user
   records keep the prototype's hero band below the bar: its state chip, headline facts and lifecycle
   buttons in one row. Vehicle, customer and driver records have no hero band, as in the prototype.
+
+A record panel's table is a different vocabulary from a list's, and both are transcribed as such
+(`.table[data-panel]` in `table.module.css`): sans headers at 11px/.05em/600 on `--inset` over
+9px 16px, 11px 16px cells, a 13px/450 row title with an 11.5px sub-line, each header left-aligned
+over its column and the actions column right. On the transfers table both instants are Geist Mono
+12.5px/400 in `--fg-3` — the list vocabulary's mono size, since the two timestamps are of equal
+standing. The prototype renders them the same way.
 
 ## Layout
 

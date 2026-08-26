@@ -304,10 +304,12 @@ export function SystemAdministrator() {
                           </span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.mono}`}>{formatUtcLabelled(t.initiatedAtUtc)}</td>
-                      {/* Both instants read alike, in the lighter of the prototype's two
-                          treatments — see the README's deliberate deviations. */}
-                      <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>
+                      {/* Both instants read alike: Geist Mono 12.5px/400 in --fg-3, matching the
+                          prototype's transfers table. */}
+                      <td className={`${table.td} ${table.mono} ${table.instant}`}>
+                        {formatUtcLabelled(t.initiatedAtUtc)}
+                      </td>
+                      <td className={`${table.td} ${table.mono} ${table.instant} ${table.foldTablet}`}>
                         {formatUtcLabelled(t.expiresAtUtc)}
                       </td>
                       <td className={table.td}>
