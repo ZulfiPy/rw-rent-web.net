@@ -3,7 +3,7 @@ import './handlers';
 import { createMockTransport } from './transport';
 import { getStore, resetStore } from './store';
 import { ID } from './ids';
-import { installTransport, transport } from '@/api/transport';
+import { installTransport, transport, type Query } from '@/api/transport';
 import { setDevState } from '@/dev/devState';
 import {
   AssignmentDriverAuthorizationType, AssignmentStatus, AuthorizationStopReason,
@@ -360,7 +360,7 @@ describe('fleet record writes', () => {
 });
 
 describe('list filters', () => {
-  const list = <T>(path: string, query: Record<string, unknown>) =>
+  const list = <T>(path: string, query: Query) =>
     transport().request<PagedResponse<T>>('GET', path, { query });
 
   test('vehicle Search matches plate number, VIN, make and model', async () => {
