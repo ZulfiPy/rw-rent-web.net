@@ -9,13 +9,12 @@ import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
-import { Dialog } from '@/ui/Dialog';
+import { Dialog, dialogStyles } from '@/ui/Dialog';
 import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Field, fieldStyles as f } from '@/ui/Field';
 import { Panel } from '@/ui/Panel';
 import { PageHeader } from '@/ui/PageHeader';
 import { RecordBanner, recordStyles as shell } from '@/ui/RecordTabs';
-import dialogStyles from '@/pages/fleet/FleetDialogs.module.css';
 
 type DialogState = { kind: 'create' } | { kind: 'edit' } | { kind: 'delete' } | null;
 

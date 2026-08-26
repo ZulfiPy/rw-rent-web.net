@@ -12,7 +12,7 @@ import { useCompanyName } from '@/app/useCompanyName';
 import { useTier } from '@/app/useViewport';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
+import { ClearFilters, SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
@@ -79,6 +79,10 @@ export function UserDirectory() {
     setParams(merged, { replace: true });
   };
 
+  /* The prototype offers clearing while the search or any filter is set. */
+  const anyFilter = !!search || !!status || !!role;
+  const clear = () => patch({ search: '', status: '', role: '' });
+
   const query: UsersQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
@@ -124,6 +128,8 @@ export function UserDirectory() {
             label="Role"
             onChange={(next) => patch({ role: next })}
           />
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>{countLabel}</span>
         </div>
 

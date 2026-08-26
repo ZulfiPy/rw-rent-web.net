@@ -11,7 +11,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SelectFilter, type FilterOption } from '@/ui/Filters';
+import { ClearFilters, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
@@ -57,6 +57,10 @@ export function Customers() {
     setParams(merged, { replace: true });
   };
 
+  /* The prototype offers clearing while the search or any filter is set. */
+  const anyFilter = !!type || !!active;
+  const clear = () => patch({ type: '', active: '' });
+
   const query: CustomersQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
@@ -89,6 +93,8 @@ export function Customers() {
         <div className={filters.toolbar}>
           <SelectFilter value={type} options={TYPE_OPTIONS} label="Type" onChange={(next) => patch({ type: next })} />
           <SelectFilter value={active} options={STATE_OPTIONS} label="Status" onChange={(next) => patch({ active: next })} />
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>
             {page ? `${page.totalCount} customer${page.totalCount === 1 ? '' : 's'}` : ''}
           </span>

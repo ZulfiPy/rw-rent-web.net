@@ -22,6 +22,10 @@
 .button[data-tone='danger']:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); }
 .button[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
 .button[data-tone='warn']:hover:not(:disabled) { border-color: var(--warn); color: var(--warn); }
+.button[data-tone='ok'] { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); }
+.button[data-tone='ok']:hover:not(:disabled) { border-color: var(--ok); color: var(--ok); }
+.button[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); color: var(--info); }
+.button[data-tone='info']:hover:not(:disabled) { border-color: var(--info); color: var(--info); }
 /* The prototype's dialog-footer Cancel: outlined, transparent, never filled. */
 .button[data-tone='ghost'] { background: transparent; }
 .button[data-tone='ghost']:hover:not(:disabled) { background: var(--surface-3); }
@@ -30,6 +34,20 @@
 
 .small { gap: 7px; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; }
 .small .icon { font-size: 16px; }
+
+/*
+ * A panel table's row action. The prototype never fills these: the frame is always the neutral
+ * line, the tone lives in the label, and the only fill is the hover shade.
+ */
+.row { gap: 6px; padding: 7px 10px; border-radius: 7px; font-size: 12px; }
+.row .icon { font-size: 15px; }
+.button.row { background: transparent; border-color: var(--line-2); }
+.button.row:hover:not(:disabled) { background: var(--surface-3); border-color: var(--line-2); }
+.button.row[data-tone='primary'] { color: var(--fg); }
+.button.row[data-tone='danger'] { color: var(--bad); }
+.button.row[data-tone='warn'] { color: var(--warn); }
+.button.row[data-tone='ok'] { color: var(--ok); }
+.button.row[data-tone='info'] { color: var(--info); }
 
 /* A folded row's actions: the prototype's 36px ghost square, tinted only on hover. */
 .button.iconOnly {

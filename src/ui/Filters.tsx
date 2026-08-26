@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import styles from './Filters.module.css';
 
 /** Types locally, commits after a pause, so a keystroke is not a request. */
@@ -67,5 +67,74 @@ export function SelectFilter({ value, options, label, onChange }: {
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </span>
+  );
+}
+
+/**
+ * The prototype offers clearing only while something is filtered, and clearing resets the search
+ * and every filter at once — the sort, the page size and the open extra-filters row are kept.
+ */
+export function ClearFilters({ onClear }: { onClear: () => void }) {
+  return (
+    <button type="button" className={styles.clearFilters} onClick={onClear}>
+      <span data-icon aria-hidden="true" className={styles.clearFiltersIcon}>filter_alt_off</span>
+      <span>Clear filters</span>
+    </button>
+  );
+}
+
+/** The shaded grid the More filters button opens, directly below the toolbar. */
+export function MoreFiltersRow({ children }: { children: ReactNode }) {
+  return <div className={styles.moreRow}>{children}</div>;
+}
+
+/** A labelled select inside the extra-filters grid. */
+export function MoreSelect({ label, value, options, hint, onChange }: {
+  value: string;
+  options: FilterOption[];
+  label: string;
+  hint?: string;
+  onChange: (next: string) => void;
+}) {
+  const current = options.find((o) => o.value === value)?.label ?? options[0]?.label ?? '';
+  return (
+    <label className={styles.moreField}>
+      <span className={styles.moreLabel}>{label}</span>
+      <span className={styles.moreControl}>
+        <span className={styles.moreValue}>{current}</span>
+        <span data-icon aria-hidden="true" className={styles.moreCaret}>expand_more</span>
+        <select
+          className={styles.nativeSelect}
+          value={value}
+          aria-label={label}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </span>
+      {hint ? <span className={styles.moreHint}>{hint}</span> : null}
+    </label>
+  );
+}
+
+/** A labelled date bound inside the extra-filters grid. */
+export function MoreDate({ label, value, hint, onChange }: {
+  label: string;
+  value: string;
+  hint?: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <label className={styles.moreField}>
+      <span className={styles.moreLabel}>{label}</span>
+      <input
+        type="date"
+        className={styles.moreDate}
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {hint ? <span className={styles.moreHint}>{hint}</span> : null}
+    </label>
   );
 }

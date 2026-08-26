@@ -9,7 +9,9 @@ import { AUDIT_EVENT_TYPES, entityLabel, eventLabel, formatUtc, shortId } from '
 import { useTier } from '@/app/useViewport';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SelectFilter, type FilterOption } from '@/ui/Filters';
+import {
+  ClearFilters, MoreFiltersRow, MoreSelect, SelectFilter, type FilterOption,
+} from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
@@ -45,6 +47,9 @@ export function SecurityAudit() {
     if (!('page' in next)) merged.delete('page');
     setParams(merged, { replace: true });
   };
+
+  const anyFilter = !!event || !!target;
+  const clear = () => patch({ event: '', target: '' });
 
   const query: SecurityAuditQuery = {
     PageNumber: pageNumber,
@@ -99,20 +104,26 @@ export function SecurityAudit() {
             aria-expanded={more}
             onClick={() => patch({ more: more ? '' : '1', ...(more ? { target: '' } : {}) })}
           >
-            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>More filters
+            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>
+            {more ? 'Fewer filters' : 'More filters'}
           </button>
-          {more ? (
-            <SelectFilter
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
+          <span className={filters.count}>
+            {page ? `${page.totalCount} record${page.totalCount === 1 ? '' : 's'}` : ''}
+          </span>
+        </div>
+
+        {more ? (
+          <MoreFiltersRow>
+            <MoreSelect
               value={target}
               options={targetOptions}
               label="Target user"
               onChange={(next) => patch({ target: next })}
             />
-          ) : null}
-          <span className={filters.count}>
-            {page ? `${page.totalCount} record${page.totalCount === 1 ? '' : 's'}` : ''}
-          </span>
-        </div>
+          </MoreFiltersRow>
+        ) : null}
 
         {failure ? (
           <EmptyState

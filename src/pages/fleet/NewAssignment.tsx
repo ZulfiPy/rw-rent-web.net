@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { qk } from '@/api';
@@ -13,9 +13,8 @@ import {
 import { fromLocalInput } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { Dialog } from '@/ui/Dialog';
+import { Dialog, DialogSection as Section, dialogStyles as section } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
-import section from './FleetDialogs.module.css';
 import styles from './NewAssignment.module.css';
 
 /** A fleet write moves the lists, the records that reference them, and the open-work counts. */
@@ -30,19 +29,6 @@ type Mode = '' | 'customer' | 'named' | 'company';
 
 const LOCK_COMPANY_HINT = 'Collective authorization for this business customer’s drivers. '
   + 'One mode at a time — either named drivers or this.';
-
-function Section({ title, cols = 2, children }: {
-  title?: string;
-  cols?: 1 | 2;
-  children: ReactNode;
-}) {
-  return (
-    <div className={section.section}>
-      {title ? <p className={section.sectionTitle}>{title}</p> : null}
-      <div className={section.grid} data-cols={cols}>{children}</div>
-    </div>
-  );
-}
 
 /**
  * The prototype's "Who will drive?" block: three coverage modes, each with its reason when the

@@ -14,7 +14,7 @@ import { useNarrow } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
-import { Dialog } from '@/ui/Dialog';
+import { Dialog, dialogStyles } from '@/ui/Dialog';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Field, fieldStyles as f } from '@/ui/Field';
@@ -22,7 +22,6 @@ import { Panel } from '@/ui/Panel';
 import { PageHeader } from '@/ui/PageHeader';
 import { RecordBanner, recordStyles as shell } from '@/ui/RecordTabs';
 import table from '@/ui/table.module.css';
-import dialogStyles from '@/pages/fleet/FleetDialogs.module.css';
 import styles from './SystemAdministrator.module.css';
 
 type DialogState =
@@ -320,6 +319,7 @@ export function SystemAdministrator() {
                                 label="Resend"
                                 icon="forward_to_inbox"
                                 small
+                                row
                                 compact={compact}
                                 onClick={() => setDialog({ kind: 'resend', transferId: t.id })}
                               />
@@ -328,6 +328,7 @@ export function SystemAdministrator() {
                                 icon="cancel"
                                 tone="danger"
                                 small
+                                row
                                 compact={compact}
                                 onClick={() => setDialog({ kind: 'cancel', transferId: t.id })}
                               />

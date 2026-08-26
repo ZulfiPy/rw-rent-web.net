@@ -234,6 +234,13 @@ group: the Company's legal identity, address and record panels with its edit and
 its first-run setup state, and the protected transfer of the single administrator account —
 initiate, rotate and resend, cancel, each password- or reason-confirmed and audited.
 
+Every list toolbar is the prototype's: search where the prototype has one, the filter chips, the
+More filters toggle whose label becomes "Fewer filters" when open, then a flexible gap, `Clear
+filters` while anything is filtered, and the record count. The extra filters open as their own shaded
+grid below the toolbar with a label above each control — the target user on Security audit, customer
+and vehicle on rental assignments, gearbox and manufacturing year on vehicles. Clearing resets the
+search and every filter at once and keeps the sort, the page size and the open row.
+
 **New rental assignment** is the assignments list's own write: the prototype's 700px create dialog —
 parties, the initial lifecycle state, the timeline that state implies, the driver-coverage block with
 its three modes and named-driver picker, and the assignment note. A Planned assignment may be saved
@@ -266,13 +273,15 @@ else — the entry page then shows the raw payload instead of guessing.
 Found in the four-viewport re-audit and deliberately left for a next pass, so nothing here is a
 silent divergence:
 
-- **Clear filters.** The prototype shows a `Clear filters` button in the list toolbar while a search
-  term is set, resetting search and every filter. No list page offers it yet.
-- **More filters row.** The prototype opens the extra filters as a shaded grid below the toolbar with
-  a label above each control; the port appends them into the toolbar as more chips. Vehicles' two
-  extra filters (gearbox, manufacturing year) are not ported at all.
-- **Dialog field grids.** The prototype groups dialog fields into labelled sections, two columns
-  where the section says so; the port stacks every field in one column.
-- **Panel-table row actions** are the prototype's transparent, tone-coloured buttons at wide widths
-  in the prototype and tone-filled here; and adjacent record panels sit 16px apart instead of 14px
-  (the port has one page stack where the prototype has a stack plus an inner panel grid).
+- **Search on the fleet lists.** `Search` is on every paged query and the prototype gives vehicles,
+  customers, drivers and rental assignments a search box (its own placeholder per list: "Plate, VIN,
+  make or model", "Name, identifier or email", "First name, last name or email", "Plate, VIN or
+  customer name"). The port has one only on the user directory and Registrations, so on those four
+  lists Clear filters can only clear the selects.
+- **Rental assignment date filters.** The prototype's extra filters carry four date bounds — planned
+  start from/to and actual start from/to, the second of each pair hinted "Must not precede the lower
+  bound." `RentalAssignmentsQuery` already types them; the port's shaded row carries customer and
+  vehicle only.
+- **Record panel grid.** A record page is one stacked column here; the prototype lays most panels out
+  in a two-column grid and marks the wide ones `span:'1 / -1'`. The gap between panels is now the
+  prototype's 14px either way.

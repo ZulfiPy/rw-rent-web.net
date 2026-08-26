@@ -42,6 +42,27 @@ function FailureBanner({ failure, onRefresh }: { failure: Failure; onRefresh?: (
   );
 }
 
+export { styles as dialogStyles };
+
+/**
+ * The prototype's `SEC`: a titled group of fields in its own column layout, with the section's
+ * caveat below them. Every dialog that groups its inputs uses this.
+ */
+export function DialogSection({ title, cols = 2, note, children }: {
+  title?: string;
+  cols?: 1 | 2 | 3;
+  note?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={styles.section}>
+      {title ? <p className={styles.sectionTitle}>{title}</p> : null}
+      <div className={styles.grid} data-cols={cols}>{children}</div>
+      {note ? <DialogNote>{note}</DialogNote> : null}
+    </div>
+  );
+}
+
 export function DialogNote({ icon = 'info', children }: { icon?: string; children: ReactNode }) {
   return (
     <p className={styles.note}>
@@ -105,7 +126,9 @@ export function Dialog({
       <div className={styles.panel} style={{ maxWidth: width }} role="dialog" aria-modal="true" aria-label={title}>
         <div className={styles.head}>
           {icon ? (
-            <span data-icon aria-hidden="true" className={styles.headIcon} data-tone={tone}>{icon}</span>
+            <span aria-hidden="true" className={styles.headIcon} data-tone={tone}>
+              <span data-icon className={styles.headGlyph}>{icon}</span>
+            </span>
           ) : null}
           <div className={styles.heading}>
             <h2 className={styles.title}>{title}</h2>

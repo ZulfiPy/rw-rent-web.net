@@ -299,8 +299,8 @@ export function UserRecord() {
                     </div>
                     {roleActionable(r) ? (
                       <div className={cards.actions}>
-                        <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
-                        <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
+                        <Button label="Expiry" icon="schedule" small row onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
+                        <Button label="Revoke" icon="remove_moderator" tone="danger" small row onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
                       </div>
                     ) : null}
                   </div>
@@ -355,8 +355,8 @@ export function UserRecord() {
                         <td className={table.td}>
                           {roleActionable(r) ? (
                             <span className={table.actionsCell}>
-                              <Button label="Expiry" icon="schedule" small onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
-                              <Button label="Revoke" icon="remove_moderator" tone="danger" small onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
+                              <Button label="Expiry" icon="schedule" small row onClick={() => setDialog({ kind: 'role-expiry', assignmentId: r.id })} />
+                              <Button label="Revoke" icon="remove_moderator" tone="danger" small row onClick={() => setDialog({ kind: 'role-revoke', assignmentId: r.id })} />
                             </span>
                           ) : null}
                         </td>
@@ -411,7 +411,7 @@ export function UserRecord() {
                     </div>
                     {s.isActive && canSessions ? (
                       <div className={cards.actions}>
-                        <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
+                        <Button label="Revoke" icon="link_off" tone="danger" small row onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
                       </div>
                     ) : null}
                   </div>
@@ -467,7 +467,7 @@ export function UserRecord() {
                         <td className={table.td}>
                           {s.isActive && canSessions ? (
                             <span className={table.actionsCell}>
-                              <Button label="Revoke" icon="link_off" tone="danger" small onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
+                              <Button label="Revoke" icon="link_off" tone="danger" small row onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })} />
                             </span>
                           ) : null}
                         </td>

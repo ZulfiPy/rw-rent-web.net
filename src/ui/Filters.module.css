@@ -8,9 +8,10 @@
   border-bottom: 1px solid var(--line);
 }
 .grow { flex: 1 1 auto; min-width: 0; }
+/* The prototype's flex:1 gap: everything after it sits at the right end of the toolbar. */
+.spacer { flex: 1; }
 .count {
   flex: none;
-  margin-left: auto;
   font-family: var(--font-mono);
   font-size: 11.5px;
   color: var(--fg-3);
@@ -98,5 +99,66 @@
   color: var(--fg-2);
 }
 .moreButton:hover { background: var(--surface-3); color: var(--fg); }
-.moreButton[aria-expanded='true'] { background: var(--surface-2); color: var(--fg); }
+.moreButton[aria-expanded='true'] { background: var(--surface-3); color: var(--fg); }
 .moreIcon { font-size: 17px; }
+
+/* Clearing is offered only while something is filtered, and is borderless until hovered. */
+.clearFilters {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 35px;
+  padding: 0 11px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+.clearFilters:hover { color: var(--fg); background: var(--surface-2); }
+.clearFiltersIcon { font-size: 16px; }
+
+/* The extra filters open as their own shaded grid below the toolbar, each control labelled. */
+.moreRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.moreField { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.moreLabel { font-size: 12px; font-weight: 500; color: var(--fg-2); }
+.moreControl {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+}
+.moreValue {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moreCaret { flex: none; font-size: 16px; color: var(--fg-3); }
+.moreDate {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.moreHint { font-size: 11.5px; color: var(--fg-4); }

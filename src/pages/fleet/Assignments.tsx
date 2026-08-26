@@ -13,7 +13,9 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SelectFilter, type FilterOption } from '@/ui/Filters';
+import {
+  ClearFilters, MoreFiltersRow, MoreSelect, SelectFilter, type FilterOption,
+} from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
@@ -59,6 +61,9 @@ export function Assignments() {
     if (!('page' in next)) merged.delete('page');
     setParams(merged, { replace: true });
   };
+
+  const anyFilter = !!status || !!customer || !!vehicle;
+  const clear = () => patch({ status: '', customer: '', vehicle: '' });
 
   const query: RentalAssignmentsQuery = {
     PageNumber: pageNumber,
@@ -116,34 +121,42 @@ export function Assignments() {
             aria-expanded={more}
             onClick={() => patch({ more: more ? '' : '1', ...(more ? { customer: '', vehicle: '' } : {}) })}
           >
-            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>More filters
+            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>
+            {more ? 'Fewer filters' : 'More filters'}
           </button>
-          {more && can('Customers.Read') ? (
-            <SelectFilter
-              value={customer}
-              options={[
-                { value: '', label: 'Any customer' },
-                ...(customerList.data?.items ?? []).map((c) => ({ value: c.id, label: c.displayName })),
-              ]}
-              label="Customer"
-              onChange={(next) => patch({ customer: next })}
-            />
-          ) : null}
-          {more && can('Vehicles.Read') ? (
-            <SelectFilter
-              value={vehicle}
-              options={[
-                { value: '', label: 'Any vehicle' },
-                ...(vehicleList.data?.items ?? []).map((v) => ({ value: v.id, label: `${v.plateNumber} · ${v.make} ${v.model}` })),
-              ]}
-              label="Vehicle"
-              onChange={(next) => patch({ vehicle: next })}
-            />
-          ) : null}
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>
             {page ? `${page.totalCount} record${page.totalCount === 1 ? '' : 's'}` : ''}
           </span>
         </div>
+
+        {more ? (
+          <MoreFiltersRow>
+            {can('Customers.Read') ? (
+              <MoreSelect
+                value={customer}
+                options={[
+                  { value: '', label: 'Any customer' },
+                  ...(customerList.data?.items ?? []).map((c) => ({ value: c.id, label: c.displayName })),
+                ]}
+                label="Customer"
+                onChange={(next) => patch({ customer: next })}
+              />
+            ) : null}
+            {can('Vehicles.Read') ? (
+              <MoreSelect
+                value={vehicle}
+                options={[
+                  { value: '', label: 'Any vehicle' },
+                  ...(vehicleList.data?.items ?? []).map((v) => ({ value: v.id, label: `${v.plateNumber} · ${v.make} ${v.model}` })),
+                ]}
+                label="Vehicle"
+                onChange={(next) => patch({ vehicle: next })}
+              />
+            ) : null}
+          </MoreFiltersRow>
+        ) : null}
 
         {failure ? (
           <EmptyState

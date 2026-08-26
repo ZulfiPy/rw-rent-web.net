@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
@@ -18,9 +18,8 @@ import {
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { Dialog, DialogNote } from '@/ui/Dialog';
+import { Dialog, DialogNote, DialogSection as Section, dialogStyles as styles } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
-import styles from './FleetDialogs.module.css';
 
 /**
  * Every write a fleet record offers. The forms are the prototype's dialogs field for field; the
@@ -94,22 +93,6 @@ function EnumSelect<T extends number>({ label, value, options, labels, error, re
         {options.map((o) => <option key={o} value={o}>{labels[o]}</option>)}
       </select>
     </Field>
-  );
-}
-
-/** The prototype's `SEC`: a titled group whose fields sit in their own column layout. */
-function Section({ title, cols = 2, note, children }: {
-  title?: string;
-  cols?: 1 | 2 | 3;
-  note?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className={styles.section}>
-      {title ? <p className={styles.sectionTitle}>{title}</p> : null}
-      <div className={styles.grid} data-cols={cols}>{children}</div>
-      {note ? <DialogNote>{note}</DialogNote> : null}
-    </div>
   );
 }
 

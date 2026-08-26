@@ -334,10 +334,10 @@ export function AssignmentRecord() {
                         <td className={table.td}>
                           <span className={table.actionsCell}>
                             {canAuth && !z.stoppedAtUtc ? (
-                              <Button label="Stop" icon="person_remove" tone="warn" small compact={compact} onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
+                              <Button label="Stop" icon="person_remove" tone="warn" small row compact={compact} onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
                             ) : null}
                             {canCorrect ? (
-                              <Button label="Correct" icon="shield" small compact={compact} onClick={() => setDialog({ kind: 'auth-correct', authorizationId: z.id })} />
+                              <Button label="Correct" icon="shield" small row compact={compact} onClick={() => setDialog({ kind: 'auth-correct', authorizationId: z.id })} />
                             ) : null}
                           </span>
                         </td>
@@ -430,13 +430,13 @@ export function AssignmentRecord() {
                       <td className={table.td}>
                         <span className={table.actionsCell}>
                           {canInt && !i.endedAtUtc ? (
-                            <Button label="End" icon="play_circle" small compact={compact} onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
+                            <Button label="End" icon="play_circle" tone="ok" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
                           ) : null}
                           {canInt ? (
-                            <Button label="Edit" icon="edit" small compact={compact} onClick={() => setDialog({ kind: 'interruption-edit', interruptionId: i.id })} />
+                            <Button label="Edit" icon="edit" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-edit', interruptionId: i.id })} />
                           ) : null}
                           {canCorrect ? (
-                            <Button label="Correct" icon="shield" small compact={compact} onClick={() => setDialog({ kind: 'interruption-correct', interruptionId: i.id })} />
+                            <Button label="Correct" icon="shield" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-correct', interruptionId: i.id })} />
                           ) : null}
                         </span>
                       </td>

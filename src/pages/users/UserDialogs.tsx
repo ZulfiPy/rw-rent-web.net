@@ -12,7 +12,7 @@ import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
-import { Dialog, DialogNote } from '@/ui/Dialog';
+import { Dialog, DialogNote, DialogSection as Section } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
 
 /** Everything a user record can open. The record page owns which are offered. */
@@ -81,6 +81,7 @@ function CorrectName({ user, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
+      <Section title="Corrected name">
       <Field label="First name" required error={m.fields['firstName']}>
         <input
           className={f.control}
@@ -97,7 +98,10 @@ function CorrectName({ user, onClose }: Common) {
           onChange={(e) => setLastName(e.target.value)}
         />
       </Field>
-      <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
+      <Section title="Audit" cols={1}>
+        <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
     </Dialog>
   );
 }

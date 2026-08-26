@@ -1,5 +1,5 @@
 /* The record shell every detail screen shares: page stack, state banner, tab strip. */
-.page { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.page { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .banner {
   display: flex;

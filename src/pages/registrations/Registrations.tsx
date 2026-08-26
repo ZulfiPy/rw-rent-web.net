@@ -14,7 +14,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
+import { ClearFilters, SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
@@ -76,6 +76,10 @@ export function Registrations() {
     setParams(merged, { replace: true });
   };
 
+  /* The prototype offers clearing while the search or any filter is set. */
+  const anyFilter = !!search || !!status;
+  const clear = () => patch({ search: '', status: '' });
+
   // FOLLOW-UP: GET /api/users takes one Status. "All lifecycle states" therefore fans out into one
   // request per state and pages the merged result here; a multi-status filter would remove the
   // fan-out and hand paging back to the server.
@@ -112,13 +116,13 @@ export function Registrations() {
   const rowActions = (u: ApplicationUserListItemResponse) => (
     <>
       {u.status === ApplicationUserStatus.PendingActivation && u.emailConfirmed && can('Users.ReviewRegistrations') ? (
-        <Button label="Activate" icon="how_to_reg" tone="primary" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'activate' } })} />
+        <Button label="Activate" icon="how_to_reg" tone="ok" small row compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'activate' } })} />
       ) : null}
       {u.status === ApplicationUserStatus.PendingActivation && can('Users.ManageRegistrations') ? (
-        <Button label="Reject" icon="person_off" tone="danger" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reject' } })} />
+        <Button label="Reject" icon="person_off" tone="danger" small row compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reject' } })} />
       ) : null}
       {u.status === ApplicationUserStatus.RegistrationRejected && can('Users.ManageRegistrations') ? (
-        <Button label="Reopen" icon="restart_alt" small compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reopen' } })} />
+        <Button label="Reopen" icon="restart_alt" tone="info" small row compact={compact} onClick={() => setDialog({ userId: u.id, state: { kind: 'reopen' } })} />
       ) : null}
     </>
   );
@@ -143,6 +147,8 @@ export function Registrations() {
             label="Status"
             onChange={(next) => patch({ status: next })}
           />
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>
             {isPending ? '' : `${totalCount} record${totalCount === 1 ? '' : 's'}`}
           </span>

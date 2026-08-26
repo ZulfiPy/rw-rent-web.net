@@ -24,7 +24,7 @@ import {
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { Dialog, DialogNote } from '@/ui/Dialog';
+import { Dialog, DialogNote, DialogSection as Section } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
 
 export type AssignmentDialogState =
@@ -161,6 +161,7 @@ function Edit({ assignment: a, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
+      <Section title="Parties">
       <Field label="Customer" required error={m.fields['customerId']}>
         <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
@@ -175,6 +176,8 @@ function Edit({ assignment: a, onClose }: Common) {
           ))}
         </select>
       </Field>
+      </Section>
+      <Section title="Planned timeline">
       <DateTimeField
         label="Planned start"
         value={plannedStart}
@@ -190,9 +193,12 @@ function Edit({ assignment: a, onClose }: Common) {
         hint="Leave empty for an open-ended rental."
         onChange={setPlannedEnd}
       />
+      </Section>
+      <Section title="Note" cols={1}>
       <Field label="Assignment note" optional error={m.fields['note']}>
         <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
+      </Section>
     </Dialog>
   );
 }
@@ -224,7 +230,9 @@ function Activate({ assignment: a, onClose }: Common) {
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
-      <DateTimeField label="Actual start" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      <Section title="Handover" cols={1}>
+        <DateTimeField label="Actual start" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      </Section>
       <DialogNote icon={open.length ? 'group' : 'group_off'}>
         {open.length
           ? `Currently authorized: ${open.map((z) => (z.authorizationType === AssignmentDriverAuthorizationType.BusinessCustomerDrivers ? 'Company-authorized drivers' : 'a named driver')).join(', ')}. A valid authorization already exists, so none is created here.`
@@ -376,6 +384,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
+      <Section title="Who will drive?" cols={1}>
       <EnumSelect
         label="Authorization"
         value={type}
@@ -406,6 +415,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
       >
         <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
+      </Section>
       {collective ? (
         <DialogNote icon="groups">
           One collective authorization replaces individually named drivers rather than adding to them.
@@ -465,6 +475,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       onSubmit={() => m.submit(undefined)}
       onRefresh={m.refresh}
     >
+      <Section title="Stop">
       <DateTimeField label="Stopped at" required value={stoppedAt} error={m.fields['stoppedAtUtc']} onChange={setStoppedAt} />
       <EnumSelect
         label="Stop reason"
@@ -484,6 +495,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       >
         <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
+      </Section>
 
       {lastCoverage ? (
         <DialogNote icon="shield">
@@ -504,7 +516,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       )}
 
       {replace || lastCoverage ? (
-        <>
+        <Section title="Replacement">
           <EnumSelect
             label="Replacement authorization"
             required
@@ -534,7 +546,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
           >
             <textarea className={f.control} rows={2} value={replacementNote} onChange={(e) => setReplacementNote(e.target.value)} />
           </Field>
-        </>
+        </Section>
       ) : null}
     </Dialog>
   );
@@ -586,6 +598,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
       onRefresh={m.refresh}
       footnote="A correction never changes the assignment's own lifecycle."
     >
+      <Section title="Corrected values">
       <EnumSelect
         label="Authorization"
         required
@@ -622,7 +635,10 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
       <Field label="Note" optional error={m.fields['note']}>
         <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
-      <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
+      <Section title="Audit" cols={1}>
+        <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
     </Dialog>
   );
 }
@@ -683,6 +699,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       onRefresh={m.refresh}
       footnote="An interruption belongs to the assignment as a whole. It stops no authorization and changes no status."
     >
+      <Section title="Period">
       <DateTimeField label="Started at" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
       <DateTimeField
         label="Ended at"
@@ -692,6 +709,8 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
         error={m.fields['endedAtUtc']}
         onChange={setEndedAt}
       />
+      </Section>
+      <Section title="Classification">
       <EnumSelect
         label="Reason"
         required
@@ -720,7 +739,12 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       >
         <textarea className={f.control} data-invalid={!!m.fields['note']} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
-      {correct ? <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} /> : null}
+      </Section>
+      {correct ? (
+        <Section title="Audit" cols={1}>
+          <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+        </Section>
+      ) : null}
     </Dialog>
   );
 }
@@ -796,6 +820,7 @@ function CorrectParties({ assignment: a, onClose }: Common) {
       onRefresh={m.refresh}
       footnote="Corrections are not a substitute for lifecycle actions."
     >
+      <Section title="Corrected values">
       <Field label="Customer" error={m.fields['customerId']}>
         <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
@@ -810,7 +835,10 @@ function CorrectParties({ assignment: a, onClose }: Common) {
           ))}
         </select>
       </Field>
-      <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
+      <Section title="Audit" cols={1}>
+        <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
     </Dialog>
   );
 }
@@ -854,14 +882,18 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
       onRefresh={m.refresh}
       footnote="Use Activate, End or Cancel for events that actually happened."
     >
+      <Section title="Corrected dates">
       <DateTimeField label="Planned start" value={plannedStart} optional error={m.fields['plannedStartAtUtc']} onChange={setPlannedStart} />
       <DateTimeField label="Actual start" value={startedAt} optional error={m.fields['startedAtUtc']} onChange={setStartedAt} />
       <DateTimeField label="Planned end" value={plannedEnd} optional error={m.fields['plannedEndAtUtc']} onChange={setPlannedEnd} />
       <DateTimeField label="Closed at" value={closedAt} optional error={m.fields['closedAtUtc']} onChange={setClosedAt} />
-      <Field label="Assignment note" optional error={m.fields['note']}>
-        <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-      </Field>
-      <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
+      <Section title="Audit" cols={1}>
+        <Field label="Assignment note" optional error={m.fields['note']}>
+          <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        </Field>
+        <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
+      </Section>
     </Dialog>
   );
 }

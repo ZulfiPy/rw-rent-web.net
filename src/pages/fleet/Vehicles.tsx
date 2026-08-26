@@ -5,17 +5,19 @@ import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import {
-  AssignmentStatus, BodyType, FuelType,
+  AssignmentStatus, BodyType, FuelType, GearboxType,
   type VehicleListItemResponse, type VehiclesQuery,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { BODY_TYPE_LABEL, FUEL_LABEL, formatLocal } from '@/format';
+import { BODY_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL, formatLocal } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { SelectFilter, type FilterOption } from '@/ui/Filters';
+import {
+  ClearFilters, MoreFiltersRow, MoreSelect, SelectFilter, type FilterOption,
+} from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import type { Tone } from '@/ui/status';
@@ -38,6 +40,17 @@ const FUEL_OPTIONS: FilterOption[] = [
   ...Object.values(FuelType).map((v) => ({ value: String(v), label: FUEL_LABEL[v] })),
 ];
 
+const GEARBOX_OPTIONS: FilterOption[] = [
+  { value: '', label: 'Any gearbox' },
+  ...Object.values(GearboxType).map((v) => ({ value: String(v), label: GEARBOX_LABEL[v] })),
+];
+
+/** The prototype offers the five most recent years; the API itself accepts 1900 or later. */
+const YEAR_OPTIONS: FilterOption[] = [
+  { value: '', label: 'Any year' },
+  ...[2024, 2023, 2022, 2021, 2020].map((y) => ({ value: String(y), label: String(y) })),
+];
+
 const ACTIVE_OPTIONS: FilterOption[] = [
   { value: '', label: 'Active and retired' },
   { value: 'true', label: 'In the fleet' },
@@ -56,6 +69,9 @@ export function Vehicles() {
   const body = params.get('body') ?? '';
   const fuel = params.get('fuel') ?? '';
   const active = params.get('active') ?? '';
+  const gearbox = params.get('gearbox') ?? '';
+  const year = params.get('year') ?? '';
+  const more = params.get('more') === '1' || gearbox !== '' || year !== '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
   const pageSize = Number(params.get('size') ?? DEFAULT_PAGE_SIZE);
 
@@ -69,11 +85,16 @@ export function Vehicles() {
     setParams(merged, { replace: true });
   };
 
+  const anyFilter = !!body || !!fuel || !!active || !!gearbox || !!year;
+  const clear = () => patch({ body: '', fuel: '', active: '', gearbox: '', year: '' });
+
   const query: VehiclesQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
     ...(body ? { BodyType: Number(body) as BodyType } : {}),
     ...(fuel ? { FuelType: Number(fuel) as FuelType } : {}),
+    ...(gearbox ? { GearboxType: Number(gearbox) as GearboxType } : {}),
+    ...(year ? { Year: Number(year) } : {}),
     ...(active ? { IsActive: active === 'true' } : {}),
   };
 
@@ -139,10 +160,39 @@ export function Vehicles() {
           <SelectFilter value={body} options={BODY_OPTIONS} label="Body" onChange={(next) => patch({ body: next })} />
           <SelectFilter value={fuel} options={FUEL_OPTIONS} label="Fuel" onChange={(next) => patch({ fuel: next })} />
           <SelectFilter value={active} options={ACTIVE_OPTIONS} label="Fleet" onChange={(next) => patch({ active: next })} />
+          <button
+            type="button"
+            className={filters.moreButton}
+            aria-expanded={more}
+            onClick={() => patch({ more: more ? '' : '1', ...(more ? { gearbox: '', year: '' } : {}) })}
+          >
+            <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>
+            {more ? 'Fewer filters' : 'More filters'}
+          </button>
+          <span className={filters.spacer} />
+          {anyFilter ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>
             {page ? `${page.totalCount} vehicle${page.totalCount === 1 ? '' : 's'}` : ''}
           </span>
         </div>
+
+        {more ? (
+          <MoreFiltersRow>
+            <MoreSelect
+              value={gearbox}
+              options={GEARBOX_OPTIONS}
+              label="Gearbox"
+              onChange={(next) => patch({ gearbox: next })}
+            />
+            <MoreSelect
+              value={year}
+              options={YEAR_OPTIONS}
+              label="Manufacturing year"
+              hint="Exact year; the API accepts 1900 or later."
+              onChange={(next) => patch({ year: next })}
+            />
+          </MoreFiltersRow>
+        ) : null}
 
         {failure ? (
           <EmptyState
