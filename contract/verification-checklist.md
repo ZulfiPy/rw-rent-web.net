@@ -16,6 +16,13 @@ deliveries rsync over everything else.
   comparison needs your pairs. Per delivery: a few pairs for what changed. The full sweep below:
   once, at the end, when the queue is empty.
 
+## Traversal order (decided 2026-08-27)
+
+Section by section, each section taken across every device to completion before the next section
+starts: desktop first, then tablet (768 / 1024), then phone (375). A closed section is never
+reopened. Current section: **Overview + System Administrator** (desktop already closed through the
+delivery pair rounds; tablet and phone pairs remain). Next section chosen when this one closes.
+
 ## Pair convention
 
 Same viewport for both shots. Prototype = PROTOTYPE tab on the right edge. React app = PROTOTYPE
