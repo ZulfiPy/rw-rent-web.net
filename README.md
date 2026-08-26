@@ -40,6 +40,13 @@ substituting something plausible.
   picker reads one list rather than one record per driver, so the row's sub-line is the email.
 - **The identifier row's copy has no toast.** The prototype confirms a copied identifier with a
   toast; there is no toast surface in the port, so the button reports "Copied" itself for two seconds.
+- **Both transfer instants read alike.** The prototype's transfers table renders INITIATED (UTC) in
+  the full foreground and EXPIRES (UTC) dimmed, which reads as an accident rather than a rule: two
+  timestamps of equal standing in adjacent columns. Both cells here take the lighter of the two
+  treatments (mono, `--fg-3`). The rest of that table is the prototype's panel-table vocabulary
+  transcribed exactly — sans headers at 11px/.05em/600 on `--inset` over 9px 16px, 11px 16px cells,
+  a 13px/450 row title with an 11.5px sub-line, and the header of each column left-aligned over it,
+  the actions column right.
 - Sign out calls `POST /api/auth/logout` and reloads. The prototype returns to its own sign-in
   screen; the authentication screens are Phase 3, so the mock ends the persona's session instead.
 - A record's state badges are in the shell's header bar next to the title (the prototype's
@@ -234,12 +241,18 @@ group: the Company's legal identity, address and record panels with its edit and
 its first-run setup state, and the protected transfer of the single administrator account —
 initiate, rotate and resend, cancel, each password- or reason-confirmed and audited.
 
-Every list toolbar is the prototype's: search where the prototype has one, the filter chips, the
-More filters toggle whose label becomes "Fewer filters" when open, then a flexible gap, `Clear
-filters` while anything is filtered, and the record count. The extra filters open as their own shaded
-grid below the toolbar with a label above each control — the target user on Security audit, customer
-and vehicle on rental assignments, gearbox and manufacturing year on vehicles. Clearing resets the
-search and every filter at once and keeps the sort, the page size and the open row.
+Every list toolbar is the prototype's: search where the prototype has one — every list but Security
+audit, which sets `noSearch` — the filter chips, the More filters toggle whose label becomes "Fewer
+filters" when open, then a flexible gap, `Clear filters` while anything is filtered, and the record
+count. Each search box carries the prototype's own placeholder ("Plate, VIN, make or model", "Name,
+identifier or email", "First name, last name or email", "Plate, VIN or customer name") and the
+documented `Search` cap for that list, and commits after a pause rather than per keystroke. The extra
+filters open as their own shaded grid below the toolbar with a label above each control — the target
+user on Security audit, gearbox and manufacturing year on vehicles, and on rental assignments the
+customer, the vehicle and four date bounds: planned start from/to and actual start from/to, the
+second of each pair hinted "Must not precede the lower bound." A date bound resolves to the edge of
+the chosen Europe/Tallinn day and is compared as an instant. Clearing resets the search and every
+filter at once and keeps the sort, the page size and the open row.
 
 **New rental assignment** is the assignments list's own write: the prototype's 700px create dialog —
 parties, the initial lifecycle state, the timeline that state implies, the driver-coverage block with
@@ -270,18 +283,13 @@ else — the entry page then shows the raw payload instead of guessing.
 
 ## Known gaps against the prototype
 
-Found in the four-viewport re-audit and deliberately left for a next pass, so nothing here is a
-silent divergence:
+None open. The three left after the four-viewport re-audit are closed: search on the four fleet
+lists, the rental assignments' four date bounds, and the record panel grid — the last one after
+checking what the prototype's grid actually renders (below).
 
-- **Search on the fleet lists.** `Search` is on every paged query and the prototype gives vehicles,
-  customers, drivers and rental assignments a search box (its own placeholder per list: "Plate, VIN,
-  make or model", "Name, identifier or email", "First name, last name or email", "Plate, VIN or
-  customer name"). The port has one only on the user directory and Registrations, so on those four
-  lists Clear filters can only clear the selects.
-- **Rental assignment date filters.** The prototype's extra filters carry four date bounds — planned
-  start from/to and actual start from/to, the second of each pair hinted "Must not precede the lower
-  bound." `RentalAssignmentsQuery` already types them; the port's shaded row carries customer and
-  vehicle only.
-- **Record panel grid.** A record page is one stacked column here; the prototype lays most panels out
-  in a two-column grid and marks the wide ones `span:'1 / -1'`. The gap between panels is now the
-  prototype's 14px either way.
+The prototype's record page is a `repeat(2,minmax(0,1fr))` grid, but every panel it places carries
+`span:'1 / -1'` — there is no half-width panel on any record, in any role or tab. A full-row panel in
+that grid and a panel in this port's 14px flex column occupy the same box, and `min-width: 0;
+max-width: 100%` on the panel gives a wide table the same containment `minmax(0,1fr)` does: the table
+scrolls inside the panel instead of widening the page. The stacked column stays, rather than carrying
+a second grid track nothing is ever placed in.

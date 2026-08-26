@@ -75,6 +75,12 @@ export function zoneOffset(at: Date): string {
   return offset === '' ? '+00:00' : offset;
 }
 
+/** yyyy-MM-dd → the instant at 00:00:00.000 local on that day; a filter's lower bound. */
+export function startOfDayLocal(dateOnly: string): string {
+  const offset = zoneOffset(new Date(`${dateOnly}T12:00:00Z`));
+  return `${dateOnly}T00:00:00.000${offset}`;
+}
+
 /** yyyy-MM-dd → the instant at 23:59:59.999 local on that day, with its offset. */
 export function endOfDayLocal(dateOnly: string): string {
   const offset = zoneOffset(new Date(`${dateOnly}T12:00:00Z`));

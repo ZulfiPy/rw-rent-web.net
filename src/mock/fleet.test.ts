@@ -9,8 +9,9 @@ import {
   AssignmentDriverAuthorizationType, AssignmentStatus, AuthorizationStopReason,
   BillingImpact, CustomerType, InterruptionReason,
   type AssignmentDriverAuthorizationResponse, type AssignmentInterruptionResponse,
-  type CustomerResponse, type DriverResponse, type RentalAssignmentResponse,
-  type VehicleResponse,
+  type CustomerResponse, type DriverResponse, type PagedResponse,
+  type RentalAssignmentListItemResponse, type RentalAssignmentResponse,
+  type VehicleListItemResponse, type VehicleResponse,
 } from '@/api/dto';
 
 /** u1 is the System Administrator: the only persona that may execute a privileged correction. */
@@ -355,5 +356,41 @@ describe('fleet record writes', () => {
     const v = await vehicle(V.v1);
     await put(`/api/vehicles/${v.id}`, { ...v, color: 'Midnight blue' });
     expect(getStore().audit.length).toBe(before);
+  });
+});
+
+describe('list filters', () => {
+  const list = <T>(path: string, query: Record<string, unknown>) =>
+    transport().request<PagedResponse<T>>('GET', path, { query });
+
+  test('vehicle Search matches plate number, VIN, make and model', async () => {
+    const all = await list<VehicleListItemResponse>('/api/vehicles', { PageSize: 100 });
+    const one = all.items[0];
+    expect(one).toBeDefined();
+    for (const term of [one!.plateNumber, one!.vinCode, one!.make, one!.model]) {
+      const hit = await list<VehicleListItemResponse>('/api/vehicles', { PageSize: 100, Search: term });
+      expect(hit.items.map((v) => v.id)).toContain(one!.id);
+    }
+    expect((await list('/api/vehicles', { Search: 'no-such-vehicle' })).totalCount).toBe(0);
+  });
+
+  test('a planned-start bound compares the instant, not the string', async () => {
+    const all = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', { PageSize: 100 });
+    const target = all.items.find((a) => !!a.plannedStartAtUtc && !a.plannedStartAtUtc.includes('T00:00'));
+    expect(target).toBeDefined();
+    const day = target!.plannedStartAtUtc!.slice(0, 10);
+    // The bounds carry an explicit +00:00 where the stored value ends in Z: only an instant
+    // comparison keeps the row.
+    const same = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', {
+      PageSize: 100,
+      PlannedFromUtc: `${day}T00:00:00.000+00:00`,
+      PlannedToUtc: `${day}T23:59:59.999+00:00`,
+    });
+    expect(same.items.map((a) => a.id)).toContain(target!.id);
+    const before = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', {
+      PageSize: 100,
+      PlannedToUtc: `${day}T00:00:00.000+00:00`,
+    });
+    expect(before.items.map((a) => a.id)).not.toContain(target!.id);
   });
 });

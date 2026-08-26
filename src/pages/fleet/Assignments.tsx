@@ -7,14 +7,14 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import { AssignmentStatus, type RentalAssignmentsQuery } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { ASSIGNMENT_STATUS_LABEL, formatLocal, relative } from '@/format';
+import { ASSIGNMENT_STATUS_LABEL, endOfDayLocal, formatLocal, relative, startOfDayLocal } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import {
-  ClearFilters, MoreFiltersRow, MoreSelect, SelectFilter, type FilterOption,
+  ClearFilters, MoreDate, MoreFiltersRow, MoreSelect, SearchInput, SelectFilter, type FilterOption,
 } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
@@ -45,10 +45,17 @@ export function Assignments() {
   const canManage = can('RentalAssignments.Manage');
   const [creating, setCreating] = useState(false);
 
+  const search = params.get('search') ?? '';
   const status = params.get('status') ?? '';
   const customer = params.get('customer') ?? '';
   const vehicle = params.get('vehicle') ?? '';
-  const more = params.get('more') === '1' || customer !== '' || vehicle !== '';
+  /** The prototype's four date bounds: planned start from/to and actual start from/to. */
+  const plannedFrom = params.get('plannedFrom') ?? '';
+  const plannedTo = params.get('plannedTo') ?? '';
+  const startedFrom = params.get('startedFrom') ?? '';
+  const startedTo = params.get('startedTo') ?? '';
+  const extra = [customer, vehicle, plannedFrom, plannedTo, startedFrom, startedTo];
+  const more = params.get('more') === '1' || extra.some((v) => v !== '');
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
   const pageSize = Number(params.get('size') ?? DEFAULT_PAGE_SIZE);
 
@@ -62,15 +69,26 @@ export function Assignments() {
     setParams(merged, { replace: true });
   };
 
-  const anyFilter = !!status || !!customer || !!vehicle;
-  const clear = () => patch({ status: '', customer: '', vehicle: '' });
+  /** Closing the extra-filters row clears what only that row can set. */
+  const closedExtras = {
+    customer: '', vehicle: '', plannedFrom: '', plannedTo: '', startedFrom: '', startedTo: '',
+  };
+
+  const anyFilter = !!search || !!status || extra.some((v) => v !== '');
+  const clear = () => patch({ search: '', status: '', ...closedExtras });
 
   const query: RentalAssignmentsQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
+    ...(search ? { Search: search } : {}),
     ...(status ? { Status: Number(status) as AssignmentStatus } : {}),
     ...(customer ? { CustomerId: customer } : {}),
     ...(vehicle ? { VehicleId: vehicle } : {}),
+    // A date-only bound resolves to the edge of the chosen local day, as every date picker here does.
+    ...(plannedFrom ? { PlannedFromUtc: startOfDayLocal(plannedFrom) } : {}),
+    ...(plannedTo ? { PlannedToUtc: endOfDayLocal(plannedTo) } : {}),
+    ...(startedFrom ? { StartedFromUtc: startOfDayLocal(startedFrom) } : {}),
+    ...(startedTo ? { StartedToUtc: endOfDayLocal(startedTo) } : {}),
   };
 
   const assignments = useQuery({
@@ -109,6 +127,12 @@ export function Assignments() {
 
       <section className={list.panel}>
         <div className={filters.toolbar}>
+          <SearchInput
+            value={search}
+            placeholder="Plate, VIN or customer name"
+            maxLength={50}
+            onChange={(next) => patch({ search: next })}
+          />
           <SelectFilter
             value={status}
             options={STATUS_OPTIONS}
@@ -119,7 +143,7 @@ export function Assignments() {
             type="button"
             className={filters.moreButton}
             aria-expanded={more}
-            onClick={() => patch({ more: more ? '' : '1', ...(more ? { customer: '', vehicle: '' } : {}) })}
+            onClick={() => patch({ more: more ? '' : '1', ...(more ? closedExtras : {}) })}
           >
             <span data-icon aria-hidden="true" className={filters.moreIcon}>tune</span>
             {more ? 'Fewer filters' : 'More filters'}
@@ -155,6 +179,27 @@ export function Assignments() {
                 onChange={(next) => patch({ vehicle: next })}
               />
             ) : null}
+            <MoreDate
+              label="Planned start from"
+              value={plannedFrom}
+              onChange={(next) => patch({ plannedFrom: next })}
+            />
+            <MoreDate
+              label="Planned start to"
+              value={plannedTo}
+              hint="Must not precede the lower bound."
+              onChange={(next) => patch({ plannedTo: next })}
+            />
+            <MoreDate
+              label="Actual start from"
+              value={startedFrom}
+              onChange={(next) => patch({ startedFrom: next })}
+            />
+            <MoreDate
+              label="Actual start to"
+              value={startedTo}
+              onChange={(next) => patch({ startedTo: next })}
+            />
           </MoreFiltersRow>
         ) : null}
 
@@ -172,8 +217,8 @@ export function Assignments() {
         ) : page && page.items.length === 0 ? (
           <EmptyState
             icon="assignment"
-            title={status || customer || vehicle ? 'No assignments match' : 'No assignments yet'}
-            body={status || customer || vehicle
+            title={anyFilter ? 'No assignments match' : 'No assignments yet'}
+            body={anyFilter
               ? 'Widen the filters to see more of the timeline.'
               : 'A handover appears here once an assignment is created.'}
           />

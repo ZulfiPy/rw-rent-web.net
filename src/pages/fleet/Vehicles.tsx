@@ -16,7 +16,7 @@ import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
 import {
-  ClearFilters, MoreFiltersRow, MoreSelect, SelectFilter, type FilterOption,
+  ClearFilters, MoreFiltersRow, MoreSelect, SearchInput, SelectFilter, type FilterOption,
 } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
@@ -66,6 +66,7 @@ export function Vehicles() {
   const canManage = can('Vehicles.Manage');
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
+  const search = params.get('search') ?? '';
   const body = params.get('body') ?? '';
   const fuel = params.get('fuel') ?? '';
   const active = params.get('active') ?? '';
@@ -85,12 +86,13 @@ export function Vehicles() {
     setParams(merged, { replace: true });
   };
 
-  const anyFilter = !!body || !!fuel || !!active || !!gearbox || !!year;
-  const clear = () => patch({ body: '', fuel: '', active: '', gearbox: '', year: '' });
+  const anyFilter = !!search || !!body || !!fuel || !!active || !!gearbox || !!year;
+  const clear = () => patch({ search: '', body: '', fuel: '', active: '', gearbox: '', year: '' });
 
   const query: VehiclesQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
+    ...(search ? { Search: search } : {}),
     ...(body ? { BodyType: Number(body) as BodyType } : {}),
     ...(fuel ? { FuelType: Number(fuel) as FuelType } : {}),
     ...(gearbox ? { GearboxType: Number(gearbox) as GearboxType } : {}),
@@ -142,7 +144,7 @@ export function Vehicles() {
 
   const page = vehicles.data;
   const failure = vehicles.error ? toFailure(vehicles.error) : null;
-  const isFiltered = !!(body || fuel || active);
+  const isFiltered = !!(search || body || fuel || active || gearbox || year);
 
   return (
     <>
@@ -157,6 +159,12 @@ export function Vehicles() {
 
       <section className={list.panel}>
         <div className={filters.toolbar}>
+          <SearchInput
+            value={search}
+            placeholder="Plate, VIN, make or model"
+            maxLength={50}
+            onChange={(next) => patch({ search: next })}
+          />
           <SelectFilter value={body} options={BODY_OPTIONS} label="Body" onChange={(next) => patch({ body: next })} />
           <SelectFilter value={fuel} options={FUEL_OPTIONS} label="Fuel" onChange={(next) => patch({ fuel: next })} />
           <SelectFilter value={active} options={ACTIVE_OPTIONS} label="Fleet" onChange={(next) => patch({ active: next })} />
@@ -210,7 +218,7 @@ export function Vehicles() {
             icon="directions_car"
             title={isFiltered ? 'No vehicles match' : 'No vehicles yet'}
             body={isFiltered
-              ? 'Widen the body, fuel or fleet filter.'
+              ? 'Widen the search, the body, fuel or fleet filter.'
               : 'A vehicle appears here once it is added to the fleet.'}
           />
         ) : phone ? (

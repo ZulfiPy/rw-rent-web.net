@@ -29,6 +29,22 @@
 .oneLine { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .actionsCell { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 
+/* A panel table is not a list table. The prototype labels a record panel's columns in the sans face
+   at 11px with .05em tracking over 9px 16px cells, where a list header is mono at 10.5px/.1em, and
+   its row title is 13px/450 rather than the list's 13.5px/600. Opt in with data-panel. */
+.table[data-panel] .th {
+  padding: 9px 16px;
+  background: var(--inset);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .05em;
+}
+.table[data-panel] .td { padding: 11px 16px; }
+.table[data-panel] .name { font-size: 13px; font-weight: 450; }
+.table[data-panel] .sub { font-size: 11.5px; }
+.table[data-panel] .mono { font-size: 13px; }
+
 .link {
   display: flex;
   align-items: center;
@@ -75,6 +91,7 @@
   .foldTablet, .foldNarrow { display: none; }
   .showTablet, .showNarrow { display: block; }
   .th, .td { padding: 9px; }
+  .table[data-panel] .th, .table[data-panel] .td { padding: 9px; }
   /* Portrait runs fixed layout (per screen), so a long value ellipsises inside its cell instead of
      widening the table past the card. */
   .td, .th { overflow: hidden; text-overflow: ellipsis; }

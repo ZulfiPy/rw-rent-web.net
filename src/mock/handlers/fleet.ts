@@ -20,7 +20,7 @@ import {
 } from '@/api/dto';
 import { writeAudit, type Payload } from '../audit';
 import { newUuid } from '../ids';
-import { byAsc, byDesc, page } from '../paging';
+import { byAsc, byDesc, contains, page } from '../paging';
 import { displayNameOf } from '../seedFleet';
 import { notFound, route, type Ctx } from '../transport';
 import {
@@ -40,6 +40,9 @@ import {
 const bool = (v: unknown) => String(v) === 'true';
 const num = (v: unknown) => Number(v);
 const has = (v: unknown) => v !== undefined && v !== '';
+/** `Search` is one case-insensitive term across the fields swagger documents for that list. */
+const matches = (search: string | undefined, ...fields: unknown[]) =>
+  !search || fields.some((f) => contains(f, search));
 
 /* vehicles -------------------------------------------------------------- */
 
@@ -66,6 +69,8 @@ route('GET', '/api/vehicles', (ctx) => {
     .filter((v) => (has(q.FuelType) ? v.fuelType === num(q.FuelType) : true))
     .filter((v) => (has(q.Year) ? v.year === num(q.Year) : true))
     .filter((v) => (has(q.IsActive) ? v.isActive === bool(q.IsActive) : true))
+    // Plate number, VIN, make and model.
+    .filter((v) => matches(q.Search, v.plateNumber, v.vinCode, v.make, v.model))
     .sort(byAsc((v) => v.plateNumber))
     .map((v): VehicleListItemResponse => ({
       id: v.id,
@@ -95,6 +100,11 @@ route('GET', '/api/customers', (ctx) => {
   const rows = ctx.store.customers
     .filter((c) => (has(q.Type) ? c.type === num(q.Type) : true))
     .filter((c) => (has(q.IsActive) ? c.isActive === bool(q.IsActive) : true))
+    // Individual and business names, personal or registration identifier, email.
+    .filter((c) => matches(
+      q.Search,
+      c.firstName, c.lastName, c.companyName, displayNameOf(c), c.personalId, c.registrationCode, c.email,
+    ))
     .map((c): CustomerListItemResponse => ({
       id: c.id,
       type: c.type,
@@ -120,6 +130,8 @@ route('GET', '/api/drivers', (ctx) => {
   const q = ctx.query as DriversQuery;
   const rows = ctx.store.drivers
     .filter((d) => (has(q.IsActive) ? d.isActive === bool(q.IsActive) : true))
+    // First name, last name, email.
+    .filter((d) => matches(q.Search, d.firstName, d.lastName, d.email))
     .sort(byAsc((d) => `${d.lastName} ${d.firstName}`))
     .map((d): DriverListItemResponse => ({
       id: d.id,
@@ -140,11 +152,15 @@ route('GET', '/api/drivers/{id}', (ctx) => {
 
 /* rental assignments ---------------------------------------------------- */
 
+const instant = (v: string) => new Date(v).getTime();
+
+/** A date bound arrives as an instant with its offset, so the comparison is on the instant. */
 const within = (value: string | null | undefined, from?: string, to?: string) => {
   if (!has(from) && !has(to)) return true;
   if (!value) return false;
-  if (has(from) && value < String(from)) return false;
-  if (has(to) && value > String(to)) return false;
+  const at = instant(value);
+  if (has(from) && at < instant(String(from))) return false;
+  if (has(to) && at > instant(String(to))) return false;
   return true;
 };
 
@@ -169,6 +185,12 @@ route('GET', '/api/rental-assignments', (ctx) => {
     .filter((a) => (has(q.Status) ? a.status === num(q.Status) : true))
     .filter((a) => within(a.plannedStartAtUtc, q.PlannedFromUtc, q.PlannedToUtc))
     .filter((a) => within(a.startedAtUtc, q.StartedFromUtc, q.StartedToUtc))
+    // Vehicle plate and VIN, customer individual or business name.
+    .filter((a) => matches(
+      q.Search,
+      a.vehiclePlateNumber, a.customerDisplayName,
+      ctx.store.vehicles.find((v) => v.id === a.vehicleId)?.vinCode,
+    ))
     // Newest timeline first: the open work is what a fleet manager opens the list for.
     .sort(byDesc((a) => a.plannedStartAtUtc ?? a.createdAtUtc))
     .map(listItem);

@@ -2,9 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import styles from './Filters.module.css';
 
 /** Types locally, commits after a pause, so a keystroke is not a request. */
-export function SearchInput({ value, placeholder, onChange, delay = 250 }: {
+export function SearchInput({ value, placeholder, maxLength, onChange, delay = 250 }: {
   value: string;
   placeholder: string;
+  /** The documented cap for this list's Search parameter. */
+  maxLength?: number;
   onChange: (next: string) => void;
   delay?: number;
 }) {
@@ -28,6 +30,7 @@ export function SearchInput({ value, placeholder, onChange, delay = 250 }: {
         value={text}
         placeholder={placeholder}
         aria-label={placeholder}
+        {...(maxLength ? { maxLength } : {})}
         onChange={(e) => setText(e.target.value)}
       />
       {text ? (

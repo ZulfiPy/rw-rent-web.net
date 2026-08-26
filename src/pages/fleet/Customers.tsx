@@ -11,7 +11,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { ClearFilters, SelectFilter, type FilterOption } from '@/ui/Filters';
+import { ClearFilters, SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
@@ -42,6 +42,7 @@ export function Customers() {
   const canManage = can('Customers.Manage');
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
+  const search = params.get('search') ?? '';
   const type = params.get('type') ?? '';
   const active = params.get('active') ?? '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
@@ -58,12 +59,13 @@ export function Customers() {
   };
 
   /* The prototype offers clearing while the search or any filter is set. */
-  const anyFilter = !!type || !!active;
-  const clear = () => patch({ type: '', active: '' });
+  const anyFilter = !!search || !!type || !!active;
+  const clear = () => patch({ search: '', type: '', active: '' });
 
   const query: CustomersQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
+    ...(search ? { Search: search } : {}),
     ...(type ? { Type: Number(type) as CustomerType } : {}),
     ...(active ? { IsActive: active === 'true' } : {}),
   };
@@ -76,7 +78,7 @@ export function Customers() {
 
   const page = customers.data;
   const failure = customers.error ? toFailure(customers.error) : null;
-  const isFiltered = !!(type || active);
+  const isFiltered = !!(search || type || active);
 
   return (
     <>
@@ -91,6 +93,12 @@ export function Customers() {
 
       <section className={list.panel}>
         <div className={filters.toolbar}>
+          <SearchInput
+            value={search}
+            placeholder="Name, identifier or email"
+            maxLength={50}
+            onChange={(next) => patch({ search: next })}
+          />
           <SelectFilter value={type} options={TYPE_OPTIONS} label="Type" onChange={(next) => patch({ type: next })} />
           <SelectFilter value={active} options={STATE_OPTIONS} label="Status" onChange={(next) => patch({ active: next })} />
           <span className={filters.spacer} />
@@ -116,7 +124,7 @@ export function Customers() {
             icon="badge"
             title={isFiltered ? 'No customers match' : 'No customers yet'}
             body={isFiltered
-              ? 'Widen the type or status filter.'
+              ? 'Widen the search, the type or status filter.'
               : 'A customer appears here once one is registered.'}
           />
         ) : phone ? (

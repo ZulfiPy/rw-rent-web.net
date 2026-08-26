@@ -275,7 +275,7 @@ export function SystemAdministrator() {
           />
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.transfers}`}>
+            <table className={`${table.table} ${styles.transfers}`} data-panel="">
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colTarget}`}>Target</th>
@@ -305,7 +305,9 @@ export function SystemAdministrator() {
                         </span>
                       </td>
                       <td className={`${table.td} ${table.mono}`}>{formatUtcLabelled(t.initiatedAtUtc)}</td>
-                      <td className={`${table.td} ${table.mono} ${table.dim} ${table.foldTablet}`}>
+                      {/* Both instants read alike, in the lighter of the prototype's two
+                          treatments — see the README's deliberate deviations. */}
+                      <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>
                         {formatUtcLabelled(t.expiresAtUtc)}
                       </td>
                       <td className={table.td}>

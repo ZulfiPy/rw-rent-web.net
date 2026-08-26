@@ -1,7 +1,7 @@
-node_modules/
-dist/
-.idea/
-.DS_Store
-tsconfig.tsbuildinfo
 *.log
+.DS_Store
+.idea/
 .vite/
+dist/
+node_modules/
+tsconfig.tsbuildinfo

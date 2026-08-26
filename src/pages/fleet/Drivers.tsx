@@ -10,7 +10,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
-import { ClearFilters, SelectFilter, type FilterOption } from '@/ui/Filters';
+import { ClearFilters, SearchInput, SelectFilter, type FilterOption } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
@@ -35,6 +35,7 @@ export function Drivers() {
   const canManage = can('Drivers.Manage');
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
+  const search = params.get('search') ?? '';
   const active = params.get('active') ?? '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
   const pageSize = Number(params.get('size') ?? DEFAULT_PAGE_SIZE);
@@ -50,12 +51,13 @@ export function Drivers() {
   };
 
   /* The prototype offers clearing while the search or any filter is set. */
-  const anyFilter = !!active;
-  const clear = () => patch({ active: '' });
+  const anyFilter = !!search || !!active;
+  const clear = () => patch({ search: '', active: '' });
 
   const query: DriversQuery = {
     PageNumber: pageNumber,
     PageSize: pageSize,
+    ...(search ? { Search: search } : {}),
     ...(active ? { IsActive: active === 'true' } : {}),
   };
 
@@ -67,6 +69,7 @@ export function Drivers() {
 
   const page = drivers.data;
   const failure = drivers.error ? toFailure(drivers.error) : null;
+  const isFiltered = !!(search || active);
 
   return (
     <>
@@ -81,6 +84,12 @@ export function Drivers() {
 
       <section className={list.panel}>
         <div className={filters.toolbar}>
+          <SearchInput
+            value={search}
+            placeholder="First name, last name or email"
+            maxLength={50}
+            onChange={(next) => patch({ search: next })}
+          />
           <SelectFilter value={active} options={STATE_OPTIONS} label="Status" onChange={(next) => patch({ active: next })} />
           <span className={filters.spacer} />
           {anyFilter ? <ClearFilters onClear={clear} /> : null}
@@ -103,9 +112,9 @@ export function Drivers() {
         ) : page && page.items.length === 0 ? (
           <EmptyState
             icon="badge"
-            title={active ? 'No drivers match' : 'No drivers yet'}
-            body={active
-              ? 'Widen the status filter to see the rest.'
+            title={isFiltered ? 'No drivers match' : 'No drivers yet'}
+            body={isFiltered
+              ? 'Widen the search or the status filter to see the rest.'
               : 'A driver appears here once one is registered.'}
           />
         ) : phone ? (
