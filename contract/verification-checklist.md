@@ -7,10 +7,10 @@ deliveries rsync over everything else.
 
 - **Claude (reviewer)** — everything functional, every delivery: typecheck, vitest, driving every
   page/dialog/button in the browser, persona variants, failure simulator (field errors, 409
-  conflict, 409 stale), light+dark. No user action needed for any of this. Layout criterion per
-  tier: the prototype's rendering is the target — where the prototype pans horizontally on small
-  screens (ruling from the Overview mobile pair, 2026-08-27), the port pans too; "no horizontal
-  overflow" applies only where the prototype itself is contained.
+  conflict, 409 stale), overflow measurement at 375/768/1024/1440, light+dark. No user action
+  needed for any of this. Ruling (settled 2026-08-27 after the Overview mobile pair): no horizontal
+  page scroll at any tier, in either app — where the prototype overflows on small screens, that is
+  a prototype bug to fix, not a behavior to port.
 - **Claude Design (builder)** — self-checks each screen side-by-side against the prototype at the
   same viewport before zipping ("port, don't recreate"), plus the queued re-audit of all delivered
   screens.
