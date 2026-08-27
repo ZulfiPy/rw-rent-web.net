@@ -301,6 +301,10 @@ The System Administrator transfers panel does not fold at phone width, it change
 renders as a stacked block: the target's name with the email beneath it, INITIATED and EXPIRES as
 label–value rows whose values keep the UTC suffix, the state chip, then Resend and Cancel as two
 outlined 44px buttons sharing the row. No header row, no panning, no column dropped. Blocks separate
-on the panel's own 1px divider, the last meeting the footer note's rule. The folded four-column table
-(`table-layout: fixed`, EXPIRES as a sub-line under the target, icon-only row actions) stays for the
-640–1023 band.
+on the panel's own 1px divider, the last meeting the footer note's rule.
+
+From 640 up the table is the same table at every width: all five columns at their declared widths
+(auto / 180 / 180 / 150 / 220), `table-layout: auto`, the panel's roomy pads, and a 900px min-width
+that scrolls inside the panel on a narrow tablet rather than folding. `data-nofold` on the table opts
+out of the shared ≤1023 panel-table fold — the prototype drops a column from a list, never from a
+panel.

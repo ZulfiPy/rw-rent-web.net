@@ -10,7 +10,7 @@ import { toFailure } from '@/api/problem';
 import { formatUtcLabelled } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { useNarrow, useSheetTier } from '@/app/useViewport';
+import { useSheetTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -186,7 +186,6 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
 
 export function SystemAdministrator() {
   const { can, me } = useAccess();
-  const compact = useNarrow();
   const sheet = useSheetTier();
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -323,12 +322,12 @@ export function SystemAdministrator() {
           </div>
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.transfers}`} data-panel="">
+            <table className={`${table.table} ${styles.transfers}`} data-panel="" data-nofold="">
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colTarget}`}>Target</th>
                   <th scope="col" className={`${table.th} ${styles.colUtc}`}>Initiated (UTC)</th>
-                  <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Expires (UTC)</th>
+                  <th scope="col" className={`${table.th} ${styles.colUtc}`}>Expires (UTC)</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                   <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
                     <span className={table.srOnly}>Actions</span>
@@ -347,9 +346,6 @@ export function SystemAdministrator() {
                             {target ? `${target.firstName} ${target.lastName}` : 'Unknown account'}
                           </span>
                           <span className={table.sub}>{target?.email ?? ''}</span>
-                          <span className={`${table.subMono} ${table.showTablet}`}>
-                            expires {formatUtcLabelled(t.expiresAtUtc)}
-                          </span>
                         </span>
                       </td>
                       {/* Both instants read alike: Geist Mono 12.5px/400 in --fg-3, matching the
@@ -357,7 +353,7 @@ export function SystemAdministrator() {
                       <td className={`${table.td} ${table.mono} ${table.instant}`}>
                         {formatUtcLabelled(t.initiatedAtUtc)}
                       </td>
-                      <td className={`${table.td} ${table.mono} ${table.instant} ${table.foldTablet}`}>
+                      <td className={`${table.td} ${table.mono} ${table.instant}`}>
                         {formatUtcLabelled(t.expiresAtUtc)}
                       </td>
                       <td className={table.td}>
@@ -372,7 +368,6 @@ export function SystemAdministrator() {
                                 icon="forward_to_inbox"
                                 small
                                 row
-                                compact={compact}
                                 onClick={() => setDialog({ kind: 'resend', transferId: t.id })}
                               />
                               <Button
@@ -381,7 +376,6 @@ export function SystemAdministrator() {
                                 tone="danger"
                                 small
                                 row
-                                compact={compact}
                                 onClick={() => setDialog({ kind: 'cancel', transferId: t.id })}
                               />
                             </>

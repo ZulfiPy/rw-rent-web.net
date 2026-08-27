@@ -1,5 +1,8 @@
 /* One table vocabulary for every list on every screen. Column widths stay with each screen. */
-.scroll { overflow-x: auto; max-width: 100%; min-width: 0; }
+/* `contain: inline-size` makes the wrapper's width independent of the table inside it, so a table
+   carrying its own min-width (the transfers panel's 900px) can never widen the page — it scrolls
+   here instead, whatever the ancestors do. */
+.scroll { overflow-x: auto; max-width: 100%; min-width: 0; contain: inline-size; }
 .table { width: 100%; }
 .th {
   padding: 10px 14px;
@@ -47,6 +50,14 @@
 /* Two timestamps of equal standing keep the list vocabulary's 12.5px/400, as the prototype's
    transfers table does. */
 .table[data-panel] .instant { font-size: 12.5px; font-weight: 400; color: var(--fg-3); }
+
+/* A panel table that never folds. The prototype drops a column from a *list*, never from a panel:
+   a panel's table keeps its declared widths, holds its own min-width and scrolls inside the panel.
+   It also keeps the roomy pads — a panel only shrinks them where it opts in (`tightMax`), which the
+   transfers table does not. */
+.table[data-panel][data-nofold] .th { padding: 9px 16px; }
+.table[data-panel][data-nofold] .td { padding: 11px 16px; }
+.table[data-nofold] .th, .table[data-nofold] .td { text-overflow: clip; }
 
 .link {
   display: flex;

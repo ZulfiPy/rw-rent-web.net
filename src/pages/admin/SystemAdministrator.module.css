@@ -1,20 +1,11 @@
-/* The transfers table: the prototype's fixed column widths. */
-.transfers { min-width: 0; }
+/* The transfers table: the prototype's fixed column widths. It never folds — from 640 up it keeps
+   all five columns at these widths and its own 900px min-width, scrolling inside the panel when the
+   panel is narrower than the table. */
+.transfers { min-width: 900px; }
 .colTarget { width: auto; }
 .colUtc { width: 180px; }
 .colState { width: 150px; }
 .colActions { width: 220px; }
-
-@media (max-width: 1279px) {
-  .colUtc { width: 160px; }
-  .colActions { width: 190px; }
-}
-@media (max-width: 1023px) {
-  .transfers { table-layout: fixed; }
-  .colUtc { width: 146px; }
-  .colState { width: 140px; }
-  .colActions { width: 108px; }
-}
 
 /*
  * The sheet tier (< 640): a transfer is a stacked block, not a table row — target, both instants,
