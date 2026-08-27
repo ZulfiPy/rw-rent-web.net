@@ -25,8 +25,8 @@ starts: desktop first, then tablet (768 / 1024), then phone (375). A closed sect
 reopened. Closed sections: **Overview + System Administrator** (2026-08-27 — desktop, iPad
 portrait/landscape, phone, both themes; transfers table nofold band, collapsed-rail scroll and the
 sr-only phantom-pan fix all verified). Current section: next one chosen by the user, starting from
-desktop. Open loose end from the closed section: Claude Design's prototype-side check of the
-sr-only phantom pan (asked in the Delivery 18 prompt, not yet confirmed).
+desktop. No open loose ends: Claude Design confirmed (Delivery 18 report) the prototype never had
+the sr-only phantom pan — its actions header is an empty string, measured clean at 834 and 695.
 
 ## Pair convention
 
