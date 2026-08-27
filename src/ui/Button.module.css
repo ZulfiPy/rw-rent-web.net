@@ -49,6 +49,29 @@
 .button.row[data-tone='ok'] { color: var(--ok); }
 .button.row[data-tone='info'] { color: var(--info); }
 
+/*
+ * The sheet tier's block action. The prototype keeps the neutral frame and surface of an ordinary
+ * button and puts the tone in the label only, at a 44px touch target, two sharing one row.
+ */
+.button.block {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 12px;
+  background: var(--surface-2);
+  border-color: var(--line-2);
+  border-radius: 9px;
+  font-size: 13px;
+}
+.button.block:hover:not(:disabled) { background: var(--surface-3); border-color: var(--line-2); }
+.button.block .icon { font-size: 16px; }
+.button.block[data-tone='danger'] { color: var(--bad); }
+.button.block[data-tone='warn'] { color: var(--warn); }
+.button.block[data-tone='ok'] { color: var(--ok); }
+.button.block[data-tone='info'] { color: var(--info); }
+
 /* A folded row's actions: the prototype's 36px ghost square, tinted only on hover. */
 .button.iconOnly {
   gap: 0;

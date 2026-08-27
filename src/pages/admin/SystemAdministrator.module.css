@@ -15,3 +15,46 @@
   .colState { width: 140px; }
   .colActions { width: 108px; }
 }
+
+/*
+ * The sheet tier (< 640): a transfer is a stacked block, not a table row — target, both instants,
+ * state, actions, each on its own line, so nothing pans sideways and no column is dropped. Blocks
+ * separate on the panel's own divider, the last one meeting the footer note's rule.
+ */
+.blocks { display: flex; flex-direction: column; }
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px 17px;
+  border-bottom: 1px solid var(--line);
+}
+.blockHeading { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.blockTitle { font-size: 13.5px; font-weight: 500; color: var(--fg); text-wrap: pretty; }
+.blockSub { font-size: 12px; color: var(--fg-3); word-break: break-word; }
+.blockFacts { display: flex; flex-direction: column; gap: 6px; }
+.blockFact { display: flex; align-items: baseline; gap: 12px; }
+.blockLabel {
+  flex: 0 0 76px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+  white-space: nowrap;
+}
+/* Both instants keep the table's instant treatment: Geist Mono 12.5px/400 in --fg-3. */
+.blockValue {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The chip sizes to its label: an inline-flex child of a column flex would stretch to the width. */
+.blockState { display: flex; }
+.blockActions { display: flex; gap: 8px; }

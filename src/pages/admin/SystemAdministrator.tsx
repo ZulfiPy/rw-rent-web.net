@@ -10,7 +10,7 @@ import { toFailure } from '@/api/problem';
 import { formatUtcLabelled } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { useNarrow } from '@/app/useViewport';
+import { useNarrow, useSheetTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -187,6 +187,7 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
 export function SystemAdministrator() {
   const { can, me } = useAccess();
   const compact = useNarrow();
+  const sheet = useSheetTier();
   const [dialog, setDialog] = useState<DialogState>(null);
 
   const transfers = useQuery({
@@ -273,6 +274,53 @@ export function SystemAdministrator() {
             title="No transfers"
             body="Initiating a transfer names another confirmed account as the next administrator."
           />
+        ) : sheet ? (
+          <div className={styles.blocks}>
+            {rows.map((t) => {
+              const target = person(t.targetUserId);
+              const s = state(t);
+              return (
+                <div key={t.id} className={styles.block}>
+                  <div className={styles.blockHeading}>
+                    <span className={styles.blockTitle}>
+                      {target ? `${target.firstName} ${target.lastName}` : 'Unknown account'}
+                    </span>
+                    {target?.email ? <span className={styles.blockSub}>{target.email}</span> : null}
+                  </div>
+                  <div className={styles.blockFacts}>
+                    <div className={styles.blockFact}>
+                      <span className={styles.blockLabel}>Initiated</span>
+                      <span className={styles.blockValue}>{formatUtcLabelled(t.initiatedAtUtc)}</span>
+                    </div>
+                    <div className={styles.blockFact}>
+                      <span className={styles.blockLabel}>Expires</span>
+                      <span className={styles.blockValue}>{formatUtcLabelled(t.expiresAtUtc)}</span>
+                    </div>
+                  </div>
+                  <div className={styles.blockState}>
+                    <Chip tone={s.tone} dot={s.dot}>{s.label}</Chip>
+                  </div>
+                  {isOpen(t) ? (
+                    <div className={styles.blockActions}>
+                      <Button
+                        label="Resend"
+                        icon="forward_to_inbox"
+                        block
+                        onClick={() => setDialog({ kind: 'resend', transferId: t.id })}
+                      />
+                      <Button
+                        label="Cancel"
+                        icon="cancel"
+                        tone="danger"
+                        block
+                        onClick={() => setDialog({ kind: 'cancel', transferId: t.id })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.transfers}`} data-panel="">

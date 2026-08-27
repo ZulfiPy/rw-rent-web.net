@@ -7,13 +7,15 @@ export type ButtonTone =
  * `blockedReason` is the disable-with-reason case: an action the persona holds the permission for
  * but the record's state refuses. An action they can never perform is not rendered at all.
  */
-export function Button({ label, icon, tone = 'default', small, row, compact, blockedReason, hint, busy, onClick, type = 'button' }: {
+export function Button({ label, icon, tone = 'default', small, row, block, compact, blockedReason, hint, busy, onClick, type = 'button' }: {
   label: string;
   icon?: string | undefined;
   tone?: ButtonTone;
   small?: boolean;
   /** A panel table's row action: the prototype's transparent, tone-coloured button. */
   row?: boolean;
+  /** A stacked block's action on the sheet tier: 44px touch target, sharing the row's width. */
+  block?: boolean;
   /** Icon only, label on the element: for a row of actions in a folded table cell. */
   compact?: boolean;
   blockedReason?: string | null;
@@ -33,6 +35,7 @@ export function Button({ label, icon, tone = 'default', small, row, compact, blo
         styles.button,
         small ? styles.small : '',
         row ? styles.row : '',
+        block ? styles.block : '',
         iconOnly ? styles.iconOnly : '',
       ].filter(Boolean).join(' ')}
       disabled={disabled}

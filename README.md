@@ -293,3 +293,14 @@ that grid and a panel in this port's 14px flex column occupy the same box, and `
 max-width: 100%` on the panel gives a wide table the same containment `minmax(0,1fr)` does: the table
 scrolls inside the panel instead of widening the page. The stacked column stays, rather than carrying
 a second grid track nothing is ever placed in.
+
+## Sheet tier (< 640)
+
+The System Administrator transfers panel does not fold at phone width, it changes shape. Below 640 —
+`useSheetTier()`, the prototype's `isPhone()`, the edge the dialog sheet already uses — each transfer
+renders as a stacked block: the target's name with the email beneath it, INITIATED and EXPIRES as
+label–value rows whose values keep the UTC suffix, the state chip, then Resend and Cancel as two
+outlined 44px buttons sharing the row. No header row, no panning, no column dropped. Blocks separate
+on the panel's own 1px divider, the last meeting the footer note's rule. The folded four-column table
+(`table-layout: fixed`, EXPIRES as a sub-line under the target, icon-only row actions) stays for the
+640–1023 band.
