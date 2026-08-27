@@ -22,8 +22,11 @@ deliveries rsync over everything else.
 
 Section by section, each section taken across every device to completion before the next section
 starts: desktop first, then tablet (768 / 1024), then phone (375). A closed section is never
-reopened. Current section: **Overview + System Administrator** (desktop already closed through the
-delivery pair rounds; tablet and phone pairs remain). Next section chosen when this one closes.
+reopened. Closed sections: **Overview + System Administrator** (2026-08-27 — desktop, iPad
+portrait/landscape, phone, both themes; transfers table nofold band, collapsed-rail scroll and the
+sr-only phantom-pan fix all verified). Current section: next one chosen by the user, starting from
+desktop. Open loose end from the closed section: Claude Design's prototype-side check of the
+sr-only phantom pan (asked in the Delivery 18 prompt, not yet confirmed).
 
 ## Pair convention
 
@@ -33,7 +36,7 @@ One width is enough (your half-32" width); add ultrawide only where a row asks.
 
 ## Final sweep — pages (one pair each)
 
-- [ ] Overview  (already through 3 pair-rounds; re-shoot after metric-grid fix, incl. ultrawide)
+- [x] Overview  (closed 2026-08-27 via the section traversal, all devices)
 - [ ] Needs attention
 - [ ] Rental assignments (list)
 - [ ] Tasks
@@ -45,7 +48,7 @@ One width is enough (your half-32" width); add ultrawide only where a row asks.
 - [ ] Registrations
 - [ ] Security audit (list)
 - [ ] Company profile  (when delivered)
-- [ ] System Administrator  (when delivered)
+- [x] System Administrator  (closed 2026-08-27 via the section traversal, all devices)
 
 ## Final sweep — record pages / tabs
 
