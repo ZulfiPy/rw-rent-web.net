@@ -55,8 +55,16 @@
 .close:hover { background: var(--surface-2); color: var(--fg); }
 
 .nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 14px 10px 10px; }
-.rail[data-mode='collapsed'] .nav { padding: 14px 0 10px; overflow-y: hidden; }
-.rail[data-mode='drawer'] .nav { flex: none; }
+/* The prototype's collapsed rail scrolls like the expanded one, but hides the scrollbar: a visible
+   track would eat most of the 64px column (`data-rail-nav="hide"`). */
+.rail[data-mode='collapsed'] .nav {
+  padding: 14px 0 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rail[data-mode='collapsed'] .nav::-webkit-scrollbar { width: 0; height: 0; }
+/* In drawer mode the drawer itself is the scroller, as in the prototype (`overflow: visible`). */
+.rail[data-mode='drawer'] .nav { flex: none; overflow-y: visible; }
 
 .group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
 .groupLabel {

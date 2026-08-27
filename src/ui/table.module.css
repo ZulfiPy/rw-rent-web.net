@@ -1,8 +1,16 @@
 /* One table vocabulary for every list on every screen. Column widths stay with each screen. */
-/* `contain: inline-size` makes the wrapper's width independent of the table inside it, so a table
-   carrying its own min-width (the transfers panel's 900px) can never widen the page — it scrolls
-   here instead, whatever the ancestors do. */
-.scroll { overflow-x: auto; max-width: 100%; min-width: 0; contain: inline-size; }
+/* `position: relative` gives the header's sr-only "Actions" span a positioned ancestor: absolute
+   with none, its containing block is the page root, so it escapes this wrapper's clipping and
+   stretches the document to the table's width — the page then pans into empty space.
+   `contain: inline-size` makes the wrapper's own width independent of the table inside it, so a
+   table carrying its own min-width (the transfers panel's 900px) can never widen the page. */
+.scroll {
+  position: relative;
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  contain: inline-size;
+}
 .table { width: 100%; }
 .th {
   padding: 10px 14px;
