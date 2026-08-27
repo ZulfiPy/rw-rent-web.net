@@ -1,4 +1,7 @@
-.page { display: flex; flex-direction: column; gap: 14px; max-width: 1000px; min-width: 0; }
+/* Matches the prototype's pgSimple container: width:100%;max-width:1000px;margin:0 auto —
+   the auto margins centre the queue in the content area at desktop/tablet; on phone the
+   1000px cap never binds, so the panel fills the width. */
+.page { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 1000px; margin: 0 auto; min-width: 0; }
 
 .notice {
   display: flex;

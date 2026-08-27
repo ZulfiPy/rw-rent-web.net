@@ -13,7 +13,7 @@ export function NeedsAttention() {
       />
       <SimpleQueue
         heading="Open queue"
-        sub="Sorted by how long the record has been waiting."
+        sub="Registrations first, then open interruptions, then upcoming handovers."
         count={`${work.items.length} ${work.items.length === 1 ? 'item' : 'items'}`}
         rows={work.items}
         emptyIcon={work.isPending ? 'hourglass_top' : 'task_alt'}

@@ -13,8 +13,8 @@ export interface SimpleRow {
 }
 
 /**
- * The prototype's `pgSimple` layout — a 1000px column with an optional "Under development" notice
- * and one panel of rows. Needs attention, Tasks and Insurance cases all render through it.
+ * The prototype's `pgSimple` layout — a centred 1000px column with an optional "Under development"
+ * notice and one panel of rows. Needs attention, Tasks and Insurance cases all render through it.
  */
 export function SimpleQueue({ notice, heading, sub, count, rows, emptyIcon, emptyTitle, emptyBody }: {
   notice?: string;

@@ -27,8 +27,9 @@ substituting something plausible.
   interruptions, then handovers inside three days). Within a group the prototype walks its in-memory
   collections in seed order, which the API cannot express — registrations are ordered by registration
   instant, newest first, and interruptions by oldest open, the directions that reproduce the
-  prototype's rendered list. The panel keeps the prototype's "Sorted by how long the record has been
-  waiting" subtitle.
+  prototype's rendered list. The panel carries the prototype's "Registrations first, then open
+  interruptions, then upcoming handovers." subtitle, which describes that grouping rather than
+  claiming a waiting-time sort.
 - **Fleet writes are not audited.** Vehicle, customer and driver edits are outside the backend's
   audited set (security events, role and registration transitions, privileged corrections), so no
   entry is written for them. The driver record's audit panel therefore usually holds only the
