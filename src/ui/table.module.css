@@ -26,6 +26,13 @@
   white-space: nowrap;
 }
 .right { text-align: right; }
+/* The list table's outer gutter: the leading and trailing columns clear the panel border by 22px
+   (16px in the folded band), where the columns between them keep the 14px cell gutter. A panel's
+   table keeps its own 16px pads and is excluded. */
+.table:not([data-panel]) .th:first-child,
+.table:not([data-panel]) .td:first-child { padding-left: 22px; }
+.table:not([data-panel]) .th:last-child,
+.table:not([data-panel]) .td:last-child { padding-right: 22px; }
 /* A sortable header. The button inherits the header's own type so only the arrow is added, as the
    prototype's list header does: `unfold_more` at .45 opacity until the column is the sort, then
    `arrow_upward` / `arrow_downward` at full strength. */
@@ -129,12 +136,21 @@
   .foldWide { display: none; }
   .showWide { display: block; }
   .tightWide .th, .tightWide .td { padding: 9px; }
+  /* The two lists on the wider folding band compress with it, so their outer gutter follows. */
+  .table.tightWide:not([data-panel]) .th:first-child,
+  .table.tightWide:not([data-panel]) .td:first-child { padding-left: 16px; }
+  .table.tightWide:not([data-panel]) .th:last-child,
+  .table.tightWide:not([data-panel]) .td:last-child { padding-right: 16px; }
 }
 @media (max-width: 1023px) {
   .foldTablet, .foldNarrow { display: none; }
   .showTablet, .showNarrow { display: block; }
   .th, .td { padding: 9px; }
   .table[data-panel] .th, .table[data-panel] .td { padding: 9px; }
+  .table:not([data-panel]) .th:first-child,
+  .table:not([data-panel]) .td:first-child { padding-left: 16px; }
+  .table:not([data-panel]) .th:last-child,
+  .table:not([data-panel]) .td:last-child { padding-right: 16px; }
   /* Portrait runs fixed layout (per screen), so a long value ellipsises inside its cell instead of
      widening the table past the card. */
   .td, .th { overflow: hidden; text-overflow: ellipsis; }
