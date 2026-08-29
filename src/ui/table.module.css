@@ -26,6 +26,27 @@
   white-space: nowrap;
 }
 .right { text-align: right; }
+/* A sortable header. The button inherits the header's own type so only the arrow is added, as the
+   prototype's list header does: `unfold_more` at .45 opacity until the column is the sort, then
+   `arrow_upward` / `arrow_downward` at full strength. */
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.sortButton:hover { color: var(--fg); }
+.sortActive { color: var(--fg); }
+.sortIcon { font-size: 15px; opacity: .45; }
+.sortActive .sortIcon { opacity: 1; }
 .row { border-bottom: 1px solid var(--line); }
 .row:hover { background: var(--surface-2); }
 .td { padding: 11px 14px; vertical-align: middle; font-size: 13px; color: var(--fg-2); }

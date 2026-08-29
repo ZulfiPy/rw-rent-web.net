@@ -1,18 +1,18 @@
-.table { min-width: 0; }
+/* The prototype's assignments list: six columns plus the open action, and a 1040px floor that the
+   panel's own scroller absorbs below desktop — this list folds no column at any width. */
+.table { min-width: 1040px; }
+.colPlate { width: 174px; }
 .wide { width: auto; }
-.colVehicle { width: 116px; }
-.colStatus { width: 146px; }
-.colWhen { width: 158px; }
-.colAction { width: 60px; }
+.colStatus { width: 124px; }
+.colWhen { width: 142px; }
+.colDrivers { width: 162px; }
+.colAction { width: 56px; }
 
-@media (max-width: 1279px) {
-  .colVehicle { width: 112px; }
-  .colStatus { width: 138px; }
-  .colWhen { width: 144px; }
-  .colAction { width: 48px; }
-}
-/* Portrait: Planned end folds under Planned start, and fixed layout holds the table to the card. */
-@media (max-width: 1023px) {
-  .table { table-layout: fixed; }
-  .colWhen { width: 140px; }
+/* The plate is the row's identifier: mono, 600, full-strength ink, with the model beneath it. */
+.plate {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
 }

@@ -1,6 +1,6 @@
 import {
   AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType, enumName,
-  AuthorizationStopReason, BillingImpact, InterruptionReason,
+  AuthorizationStopReason, BillingImpact, InterruptionReason, SortDirection,
   type ActivateRentalAssignmentRequest, type AssignmentDriverAuthorizationResponse,
   type AssignmentInterruptionResponse, type AuthorizationsQuery,
   type CancelRentalAssignmentRequest, type CorrectDriverAuthorizationRequest,
@@ -177,6 +177,29 @@ const listItem = (a: RentalAssignmentResponse): RentalAssignmentListItemResponse
   closedAtUtc: a.closedAtUtc ?? null,
 });
 
+/**
+ * The list order the prototype renders. With no column chosen it is the record's own creation
+ * instant, newest first — which is why a freshly planned handover leads the list rather than the
+ * nearest planned start. The STATUS and STARTS headers sort on `status` and `plannedStartAtUtc`;
+ * a missing planned start sorts as an empty string, as the prototype's `sortVal` does.
+ */
+const ASSIGNMENT_SORT: Record<string, (a: RentalAssignmentResponse) => string | number> = {
+  Status: (a) => a.status,
+  PlannedStartAtUtc: (a) => a.plannedStartAtUtc ?? '',
+};
+
+const assignmentOrder = (q: RentalAssignmentsQuery) => {
+  const key = ASSIGNMENT_SORT[String(q.SortBy ?? '')];
+  const value = key ?? ((a: RentalAssignmentResponse) => a.createdAtUtc);
+  // No column chosen means the default descending order; a chosen column defaults to ascending.
+  const desc = key ? num(q.SortDirection) === SortDirection.Descending : true;
+  return (x: RentalAssignmentResponse, y: RentalAssignmentResponse) => {
+    const a = value(x), b = value(y);
+    const c = a > b ? 1 : a < b ? -1 : 0;
+    return desc ? -c : c;
+  };
+};
+
 route('GET', '/api/rental-assignments', (ctx) => {
   const q = ctx.query as RentalAssignmentsQuery;
   const rows = ctx.store.assignments
@@ -191,8 +214,7 @@ route('GET', '/api/rental-assignments', (ctx) => {
       a.vehiclePlateNumber, a.customerDisplayName,
       ctx.store.vehicles.find((v) => v.id === a.vehicleId)?.vinCode,
     ))
-    // Newest timeline first: the open work is what a fleet manager opens the list for.
-    .sort(byDesc((a) => a.plannedStartAtUtc ?? a.createdAtUtc))
+    .sort(assignmentOrder(q))
     .map(listItem);
   return page(rows, q);
 }, ['RentalAssignments.Read']);

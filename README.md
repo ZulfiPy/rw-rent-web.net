@@ -187,6 +187,14 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
   vehicle is in the fleet
 - Interruptions and authorizations are assignment-scoped, so the open-work queue fans out one
   request per open assignment; a company-wide `GET /api/interruptions?IsOpen=true` would collapse it
+- The rental assignments LIST projection carries the plate and the customer's display name and
+  nothing else the prototype's row shows. Vehicle model, customer type, authorized-driver surnames
+  and the open-interruption count are assembled client-side from the vehicles, customers and drivers
+  directories plus one `GET /api/rental-assignments/{id}/authorizations?IsOpen=true` and one
+  `GET /api/rental-assignments/{id}/interruptions?IsOpen=true` per row, each gated on its own
+  permission — the same fan-out shape as the open-work queue. A richer `GET /api/rental-assignments`
+  projection (`vehicleMake` / `vehicleModel`, `customerType`, the open authorization names and
+  `openInterruptionCount`) would serve the list in the one call it already makes
 - No `GET /api/security-audit/{id}`: an audit entry is located in the first page of the unfiltered
   list, so a deep link is best-effort
 - `GET /api/users` takes one `Status`, so “All lifecycle states” fans out into one request per state
@@ -254,6 +262,16 @@ customer, the vehicle and four date bounds: planned start from/to and actual sta
 second of each pair hinted "Must not precede the lower bound." A date bound resolves to the edge of
 the chosen Europe/Tallinn day and is compared as an instant. Clearing resets the search and every
 filter at once and keeps the sort, the page size and the open row.
+
+The **rental assignments** list is the prototype's six columns in its order: the plate over the
+vehicle model, the customer over Private / Business, the status chip, one Starts instant qualified
+"actual" once the handover happened and "planned" until then, one Ends instant qualified "planned"
+while the assignment is open and "closed" once it is, and the authorized drivers — the open
+authorizations by surname, "None authorized", or "Company-authorized drivers" — with "1 open
+interruption" beneath the row where one is open. Status and Starts carry the prototype's sort
+affordance: the first click sorts ascending and only an already ascending column flips to
+descending. Untouched, the list is ordered by the record's creation instant, newest first, which is
+the prototype's default and what the mock now serves.
 
 **New rental assignment** is the assignments list's own write: the prototype's 700px create dialog —
 parties, the initial lifecycle state, the timeline that state implies, the driver-coverage block with

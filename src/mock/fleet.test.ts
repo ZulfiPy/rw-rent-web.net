@@ -7,7 +7,7 @@ import { installTransport, transport, type Query } from '@/api/transport';
 import { setDevState } from '@/dev/devState';
 import {
   AssignmentDriverAuthorizationType, AssignmentStatus, AuthorizationStopReason,
-  BillingImpact, CustomerType, InterruptionReason,
+  BillingImpact, CustomerType, InterruptionReason, SortDirection,
   type AssignmentDriverAuthorizationResponse, type AssignmentInterruptionResponse,
   type CustomerResponse, type DriverResponse, type PagedResponse,
   type RentalAssignmentListItemResponse, type RentalAssignmentResponse,
@@ -392,5 +392,27 @@ describe('list filters', () => {
       PlannedToUtc: `${day}T00:00:00.000+00:00`,
     });
     expect(before.items.map((a) => a.id)).not.toContain(target!.id);
+  });
+
+  test('the assignments list leads with the newest record, and both sortable columns sort', async () => {
+    // The prototype's default order is the record's creation instant, newest first — a4 leads.
+    const all = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', { PageSize: 100 });
+    expect(all.items[0]?.id).toBe(A.a4);
+
+    const ascending = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', {
+      PageSize: 100,
+      SortBy: 'PlannedStartAtUtc',
+      SortDirection: SortDirection.Ascending,
+    });
+    const starts = ascending.items.map((a) => a.plannedStartAtUtc ?? '');
+    expect(starts).toEqual([...starts].sort());
+
+    const descending = await list<RentalAssignmentListItemResponse>('/api/rental-assignments', {
+      PageSize: 100,
+      SortBy: 'Status',
+      SortDirection: SortDirection.Descending,
+    });
+    const states = descending.items.map((a) => a.status);
+    expect(states).toEqual([...states].sort((x, y) => y - x));
   });
 });
