@@ -60,7 +60,8 @@ function SortHeader(props: {
   column: SortKey;
   sort: SortKey | '';
   dir: 'asc' | 'desc';
-  className: string;
+  /** A CSS-module key resolves to `string | undefined`, so the column class is optional here. */
+  className?: string;
   onSort: (column: SortKey, dir: 'asc' | 'desc') => void;
 }) {
   const active = props.sort === props.column;
@@ -71,7 +72,7 @@ function SortHeader(props: {
   return (
     <th
       scope="col"
-      className={`${table.th} ${props.className}`}
+      className={`${table.th} ${props.className ?? ''}`}
       aria-sort={active ? (props.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
       <button
