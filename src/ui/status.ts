@@ -27,7 +27,7 @@ export const USER_STATUS_DOT: Record<ApplicationUserStatus, string> = {
 export const ASSIGNMENT_STATUS_TONE: Record<AssignmentStatus, Tone> = {
   [AssignmentStatus.Active]: 'ok',
   [AssignmentStatus.Ended]: 'mute',
-  [AssignmentStatus.Cancelled]: 'mute',
+  [AssignmentStatus.Cancelled]: 'bad',
   [AssignmentStatus.Planned]: 'info',
 };
 
