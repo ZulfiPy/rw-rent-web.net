@@ -1,5 +1,5 @@
-/* The prototype's assignments list: six columns plus the open action, and a 1040px floor that the
-   panel's own scroller absorbs below desktop — this list folds no column at any width. */
+/* The prototype's assignments list: six columns plus the open action, and a 1040px floor above the
+   folded band — this list folds no column at any width. */
 .table { min-width: 1040px; }
 .colPlate { width: 174px; }
 .wide { width: auto; }
@@ -15,4 +15,17 @@
   font-weight: 600;
   color: var(--fg);
   white-space: nowrap;
+}
+
+/* In the folded band the prototype compresses this list to fit the panel rather than pan inside it:
+   the floor and every declared column width take its 0.71 factor, and the header stops holding one
+   line, so Authorized drivers wraps to two. At 834 all six columns fit with nothing panning. */
+@media (max-width: 1023px) {
+  .table { min-width: 738px; }
+  .table th { white-space: normal; }
+  .colPlate { width: 124px; }
+  .colStatus { width: 88px; }
+  .colWhen { width: 101px; }
+  .colDrivers { width: 115px; }
+  .colAction { width: 40px; }
 }
