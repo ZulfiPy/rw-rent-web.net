@@ -171,11 +171,10 @@ export function AssignmentRecord() {
           </>
         ) : undefined}
       >
+        <HeaderFact label="Plate number" value={a?.vehiclePlateNumber ?? '—'} mono />
         <HeaderFact
           label="Vehicle"
-          value={a?.vehiclePlateNumber ?? '—'}
-          sub={vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : null}
-          mono
+          value={vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : '—'}
         />
         <HeaderFact label="Customer" value={a?.customerDisplayName ?? '—'} />
         <HeaderFact label="Open authorizations" value={String(openAuths.length)} mono />
@@ -205,15 +204,20 @@ export function AssignmentRecord() {
               : undefined}
           >
             <FactGrid>
-              <Fact label="Customer">{a?.customerDisplayName ?? '—'}</Fact>
-              <Fact label="Customer type" dim={!customer.data}>
-                {customer.data ? CUSTOMER_TYPE_LABEL[customer.data.type] : 'Not available'}
+              <Fact
+                label="Customer"
+                to={a ? `/customers/${a.customerId}` : undefined}
+                sub={customer.data ? CUSTOMER_TYPE_LABEL[customer.data.type] : null}
+              >
+                {a?.customerDisplayName ?? '—'}
               </Fact>
               <Fact label="Vehicle">
                 {vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : '—'}
               </Fact>
-              <Fact label="Plate number" mono>{a?.vehiclePlateNumber ?? '—'}</Fact>
-              <Fact label="VIN" mono dim span={2}>{vehicle.data?.vinCode ?? '—'}</Fact>
+              <Fact label="Plate number" mono to={a ? `/vehicles/${a.vehicleId}` : undefined}>
+                {a?.vehiclePlateNumber ?? '—'}
+              </Fact>
+              <Fact label="VIN" mono dim>{vehicle.data?.vinCode ?? '—'}</Fact>
             </FactGrid>
           </Panel>
 
@@ -248,7 +252,7 @@ export function AssignmentRecord() {
 
           <Panel
             title="Notes"
-            description="The assignment note is kept as its own value; a cancellation records its explanation here."
+            description="The assignment note and any cancellation note are kept as separate values."
           >
             <FactGrid>
               <Fact label="Assignment note" dim={!a?.note} span="full">
