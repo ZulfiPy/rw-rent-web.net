@@ -17,6 +17,26 @@
   white-space: nowrap;
 }
 
+/* The phone card leads with the row's identifier, as the prototype's does: the plate in mono beside
+   the vehicle model, which ellipsises when it runs long. The customer takes the sub-line, and the
+   status chip may carry the Interrupted companion beside it. */
+.cardTitleRow { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.cardPlate {
+  flex: none;
+  font-family: var(--font-mono);
+  letter-spacing: .01em;
+}
+.cardModel {
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 450;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cardChips { display: flex; align-items: center; gap: 6px; flex: none; }
+
 /* In the folded band the prototype compresses this list to fit the panel rather than pan inside it:
    the floor and every declared column width take its 0.71 factor, and the header stops holding one
    line, so Authorized drivers wraps to two. At 834 all six columns fit with nothing panning. */

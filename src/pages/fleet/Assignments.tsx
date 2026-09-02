@@ -337,37 +337,51 @@ export function Assignments() {
           />
         ) : phone ? (
           <div className={cards.cards}>
-            {rows.map((a) => (
-              <div key={a.id} className={cards.card}>
-                <div className={cards.head}>
-                  <span className={cards.heading}>
-                    <Link to={`/rental-assignments/${a.id}`} className={cards.title}>{a.customerDisplayName}</Link>
-                    <span className={cards.sub}>{a.vehiclePlateNumber}</span>
-                  </span>
-                  <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
-                    {ASSIGNMENT_STATUS_LABEL[a.status]}
-                  </Chip>
+            {rows.map((a, i) => {
+              const model = models.get(a.vehicleId) ?? '';
+              return (
+                <div key={a.id} className={cards.card}>
+                  <div className={cards.head}>
+                    <span className={cards.heading}>
+                      <span className={styles.cardTitleRow}>
+                        <Link
+                          to={`/rental-assignments/${a.id}`}
+                          className={`${cards.title} ${styles.cardPlate}`}
+                        >
+                          {a.vehiclePlateNumber}
+                        </Link>
+                        {model ? <span className={styles.cardModel}>{model}</span> : null}
+                      </span>
+                      <span className={cards.sub}>{a.customerDisplayName}</span>
+                    </span>
+                    <span className={styles.cardChips}>
+                      <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
+                        {ASSIGNMENT_STATUS_LABEL[a.status]}
+                      </Chip>
+                      {/* The prototype's companion chip: an open interruption sits beside the status,
+                          in the warn tone with the cut-corner dot, and never replaces it. */}
+                      {openInterruptions(i) ? (
+                        <Chip tone="warn" dot="50% 50% 50% 0">Interrupted</Chip>
+                      ) : null}
+                    </span>
+                  </div>
+                  <div className={cards.facts}>
+                    <span className={cards.fact}>
+                      <span className={cards.factLabel}>Starts</span>
+                      <span className={cards.factValue}>
+                        {when(a.startedAtUtc ?? a.plannedStartAtUtc) ?? '—'}
+                      </span>
+                    </span>
+                    <span className={cards.fact}>
+                      <span className={cards.factLabel}>Ends</span>
+                      <span className={cards.factValue}>
+                        {when(a.closedAtUtc ?? a.plannedEndAtUtc) ?? '—'}
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                <div className={cards.facts}>
-                  <span className={cards.fact}>
-                    <span className={cards.factLabel}>Planned start</span>
-                    <span className={cards.factMono}>{when(a.plannedStartAtUtc) ?? 'Not set'}</span>
-                  </span>
-                  <span className={cards.fact}>
-                    <span className={cards.factLabel}>Started</span>
-                    <span className={cards.factMono}>{when(a.startedAtUtc) ?? 'Not started'}</span>
-                  </span>
-                  <span className={cards.fact}>
-                    <span className={cards.factLabel}>Planned end</span>
-                    <span className={cards.factMono}>{when(a.plannedEndAtUtc) ?? 'Open ended'}</span>
-                  </span>
-                  <span className={cards.fact}>
-                    <span className={cards.factLabel}>Closed</span>
-                    <span className={cards.factMono}>{when(a.closedAtUtc) ?? 'Not closed'}</span>
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className={table.scroll}>
