@@ -10,16 +10,18 @@
   border-radius: 14px;
   box-shadow: var(--sh-1);
 }
-/* One row of content-width columns holding the band's free width: spreading it between the facts
-   leaves the chip → first fact gap equal to the last fact → first button gap, both the band's 14px. */
+/* One row of content-width columns, and the free width divided into equal gaps — nothing else. The
+   negative side margins cancel the band's own 14px flex gaps, so space-evenly splits the run from the
+   chip to the first button into six equal parts: chip → fact 1, the four fact gaps, fact 5 → button. */
 .facts {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, max-content);
-  justify-content: space-between;
+  justify-content: space-evenly;
   flex: 1 1 auto;
   align-items: center;
-  gap: 14px;
+  gap: 0;
+  margin-inline: -14px;
   min-width: 0;
 }
 .heroActions { display: flex; flex-wrap: wrap; gap: 8px; width: auto; }
@@ -53,15 +55,16 @@
 .factMono { font-family: var(--font-mono); font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
 .factSub { font-size: 11.5px; color: var(--fg-3); }
 
-/* Tablet: the facts grid takes its own line above the actions, so it is never squeezed out. */
+/* Tablet: the facts grid takes its own line above the actions, so it is never squeezed out. The same
+   six equal parts then run edge to edge inside the band's padding. */
 @media (max-width: 1279px) {
-  .facts { flex: 1 1 100%; }
+  .facts { flex: 1 1 100%; margin-inline: 0; }
 }
 /* Card tier: actions go full width, each button fills its row, facts drop to two up. */
 @media (max-width: 767px) {
   .heroActions { width: 100%; }
   .heroActions > * { flex: 1 1 100%; }
-  .facts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; }
+  .facts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 14px; }
   /* Stacked facts have no shared centre line to hold, so the sub-line reserve goes back in the body. */
   .fact { min-height: 0; justify-content: flex-start; }
   .factBody { min-height: 32px; }
