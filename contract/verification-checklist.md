@@ -24,8 +24,9 @@ Section by section, each section taken across every device to completion before 
 starts: desktop first, then tablet (768 / 1024), then phone (375). A closed section is never
 reopened. Closed sections: **Overview + System Administrator** (2026-08-27 — desktop, iPad
 portrait/landscape, phone, both themes; transfers table nofold band, collapsed-rail scroll and the
-sr-only phantom-pan fix all verified). Current section: next one chosen by the user, starting from
-desktop. No open loose ends: Claude Design confirmed (Delivery 18 report) the prototype never had
+sr-only phantom-pan fix all verified). Current section: **Rental assignments** (since 2026-08-29) — the list page closed 2026-09-01 on
+all devices (Deliveries 22–25: shared list gutter, Cancelled chip tone, folded-band fit, phone card
+composition); the assignment record pages are next, starting from desktop. No open loose ends: Claude Design confirmed (Delivery 18 report) the prototype never had
 the sr-only phantom pan — its actions header is an empty string, measured clean at 834 and 695.
 
 ## Pair convention
@@ -38,7 +39,7 @@ One width is enough (your half-32" width); add ultrawide only where a row asks.
 
 - [x] Overview  (closed 2026-08-27 via the section traversal, all devices)
 - [ ] Needs attention
-- [ ] Rental assignments (list)
+- [x] Rental assignments (list)  (closed 2026-09-01 via the section traversal, all devices)
 - [ ] Tasks
 - [ ] Insurance cases
 - [ ] Vehicles (list)
