@@ -182,8 +182,18 @@ export function AssignmentRecord() {
                 onClick={() => setDialog({ kind: 'end' })}
               />
             ) : null}
+            {/* ASSIGN-013: the mistaken-activation cancellation needs a clean record, so an open
+                interruption refuses it here as it refuses End assignment. The dialog keeps the
+                stricter check — any interruption at all blocks an Active cancellation. */}
             {planned || active ? (
-              <Button label="Cancel" icon="cancel" tone="danger" small onClick={() => setDialog({ kind: 'cancel' })} />
+              <Button
+                label="Cancel"
+                icon="cancel"
+                tone="danger"
+                small
+                blockedReason={openInts.length ? 'End the open interruption before cancelling this assignment.' : null}
+                onClick={() => setDialog({ kind: 'cancel' })}
+              />
             ) : null}
           </>
         ) : undefined}
@@ -305,7 +315,7 @@ export function AssignmentRecord() {
             />
           ) : (
             <div className={table.scroll}>
-              <table className={`${table.table} ${styles.coverage}`}>
+              <table className={`${table.table} ${styles.coverage}`} data-panel="">
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colAuth}`}>Authorization</th>
@@ -418,7 +428,7 @@ export function AssignmentRecord() {
             />
           ) : (
             <div className={table.scroll}>
-              <table className={`${table.table} ${styles.interruptions}`}>
+              <table className={`${table.table} ${styles.interruptions}`} data-panel="">
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colPeriod}`}>Period</th>

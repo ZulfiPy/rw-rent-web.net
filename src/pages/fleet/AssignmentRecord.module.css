@@ -12,24 +12,25 @@
 .colPeriod { width: 200px; }
 .colReason { width: 220px; }
 .colBilling { width: 150px; }
-.colActions { width: 190px; }
-.colIntActions { width: 220px; }
+.colActions { width: 200px; }
+.colIntActions { width: 264px; }
 .colEvent { width: 300px; }
 .colActor { width: 180px; }
 .colUtc { width: 180px; }
 
-/* Row actions wrap inside their column, as the prototype's do: Stop over Correct, End · Edit over
-   Correct, rather than one inline row that widens the column. */
+/* Row actions wrap only where the column is too narrow to hold them — the folding bands. From the
+   desktop line up the prototype sizes the actions column to its buttons and keeps them on one line
+   (its `fitActions`). */
 .rowActions { flex-wrap: wrap; gap: 5px; }
 
 @media (min-width: 1280px) {
   .coverage, .interruptions { table-layout: fixed; }
-  .coverage { min-width: 1260px; }
-  .interruptions { min-width: 1120px; }
-  /* The prototype's panel cell gutter. A column's usable width is its declared width less 2×16, and
-     that is what decides whether a row's actions wrap: 190 − 32 = 158 against the 162 the two
-     buttons need. On the port's 14px list gutter the same pair fits by a pixel and stays inline. */
-  .coverage th, .coverage td, .interruptions th, .interruptions td { padding-left: 16px; padding-right: 16px; }
+  .coverage { min-width: 1270px; }
+  .interruptions { min-width: 1164px; }
+  /* The trailing column is sized to its buttons over the panel's 2×16 gutter — coverage 200 for
+     Stop 69.5 + Correct 85 + one 5px gap, interruptions 264 for End 64.5 + Edit 64.5 + Correct 85
+     with two — so the actions never wrap and the row stays a single line. */
+  .rowActions { flex-wrap: nowrap; }
 }
 
 @media (max-width: 1279px) {
