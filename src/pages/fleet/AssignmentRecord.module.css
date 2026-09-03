@@ -1,23 +1,44 @@
 .wide { width: auto; }
 .coverage, .interruptions, .history { min-width: 0; }
 
-.colAuth { width: 230px; }
-.colWhen { width: 150px; }
-.colReason { width: 220px; }
+/* The prototype's column recipe for the two record tables, transcribed. Desktop runs its fixed
+   layout so the declared widths hold: under auto layout the trailing actions column took its
+   max-content width, which widened it, laid every button inline and shortened the rows. Each table
+   also carries the prototype's own min-width and scrolls inside its panel. Below 1280 the port's
+   compressed widths and its folding bands take over. */
+.colAuth { width: 270px; }
+.colWhen { width: 140px; }
+.colStopReason { width: 240px; }
 .colPeriod { width: 200px; }
+.colReason { width: 220px; }
 .colBilling { width: 150px; }
 .colActions { width: 190px; }
+.colIntActions { width: 220px; }
 .colEvent { width: 300px; }
 .colActor { width: 180px; }
 .colUtc { width: 180px; }
 
+/* Row actions wrap inside their column, as the prototype's do: Stop over Correct, End · Edit over
+   Correct, rather than one inline row that widens the column. */
+.rowActions { flex-wrap: wrap; gap: 5px; }
+
+@media (min-width: 1280px) {
+  .coverage, .interruptions { table-layout: fixed; }
+  .coverage { min-width: 1260px; }
+  .interruptions { min-width: 1120px; }
+  /* The prototype's panel cell gutter. A column's usable width is its declared width less 2×16, and
+     that is what decides whether a row's actions wrap: 190 − 32 = 158 against the 162 the two
+     buttons need. On the port's 14px list gutter the same pair fits by a pixel and stays inline. */
+  .coverage th, .coverage td, .interruptions th, .interruptions td { padding-left: 16px; padding-right: 16px; }
+}
+
 @media (max-width: 1279px) {
   .colAuth { width: 190px; }
   .colWhen { width: 140px; }
-  .colReason { width: 190px; }
+  .colReason, .colStopReason { width: 190px; }
   .colPeriod { width: 176px; }
   .colBilling { width: 136px; }
-  .colActions { width: 160px; }
+  .colActions, .colIntActions { width: 160px; }
   .colEvent { width: 260px; }
   .colUtc { width: 150px; }
 }
@@ -29,6 +50,6 @@
   .colAuth { width: 150px; }
   .colWhen { width: 136px; }
   .colPeriod { width: 150px; }
-  .colActions { width: 108px; }
+  .colActions, .colIntActions { width: 108px; }
   .colUtc { width: 146px; }
 }

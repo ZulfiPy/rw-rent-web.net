@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { qk } from '@/api';
 import { getAssignment } from '@/api/rentalAssignments';
 import { getCustomer } from '@/api/customers';
 import { getVehicle } from '@/api/vehicles';
-import { listDrivers } from '@/api/drivers';
+import { getDriver, listDrivers } from '@/api/drivers';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import {
@@ -64,6 +64,21 @@ export function AssignmentRecord() {
     staleTime: 60_000,
   });
 
+  /** The list projection carries no licence number, so each named driver's own record supplies it. */
+  const namedDriverIds = [...new Set(
+    (record.data?.driverAuthorizations ?? [])
+      .filter((z) => z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver && z.driverId)
+      .map((z) => z.driverId as Uuid),
+  )];
+  const driverRecords = useQueries({
+    queries: namedDriverIds.map((id) => ({
+      queryKey: qk.drivers.detail(id),
+      queryFn: () => getDriver(id),
+      enabled: can('Drivers.Read'),
+      staleTime: 60_000,
+    })),
+  });
+
   const canCorrect = can('PrivilegedCorrections.Execute');
   const canManage = can('RentalAssignments.Manage');
   const canAuth = can('DriverAuthorizations.Manage');
@@ -112,6 +127,8 @@ export function AssignmentRecord() {
     const d = drivers.data?.items.find((x) => x.id === id);
     return d ? `${d.firstName} ${d.lastName}` : null;
   };
+  const driverLicence = (id: Uuid | null | undefined) =>
+    driverRecords.find((q) => q.data?.id === id)?.data?.driverLicenseNumber ?? null;
   const actorName = (id: Uuid | null | undefined) => {
     const u = actors.data?.items.find((x) => x.id === id);
     return u ? `${u.firstName} ${u.lastName}` : 'System';
@@ -181,6 +198,8 @@ export function AssignmentRecord() {
         <HeaderFact label="Open interruptions" value={String(openInts.length)} mono />
       </RecordHeader>
 
+      <RecordTabs tabs={tabs} active={tab} onSelect={selectTab} />
+
       {openInts.length ? (
         <RecordBanner
           tone="bad"
@@ -191,8 +210,6 @@ export function AssignmentRecord() {
             : 'Normal use is paused. Close the interruption once the vehicle is back in service so billing reflects reality.'}
         />
       ) : null}
-
-      <RecordTabs tabs={tabs} active={tab} onSelect={selectTab} />
 
       {tab === 'summary' ? (
         <>
@@ -224,6 +241,9 @@ export function AssignmentRecord() {
           <Panel
             title="Lifecycle"
             description="Local time. Original UTC values are shown in the audit trail."
+            actions={canManage && active && openInts.length
+              ? <Button label="Open interruption" icon="pause_circle" tone="warn" small onClick={() => selectTab('interruptions')} />
+              : undefined}
             note={!canManage
               ? 'Read-only: lifecycle changes require Fleet Manager.'
               : active && openInts.length
@@ -255,8 +275,8 @@ export function AssignmentRecord() {
             description="The assignment note and any cancellation note are kept as separate values."
           >
             <FactGrid>
-              <Fact label="Assignment note" dim={!a?.note} span="full">
-                {a?.note ?? 'No note recorded'}
+              <Fact label="Assignment note" span="full">
+                {a?.note ?? '—'}
               </Fact>
             </FactGrid>
           </Panel>
@@ -292,7 +312,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>From</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldTablet}`}>Stopped</th>
-                    <th scope="col" className={`${table.th} ${styles.colReason} ${table.foldNarrow}`}>Stop reason</th>
+                    <th scope="col" className={`${table.th} ${styles.colStopReason} ${table.foldNarrow}`}>Stop reason</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
                       <span className={table.srOnly}>Actions</span>
                     </th>
@@ -301,6 +321,7 @@ export function AssignmentRecord() {
                 <tbody>
                   {auths.map((z) => {
                     const named = z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver;
+                    const licence = named ? driverLicence(z.driverId) : null;
                     return (
                       <tr key={z.id} className={table.row}>
                         <td className={table.td}>
@@ -310,10 +331,17 @@ export function AssignmentRecord() {
                         </td>
                         <td className={`${table.td} ${table.wrap}`}>
                           <span className={table.stack}>
-                            <span className={table.name}>
-                              {named ? driverName(z.driverId) ?? 'Named driver' : 'Company-authorized drivers'}
-                            </span>
-                            {z.note ? <span className={table.sub}>{z.note}</span> : null}
+                            {named && z.driverId ? (
+                              <Link to={`/drivers/${z.driverId}`} className={`${table.name} ${table.nameLink}`}>
+                                {driverName(z.driverId) ?? 'Named driver'}
+                              </Link>
+                            ) : (
+                              <span className={table.name}>
+                                {named ? 'Named driver' : 'Company-authorized drivers'}
+                              </span>
+                            )}
+                            {licence ? <span className={table.subMono}>{licence}</span> : null}
+                            {!named && z.note ? <span className={table.sub}>{z.note}</span> : null}
                             <span className={`${table.sub} ${table.showNarrow}`}>
                               {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : 'Open authorization'}
                             </span>
@@ -336,7 +364,7 @@ export function AssignmentRecord() {
                           {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '—'}
                         </td>
                         <td className={table.td}>
-                          <span className={table.actionsCell}>
+                          <span className={`${table.actionsCell} ${styles.rowActions}`}>
                             {canAuth && !z.stoppedAtUtc ? (
                               <Button label="Stop" icon="person_remove" tone="warn" small row compact={compact} onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
                             ) : null}
@@ -397,7 +425,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
                     <th scope="col" className={`${table.th} ${styles.colBilling} ${table.foldNarrow}`}>Billing impact</th>
                     <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Note</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions}`}>
                       <span className={table.srOnly}>Actions</span>
                     </th>
                   </tr>
@@ -432,7 +460,7 @@ export function AssignmentRecord() {
                       </td>
                       <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>{i.note}</td>
                       <td className={table.td}>
-                        <span className={table.actionsCell}>
+                        <span className={`${table.actionsCell} ${styles.rowActions}`}>
                           {canInt && !i.endedAtUtc ? (
                             <Button label="End" icon="play_circle" tone="ok" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
                           ) : null}
