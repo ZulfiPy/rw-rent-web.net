@@ -273,7 +273,7 @@ export function UserRecord() {
           }
         >
           {roles.data && roles.data.items.length === 0 ? (
-            <EmptyState
+            <EmptyState variant="panel"
               icon="shield_person"
               title="No role history"
               body="Roles appear here once the account has been activated."
@@ -386,7 +386,7 @@ export function UserRecord() {
           ) : undefined}
         >
           {sessions.data && sessions.data.items.length === 0 ? (
-            <EmptyState
+            <EmptyState variant="panel"
               icon="devices_off"
               title="No sessions"
               body="This user has never signed in, or every session has been cleared."

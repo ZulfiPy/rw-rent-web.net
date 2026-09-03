@@ -150,13 +150,13 @@ export function VehicleRecord() {
         description="Every rental assignment recorded against this vehicle. Active first, then planned by nearest start."
       >
         {!mayReadAssignments ? (
-          <EmptyState
+          <EmptyState variant="panel"
             icon="lock"
             title="Not available to you"
             body="Reading rental assignments needs RentalAssignments.Read."
           />
         ) : rows.length === 0 ? (
-          <EmptyState icon="assignment" title="No rental history." body="" />
+          <EmptyState variant="panel" icon="assignment" title="No rental history." body="" />
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.history}`}>

@@ -259,7 +259,7 @@ export function SystemAdministrator() {
         noteIcon="key"
       >
         {failure ? (
-          <EmptyState
+          <EmptyState variant="panel"
             icon={failure.kind === 'forbidden' ? 'lock' : 'error'}
             title={failure.kind === 'forbidden' ? 'Not available to you' : 'Transfers could not be loaded'}
             body={failure.kind === 'forbidden'
@@ -268,7 +268,7 @@ export function SystemAdministrator() {
             onRetry={failure.kind === 'forbidden' ? undefined : () => void transfers.refetch()}
           />
         ) : rows.length === 0 ? (
-          <EmptyState
+          <EmptyState variant="panel"
             icon="swap_horiz"
             title="No transfers"
             body="Initiating a transfer names another confirmed account as the next administrator."

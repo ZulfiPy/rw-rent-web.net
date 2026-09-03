@@ -244,7 +244,7 @@ export function UserDirectory() {
             )}
 
             {page && page.items.length === 0 ? (
-              <EmptyState
+              <EmptyState variant="panel"
                 icon="group"
                 title={isFiltered ? 'No users match' : 'No users yet'}
                 body={

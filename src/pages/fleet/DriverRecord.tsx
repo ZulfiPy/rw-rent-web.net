@@ -228,13 +228,13 @@ export function DriverRecord() {
         description="Every assignment this driver is or was named on. One row per authorization period, open first."
       >
         {!mayReadAuths ? (
-          <EmptyState
+          <EmptyState variant="panel"
             icon="lock"
             title="Not available to you"
             body="Reading driver authorizations needs DriverAuthorizations.Read."
           />
         ) : periods.length === 0 ? (
-          <EmptyState icon="assignment_ind" title="Never authorized on an assignment." body="" />
+          <EmptyState variant="panel" icon="assignment_ind" title="Never authorized on an assignment." body="" />
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.assignments}`}>
@@ -373,7 +373,7 @@ export function DriverRecord() {
         noteIcon="construction"
         noteTone="warn"
       >
-        <EmptyState icon="shield" title="Nothing recorded yet" body="" />
+        <EmptyState variant="panel" icon="shield" title="Nothing recorded yet" body="" />
       </Panel>
 
       <Panel title="Record">

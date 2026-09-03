@@ -176,13 +176,13 @@ export function CustomerRecord() {
         description="Every rental assignment this customer is responsible for. Active first, then planned by nearest start."
       >
         {!mayReadAssignments ? (
-          <EmptyState
+          <EmptyState variant="panel"
             icon="lock"
             title="Not available to you"
             body="Reading rental assignments needs RentalAssignments.Read."
           />
         ) : rows.length === 0 ? (
-          <EmptyState icon="assignment" title="No assignments yet." body="" />
+          <EmptyState variant="panel" icon="assignment" title="No assignments yet." body="" />
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.assignments}`}>

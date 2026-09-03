@@ -278,7 +278,7 @@ export function AssignmentRecord() {
           noteIcon={canAuth ? 'info' : 'lock'}
         >
           {auths.length === 0 ? (
-            <EmptyState
+            <EmptyState variant="panel"
               icon="group_off"
               title="No authorized drivers"
               body="This vehicle cannot be handed over until at least one driver is authorized for this rental. A Planned assignment may still be saved without a driver."
@@ -379,7 +379,7 @@ export function AssignmentRecord() {
           noteIcon={canInt ? 'info' : 'lock'}
         >
           {ints.length === 0 ? (
-            <EmptyState
+            <EmptyState variant="panel"
               icon={planned ? 'schedule' : 'check_circle'}
               title="No interruptions recorded"
               body={planned
@@ -486,7 +486,7 @@ export function AssignmentRecord() {
             description="Audit entries recorded against this assignment and its children. Times in UTC."
           >
             {history.length === 0 ? (
-              <EmptyState
+              <EmptyState variant="panel"
                 icon="history"
                 title="No corrections recorded"
                 body="Nothing has been rewritten on this assignment."
