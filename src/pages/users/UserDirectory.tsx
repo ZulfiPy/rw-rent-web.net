@@ -19,6 +19,7 @@ import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import styles from './UserDirectory.module.css';
 
@@ -59,6 +60,7 @@ function SkeletonRows() {
 
 export function UserDirectory() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const companyName = useCompanyName();
   const phone = useTier() === 'phone';
 
@@ -198,7 +200,7 @@ export function UserDirectory() {
                   <tbody>
                     {users.isPending ? <SkeletonRows /> : null}
                     {page?.items.map((u) => (
-                      <tr key={u.id} className={table.row}>
+                      <tr key={u.id} {...rowNav(`/users/${u.id}`)}>
                         <td className={table.td}>
                           <span className={table.stack}>
                             <span className={table.name}>{u.firstName} {u.lastName}</span>

@@ -17,6 +17,7 @@ import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import styles from './SecurityAudit.module.css';
 
@@ -30,6 +31,7 @@ const EVENT_OPTIONS: FilterOption[] = [
 
 export function SecurityAudit() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const phone = useTier() === 'phone';
 
   const event = params.get('event') ?? '';
@@ -184,7 +186,7 @@ export function SecurityAudit() {
               </thead>
               <tbody>
                 {page?.items.map((a) => (
-                  <tr key={a.id} className={table.row}>
+                  <tr key={a.id} {...rowNav(`/security-audit/${a.id}`)}>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
                         <span className={table.name}>{eventLabel(a.eventType)}</span>

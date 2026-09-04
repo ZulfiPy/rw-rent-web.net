@@ -16,6 +16,7 @@ import { Pagination } from '@/ui/Pagination';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, type FleetDialogState } from './FleetDialogs';
 import styles from './Drivers.module.css';
@@ -30,6 +31,7 @@ const STATE_OPTIONS: FilterOption[] = [
 
 export function Drivers() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
   const canManage = can('Drivers.Manage');
@@ -151,7 +153,7 @@ export function Drivers() {
               </thead>
               <tbody>
                 {page?.items.map((d) => (
-                  <tr key={d.id} className={table.row}>
+                  <tr key={d.id} {...rowNav(`/drivers/${d.id}`)}>
                     <td className={table.td}>
                       <span className={table.stack}>
                         <Link to={`/drivers/${d.id}`} className={table.name}>{d.firstName} {d.lastName}</Link>

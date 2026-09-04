@@ -20,6 +20,7 @@ import { Panel } from '@/ui/Panel';
 import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, useAssignmentBlockers, type FleetDialogState } from './FleetDialogs';
 import { sortHistory } from './history';
@@ -29,6 +30,7 @@ const PICK = { PageSize: 100 } as const;
 
 export function VehicleRecord() {
   const { vehicleId = '' } = useParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
@@ -170,7 +172,7 @@ export function VehicleRecord() {
               </thead>
               <tbody>
                 {rows.map((a) => (
-                  <tr key={a.id} className={table.row}>
+                  <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
                         <Link to={`/rental-assignments/${a.id}`} className={table.name}>

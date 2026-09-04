@@ -24,6 +24,7 @@ import type { Tone } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, type FleetDialogState } from './FleetDialogs';
 import styles from './Vehicles.module.css';
@@ -61,6 +62,7 @@ interface Availability { label: string; tone: Tone; dot: string; sub: string | n
 
 export function Vehicles() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
   const canManage = can('Vehicles.Manage');
@@ -275,7 +277,7 @@ export function Vehicles() {
                 {page?.items.map((v) => {
                   const a = availability(v);
                   return (
-                    <tr key={v.id} className={table.row}>
+                    <tr key={v.id} {...rowNav(`/vehicles/${v.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
                           <Link to={`/vehicles/${v.id}`} className={`${table.name} ${table.mono}`}>{v.plateNumber}</Link>

@@ -27,6 +27,7 @@ import { Panel } from '@/ui/Panel';
 import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, type Blocker, type FleetDialogState } from './FleetDialogs';
 import styles from './FleetRecord.module.css';
@@ -36,6 +37,7 @@ const cmp = (x: string, y: string) => (x < y ? -1 : x > y ? 1 : 0);
 
 export function DriverRecord() {
   const { driverId = '' } = useParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
@@ -258,7 +260,7 @@ export function DriverRecord() {
                       : STOP_REASON_LABEL[z.stopReason]
                     : '—';
                   return (
-                    <tr key={z.id} className={table.row}>
+                    <tr key={z.id} {...rowNav(a ? `/rental-assignments/${a.id}` : null)}>
                       <td className={table.td}>
                         <span className={table.stack}>
                           {a ? (

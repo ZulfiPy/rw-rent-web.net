@@ -30,6 +30,7 @@ import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { NewAssignmentDialog } from './NewAssignment';
 import styles from './Assignments.module.css';
@@ -90,6 +91,7 @@ function SortHeader(props: {
 
 export function Assignments() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
   const canManage = can('RentalAssignments.Manage');
@@ -420,7 +422,7 @@ export function Assignments() {
                   const cover = coverage(i);
                   const open = openInterruptions(i);
                   return (
-                    <tr key={a.id} className={table.row}>
+                    <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
                           <span className={styles.plate}>{a.vehiclePlateNumber}</span>

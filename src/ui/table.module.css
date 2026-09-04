@@ -56,6 +56,8 @@
 .sortActive .sortIcon { opacity: 1; }
 .row { border-bottom: 1px solid var(--line); }
 .row:hover { background: var(--surface-2); }
+/* A row that opens a record: the hover already promises the click, so the cursor says so. */
+.rowNav { cursor: pointer; }
 .td { padding: 11px 14px; vertical-align: middle; font-size: 13px; color: var(--fg-2); }
 .stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .name { font-size: 13.5px; font-weight: 600; color: var(--fg); }

@@ -21,6 +21,7 @@ import { USER_STATUS_DOT, USER_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
+import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { UserDialogs, type UserDialogState } from '../users/UserDialogs';
 import styles from './Registrations.module.css';
@@ -54,6 +55,7 @@ function RowDialog({ userId, state, onClose }: {
 
 export function Registrations() {
   const [params, setParams] = useSearchParams();
+  const rowNav = useRowNav();
   const { can } = useAccess();
   const phone = useTier() === 'phone';
   // Portrait tablet: the row's buttons keep their icons and drop their labels, which is what lets
@@ -226,7 +228,7 @@ export function Registrations() {
               </thead>
               <tbody>
                 {page.items.map((u) => (
-                  <tr key={u.id} className={table.row}>
+                  <tr key={u.id} {...rowNav(`/users/${u.id}`)}>
                     <td className={table.td}>
                       <span className={table.stack}>
                         <Link to={`/users/${u.id}`} className={table.name}>{u.firstName} {u.lastName}</Link>
