@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './FactGrid.module.css';
 
-export function FactGrid({ children }: { children: ReactNode }) {
-  return <div className={styles.grid}>{children}</div>;
+export function FactGrid({ children, oneRow }: { children: ReactNode; oneRow?: boolean }) {
+  return <div className={oneRow ? `${styles.grid} ${styles.oneRow}` : styles.grid}>{children}</div>;
 }
 
 /**

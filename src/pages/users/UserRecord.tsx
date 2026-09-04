@@ -317,9 +317,7 @@ export function UserRecord() {
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>Expires</th>
                     <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                     <th scope="col" className={`${table.th} ${table.foldTablet}`}>Revocation</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
-                      <span className={table.srOnly}>Actions</span>
-                    </th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,9 +426,7 @@ export function UserRecord() {
                     <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen (UTC)</th>
                     <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                     <th scope="col" className={table.th}>Reason</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
-                      <span className={table.srOnly}>Actions</span>
-                    </th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

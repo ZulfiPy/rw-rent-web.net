@@ -329,9 +329,7 @@ export function SystemAdministrator() {
                   <th scope="col" className={`${table.th} ${styles.colUtc}`}>Initiated (UTC)</th>
                   <th scope="col" className={`${table.th} ${styles.colUtc}`}>Expires (UTC)</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
-                  <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
-                    <span className={table.srOnly}>Actions</span>
-                  </th>
+                  <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                 </tr>
               </thead>
               <tbody>

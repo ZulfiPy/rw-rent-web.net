@@ -54,3 +54,16 @@
   .grid { grid-template-columns: 1fr; }
   .span2, .full { grid-column: 1 / -1; }
 }
+
+/* Opt-in: every fact on one row from the desktop line up, for a panel whose facts all fit there
+   — the auto-fit grid would otherwise wrap the tail and leave empty tracks. The side pad comes in
+   to 12px because seven tracks leave ~104px of content at 1280 and a short timestamp needs 105.
+   Only panels that pass `oneRow` are affected; every other fact grid is unchanged. */
+@media (min-width: 1280px) {
+  .oneRow {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  .oneRow .cell { padding-left: 12px; padding-right: 12px; }
+}

@@ -23,13 +23,17 @@
    (its `fitActions`). */
 .rowActions { flex-wrap: wrap; gap: 5px; }
 
+/* From the desktop line up the two record tables run auto layout with no table minimum, as the
+   prototype now does: every column sits on its content (1% resolves to the content width under
+   auto layout) and only the flexible column takes what is left, so the table fits its panel
+   instead of panning. The actions column lands on its buttons — coverage Stop 69.5 + Correct 85
+   with a 5px gap, interruptions End 64.5 + Edit 64.5 + Correct 85 with two — and never wraps.
+   Stop reason keeps a 190px floor so a wrapping value does not collapse to its longest word. */
 @media (min-width: 1280px) {
-  .coverage, .interruptions { table-layout: fixed; }
-  .coverage { min-width: 1270px; }
-  .interruptions { min-width: 1164px; }
-  /* The trailing column is sized to its buttons over the panel's 2×16 gutter — coverage 200 for
-     Stop 69.5 + Correct 85 + one 5px gap, interruptions 264 for End 64.5 + Edit 64.5 + Correct 85
-     with two — so the actions never wrap and the row stays a single line. */
+  .coverage, .interruptions { table-layout: auto; min-width: 0; }
+  .coverage th, .interruptions th { width: 1%; min-width: 0; }
+  .coverage .wide, .interruptions .wide { width: 100%; }
+  .coverage .colStopReason { min-width: 190px; }
   .rowActions { flex-wrap: nowrap; }
 }
 

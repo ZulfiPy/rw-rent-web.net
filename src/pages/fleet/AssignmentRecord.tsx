@@ -261,7 +261,7 @@ export function AssignmentRecord() {
                 : null}
             noteIcon={canManage ? 'warning' : 'lock'}
           >
-            <FactGrid>
+            <FactGrid oneRow>
               <Fact label="Status">{a ? ASSIGNMENT_STATUS_LABEL[a.status] : '—'}</Fact>
               <Fact label="Planned start" mono dim={!a?.plannedStartAtUtc}>{formatLocal(a?.plannedStartAtUtc)}</Fact>
               <Fact label="Actual start" mono dim={!a?.startedAtUtc}>{formatLocal(a?.startedAtUtc)}</Fact>
@@ -323,9 +323,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>From</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldTablet}`}>Stopped</th>
                     <th scope="col" className={`${table.th} ${styles.colStopReason} ${table.foldNarrow}`}>Stop reason</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
-                      <span className={table.srOnly}>Actions</span>
-                    </th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -435,9 +433,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
                     <th scope="col" className={`${table.th} ${styles.colBilling} ${table.foldNarrow}`}>Billing impact</th>
                     <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Note</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions}`}>
-                      <span className={table.srOnly}>Actions</span>
-                    </th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
