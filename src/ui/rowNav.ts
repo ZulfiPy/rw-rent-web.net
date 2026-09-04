@@ -18,6 +18,10 @@ function opens(e: MouseEvent<HTMLElement>): boolean {
   return !window.getSelection()?.toString();
 }
 
+/* CSS-module keys are typed `string | undefined`; the row classes are read once, here. */
+const ROW = table.row ?? '';
+const ROW_NAV = `${ROW} ${table.rowNav ?? ''}`;
+
 export interface RowNavProps {
   className: string;
   onClick?: (e: MouseEvent<HTMLTableRowElement>) => void;
@@ -42,10 +46,10 @@ export function useRowNav(): (to: string | null | undefined) => RowNavProps {
   const navigate = useNavigate();
   return useCallback(
     (to: string | null | undefined): RowNavProps => {
-      if (!to) return { className: table.row };
+      if (!to) return { className: ROW };
       const href = to;
       return {
-        className: `${table.row} ${table.rowNav}`,
+        className: ROW_NAV,
         onClick: (e) => {
           if (e.button !== 0 || !opens(e)) return;
           if (e.metaKey || e.ctrlKey || e.shiftKey) {
