@@ -88,6 +88,9 @@
 .table[data-panel] .name { font-size: 13px; font-weight: 450; }
 .table[data-panel] .sub { font-size: 11.5px; }
 .table[data-panel] .mono { font-size: 13px; }
+/* A panel row whose identifier is an instant (an interruption's start): the row-title treatment in
+   the mono face — the prototype's `cell(fmt(startedAtUtc), { mono:true, sub })` at 13px/450 in --fg. */
+.table[data-panel] .monoName { font-family: var(--font-mono); font-size: 13px; font-weight: 450; color: var(--fg); white-space: nowrap; }
 /* Two timestamps of equal standing keep the list vocabulary's 12.5px/400, as the prototype's
    transfers table does. */
 .table[data-panel] .instant { font-size: 12.5px; font-weight: 400; color: var(--fg-3); }

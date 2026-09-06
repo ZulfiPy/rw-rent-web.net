@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, Fragment, type ReactNode } from 'react';
 import { usePageHeader, type PageHeaderModel } from '@/app/pageHeader';
 import { Chip } from './Chip';
 import type { Tone } from './status';
@@ -45,10 +45,25 @@ export function RecordHeader({
 
   if (!children && !chip && !actions) return null;
 
+  // The desktop band's spacers are generated from the facts, whatever their count: one at each end
+  // and one between every neighbouring pair (RecordHeader.module.css hides them below 1280).
+  const facts = Children.toArray(children);
+
   return (
     <div className={styles.hero}>
       {chip ? <Chip tone={chip.tone} dot={chip.dot} size="hero">{chip.label}</Chip> : null}
-      {children ? <div className={styles.facts}>{children}</div> : null}
+      {facts.length ? (
+        <div className={styles.facts}>
+          <span aria-hidden="true" className={styles.gapEnd} />
+          {facts.map((fact, i) => (
+            <Fragment key={i}>
+              {i > 0 ? <span aria-hidden="true" className={styles.gapInner} /> : null}
+              {fact}
+            </Fragment>
+          ))}
+          <span aria-hidden="true" className={styles.gapEnd} />
+        </div>
+      ) : null}
       {actions ? <div className={styles.heroActions}>{actions}</div> : null}
     </div>
   );

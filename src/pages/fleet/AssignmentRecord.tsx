@@ -441,7 +441,7 @@ export function AssignmentRecord() {
                     <tr key={i.id} className={table.row}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <span className={table.mono}>{formatLocal(i.startedAtUtc)}</span>
+                          <span className={table.monoName}>{formatLocal(i.startedAtUtc)}</span>
                           <span className={i.endedAtUtc ? table.subMono : table.sub}>
                             {i.endedAtUtc ? `to ${formatLocal(i.endedAtUtc)}` : 'ongoing'}
                           </span>

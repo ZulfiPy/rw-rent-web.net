@@ -10,20 +10,21 @@
   border-radius: 14px;
   box-shadow: var(--sh-1);
 }
-/* One row of content-width columns, and the free width divided into equal gaps — nothing else. The
-   negative side margins cancel the band's own 14px flex gaps, so space-evenly splits the run from the
-   chip to the first button into six equal parts: chip → fact 1, the four fact gaps, fact 5 → button. */
+/* Desktop (1280 up): a flex row of content-width facts with a spacer between every neighbour and one
+   at each end. The group's negative side margins cancel the band's own 14px flex gaps, so the spacers
+   run from the state chip's edge to the first lifecycle button's edge, and they share that free width
+   2 : 5 : 5 : 5 : 5 : 2 — an end gap is always 40% of an inner gap, with a 16px floor on the ends.
+   No cap and no centring: the row scales with the band. */
 .facts {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, max-content);
-  justify-content: space-evenly;
+  display: flex;
   flex: 1 1 auto;
   align-items: center;
   gap: 0;
   margin-inline: -14px;
   min-width: 0;
 }
+.gapEnd { flex: 2 1 0; min-width: 16px; }
+.gapInner { flex: 5 1 0; min-width: 0; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 8px; width: auto; }
 
 /* Every fact reserves the sub-line's height (label 15.75 + value 19.5 + sub 17.25 + two 1px gaps) and
@@ -55,10 +56,19 @@
 .factMono { font-family: var(--font-mono); font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
 .factSub { font-size: 11.5px; color: var(--fg-3); }
 
-/* Tablet: the facts grid takes its own line above the actions, so it is never squeezed out. The same
-   six equal parts then run edge to edge inside the band's padding. */
+/* Tablet: the facts take their own line above the actions as one row of content-width grid columns,
+   so they are never squeezed out; the spacers are gone and space-evenly splits the line into six equal
+   parts edge to edge inside the band's padding. */
 @media (max-width: 1279px) {
-  .facts { flex: 1 1 100%; margin-inline: 0; }
+  .facts {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, max-content);
+    justify-content: space-evenly;
+    flex: 1 1 100%;
+    margin-inline: 0;
+  }
+  .gapEnd, .gapInner { display: none; }
 }
 /* Card tier: actions go full width, each button fills its row, facts drop to two up. */
 @media (max-width: 767px) {
