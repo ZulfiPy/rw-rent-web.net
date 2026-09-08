@@ -135,7 +135,7 @@ export function VehicleRecord() {
         note={canManage ? null : 'Read-only: changing vehicles requires Fleet Manager.'}
         noteIcon="lock"
       >
-        <FactGrid>
+        <FactGrid columns={4}>
           <Fact label="Make">{v?.make ?? '—'}</Fact>
           <Fact label="Model">{v?.model ?? '—'}</Fact>
           <Fact label="Year" mono>{v?.year ?? '—'}</Fact>
@@ -161,10 +161,10 @@ export function VehicleRecord() {
           <EmptyState variant="panel" icon="assignment" title="No rental history." body="" />
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.history}`}>
+            <table className={`${table.table} ${styles.history}`} data-panel>
               <thead>
                 <tr>
-                  <th scope="col" className={`${table.th} ${styles.colCustomer}`}>Customer</th>
+                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${styles.wide}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldNarrow}`}>Ends</th>

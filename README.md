@@ -135,11 +135,17 @@ column that stays, bound to the same breakpoint as the fold.
 
 **Panel width, not window width.** `ui/Panel` is a size container (`container-type: inline-size`),
 so what a panel holds can pick its layout from the panel rather than the viewport — the rail state
-then changes a layout the way a narrower window does. Two places take it up: the assignment record's
-Authorized drivers and Interruptions tables (desktop recipe at 940 and wider, the portrait fold
-below, with `foldPanel` / `showPanel` in `AssignmentRecord.module.css` in place of the viewport fold
-classes), and a `FactGrid` that opts in with `oneRow`. Landscape iPad with the rail pinned open is
-the case this answers: 1194 wide, but a panel no wider than a portrait one.
+then changes a layout the way a narrower window does. Three places take it up: the assignment
+record's Authorized drivers and Interruptions tables (desktop recipe at 940 and wider, the portrait
+fold below, with `foldPanel` / `showPanel` in `AssignmentRecord.module.css` in place of the viewport
+fold classes), the fleet records' history tables (the same recipe in `FleetRecord.module.css`, from
+1024 up: auto layout, every `th` at 1%, one `.wide` column taking the free width, no table minimum,
+so nothing pans), and a `FactGrid` that opts in with `oneRow`. Landscape iPad with the rail pinned
+open is the case this answers: 1194 wide, but a panel no wider than a portrait one.
+
+A `FactGrid` whose facts divide evenly can pin its track count instead: `columns={4}` on the vehicle
+record's Specifications gives two rows of four at every desktop width and rail state, where the
+auto-fit default leaves a remainder that moves with the panel.
 
 **Type.** Mono is for machine values only — identifiers, phone numbers, timestamps, counts, IP
 addresses. Emails, names, reasons and sublabels such as “Protected account” are sans secondary text.

@@ -4,6 +4,18 @@ import styles from './Field.module.css';
 export { styles as fieldStyles };
 
 /**
+ * The attributes a control carries while its field is showing a message: the prototype's invalid
+ * border and fill, and the state assistive technology reads. Spread onto the input, select or
+ * textarea inside a `Field` that takes an `error`.
+ */
+export function invalidProps(error?: string | null | undefined): {
+  'data-invalid': boolean;
+  'aria-invalid'?: true;
+} {
+  return error ? { 'data-invalid': true, 'aria-invalid': true } : { 'data-invalid': false };
+}
+
+/**
  * Label, control, and the API's message for this input when there is one. `group` switches the
  * wrapper from a label to a plain group, for fields that hold several controls — a label may only
  * name one.

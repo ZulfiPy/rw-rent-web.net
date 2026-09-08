@@ -19,7 +19,7 @@ import {
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { Dialog, DialogNote, DialogSection as Section, dialogStyles as styles } from '@/ui/Dialog';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 
 /**
  * Every write a fleet record offers. The forms are the prototype's dialogs field for field; the
@@ -64,7 +64,7 @@ function Text({ label, value, error, hint, required, optional, mono, maxLength, 
       <input
         type={type}
         className={`${f.control} ${mono ? f.mono : ''}`}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         value={value}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
@@ -86,7 +86,7 @@ function EnumSelect<T extends number>({ label, value, options, labels, error, re
     <Field label={label} error={error} required={required}>
       <select
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         value={String(value)}
         onChange={(e) => onChange(Number(e.target.value) as T)}
       >
@@ -104,7 +104,7 @@ function VehicleForm({ vehicle, onClose }: { vehicle: VehicleResponse | null; on
   const [vinCode, setVin] = useState(vehicle?.vinCode ?? '');
   const [make, setMake] = useState(vehicle?.make ?? '');
   const [model, setModel] = useState(vehicle?.model ?? '');
-  const [year, setYear] = useState(String(vehicle?.year ?? 2025));
+  const [year, setYear] = useState(String(vehicle?.year ?? new Date().getFullYear()));
   const [color, setColor] = useState(vehicle?.color ?? '');
   const [bodyType, setBody] = useState<BodyType>(vehicle?.bodyType ?? BodyType.Sedan);
   const [gearboxType, setGearbox] = useState<GearboxType>(vehicle?.gearboxType ?? GearboxType.Automatic);

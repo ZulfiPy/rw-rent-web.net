@@ -2,8 +2,18 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './FactGrid.module.css';
 
-export function FactGrid({ children, oneRow }: { children: ReactNode; oneRow?: boolean }) {
-  return <div className={oneRow ? `${styles.grid} ${styles.oneRow}` : styles.grid}>{children}</div>;
+/**
+ * `oneRow` puts every fact on one line once the panel is 940px wide; `columns` pins a track count
+ * from 1024px up, for a panel whose facts divide evenly and would otherwise leave an auto-fit
+ * remainder. Both stay on the two-column and stacked bands below 1024.
+ */
+export function FactGrid({ children, oneRow, columns }: {
+  children: ReactNode;
+  oneRow?: boolean;
+  columns?: 4;
+}) {
+  const cls = `${styles.grid}${oneRow ? ` ${styles.oneRow}` : ''}${columns === 4 ? ` ${styles.cols4}` : ''}`;
+  return <div className={cls}>{children}</div>;
 }
 
 /**

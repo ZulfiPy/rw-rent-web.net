@@ -65,6 +65,13 @@
   .oneRow { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
+/* Opt-in: a fixed track count for a panel whose facts divide evenly — the specifications' eight
+   facts read as two rows of four at every desktop width and rail state, where auto-fit leaves a
+   grey remainder that moves with the panel. Only panels that pass `columns` are affected. */
+@media (min-width: 1024px) {
+  .cols4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 /* The portrait and phone tiers stay on the viewport, and take the tail of the cascade so a one-row
    panel folds with them. */
 @media (max-width: 1023px) {
