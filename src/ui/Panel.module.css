@@ -1,4 +1,8 @@
+/* The panel is a size container: what a panel holds can pick its layout from the panel's own width,
+   so the rail state and the window size are the same question. Inline-size only, so a panel's own
+   width is still the column it sits in. */
 .panel {
+  container-type: inline-size;
   min-width: 0;
   max-width: 100%;
   background: var(--surface);

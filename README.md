@@ -133,6 +133,14 @@ fixed`, so a long value ellipsises inside its cell instead of widening the table
 ever wider than the viewport, at any tier. Every value a fold removes reappears as a sub-line in a
 column that stays, bound to the same breakpoint as the fold.
 
+**Panel width, not window width.** `ui/Panel` is a size container (`container-type: inline-size`),
+so what a panel holds can pick its layout from the panel rather than the viewport — the rail state
+then changes a layout the way a narrower window does. Two places take it up: the assignment record's
+Authorized drivers and Interruptions tables (desktop recipe at 940 and wider, the portrait fold
+below, with `foldPanel` / `showPanel` in `AssignmentRecord.module.css` in place of the viewport fold
+classes), and a `FactGrid` that opts in with `oneRow`. Landscape iPad with the rail pinned open is
+the case this answers: 1194 wide, but a panel no wider than a portrait one.
+
 **Type.** Mono is for machine values only — identifiers, phone numbers, timestamps, counts, IP
 addresses. Emails, names, reasons and sublabels such as “Protected account” are sans secondary text.
 A list cell shows an identifier shortened to eight characters with the full value in its tooltip; the

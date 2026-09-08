@@ -323,7 +323,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>From</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen} ${styles.foldPhone}`}>Stopped</th>
-                    <th scope="col" className={`${table.th} ${styles.colStopReason} ${table.foldNarrow}`}>Stop reason</th>
+                    <th scope="col" className={`${table.th} ${styles.colStopReason} ${styles.foldPanel}`}>Stop reason</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colActions} ${canAuth && canCorrect ? styles.twoUp : canCorrect ? styles.oneWide : ''}`}>Actions</th>
                   </tr>
                 </thead>
@@ -368,13 +368,13 @@ export function AssignmentRecord() {
                           {z.stoppedAtUtc ? (
                             <span className={table.stack}>
                               <span className={table.mono}>{formatLocal(z.stoppedAtUtc)}</span>
-                              <span className={`${table.sub} ${table.showNarrow}`}>
+                              <span className={`${table.sub} ${styles.showPanel}`}>
                                 {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '\u2014'}
                               </span>
                             </span>
                           ) : <Chip tone="ok" dot="50%">Open</Chip>}
                         </td>
-                        <td className={`${table.td} ${table.wrap} ${table.foldNarrow} ${z.stopReason ? '' : table.dim}`}>
+                        <td className={`${table.td} ${table.wrap} ${styles.foldPanel} ${z.stopReason ? '' : table.dim}`}>
                           {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '—'}
                         </td>
                         <td className={table.td}>
@@ -438,7 +438,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colPeriod}`}>Period</th>
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
                     <th scope="col" className={`${table.th} ${styles.colBilling} ${styles.foldPhone}`}>Billing impact</th>
-                    <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Note</th>
+                    <th scope="col" className={`${table.th} ${styles.wide} ${styles.foldPanel}`}>Note</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions} ${canCorrect ? styles.threeUp : ''}`}>Actions</th>
                   </tr>
                 </thead>
@@ -464,13 +464,13 @@ export function AssignmentRecord() {
                           <span className={`${table.sub} ${styles.showPhone}`}>
                             {BILLING_IMPACT_LABEL[i.billingImpact]}
                           </span>
-                          <span className={`${table.sub} ${table.showTablet}`}>{i.note}</span>
+                          <span className={`${table.sub} ${styles.showPanel}`}>{i.note}</span>
                         </span>
                       </td>
                       <td className={`${table.td} ${table.dim} ${styles.foldPhone}`}>
                         {BILLING_IMPACT_LABEL[i.billingImpact]}
                       </td>
-                      <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>{i.note}</td>
+                      <td className={`${table.td} ${table.wrap} ${table.dim} ${styles.foldPanel}`}>{i.note}</td>
                       <td className={table.td}>
                         <span className={`${table.actionsCell} ${styles.rowActions}`}>
                           {canInt && !i.endedAtUtc ? (

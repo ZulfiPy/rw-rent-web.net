@@ -47,23 +47,30 @@
 .hint { font-size: 11.5px; color: var(--fg-4); }
 .pre { white-space: pre-wrap; }
 
-@media (max-width: 1023px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 639px) {
-  .grid { grid-template-columns: 1fr; }
-  .span2, .full { grid-column: 1 / -1; }
-}
-
-/* Opt-in: every fact on one row from the desktop line up, for a panel whose facts all fit there
-   — the auto-fit grid would otherwise wrap the tail and leave empty tracks. The side pad comes in
-   to 12px because seven tracks leave ~104px of content at 1280 and a short timestamp needs 105.
-   Only panels that pass `oneRow` are affected; every other fact grid is unchanged. */
-@media (min-width: 1280px) {
+/* Opt-in: every fact on one row once the panel is 940px wide, for a panel whose facts all fit there
+   — the auto-fit grid would otherwise wrap the tail and leave empty tracks. The panel's own width
+   decides, so the rail state moves the grid the way a narrower window does. The side pad comes in
+   to 12px because seven tracks leave ~104px of content in a 1092 panel and a short timestamp needs
+   105. Below 940 the tracks are pinned at five, so the tail is the same two facts at every width
+   rather than following the auto-fit count. Only panels that pass `oneRow` are affected. */
+@container (min-width: 940px) {
   .oneRow {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
   }
   .oneRow .cell { padding-left: 12px; padding-right: 12px; }
+}
+@container (max-width: 939.98px) {
+  .oneRow { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* The portrait and phone tiers stay on the viewport, and take the tail of the cascade so a one-row
+   panel folds with them. */
+@media (max-width: 1023px) {
+  .grid, .oneRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .grid, .oneRow { grid-template-columns: 1fr; }
+  .span2, .full { grid-column: 1 / -1; }
 }
