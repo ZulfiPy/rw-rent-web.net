@@ -890,14 +890,14 @@ function CorrectParties({ assignment: a, onClose }: Common) {
     >
       <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
       <Section title="Corrected values">
-      <Field label="Customer" error={m.fields['customerId']}>
+      <Field label="Customer" required error={m.fields['customerId']}>
         <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
             <option key={c.id} value={c.id}>{c.displayName}{c.isActive ? '' : ' · inactive'}</option>
           ))}
         </select>
       </Field>
-      <Field label="Vehicle" error={m.fields['vehicleId']}>
+      <Field label="Vehicle" required error={m.fields['vehicleId']}>
         <select className={f.control} data-invalid={!!m.fields['vehicleId']} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
           {(vehicles.data?.items ?? []).map((v) => (
             <option key={v.id} value={v.id}>{v.plateNumber} · {v.make} {v.model}</option>
@@ -919,6 +919,10 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
   const [closedAt, setClosedAt] = useState(toLocalInput(a.closedAtUtc));
   const [note, setNote] = useState(a.note ?? '');
   const [reason, setReason] = useState('');
+  /* A correction repairs what the status can hold: an Active assignment has an actual start, a
+     closed one a closing instant. Planned dates exist throughout, and the status is never set here. */
+  const showActualStart = a.status === AssignmentStatus.Active || a.status === AssignmentStatus.Ended;
+  const showClosedAt = a.status === AssignmentStatus.Ended || a.status === AssignmentStatus.Cancelled;
 
   const m = useActionMutation({
     op: 'correct-timeline',
@@ -952,16 +956,20 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
       footnote="Use Activate, End or Cancel for events that actually happened."
     >
       <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
-      <Section title="Corrected dates">
+      <Section title="Corrected values">
       <DateTimeField label="Planned start" value={plannedStart} optional error={m.fields['plannedStartAtUtc']} onChange={setPlannedStart} />
-      <DateTimeField label="Actual start" value={startedAt} optional error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      {showActualStart ? (
+        <DateTimeField label="Actual start" value={startedAt} required error={m.fields['startedAtUtc']} onChange={setStartedAt} />
+      ) : null}
       <DateTimeField label="Planned end" value={plannedEnd} optional error={m.fields['plannedEndAtUtc']} onChange={setPlannedEnd} />
-      <DateTimeField label="Closed at" value={closedAt} optional error={m.fields['closedAtUtc']} onChange={setClosedAt} />
+      {showClosedAt ? (
+        <DateTimeField label="Closed at" value={closedAt} required error={m.fields['closedAtUtc']} onChange={setClosedAt} />
+      ) : null}
+      <Field label="Assignment note" optional error={m.fields['note']}>
+        <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+      </Field>
       </Section>
       <Section title="Audit" cols={1}>
-        <Field label="Assignment note" optional error={m.fields['note']}>
-          <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-        </Field>
         <ReasonField value={reason} error={m.fields['reason']} onChange={setReason} />
       </Section>
     </Dialog>
