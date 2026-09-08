@@ -75,8 +75,7 @@ function ReasonField({ value, error, onChange }: {
   );
 }
 
-function DateTimeField({ label, value, error, hint, required, optional, onChange }: {
-  label: string;
+function DateTimeField({ label, value, error, hint, required, optional, onChange }: {  label: string;
   value: string;
   error?: string | undefined;
   hint?: string;
@@ -95,6 +94,19 @@ function DateTimeField({ label, value, error, hint, required, optional, onChange
       />
     </Field>
   );
+}
+
+/**
+ * A driver list item carries no licence, so the chosen driver's own record supplies it. Every driver
+ * select names the driver in its options and puts the licence in the helper slot once one is chosen.
+ */
+function useDriverLicence(driverId: string) {
+  const q = useQuery({
+    queryKey: qk.drivers.detail(driverId),
+    queryFn: () => getDriver(driverId),
+    enabled: !!driverId,
+  });
+  return driverId && q.data ? q.data.driverLicenseNumber : null;
 }
 
 function EnumSelect<T extends number>({ label, value, options, labels, error, required, onChange }: {
@@ -376,6 +388,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
   const [from, setFrom] = useState(toLocalInput(new Date().toISOString()));
   const [note, setNote] = useState('');
   const drivers = useQuery({ queryKey: qk.drivers.list({ ...PICK, IsActive: true }), queryFn: () => listDrivers({ ...PICK, IsActive: true }) });
+  const startLicence = useDriverLicence(driverId);
   const collective = type === AssignmentDriverAuthorizationType.BusinessCustomerDrivers;
 
   const m = useActionMutation({
@@ -416,7 +429,12 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
         onChange={setType}
       />
       {collective ? null : (
-        <Field label="Driver" required error={m.fields['driverId']}>
+        <Field
+          label="Driver"
+          required
+          hint={startLicence ? <span className={f.mono}>{startLicence}</span> : undefined}
+          error={m.fields['driverId']}
+        >
           <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (
@@ -467,12 +485,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
   /** The replacement cannot repeat coverage that is already open, including the one being stopped. */
   const authorized = new Set(a.driverAuthorizations.filter((x) => !x.stoppedAtUtc).map((x) => x.driverId));
   const replacementDrivers = (drivers.data?.items ?? []).filter((d) => !authorized.has(d.id));
-  /** The list item carries no licence, so the chosen driver's record supplies it. */
-  const chosenDriver = useQuery({
-    queryKey: qk.drivers.detail(driverId),
-    queryFn: () => getDriver(driverId),
-    enabled: !!driverId,
-  });
+  const chosenLicence = useDriverLicence(driverId);
   /** Ticking the card makes this a replacement, so the reason follows; unticking restores the default. */
   const toggleReplace = (next: boolean) => {
     setReplace(next);
@@ -568,8 +581,8 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
             <Field
               label="Replacement driver"
               required
-              hint={driverId && chosenDriver.data
-                ? <span className={f.mono}>{chosenDriver.data.driverLicenseNumber}</span>
+              hint={chosenLicence
+                ? <span className={f.mono}>{chosenLicence}</span>
                 : 'Drivers already authorized on this assignment are not listed.'}
               error={m.fields['driverId']}
             >
@@ -607,6 +620,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
   const [note, setNote] = useState(z.note ?? '');
   const [reason, setReason] = useState('');
   const drivers = useQuery({ queryKey: qk.drivers.list(PICK), queryFn: () => listDrivers(PICK) });
+  const correctLicence = useDriverLicence(driverId);
   const collective = type === AssignmentDriverAuthorizationType.BusinessCustomerDrivers;
 
   const m = useActionMutation({
@@ -655,7 +669,12 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
         onChange={setType}
       />
       {collective ? null : (
-        <Field label="Driver" required error={m.fields['driverId']}>
+        <Field
+          label="Driver"
+          required
+          hint={correctLicence ? <span className={f.mono}>{correctLicence}</span> : undefined}
+          error={m.fields['driverId']}
+        >
           <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (

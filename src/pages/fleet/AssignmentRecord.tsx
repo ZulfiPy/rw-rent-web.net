@@ -16,7 +16,7 @@ import {
   ASSIGNMENT_STATUS_LABEL, AUTHORIZATION_TYPE_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL,
   INTERRUPTION_REASON_LABEL, STOP_REASON_LABEL, eventLabel, formatLocal, formatUtc,
 } from '@/format';
-import { useNarrow } from '@/app/useViewport';
+import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -38,7 +38,8 @@ export function AssignmentRecord() {
   const { assignmentId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { can } = useAccess();
-  const compact = useNarrow();
+  /** Only the phone tier drops the row buttons to their icons; the portrait band keeps the labels. */
+  const compact = useTier() === 'phone';
   const [dialog, setDialog] = useState<AssignmentDialogState | null>(null);
 
   const record = useQuery({
@@ -321,9 +322,9 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colAuth}`}>Authorization</th>
                     <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>From</th>
-                    <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldTablet}`}>Stopped</th>
+                    <th scope="col" className={`${table.th} ${styles.colWhen} ${styles.foldPhone}`}>Stopped</th>
                     <th scope="col" className={`${table.th} ${styles.colStopReason} ${table.foldNarrow}`}>Stop reason</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions} ${canAuth && canCorrect ? styles.twoUp : canCorrect ? styles.oneWide : ''}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,7 +351,7 @@ export function AssignmentRecord() {
                             )}
                             {licence ? <span className={table.subMono}>{licence}</span> : null}
                             {!named && z.note ? <span className={table.sub}>{z.note}</span> : null}
-                            <span className={`${table.sub} ${table.showNarrow}`}>
+                            <span className={`${table.sub} ${styles.showPhone}`}>
                               {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : 'Open authorization'}
                             </span>
                           </span>
@@ -358,15 +359,20 @@ export function AssignmentRecord() {
                         <td className={table.td}>
                           <span className={table.stack}>
                             <span className={table.mono}>{formatLocal(z.authorizedFromUtc)}</span>
-                            <span className={`${table.sub} ${table.showTablet}`}>
+                            <span className={`${table.sub} ${styles.showPhone}`}>
                               {z.stoppedAtUtc ? `to ${formatLocal(z.stoppedAtUtc)}` : 'Open'}
                             </span>
                           </span>
                         </td>
-                        <td className={`${table.td} ${table.foldTablet}`}>
-                          {z.stoppedAtUtc
-                            ? <span className={table.mono}>{formatLocal(z.stoppedAtUtc)}</span>
-                            : <Chip tone="ok" dot="50%">Open</Chip>}
+                        <td className={`${table.td} ${styles.foldPhone}`}>
+                          {z.stoppedAtUtc ? (
+                            <span className={table.stack}>
+                              <span className={table.mono}>{formatLocal(z.stoppedAtUtc)}</span>
+                              <span className={`${table.sub} ${table.showNarrow}`}>
+                                {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '\u2014'}
+                              </span>
+                            </span>
+                          ) : <Chip tone="ok" dot="50%">Open</Chip>}
                         </td>
                         <td className={`${table.td} ${table.wrap} ${table.foldNarrow} ${z.stopReason ? '' : table.dim}`}>
                           {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '—'}
@@ -431,7 +437,7 @@ export function AssignmentRecord() {
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colPeriod}`}>Period</th>
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
-                    <th scope="col" className={`${table.th} ${styles.colBilling} ${table.foldNarrow}`}>Billing impact</th>
+                    <th scope="col" className={`${table.th} ${styles.colBilling} ${styles.foldPhone}`}>Billing impact</th>
                     <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Note</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions} ${canCorrect ? styles.threeUp : ''}`}>Actions</th>
                   </tr>
@@ -455,13 +461,13 @@ export function AssignmentRecord() {
                           >
                             {INTERRUPTION_REASON_LABEL[i.reason]}
                           </Chip>
-                          <span className={`${table.sub} ${table.showNarrow}`}>
+                          <span className={`${table.sub} ${styles.showPhone}`}>
                             {BILLING_IMPACT_LABEL[i.billingImpact]}
                           </span>
                           <span className={`${table.sub} ${table.showTablet}`}>{i.note}</span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>
+                      <td className={`${table.td} ${table.dim} ${styles.foldPhone}`}>
                         {BILLING_IMPACT_LABEL[i.billingImpact]}
                       </td>
                       <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>{i.note}</td>

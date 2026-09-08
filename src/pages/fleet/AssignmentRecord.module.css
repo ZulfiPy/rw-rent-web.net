@@ -48,18 +48,40 @@
   .colUtc { width: 150px; }
 }
 
-/* Portrait: stop reason, billing and the note live in the stack next to them; the row's buttons go
-   icon-only and fixed layout holds each table inside its panel. The prototype's recipe: coverage
-   150 / flexible / 136 / 108, interruptions 150 / flexible / 108 — Reason is the flexible column once
-   Note has folded into it. Three icon buttons (End, Edit, Correct for a corrections-capable user)
-   need 3×32 + 2×5 + 2×9 = 124, so the interruptions column widens to that when Correct is present. */
+/* Portrait (768–1023): only what does not fit folds. Coverage keeps Authorization, Driver, From,
+   Stopped and Actions — Stop reason folds under the stop instant; Interruptions keep Period, Reason,
+   Billing impact and Actions — the note folds under the reason chip. Row buttons stay labelled, each
+   fixed column sits on its content and the flexible column (Driver ≈210, Reason ≈290 at 834) takes
+   the rest, so both tables fit the panel with no pan. Actions are sized to their buttons: coverage
+   Stop 69.5 + Correct 85, interruptions End 64.5 + Edit 64.5 + Correct 85, 5px gaps and 9px cells. */
 @media (max-width: 1023px) {
   .coverage, .interruptions, .history { table-layout: fixed; }
+  .colUtc { width: 146px; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .colAuth { width: 128px; }
+  .colWhen { width: 136px; }
+  .colPeriod { width: 136px; }
+  .colReason { width: auto; }
+  .colBilling { width: 124px; }
+  .colActions { width: 88px; }
+  .colActions.oneWide { width: 112px; }
+  .colActions.twoUp { width: 178px; }
+  .colIntActions { width: 152px; }
+  .colIntActions.threeUp { width: 242px; }
+  .rowActions { flex-wrap: nowrap; }
+}
+
+/* The phone tier keeps the widths and the icon-only buttons it already had: Stopped and Billing
+   impact leave their columns and return as sub-lines, exactly as before the portrait recipe. */
+.showPhone { display: none; }
+@media (max-width: 767px) {
   .colAuth { width: 150px; }
   .colWhen { width: 136px; }
   .colPeriod { width: 150px; }
   .colReason { width: auto; }
   .colActions, .colIntActions { width: 108px; }
   .colIntActions.threeUp { width: 124px; }
-  .colUtc { width: 146px; }
+  .foldPhone { display: none; }
+  .showPhone { display: block; }
 }
