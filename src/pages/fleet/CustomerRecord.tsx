@@ -190,7 +190,7 @@ export function CustomerRecord() {
             <table className={`${table.table} ${styles.assignments}`} data-panel>
               <thead>
                 <tr>
-                  <th scope="col" className={`${table.th} ${styles.colPlate} ${styles.wide}`}>Plate number</th>
+                  <th scope="col" className={`${table.th} ${styles.colPlate}`}>Plate number</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldNarrow}`}>Ends</th>

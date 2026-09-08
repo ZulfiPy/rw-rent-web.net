@@ -425,7 +425,7 @@ export function Assignments() {
                     <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <span className={styles.plate}>{a.vehiclePlateNumber}</span>
+                          <span className={table.plate}>{a.vehiclePlateNumber}</span>
                           <span className={table.sub}>{models.get(a.vehicleId) ?? ''}</span>
                         </span>
                       </td>

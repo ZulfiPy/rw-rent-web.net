@@ -1,10 +1,11 @@
-/* Shared column widths for the fleet records' history tables. From a 940px panel the desktop
-   recipe at the foot of this file takes over and sizes every column on its content, so these widths
-   are the folded band's — the tablet and phone tiers. */
+/* Shared column widths for the fleet records' history tables. The prototype's fixed layouts: the
+   declared widths share the panel's spare width between them. */
 .history, .assignments, .audit { min-width: 0; }
-.wide { width: auto; }
 
+.colCustomer { width: 290px; }
 .colPlate { width: 190px; }
+.colStatus { width: 132px; }
+.colWhen { width: 150px; }
 .colType { width: 150px; }
 .colCoverage { width: auto; min-width: 190px; }
 .colLicence { width: 170px; }
@@ -30,17 +31,4 @@
   .colPlate { width: 140px; }
   .colWhen { width: 136px; }
   .colUtc { width: 146px; }
-}
-
-/* Desktop, panel 940 and wider: the assignment record's panel-table recipe. `Panel` is a size
-   container, so the rail state moves these tables exactly as a narrower window does. Auto layout
-   with no table minimum — every th at 1% resolves to its content width and only the `.wide` column
-   takes what is left — so the table fits its panel instead of panning. The viewport guard leaves
-   the portrait and phone tiers on the fold above; they are their own pass. */
-@media (min-width: 1024px) {
-  @container (min-width: 940px) {
-    .history, .assignments, .audit { table-layout: auto; min-width: 0; }
-    .history th, .assignments th, .audit th { width: 1%; min-width: 0; }
-    .history .wide, .assignments .wide, .audit .wide { width: 100%; min-width: 0; }
-  }
 }

@@ -280,7 +280,7 @@ export function Vehicles() {
                     <tr key={v.id} {...rowNav(`/vehicles/${v.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <Link to={`/vehicles/${v.id}`} className={`${table.name} ${table.mono}`}>{v.plateNumber}</Link>
+                          <Link to={`/vehicles/${v.id}`} className={`${table.name} ${table.plate}`}>{v.plateNumber}</Link>
                           <span className={`${table.sub} ${table.oneLine}`} title={`${v.make} ${v.model}`}>
                             {v.make} {v.model}
                           </span>

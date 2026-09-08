@@ -8,15 +8,6 @@
 .colDrivers { width: 162px; }
 .colAction { width: 56px; }
 
-/* The plate is the row's identifier: mono, 600, full-strength ink, with the model beneath it. */
-.plate {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fg);
-  white-space: nowrap;
-}
-
 /* The phone card leads with the row's identifier, as the prototype's does: the plate in mono beside
    the vehicle model, which ellipsises when it runs long. The customer takes the sub-line, and the
    status chip may carry the Interrupted companion beside it. */

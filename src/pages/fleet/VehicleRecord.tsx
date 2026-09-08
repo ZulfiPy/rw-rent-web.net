@@ -164,7 +164,7 @@ export function VehicleRecord() {
             <table className={`${table.table} ${styles.history}`} data-panel>
               <thead>
                 <tr>
-                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${styles.wide}`}>Customer</th>
+                  <th scope="col" className={`${table.th} ${styles.colCustomer}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldNarrow}`}>Ends</th>

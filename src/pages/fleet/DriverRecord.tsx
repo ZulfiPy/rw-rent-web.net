@@ -243,11 +243,11 @@ export function DriverRecord() {
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colPlate}`}>Plate number</th>
-                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${styles.wide} ${table.foldNarrow}`}>Customer</th>
+                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${table.foldNarrow}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Assignment status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Authorized from</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldTablet}`}>Stopped</th>
-                  <th scope="col" className={`${table.th} ${styles.colReason} ${styles.wide} ${table.foldTablet}`}>Stop reason</th>
+                  <th scope="col" className={`${table.th} ${styles.colReason} ${table.foldTablet}`}>Stop reason</th>
                 </tr>
               </thead>
               <tbody>
@@ -329,7 +329,7 @@ export function DriverRecord() {
                   <th scope="col" className={`${table.th} ${styles.colEvent}`}>Event</th>
                   <th scope="col" className={`${table.th} ${styles.colActor} ${table.foldNarrow}`}>Acting user</th>
                   <th scope="col" className={`${table.th} ${styles.colUtc}`}>When</th>
-                  <th scope="col" className={`${table.th} ${styles.colChanged} ${styles.wide} ${table.foldTablet}`}>Reason</th>
+                  <th scope="col" className={`${table.th} ${styles.colChanged} ${table.foldTablet}`}>Reason</th>
                 </tr>
               </thead>
               <tbody>
