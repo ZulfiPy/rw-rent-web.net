@@ -59,7 +59,9 @@
 /* A row that opens a record: the hover already promises the click, so the cursor says so. */
 .rowNav { cursor: pointer; }
 .td { padding: 11px 14px; vertical-align: middle; font-size: 13px; color: var(--fg-2); }
-.stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* `align-items: flex-start` so a chip or a link inside a stack keeps its content width at every
+   band, while the sub-lines beneath it still wrap to the column. */
+.stack { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .name { font-size: 13.5px; font-weight: 600; color: var(--fg); }
 /* Mono is for machine values only: identifiers, phone numbers, timestamps, counts. */
 .mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-3); white-space: nowrap; }
