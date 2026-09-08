@@ -20,7 +20,7 @@ import {
 } from '@/api/dto';
 import {
   AUTHORIZATION_TYPE_LABEL, BILLING_IMPACT_LABEL, INTERRUPTION_REASON_LABEL, STOP_REASON_LABEL,
-  fromLocalInput, toLocalInput,
+  formatLocal, fromLocalInput, toLocalInput,
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
@@ -49,6 +49,8 @@ const INVALIDATE = [
 
 const PICK = { PageSize: 100 } as const;
 const REASON_HINT = 'Recorded in the security audit against this record.';
+/** Every privileged correction opens with the same callout. */
+const CORRECTION_NOTE = 'Rewrites recorded history to repair a data-entry mistake. The corrected values and your reason are written to the security audit.';
 
 interface Common {
   assignment: RentalAssignmentResponse;
@@ -61,7 +63,7 @@ function ReasonField({ value, error, onChange }: {
   onChange: (next: string) => void;
 }) {
   return (
-    <Field label="Reason" required hint={REASON_HINT} error={error}>
+    <Field label="Reason for the correction" required hint={REASON_HINT} error={error}>
       <textarea
         className={f.control}
         data-invalid={!!error}
@@ -639,6 +641,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
       onRefresh={m.refresh}
       footnote="A correction never changes the assignment's own lifecycle."
     >
+      <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
       <Section title="Corrected values">
       <EnumSelect
         label="Authorization"
@@ -730,7 +733,9 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       icon={correct ? 'shield' : 'pause_circle'}
       tone={correct ? 'warn' : 'accent'}
       width={640}
-      description="A period where normal use paused. The billing impact is recorded per interruption."
+      description={correct
+        ? 'A privileged correction of a recorded interruption. The record is never deleted.'
+        : 'A period where normal use paused. The billing impact is recorded per interruption.'}
       submitLabel={correct ? 'Save correction' : interruption ? 'Save changes' : 'Record interruption'}
       submitTone={correct ? 'warn' : 'primary'}
       busy={m.busy}
@@ -740,6 +745,9 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
       onRefresh={m.refresh}
       footnote="An interruption belongs to the assignment as a whole. It stops no authorization and changes no status."
     >
+      {correct ? (
+        <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
+      ) : null}
       <Section title="Period">
       <DateTimeField label="Started at" required value={startedAt} error={m.fields['startedAtUtc']} onChange={setStartedAt} />
       <DateTimeField
@@ -807,7 +815,7 @@ function InterruptionEnd({ assignment: a, onClose, interruption: i }: Common & {
       icon="play_circle"
       tone="ok"
       width={460}
-      description={INTERRUPTION_REASON_LABEL[i.reason]}
+      description={`${INTERRUPTION_REASON_LABEL[i.reason]} · since ${formatLocal(i.startedAtUtc)}`}
       submitLabel="End interruption"
       busy={m.busy}
       failure={m.failure}
@@ -861,6 +869,7 @@ function CorrectParties({ assignment: a, onClose }: Common) {
       onRefresh={m.refresh}
       footnote="Corrections are not a substitute for lifecycle actions."
     >
+      <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
       <Section title="Corrected values">
       <Field label="Customer" error={m.fields['customerId']}>
         <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
@@ -923,6 +932,7 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
       onRefresh={m.refresh}
       footnote="Use Activate, End or Cancel for events that actually happened."
     >
+      <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
       <Section title="Corrected dates">
       <DateTimeField label="Planned start" value={plannedStart} optional error={m.fields['plannedStartAtUtc']} onChange={setPlannedStart} />
       <DateTimeField label="Actual start" value={startedAt} optional error={m.fields['startedAtUtc']} onChange={setStartedAt} />

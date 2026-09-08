@@ -120,6 +120,11 @@
   color: var(--fg-3);
 }
 .noteIcon { flex: none; font-size: 17px; color: var(--fg-4); }
+/* The titled callout a correction dialog opens with. */
+.noteText { flex: 1; min-width: 0; }
+.noteTitle { display: block; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
+.note[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--fg-2); }
+.note[data-tone='warn'] .noteIcon { color: var(--warn); }
 
 .footer {
   flex: none;

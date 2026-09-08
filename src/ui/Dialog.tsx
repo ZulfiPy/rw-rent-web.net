@@ -63,11 +63,25 @@ export function DialogSection({ title, cols = 2, note, children }: {
   );
 }
 
-export function DialogNote({ icon = 'info', children }: { icon?: string; children: ReactNode }) {
+/**
+ * The caveat under a section, and — with a tone and a title — the callout a dialog opens with.
+ * The titled form is the prototype's box: a bold line naming the case, then what it means.
+ */
+export function DialogNote({ icon = 'info', tone, title, children }: {
+  icon?: string;
+  tone?: 'warn';
+  title?: string;
+  children: ReactNode;
+}) {
   return (
-    <p className={styles.note}>
+    <p className={styles.note} data-tone={tone}>
       <span data-icon aria-hidden="true" className={styles.noteIcon}>{icon}</span>
-      {children}
+      {title ? (
+        <span className={styles.noteText}>
+          <strong className={styles.noteTitle}>{title}</strong>
+          {children}
+        </span>
+      ) : children}
     </p>
   );
 }
