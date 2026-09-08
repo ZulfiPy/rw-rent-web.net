@@ -68,17 +68,17 @@
   }
 }
 
-/* The phone tier keeps the widths and the icon-only buttons it already had: Stopped and Billing
-   impact leave their columns and return as sub-lines, and the row actions wrap. */
-.showPhone { display: none; }
-@media (max-width: 767px) {
-  .colAuth { width: 150px; }
-  .colWhen { width: 136px; }
-  .colPeriod { width: 150px; }
-  .colReason { width: auto; }
-  .colActions, .colIntActions { width: 108px; }
-  .colIntActions.threeUp { width: 124px; }
-  .rowActions { flex-wrap: wrap; }
-  .foldPhone { display: none; }
-  .showPhone { display: block; }
-}
+/* The phone tier's cards for the two record tables: the list pages' card vocabulary
+   (`ui/cards.module.css`) with the four additions this record needs — a driver name that reads as
+   the link it is, the licence in the mono face beneath it, an interruption's start instant as the
+   card title in the row-identifier style, and a fact that takes the whole card width. */
+.cardTitleLink { color: var(--accent); border-bottom: 1px solid transparent; }
+.cardTitleLink:hover { color: var(--accent); text-decoration: none; border-bottom-color: currentColor; }
+.cardSubMono { font-family: var(--font-mono); }
+.cardInstant { font-family: var(--font-mono); font-size: 13.5px; font-weight: 500; letter-spacing: .01em; }
+/* A fact whose value is a chip keeps the chip at its content width. */
+.cardFactStart { align-items: flex-start; }
+.cardFactFull { grid-column: 1 / -1; }
+
+/* Below 768 neither table is a table: the record renders cards (`ui/cards.module.css`), so the
+   fold, the compressed widths and the icon-only row buttons the phone tier used to need are gone. */

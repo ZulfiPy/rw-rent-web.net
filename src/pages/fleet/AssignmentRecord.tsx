@@ -1,6 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { qk } from '@/api';
 import { getAssignment } from '@/api/rentalAssignments';
 import { getCustomer } from '@/api/customers';
@@ -26,6 +26,7 @@ import { Panel } from '@/ui/Panel';
 import { RecordHeader, HeaderFact } from '@/ui/RecordHeader';
 import { RecordBanner, RecordTabs, recordStyles as shell, type RecordTab } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
+import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
 import { AssignmentDialogs, type AssignmentDialogState } from './AssignmentDialogs';
 import styles from './AssignmentRecord.module.css';
@@ -34,12 +35,26 @@ type TabId = 'summary' | 'coverage' | 'interruptions' | 'corrections';
 
 const PICK = { PageSize: 100 } as const;
 
+function CardFact({ label, value, mono, full }: {
+  label: string;
+  value: ReactNode;
+  mono?: boolean;
+  full?: boolean;
+}) {
+  return (
+    <span className={full ? `${cards.fact} ${styles.cardFactFull}` : cards.fact}>
+      <span className={cards.factLabel}>{label}</span>
+      <span className={mono ? cards.factMono : cards.factValue}>{value}</span>
+    </span>
+  );
+}
+
 export function AssignmentRecord() {
   const { assignmentId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { can } = useAccess();
-  /** Only the phone tier drops the row buttons to their icons; the portrait band keeps the labels. */
-  const compact = useTier() === 'phone';
+  /** Below 768 the two record tables become cards; the tables themselves start at the portrait tier. */
+  const phone = useTier() === 'phone';
   const [dialog, setDialog] = useState<AssignmentDialogState | null>(null);
 
   const record = useQuery({
@@ -314,6 +329,63 @@ export function AssignmentRecord() {
               title="No authorized drivers"
               body="This vehicle cannot be handed over until at least one driver is authorized for this rental. A Planned assignment may still be saved without a driver."
             />
+          ) : phone ? (
+            <div className={cards.cards}>
+              {auths.map((z) => {
+                const named = z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver;
+                const licence = named ? driverLicence(z.driverId) : null;
+                const stoppable = canAuth && !z.stoppedAtUtc;
+                return (
+                  <div key={z.id} className={cards.card}>
+                    <div className={cards.head}>
+                      <span className={cards.heading}>
+                        {named && z.driverId ? (
+                          <Link to={`/drivers/${z.driverId}`} className={`${cards.title} ${styles.cardTitleLink}`}>
+                            {driverName(z.driverId) ?? 'Named driver'}
+                          </Link>
+                        ) : (
+                          <span className={cards.title}>
+                            {named ? 'Named driver' : 'Company-authorized drivers'}
+                          </span>
+                        )}
+                        {named && licence ? (
+                          <span className={`${cards.sub} ${styles.cardSubMono}`}>{licence}</span>
+                        ) : null}
+                        {!named && z.note ? <span className={cards.sub}>{z.note}</span> : null}
+                      </span>
+                      <Chip tone={named ? 'info' : 'mute'} dot={named ? '50%' : '2px'}>
+                        {AUTHORIZATION_TYPE_LABEL[z.authorizationType]}
+                      </Chip>
+                    </div>
+                    <div className={cards.facts}>
+                      <CardFact label="From" value={formatLocal(z.authorizedFromUtc)} mono />
+                      <span className={`${cards.fact} ${styles.cardFactStart}`}>
+                        <span className={cards.factLabel}>Stopped</span>
+                        {z.stoppedAtUtc
+                          ? <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>
+                          : <Chip tone="ok" dot="50%">Open</Chip>}
+                      </span>
+                      {z.stoppedAtUtc ? (
+                        <CardFact
+                          label="Stop reason"
+                          value={z.stopReason ? STOP_REASON_LABEL[z.stopReason] : '\u2014'}
+                        />
+                      ) : null}
+                    </div>
+                    {stoppable || canCorrect ? (
+                      <div className={cards.actions}>
+                        {stoppable ? (
+                          <Button label="Stop" icon="person_remove" tone="warn" small row onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
+                        ) : null}
+                        {canCorrect ? (
+                          <Button label="Correct" icon="shield" small row onClick={() => setDialog({ kind: 'auth-correct', authorizationId: z.id })} />
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <div className={table.scroll}>
               <table className={`${table.table} ${styles.coverage}`} data-panel="">
@@ -322,7 +394,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colAuth}`}>Authorization</th>
                     <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
                     <th scope="col" className={`${table.th} ${styles.colWhen}`}>From</th>
-                    <th scope="col" className={`${table.th} ${styles.colWhen} ${styles.foldPhone}`}>Stopped</th>
+                    <th scope="col" className={`${table.th} ${styles.colWhen}`}>Stopped</th>
                     <th scope="col" className={`${table.th} ${styles.colStopReason} ${styles.foldPanel}`}>Stop reason</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colActions} ${canAuth && canCorrect ? styles.twoUp : canCorrect ? styles.oneWide : ''}`}>Actions</th>
                   </tr>
@@ -351,20 +423,14 @@ export function AssignmentRecord() {
                             )}
                             {licence ? <span className={table.subMono}>{licence}</span> : null}
                             {!named && z.note ? <span className={table.sub}>{z.note}</span> : null}
-                            <span className={`${table.sub} ${styles.showPhone}`}>
-                              {z.stopReason ? STOP_REASON_LABEL[z.stopReason] : 'Open authorization'}
-                            </span>
                           </span>
                         </td>
                         <td className={table.td}>
                           <span className={table.stack}>
                             <span className={table.mono}>{formatLocal(z.authorizedFromUtc)}</span>
-                            <span className={`${table.sub} ${styles.showPhone}`}>
-                              {z.stoppedAtUtc ? `to ${formatLocal(z.stoppedAtUtc)}` : 'Open'}
-                            </span>
                           </span>
                         </td>
-                        <td className={`${table.td} ${styles.foldPhone}`}>
+                        <td className={table.td}>
                           {z.stoppedAtUtc ? (
                             <span className={table.stack}>
                               <span className={table.mono}>{formatLocal(z.stoppedAtUtc)}</span>
@@ -380,10 +446,10 @@ export function AssignmentRecord() {
                         <td className={table.td}>
                           <span className={`${table.actionsCell} ${styles.rowActions}`}>
                             {canAuth && !z.stoppedAtUtc ? (
-                              <Button label="Stop" icon="person_remove" tone="warn" small row compact={compact} onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
+                              <Button label="Stop" icon="person_remove" tone="warn" small row onClick={() => setDialog({ kind: 'auth-stop', authorizationId: z.id })} />
                             ) : null}
                             {canCorrect ? (
-                              <Button label="Correct" icon="shield" small row compact={compact} onClick={() => setDialog({ kind: 'auth-correct', authorizationId: z.id })} />
+                              <Button label="Correct" icon="shield" small row onClick={() => setDialog({ kind: 'auth-correct', authorizationId: z.id })} />
                             ) : null}
                           </span>
                         </td>
@@ -430,6 +496,44 @@ export function AssignmentRecord() {
                   ? 'This assignment ran without a recorded pause. Only a closed historical interruption can be added now.'
                   : 'This assignment has run without a recorded pause.'}
             />
+          ) : phone ? (
+            <div className={cards.cards}>
+              {ints.map((i) => (
+                <div key={i.id} className={cards.card}>
+                  <div className={cards.head}>
+                    <span className={cards.heading}>
+                      <span className={`${cards.title} ${styles.cardInstant}`}>{formatLocal(i.startedAtUtc)}</span>
+                      <span className={cards.sub}>
+                        {i.endedAtUtc ? `to ${formatLocal(i.endedAtUtc)}` : 'ongoing'}
+                      </span>
+                    </span>
+                    <Chip
+                      tone={i.endedAtUtc ? 'mute' : 'bad'}
+                      dot={i.endedAtUtc ? '1px' : '50% 50% 50% 0'}
+                    >
+                      {INTERRUPTION_REASON_LABEL[i.reason]}
+                    </Chip>
+                  </div>
+                  <div className={cards.facts}>
+                    <CardFact label="Billing impact" value={BILLING_IMPACT_LABEL[i.billingImpact]} />
+                    {i.note ? <CardFact label="Note" value={i.note} full /> : null}
+                  </div>
+                  {canInt || canCorrect ? (
+                    <div className={cards.actions}>
+                      {canInt && !i.endedAtUtc ? (
+                        <Button label="End" icon="play_circle" tone="ok" small row onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
+                      ) : null}
+                      {canInt ? (
+                        <Button label="Edit" icon="edit" small row onClick={() => setDialog({ kind: 'interruption-edit', interruptionId: i.id })} />
+                      ) : null}
+                      {canCorrect ? (
+                        <Button label="Correct" icon="shield" small row onClick={() => setDialog({ kind: 'interruption-correct', interruptionId: i.id })} />
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           ) : (
             <div className={table.scroll}>
               <table className={`${table.table} ${styles.interruptions}`} data-panel="">
@@ -437,7 +541,7 @@ export function AssignmentRecord() {
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colPeriod}`}>Period</th>
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
-                    <th scope="col" className={`${table.th} ${styles.colBilling} ${styles.foldPhone}`}>Billing impact</th>
+                    <th scope="col" className={`${table.th} ${styles.colBilling}`}>Billing impact</th>
                     <th scope="col" className={`${table.th} ${styles.wide} ${styles.foldPanel}`}>Note</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions} ${canCorrect ? styles.threeUp : ''}`}>Actions</th>
                   </tr>
@@ -461,26 +565,23 @@ export function AssignmentRecord() {
                           >
                             {INTERRUPTION_REASON_LABEL[i.reason]}
                           </Chip>
-                          <span className={`${table.sub} ${styles.showPhone}`}>
-                            {BILLING_IMPACT_LABEL[i.billingImpact]}
-                          </span>
                           <span className={`${table.sub} ${styles.showPanel}`}>{i.note}</span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.dim} ${styles.foldPhone}`}>
+                      <td className={`${table.td} ${table.dim}`}>
                         {BILLING_IMPACT_LABEL[i.billingImpact]}
                       </td>
                       <td className={`${table.td} ${table.wrap} ${table.dim} ${styles.foldPanel}`}>{i.note}</td>
                       <td className={table.td}>
                         <span className={`${table.actionsCell} ${styles.rowActions}`}>
                           {canInt && !i.endedAtUtc ? (
-                            <Button label="End" icon="play_circle" tone="ok" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
+                            <Button label="End" icon="play_circle" tone="ok" small row onClick={() => setDialog({ kind: 'interruption-end', interruptionId: i.id })} />
                           ) : null}
                           {canInt ? (
-                            <Button label="Edit" icon="edit" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-edit', interruptionId: i.id })} />
+                            <Button label="Edit" icon="edit" small row onClick={() => setDialog({ kind: 'interruption-edit', interruptionId: i.id })} />
                           ) : null}
                           {canCorrect ? (
-                            <Button label="Correct" icon="shield" small row compact={compact} onClick={() => setDialog({ kind: 'interruption-correct', interruptionId: i.id })} />
+                            <Button label="Correct" icon="shield" small row onClick={() => setDialog({ kind: 'interruption-correct', interruptionId: i.id })} />
                           ) : null}
                         </span>
                       </td>

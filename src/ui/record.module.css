@@ -53,3 +53,24 @@
 }
 .tabIcon { font-size: 17px; }
 .count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+
+/* On the phone tier the strip is wider than the screen. It still scrolls, but the scrollbar is not
+   part of the control, and the clipped edge fades out so the tab under it reads as more. The fade
+   follows the scroll position (`data-fade` from `RecordTabs`), so a strip scrolled to either end
+   keeps that end crisp. */
+@media (max-width: 767px) {
+  .tabs { scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .tabs[data-fade='end'] {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent 100%);
+  }
+  .tabs[data-fade='start'] {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px);
+    mask-image: linear-gradient(to right, transparent 0, #000 30px);
+  }
+  .tabs[data-fade='both'] {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%);
+  }
+}
