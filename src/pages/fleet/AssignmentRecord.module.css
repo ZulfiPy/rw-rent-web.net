@@ -49,12 +49,17 @@
 }
 
 /* Portrait: stop reason, billing and the note live in the stack next to them; the row's buttons go
-   icon-only and fixed layout holds each table inside its panel. */
+   icon-only and fixed layout holds each table inside its panel. The prototype's recipe: coverage
+   150 / flexible / 136 / 108, interruptions 150 / flexible / 108 — Reason is the flexible column once
+   Note has folded into it. Three icon buttons (End, Edit, Correct for a corrections-capable user)
+   need 3×32 + 2×5 + 2×9 = 124, so the interruptions column widens to that when Correct is present. */
 @media (max-width: 1023px) {
   .coverage, .interruptions, .history { table-layout: fixed; }
   .colAuth { width: 150px; }
   .colWhen { width: 136px; }
   .colPeriod { width: 150px; }
+  .colReason { width: auto; }
   .colActions, .colIntActions { width: 108px; }
+  .colIntActions.threeUp { width: 124px; }
   .colUtc { width: 146px; }
 }

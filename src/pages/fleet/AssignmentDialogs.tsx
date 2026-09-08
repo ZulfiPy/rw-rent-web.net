@@ -24,7 +24,7 @@ import {
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
-import { Dialog, DialogNote, DialogSection as Section } from '@/ui/Dialog';
+import { Dialog, DialogNote, DialogSection as Section, dialogStyles } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
 
 export type AssignmentDialogState =
@@ -118,8 +118,26 @@ function EnumSelect<T extends number>({ label, value, options, labels, error, re
   );
 }
 
-const INTERRUPTION_REASONS = Object.values(InterruptionReason);
-const BILLING_IMPACTS = Object.values(BillingImpact);
+/** The prototype's checkbox card: a decision that opens a section, locked when a rule fixes it. */
+function CheckCard({ label, hint, checked, locked, onChange }: {
+  label: string;
+  hint: string;
+  checked: boolean;
+  locked?: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label className={f.card} data-checked={checked} data-locked={locked ? 'true' : undefined}>
+      <input type="checkbox" checked={checked} disabled={locked} onChange={(e) => onChange(e.target.checked)} />
+      <span className={f.cardBody}>
+        <span className={f.cardTitle}>{label}</span>
+        <span className={f.cardHint}>{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+const INTERRUPTION_REASONS = Object.values(InterruptionReason);const BILLING_IMPACTS = Object.values(BillingImpact);
 const STOP_REASONS = Object.values(AuthorizationStopReason);
 
 /* lifecycle -------------------------------------------------------------- */
@@ -429,18 +447,30 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
   authorization: AssignmentDriverAuthorizationResponse;
   businessCustomer: boolean;
 }) {
+  const remaining = a.driverAuthorizations.filter((x) => !x.stoppedAtUtc && x.id !== z.id);
+  /** AUTH-007: the last open authorization on an Active assignment can only be replaced, never simply stopped. */
+  const lastCoverage = a.status === AssignmentStatus.Active && remaining.length === 0;
   const [stoppedAt, setStoppedAt] = useState(toLocalInput(new Date().toISOString()));
-  const [reason, setReason] = useState<AuthorizationStopReason>(AuthorizationStopReason.CustomerRequest);
+  const [reason, setReason] = useState<AuthorizationStopReason>(
+    lastCoverage ? AuthorizationStopReason.Replaced : AuthorizationStopReason.CustomerRequest,
+  );
   const [note, setNote] = useState('');
-  const [replace, setReplace] = useState(false);
+  const [replace, setReplace] = useState(lastCoverage);
   const [replacementType, setReplacementType] = useState<AssignmentDriverAuthorizationType>(AssignmentDriverAuthorizationType.NamedDriver);
   const [driverId, setDriverId] = useState('');
   const [replacementNote, setReplacementNote] = useState('');
   const drivers = useQuery({ queryKey: qk.drivers.list({ ...PICK, IsActive: true }), queryFn: () => listDrivers({ ...PICK, IsActive: true }) });
 
-  const remaining = a.driverAuthorizations.filter((x) => !x.stoppedAtUtc && x.id !== z.id);
-  const lastCoverage = a.status === AssignmentStatus.Active && remaining.length === 0;
   const collectiveReplacement = replacementType === AssignmentDriverAuthorizationType.BusinessCustomerDrivers;
+  /** The replacement cannot repeat coverage that is already open, including the one being stopped. */
+  const authorized = new Set(a.driverAuthorizations.filter((x) => !x.stoppedAtUtc).map((x) => x.driverId));
+  const replacementDrivers = (drivers.data?.items ?? []).filter((d) => !authorized.has(d.id));
+  const chosenDriver = replacementDrivers.find((d) => d.id === driverId);
+  /** Ticking the card makes this a replacement, so the reason follows; unticking restores the default. */
+  const toggleReplace = (next: boolean) => {
+    setReplace(next);
+    setReason(next ? AuthorizationStopReason.Replaced : AuthorizationStopReason.CustomerRequest);
+  };
 
   const m = useActionMutation({
     op: 'auth-stop',
@@ -497,42 +527,48 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
       </Field>
       </Section>
 
-      {lastCoverage ? (
-        <DialogNote icon="shield">
-          This is the last open authorization on an active assignment, so a replacement is part of the
-          same operation. Ending the assignment is the only way to stop coverage entirely.
-        </DialogNote>
-      ) : (
-        <Field label="Replacement" group>
-          <span className={f.choices}>
-            <span className={f.choice} data-checked={replace}>
-              <input type="checkbox" checked={replace} onChange={() => setReplace((v) => !v)} />
-              <span className={f.choiceBody}>
-                <span className={f.choiceRow}>Authorize a replacement in the same operation</span>
-              </span>
-            </span>
-          </span>
-        </Field>
-      )}
+      <CheckCard
+        label="Record a replacement authorization"
+        hint={lastCoverage
+          ? 'This is the last open authorization on an active assignment, so a replacement is part of the same operation. Ending the assignment is the only way to stop coverage entirely.'
+          : 'Starts a new authorization as this one stops, in one request. The stop reason defaults to Replaced.'}
+        checked={replace}
+        locked={lastCoverage}
+        onChange={toggleReplace}
+      />
 
       {replace || lastCoverage ? (
         <Section title="Replacement">
-          <EnumSelect
-            label="Replacement authorization"
-            required
-            value={replacementType}
-            options={businessCustomer
-              ? [AssignmentDriverAuthorizationType.NamedDriver, AssignmentDriverAuthorizationType.BusinessCustomerDrivers]
-              : [AssignmentDriverAuthorizationType.NamedDriver]}
-            labels={AUTHORIZATION_TYPE_LABEL}
-            error={m.fields['authorizationType']}
-            onChange={setReplacementType}
-          />
+          {businessCustomer ? (
+            <EnumSelect
+              label="Replacement authorization"
+              required
+              value={replacementType}
+              options={[AssignmentDriverAuthorizationType.NamedDriver, AssignmentDriverAuthorizationType.BusinessCustomerDrivers]}
+              labels={AUTHORIZATION_TYPE_LABEL}
+              error={m.fields['authorizationType']}
+              onChange={setReplacementType}
+            />
+          ) : (
+            /* AUTH-009: collective authorization belongs to business customers only. */
+            <Field label="Replacement authorization" hint="Private customer: named drivers only.">
+              <p className={dialogStyles.static}>
+                {AUTHORIZATION_TYPE_LABEL[AssignmentDriverAuthorizationType.NamedDriver]}
+              </p>
+            </Field>
+          )}
           {collectiveReplacement ? null : (
-            <Field label="Replacement driver" required error={m.fields['driverId']}>
+            <Field
+              label="Replacement driver"
+              required
+              hint={chosenDriver
+                ? <span className={f.mono}>{chosenDriver.driverLicenseNumber}</span>
+                : 'Drivers already authorized on this assignment are not listed.'}
+              error={m.fields['driverId']}
+            >
               <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
                 <option value="">Select a driver</option>
-                {(drivers.data?.items ?? []).map((d) => (
+                {replacementDrivers.map((d) => (
                   <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>
                 ))}
               </select>

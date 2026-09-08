@@ -433,7 +433,7 @@ export function AssignmentRecord() {
                     <th scope="col" className={`${table.th} ${styles.colReason}`}>Reason</th>
                     <th scope="col" className={`${table.th} ${styles.colBilling} ${table.foldNarrow}`}>Billing impact</th>
                     <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Note</th>
-                    <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions}`}>Actions</th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colIntActions} ${canCorrect ? styles.threeUp : ''}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

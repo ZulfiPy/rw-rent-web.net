@@ -56,25 +56,28 @@
 .factMono { font-family: var(--font-mono); font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
 .factSub { font-size: 11.5px; color: var(--fg-3); }
 
-/* Tablet: the facts take their own line above the actions as one row of content-width grid columns,
-   so they are never squeezed out; the spacers are gone and space-evenly splits the line into six equal
-   parts edge to edge inside the band's padding. */
+/* Below the desktop line the facts leave the chip's row and take a full-width row of their own; the
+   desktop spacers are gone. */
 @media (max-width: 1279px) {
-  .facts {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, max-content);
-    justify-content: space-evenly;
-    flex: 1 1 100%;
-    margin-inline: 0;
-  }
+  .facts { flex: 1 1 100%; margin-inline: 0; }
   .gapEnd, .gapInner { display: none; }
+}
+/* Tablet (768–1279): two rows. The facts are ordered after the actions, and the actions take
+   margin-left:auto, so the state chip and the lifecycle buttons share row one exactly as on desktop
+   (content width, one centre line). Row two is the facts as one flex row spanning the band's padding
+   box: space-between puts the first fact flush with the chip's left edge and the last flush with the
+   last button's right edge, and splits the free width equally among the four inner gaps — no end
+   gaps. Should the facts ever need more than the row they wrap under the same rule; nothing scrolls.
+   The band's own 14px gap is the row gap. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .facts { order: 1; justify-content: space-between; flex-wrap: wrap; gap: 14px 16px; }
+  .heroActions { margin-left: auto; }
 }
 /* Card tier: actions go full width, each button fills its row, facts drop to two up. */
 @media (max-width: 767px) {
   .heroActions { width: 100%; }
   .heroActions > * { flex: 1 1 100%; }
-  .facts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 14px; }
+  .facts { display: grid; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 14px; }
   /* Stacked facts have no shared centre line to hold, so the sub-line reserve goes back in the body. */
   .fact { min-height: 0; justify-content: flex-start; }
   .factBody { min-height: 32px; }

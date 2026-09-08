@@ -13,7 +13,7 @@ export function Field({ label, required, optional, hint, error, group, children 
   /** The prototype's gray tag beside the label. */
   required?: boolean;
   optional?: boolean;
-  hint?: string;
+  hint?: ReactNode;
   error?: string | undefined;
   group?: boolean;
   children: ReactNode;
