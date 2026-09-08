@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/api';
 import { listCustomers } from '@/api/customers';
-import { listDrivers } from '@/api/drivers';
+import { getDriver, listDrivers } from '@/api/drivers';
 import { listVehicles } from '@/api/vehicles';
 import {
   activateAssignment, cancelAssignment, correctAssignmentParties, correctAssignmentTimeline,
@@ -465,7 +465,12 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
   /** The replacement cannot repeat coverage that is already open, including the one being stopped. */
   const authorized = new Set(a.driverAuthorizations.filter((x) => !x.stoppedAtUtc).map((x) => x.driverId));
   const replacementDrivers = (drivers.data?.items ?? []).filter((d) => !authorized.has(d.id));
-  const chosenDriver = replacementDrivers.find((d) => d.id === driverId);
+  /** The list item carries no licence, so the chosen driver's record supplies it. */
+  const chosenDriver = useQuery({
+    queryKey: qk.drivers.detail(driverId),
+    queryFn: () => getDriver(driverId),
+    enabled: !!driverId,
+  });
   /** Ticking the card makes this a replacement, so the reason follows; unticking restores the default. */
   const toggleReplace = (next: boolean) => {
     setReplace(next);
@@ -561,8 +566,8 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
             <Field
               label="Replacement driver"
               required
-              hint={chosenDriver
-                ? <span className={f.mono}>{chosenDriver.driverLicenseNumber}</span>
+              hint={driverId && chosenDriver.data
+                ? <span className={f.mono}>{chosenDriver.data.driverLicenseNumber}</span>
                 : 'Drivers already authorized on this assignment are not listed.'}
               error={m.fields['driverId']}
             >
