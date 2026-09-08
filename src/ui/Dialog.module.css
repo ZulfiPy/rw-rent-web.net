@@ -17,7 +17,7 @@
   width: 100%;
   max-width: 560px;
   margin: auto;
-  max-height: min(88vh, 760px);
+  max-height: min(88vh, 960px);
   background: var(--surface);
   border: 1px solid var(--line-2);
   border-radius: 16px;

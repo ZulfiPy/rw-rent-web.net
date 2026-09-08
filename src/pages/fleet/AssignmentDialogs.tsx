@@ -683,7 +683,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
           </select>
         </Field>
       )}
-      <DateTimeField label="Authorized from" value={from} error={m.fields['authorizedFromUtc']} onChange={setFrom} />
+      <DateTimeField label="Authorized from" required value={from} error={m.fields['authorizedFromUtc']} onChange={setFrom} />
       <DateTimeField label="Stopped at" value={stopped} optional error={m.fields['stoppedAtUtc']} onChange={setStopped} hint="Leave empty for an open authorization." />
       {stopped ? (
         <EnumSelect
