@@ -264,7 +264,7 @@ export function DriverRecord() {
                       <td className={table.td}>
                         <span className={table.stack}>
                           {a ? (
-                            <Link to={`/rental-assignments/${a.id}`} className={`${table.name} ${table.mono}`}>
+                            <Link to={`/rental-assignments/${a.id}`} className={`${table.monoName} ${table.nameLink}`}>
                               {a.vehiclePlateNumber}
                             </Link>
                           ) : <span className={table.dim}>—</span>}

@@ -147,7 +147,7 @@ export function Customers() {
                     <span className={cards.factLabel}>Email</span>
                     <span className={cards.factValue}>{c.email}</span>
                   </span>
-                  <span className={cards.fact}>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                     <span className={cards.factLabel}>Phone</span>
                     <span className={cards.factMono}>{c.phoneNumber}</span>
                   </span>

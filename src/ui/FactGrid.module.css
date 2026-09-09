@@ -70,6 +70,7 @@
    grey remainder that moves with the panel. Only panels that pass `columns` are affected. */
 @media (min-width: 1024px) {
   .cols4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cols5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 /* The portrait and phone tiers stay on the viewport, and take the tail of the cascade so a one-row

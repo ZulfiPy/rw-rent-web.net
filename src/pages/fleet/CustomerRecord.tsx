@@ -86,6 +86,9 @@ export function CustomerRecord() {
       : `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim() || 'Customer';
 
   const linked = drivers.data?.items.find((d) => d.id === c?.driverId) ?? null;
+  /* The drivers query resolves after the customer, so a customer that *has* a driverId must not
+     read as "Not linked" in between — that state (and its note) is only for a customer with none. */
+  const linkPending = !c || (!!c.driverId && !linked);
   const rows = sortHistory(history.data?.items ?? []);
   const vehicleOf = (id: string) => vehicles.data?.items.find((v) => v.id === id) ?? null;
 
@@ -126,25 +129,23 @@ export function CustomerRecord() {
         note={canManage ? null : 'Read-only: changing customers requires Fleet Manager.'}
         noteIcon="lock"
       >
-        <FactGrid>
-          {business ? (
-            <>
-              <Fact label="Business name">{c?.companyName ?? '—'}</Fact>
-              <Fact label="Registration code" mono>{c?.registrationCode ?? '—'}</Fact>
-              <Fact label="Customer type">{c ? CUSTOMER_TYPE_LABEL[c.type] : '—'}</Fact>
-            </>
-          ) : (
-            <>
-              <Fact label="First name">{c?.firstName ?? '—'}</Fact>
-              <Fact label="Last name">{c?.lastName ?? '—'}</Fact>
-              <Fact label="Personal identifier" mono dim={!c?.personalId}>{c?.personalId ?? 'Not recorded'}</Fact>
-              <Fact label="Date of birth" dim={!c?.dateOfBirth}>
-                {c?.dateOfBirth ? formatLocal(c.dateOfBirth, 'date') : 'Not recorded'}
-              </Fact>
-              <Fact label="Customer type">{c ? CUSTOMER_TYPE_LABEL[c.type] : '—'}</Fact>
-            </>
-          )}
-        </FactGrid>
+        {business ? (
+          <FactGrid>
+            <Fact label="Business name">{c?.companyName ?? '—'}</Fact>
+            <Fact label="Registration code" mono>{c?.registrationCode ?? '—'}</Fact>
+            <Fact label="Customer type">{c ? CUSTOMER_TYPE_LABEL[c.type] : '—'}</Fact>
+          </FactGrid>
+        ) : (
+          <FactGrid columns={5}>
+            <Fact label="First name">{c?.firstName ?? '—'}</Fact>
+            <Fact label="Last name">{c?.lastName ?? '—'}</Fact>
+            <Fact label="Personal identifier" mono dim={!c?.personalId}>{c?.personalId ?? 'Not recorded'}</Fact>
+            <Fact label="Date of birth" dim={!c?.dateOfBirth}>
+              {c?.dateOfBirth ? formatLocal(c.dateOfBirth, 'date') : 'Not recorded'}
+            </Fact>
+            <Fact label="Customer type">{c ? CUSTOMER_TYPE_LABEL[c.type] : '—'}</Fact>
+          </FactGrid>
+        )}
       </Panel>
 
       <Panel title="Contact">
@@ -160,15 +161,20 @@ export function CustomerRecord() {
         description="A driver link records licence details. It does not by itself allow the customer to drive an assignment."
         note={business
           ? 'Driving permission for a business customer is granted per assignment — through named drivers or company-authorized drivers.'
-          : !linked
+          : c && !c.driverId
             ? 'Link a Driver record holding their licence details, then name that driver on the assignment authorization. The link alone does not grant driving permission.'
             : null}
       >
         <FactGrid>
-          <Fact label="Linked driver record" dim={!linked}>
-            {linked ? (
-              <Link to={`/drivers/${linked.id}`}>{linked.firstName} {linked.lastName}</Link>
-            ) : business ? 'Not applicable for business customers' : 'Not linked'}
+          <Fact
+            label="Linked driver record"
+            dim={!linked}
+            to={linked ? `/drivers/${linked.id}` : undefined}
+          >
+            {business
+              ? 'Not applicable for business customers'
+              : linked ? `${linked.firstName} ${linked.lastName}`
+                : linkPending ? '—' : 'Not linked'}
           </Fact>
         </FactGrid>
       </Panel>
@@ -203,7 +209,7 @@ export function CustomerRecord() {
                     <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <Link to={`/rental-assignments/${a.id}`} className={`${table.name} ${table.mono}`}>
+                          <Link to={`/rental-assignments/${a.id}`} className={`${table.monoName} ${table.nameLink}`}>
                             {a.vehiclePlateNumber}
                           </Link>
                           <span className={table.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
