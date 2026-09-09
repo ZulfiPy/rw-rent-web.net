@@ -153,7 +153,13 @@ export function Customers() {
                   </span>
                   <span className={cards.fact}>
                     <span className={cards.factLabel}>Driver record</span>
-                    <span className={cards.factValue}>{c.driverId ? 'Also a driver' : 'None'}</span>
+                    {c.driverId ? (
+                      <Link to={`/drivers/${c.driverId}`} className={`${cards.factValue} ${cards.cardTitleLink}`}>
+                        Also a driver
+                      </Link>
+                    ) : (
+                      <span className={cards.factValue}>None</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -167,7 +173,7 @@ export function Customers() {
                   <th scope="col" className={`${table.th} ${styles.wide}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colType}`}>Type</th>
                   <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldTablet}`}>Phone</th>
-                  <th scope="col" className={`${table.th} ${styles.colDriver} ${table.foldNarrow}`}>Driver record</th>
+                  <th scope="col" className={`${table.th} ${styles.colDriver}`}>Driver record</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>Status</th>
                 </tr>
               </thead>
@@ -178,7 +184,7 @@ export function Customers() {
                       <span className={table.stack}>
                         <Link to={`/customers/${c.id}`} className={`${table.name} ${table.oneLine}`} title={c.displayName}>{c.displayName}</Link>
                         <span className={`${table.sub} ${table.oneLine}`} title={c.email}>{c.email}</span>
-                        <span className={`${table.sub} ${table.showTablet}`}>{c.phoneNumber}</span>
+                        <span className={`${table.subMono} ${table.showTablet}`}>{c.phoneNumber}</span>
                       </span>
                     </td>
                     <td className={table.td}>
@@ -187,8 +193,12 @@ export function Customers() {
                       </Chip>
                     </td>
                     <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>{c.phoneNumber}</td>
-                    <td className={`${table.td} ${table.foldNarrow} ${c.driverId ? '' : table.dim}`}>
-                      {c.driverId ? 'Also a driver' : 'None'}
+                    <td className={`${table.td} ${c.driverId ? '' : table.dim}`}>
+                      {c.driverId ? (
+                        <Link to={`/drivers/${c.driverId}`} className={`${table.name} ${table.nameLink} ${styles.driverLink}`}>
+                          Also a driver
+                        </Link>
+                      ) : 'None'}
                     </td>
                     <td className={table.td}>
                       <Chip tone={c.isActive ? 'ok' : 'mute'} dot={c.isActive ? '50%' : '1px'}>
