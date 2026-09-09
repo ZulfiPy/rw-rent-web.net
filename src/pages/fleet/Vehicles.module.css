@@ -14,5 +14,6 @@
 @media (max-width: 1023px) {
   .table { table-layout: fixed; }
   .colYear { width: 68px; }
-  .colState { width: 160px; }
+  /* The Reserved sub-line ("customer · from <date>") needs the room; Vehicle has it to spare. */
+  .colState { width: 260px; }
 }

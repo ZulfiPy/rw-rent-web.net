@@ -284,11 +284,11 @@ export function Vehicles() {
                           <span className={`${table.sub} ${table.oneLine}`} title={`${v.make} ${v.model}`}>
                             {v.make} {v.model}
                           </span>
-                          <span className={`${table.sub} ${table.showWide}`}>
+                          <span className={`${table.sub} ${table.showWide} ${table.foldNarrow}`}>
                             {FUEL_LABEL[v.fuelType]}
                           </span>
                           <span className={`${table.sub} ${table.showNarrow}`}>
-                            {BODY_TYPE_LABEL[v.bodyType]}
+                            {BODY_TYPE_LABEL[v.bodyType]} · {FUEL_LABEL[v.fuelType]}
                           </span>
                         </span>
                       </td>

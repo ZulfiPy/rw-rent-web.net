@@ -126,8 +126,9 @@ for a list, `ui/RecordHeader` for a record — and renders only its body.
 
 **Tiers.** Three, as in the prototype: phone below 768 (cards instead of tables, sidebar behind a
 menu button), tablet 768–1279 in both orientations (icon rail, folded columns, tighter cells),
-desktop from 1280 (expanded rail, every column). Column folding is CSS — `foldTablet` and
-`foldNarrow` in `ui/table.module.css`; only the structural switches (table → cards, rail → drawer,
+desktop from 1280 (expanded rail, every column). Column folding is CSS — `foldTablet`,
+`foldNarrow` and `foldPhone` in `ui/table.module.css`, the last for a column a record panel has the
+width to keep through portrait and folds only for the card tier; only the structural switches (table → cards, rail → drawer,
 row buttons going icon-only) read `useTier()` / `useNarrow()`. Portrait tables run `table-layout:
 fixed`, so a long value ellipsises inside its cell instead of widening the table: no page body is
 ever wider than the viewport, at any tier. Every value a fold removes reappears as a sub-line in a

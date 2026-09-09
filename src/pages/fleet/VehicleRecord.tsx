@@ -167,7 +167,7 @@ export function VehicleRecord() {
                   <th scope="col" className={`${table.th} ${styles.colCustomer}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
-                  <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldNarrow}`}>Ends</th>
+                  <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldPhone}`}>Ends</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,7 +175,7 @@ export function VehicleRecord() {
                   <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
-                        <Link to={`/rental-assignments/${a.id}`} className={table.name}>
+                        <Link to={`/rental-assignments/${a.id}`} className={`${table.name} ${table.nameLink}`}>
                           {a.customerDisplayName}
                         </Link>
                         <span className={table.sub}>{customerType(a.customerId) ?? ''}</span>
@@ -190,12 +190,12 @@ export function VehicleRecord() {
                       <span className={table.stack}>
                         <span className={table.mono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
                         <span className={table.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
-                        <span className={`${table.subMono} ${table.showNarrow}`}>
+                        <span className={`${table.subMono} ${table.showPhone}`}>
                           {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}
                         </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldNarrow}`}>
+                    <td className={`${table.td} ${table.foldPhone}`}>
                       <span className={table.stack}>
                         <span className={`${table.mono} ${table.dim}`}>
                           {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}

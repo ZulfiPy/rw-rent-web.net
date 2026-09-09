@@ -150,7 +150,7 @@
    `tightMax:1280` on Vehicles and Security audit) with `foldWide` + `tightWide`.
    Each `show*` utility pairs with the fold at the same breakpoint: what leaves a column of its own
    arrives as a sub-line in the column that stays. */
-.showTablet, .showNarrow, .showWide { display: none; }
+.showTablet, .showNarrow, .showWide, .showPhone { display: none; }
 @media (max-width: 1279px) {
   .foldWide { display: none; }
   .showWide { display: block; }
@@ -160,6 +160,12 @@
   .table.tightWide:not([data-panel]) .td:first-child { padding-left: 16px; }
   .table.tightWide:not([data-panel]) .th:last-child,
   .table.tightWide:not([data-panel]) .td:last-child { padding-right: 16px; }
+}
+/* One column of a record panel's table can hold to the portrait tier and fold only for the card
+   tier: the panel has the width for it at 768–1023 and not below. */
+@media (max-width: 767px) {
+  .foldPhone { display: none; }
+  .showPhone { display: block; }
 }
 @media (max-width: 1023px) {
   .foldTablet, .foldNarrow { display: none; }
