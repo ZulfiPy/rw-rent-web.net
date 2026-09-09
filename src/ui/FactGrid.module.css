@@ -77,6 +77,9 @@
    panel folds with them. */
 @media (max-width: 1023px) {
   .grid, .oneRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* An odd fact count leaves the last cell alone beside an empty grey half. It takes the row
+     instead — the same shape a `span2` last fact already has. Even counts are untouched. */
+  .grid > :last-child:nth-child(odd), .oneRow > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 639px) {
   .grid, .oneRow { grid-template-columns: 1fr; }

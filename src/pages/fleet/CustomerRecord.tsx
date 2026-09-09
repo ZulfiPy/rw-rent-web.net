@@ -199,7 +199,7 @@ export function CustomerRecord() {
                   <th scope="col" className={`${table.th} ${styles.colPlate}`}>Plate number</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
-                  <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldNarrow}`}>Ends</th>
+                  <th scope="col" className={`${table.th} ${styles.colWhen}`}>Ends</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,12 +224,9 @@ export function CustomerRecord() {
                         <span className={table.stack}>
                           <span className={table.mono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
                           <span className={table.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
-                          <span className={`${table.subMono} ${table.showNarrow}`}>
-                            {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}
-                          </span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.foldNarrow}`}>
+                      <td className={table.td}>
                         <span className={table.stack}>
                           <span className={`${table.mono} ${table.dim}`}>
                             {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}
