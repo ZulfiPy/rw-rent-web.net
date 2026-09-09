@@ -359,7 +359,7 @@ export function AssignmentRecord() {
                     </div>
                     <div className={cards.facts}>
                       <CardFact label="From" value={formatLocal(z.authorizedFromUtc)} mono />
-                      <span className={`${cards.fact} ${cards.cardFactStart}`}>
+                      <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                         <span className={cards.factLabel}>Stopped</span>
                         {z.stoppedAtUtc
                           ? <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>

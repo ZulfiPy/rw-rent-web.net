@@ -184,7 +184,7 @@ export function VehicleRecord() {
                     <span className={cards.factMono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
                     <span className={cards.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
                   </span>
-                  <span className={cards.fact}>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                     <span className={cards.factLabel}>Ends</span>
                     <span className={cards.factMono}>{formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}</span>
                     <span className={cards.sub}>{a.closedAtUtc ? 'closed' : 'planned'}</span>

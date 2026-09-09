@@ -374,7 +374,7 @@ export function Assignments() {
                         {when(a.startedAtUtc ?? a.plannedStartAtUtc) ?? '—'}
                       </span>
                     </span>
-                    <span className={cards.fact}>
+                    <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                       <span className={cards.factLabel}>Ends</span>
                       <span className={cards.factValue}>
                         {when(a.closedAtUtc ?? a.plannedEndAtUtc) ?? '—'}

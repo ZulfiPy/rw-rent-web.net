@@ -36,4 +36,9 @@
 .cardPlate { flex: none; font-family: var(--font-mono); letter-spacing: .01em; }
 .cardInstant { font-family: var(--font-mono); font-size: 13.5px; font-weight: 500; letter-spacing: .01em; }
 .cardFactStart { align-items: flex-start; }
+/* A fact in the grid's right column: label, value and sub-line sit flush with the card's right
+   padding edge, so the two columns mirror each other and a wrapping value wraps right-aligned. The
+   column is named on the fact rather than taken from nth-child parity, which a full-width fact
+   (`cardFactFull`) shifts. */
+.cardFactEnd { align-items: flex-end; text-align: right; }
 .cardFactFull { grid-column: 1 / -1; }

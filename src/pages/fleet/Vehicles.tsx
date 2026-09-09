@@ -241,7 +241,7 @@ export function Vehicles() {
                       <span className={cards.factLabel}>Body</span>
                       <span className={cards.factValue}>{BODY_TYPE_LABEL[v.bodyType]}</span>
                     </span>
-                    <span className={cards.fact}>
+                    <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                       <span className={cards.factLabel}>Fuel</span>
                       <span className={cards.factValue}>{FUEL_LABEL[v.fuelType]}</span>
                     </span>
@@ -250,7 +250,7 @@ export function Vehicles() {
                       <span className={cards.factMono}>{v.vinCode}</span>
                     </span>
                     {a.sub ? (
-                      <span className={cards.fact}>
+                      <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                         <span className={cards.factLabel}>{a.label}</span>
                         <span className={cards.factValue}>{a.sub}</span>
                       </span>
