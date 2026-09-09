@@ -11,6 +11,7 @@ import {
   ASSIGNMENT_STATUS_LABEL, BODY_TYPE_LABEL, CUSTOMER_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL,
   formatLocal,
 } from '@/format';
+import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -21,6 +22,7 @@ import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
 import { useRowNav } from '@/ui/rowNav';
+import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, useAssignmentBlockers, type FleetDialogState } from './FleetDialogs';
 import { sortHistory } from './history';
@@ -32,6 +34,8 @@ export function VehicleRecord() {
   const { vehicleId = '' } = useParams();
   const rowNav = useRowNav();
   const { can } = useAccess();
+  /** Below 768 the rental history is cards; the table itself starts at the portrait tier. */
+  const phone = useTier() === 'phone';
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
   const record = useQuery({
@@ -159,6 +163,36 @@ export function VehicleRecord() {
           />
         ) : rows.length === 0 ? (
           <EmptyState variant="panel" icon="assignment" title="No rental history." body="" />
+        ) : phone ? (
+          <div className={cards.cards}>
+            {rows.map((a) => (
+              <div key={a.id} className={cards.card}>
+                <div className={cards.head}>
+                  <span className={cards.heading}>
+                    <Link to={`/rental-assignments/${a.id}`} className={`${cards.title} ${cards.cardTitleLink}`}>
+                      {a.customerDisplayName}
+                    </Link>
+                    <span className={cards.sub}>{customerType(a.customerId) ?? ''}</span>
+                  </span>
+                  <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
+                    {ASSIGNMENT_STATUS_LABEL[a.status]}
+                  </Chip>
+                </div>
+                <div className={cards.facts}>
+                  <span className={cards.fact}>
+                    <span className={cards.factLabel}>Starts</span>
+                    <span className={cards.factMono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
+                    <span className={cards.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
+                  </span>
+                  <span className={cards.fact}>
+                    <span className={cards.factLabel}>Ends</span>
+                    <span className={cards.factMono}>{formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}</span>
+                    <span className={cards.sub}>{a.closedAtUtc ? 'closed' : 'planned'}</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.history}`} data-panel>
@@ -167,7 +201,7 @@ export function VehicleRecord() {
                   <th scope="col" className={`${table.th} ${styles.colCustomer}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Starts</th>
-                  <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldPhone}`}>Ends</th>
+                  <th scope="col" className={`${table.th} ${styles.colWhen}`}>Ends</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,12 +224,9 @@ export function VehicleRecord() {
                       <span className={table.stack}>
                         <span className={table.mono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
                         <span className={table.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
-                        <span className={`${table.subMono} ${table.showPhone}`}>
-                          {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}
-                        </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldPhone}`}>
+                    <td className={table.td}>
                       <span className={table.stack}>
                         <span className={`${table.mono} ${table.dim}`}>
                           {formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}

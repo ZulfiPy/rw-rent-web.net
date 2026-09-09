@@ -8,15 +8,11 @@
 .colDrivers { width: 162px; }
 .colAction { width: 56px; }
 
-/* The phone card leads with the row's identifier, as the prototype's does: the plate in mono beside
-   the vehicle model, which ellipsises when it runs long. The customer takes the sub-line, and the
-   status chip may carry the Interrupted companion beside it. */
+/* The phone card leads with the row's identifier, as the prototype's does: the plate in mono
+   (`cardPlate` in `ui/cards.module.css`) beside the vehicle model, which ellipsises when it runs
+   long. The customer takes the sub-line, and the status chip may carry the Interrupted companion
+   beside it. */
 .cardTitleRow { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.cardPlate {
-  flex: none;
-  font-family: var(--font-mono);
-  letter-spacing: .01em;
-}
 .cardModel {
   min-width: 0;
   font-size: 13.5px;

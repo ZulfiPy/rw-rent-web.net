@@ -231,7 +231,7 @@ export function Vehicles() {
                 <div key={v.id} className={cards.card}>
                   <div className={cards.head}>
                     <span className={cards.heading}>
-                      <Link to={`/vehicles/${v.id}`} className={cards.title}>{v.plateNumber}</Link>
+                      <Link to={`/vehicles/${v.id}`} className={`${cards.title} ${cards.cardPlate}`}>{v.plateNumber}</Link>
                       <span className={cards.sub}>{v.make} {v.model} · {v.year}</span>
                     </span>
                     <Chip tone={a.tone} dot={a.dot}>{a.label}</Chip>

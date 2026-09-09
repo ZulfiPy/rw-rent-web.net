@@ -132,7 +132,10 @@ width to keep through portrait and folds only for the card tier; only the struct
 row buttons going icon-only) read `useTier()` / `useNarrow()`. Portrait tables run `table-layout:
 fixed`, so a long value ellipsises inside its cell instead of widening the table: no page body is
 ever wider than the viewport, at any tier. Every value a fold removes reappears as a sub-line in a
-column that stays, bound to the same breakpoint as the fold.
+column that stays, bound to the same breakpoint as the fold. A record panel whose table needs more
+width than the card tier has renders cards there instead of folding further — the vehicle record's
+Rental history and the assignment record's two tables — from the shared card vocabulary in
+`ui/cards.module.css`, which the lists' cards use too.
 
 **Panel width, not window width.** `ui/Panel` is a size container (`container-type: inline-size`),
 so what a panel holds can pick its layout from the panel rather than the viewport — the rail state

@@ -42,7 +42,7 @@ function CardFact({ label, value, mono, full }: {
   full?: boolean;
 }) {
   return (
-    <span className={full ? `${cards.fact} ${styles.cardFactFull}` : cards.fact}>
+    <span className={full ? `${cards.fact} ${cards.cardFactFull}` : cards.fact}>
       <span className={cards.factLabel}>{label}</span>
       <span className={mono ? cards.factMono : cards.factValue}>{value}</span>
     </span>
@@ -340,7 +340,7 @@ export function AssignmentRecord() {
                     <div className={cards.head}>
                       <span className={cards.heading}>
                         {named && z.driverId ? (
-                          <Link to={`/drivers/${z.driverId}`} className={`${cards.title} ${styles.cardTitleLink}`}>
+                          <Link to={`/drivers/${z.driverId}`} className={`${cards.title} ${cards.cardTitleLink}`}>
                             {driverName(z.driverId) ?? 'Named driver'}
                           </Link>
                         ) : (
@@ -359,7 +359,7 @@ export function AssignmentRecord() {
                     </div>
                     <div className={cards.facts}>
                       <CardFact label="From" value={formatLocal(z.authorizedFromUtc)} mono />
-                      <span className={`${cards.fact} ${styles.cardFactStart}`}>
+                      <span className={`${cards.fact} ${cards.cardFactStart}`}>
                         <span className={cards.factLabel}>Stopped</span>
                         {z.stoppedAtUtc
                           ? <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>
@@ -502,7 +502,7 @@ export function AssignmentRecord() {
                 <div key={i.id} className={cards.card}>
                   <div className={cards.head}>
                     <span className={cards.heading}>
-                      <span className={`${cards.title} ${styles.cardInstant}`}>{formatLocal(i.startedAtUtc)}</span>
+                      <span className={`${cards.title} ${cards.cardInstant}`}>{formatLocal(i.startedAtUtc)}</span>
                       <span className={cards.sub}>
                         {i.endedAtUtc ? `to ${formatLocal(i.endedAtUtc)}` : 'ongoing'}
                       </span>

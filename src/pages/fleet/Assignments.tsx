@@ -348,7 +348,7 @@ export function Assignments() {
                       <span className={styles.cardTitleRow}>
                         <Link
                           to={`/rental-assignments/${a.id}`}
-                          className={`${cards.title} ${styles.cardPlate}`}
+                          className={`${cards.title} ${cards.cardPlate}`}
                         >
                           {a.vehiclePlateNumber}
                         </Link>
