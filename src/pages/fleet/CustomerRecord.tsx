@@ -9,6 +9,7 @@ import { listVehicles } from '@/api/vehicles';
 import { CustomerType } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, formatLocal } from '@/format';
+import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -19,6 +20,7 @@ import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
 import { useRowNav } from '@/ui/rowNav';
+import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, useAssignmentBlockers, type FleetDialogState } from './FleetDialogs';
 import { sortHistory } from './history';
@@ -29,6 +31,8 @@ const PICK = { PageSize: 100 } as const;
 export function CustomerRecord() {
   const { customerId = '' } = useParams();
   const rowNav = useRowNav();
+  /** Below 768 the assignments table is cards, as the vehicle record's rental history is. */
+  const phone = useTier() === 'phone';
   const { can } = useAccess();
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
@@ -191,6 +195,42 @@ export function CustomerRecord() {
           />
         ) : rows.length === 0 ? (
           <EmptyState variant="panel" icon="assignment" title="No assignments yet." body="" />
+        ) : phone ? (
+          <div className={cards.cards}>
+            {rows.map((a) => {
+              const v = vehicleOf(a.vehicleId);
+              return (
+                <div key={a.id} className={cards.card}>
+                  <div className={cards.head}>
+                    <span className={cards.heading}>
+                      <Link
+                        to={`/rental-assignments/${a.id}`}
+                        className={`${cards.title} ${cards.cardPlate} ${cards.cardTitleLink}`}
+                      >
+                        {a.vehiclePlateNumber}
+                      </Link>
+                      <span className={cards.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
+                    </span>
+                    <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
+                      {ASSIGNMENT_STATUS_LABEL[a.status]}
+                    </Chip>
+                  </div>
+                  <div className={cards.facts}>
+                    <span className={cards.fact}>
+                      <span className={cards.factLabel}>Starts</span>
+                      <span className={cards.factMono}>{formatLocal(a.startedAtUtc ?? a.plannedStartAtUtc)}</span>
+                      <span className={cards.sub}>{a.startedAtUtc ? 'actual' : 'planned'}</span>
+                    </span>
+                    <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                      <span className={cards.factLabel}>Ends</span>
+                      <span className={cards.factMono}>{formatLocal(a.closedAtUtc ?? a.plannedEndAtUtc)}</span>
+                      <span className={cards.sub}>{a.closedAtUtc ? 'closed' : 'planned'}</span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.assignments}`} data-panel>
