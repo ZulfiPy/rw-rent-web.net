@@ -33,7 +33,9 @@
   /* User goes back to the remainder: with a declared width on every column, fixed layout would
      spread the panel's spare width across them instead of giving it to the name and email. */
   .colUser { width: auto; }
-  .colPhone { width: 116px; }
+  /* Phone keeps its own column through portrait: the longest number is 112.5px of mono text, and
+     the band's cell padding is 9px a side. */
+  .colPhone { width: 136px; }
   /* Status holds "Registration rejected" — 140px of chip plus the cell's padding. */
   .colStatus { width: 172px; }
   .colRoles { width: 152px; }

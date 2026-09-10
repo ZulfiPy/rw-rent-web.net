@@ -185,7 +185,7 @@ export function UserDirectory() {
                   <thead>
                     <tr>
                       <th scope="col" className={`${table.th} ${styles.colUser}`}>User</th>
-                      <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldNarrow}`}>Phone</th>
+                      <th scope="col" className={`${table.th} ${styles.colPhone}`}>Phone</th>
                       <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                       <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldTablet}`}>Email</th>
                       <th scope="col" className={`${table.th} ${styles.colRoles}`}>Effective roles</th>
@@ -200,10 +200,9 @@ export function UserDirectory() {
                           <span className={table.stack}>
                             <Link to={`/users/${u.id}`} className={table.name}>{u.firstName} {u.lastName}</Link>
                             <span className={`${table.sub} ${table.oneLine}`} title={u.email}>{u.email}</span>
-                            <span className={`${table.subMono} ${table.showNarrow}`}>{u.phoneNumber}</span>
                           </span>
                         </td>
-                        <td className={`${table.td} ${table.mono} ${table.foldNarrow}`}>{u.phoneNumber}</td>
+                        <td className={`${table.td} ${table.mono}`}>{u.phoneNumber}</td>
                         <td className={table.td}>
                           <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
                             {USER_STATUS_LABEL[u.status]}
