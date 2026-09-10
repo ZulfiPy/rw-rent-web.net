@@ -1,26 +1,40 @@
 .table { min-width: 0; }
-.wide { width: auto; }
+/* Every column has a declared width, so the panel's spare width is shared between them in
+   proportion — the Drivers list layout. */
+.colUser { width: 300px; }
 .colPhone { width: 158px; }
 .colStatus { width: 176px; }
 .colEmail { width: 138px; }
 .colRoles { width: 216px; }
 .colCompany { width: 150px; max-width: 150px; }
-.colAction { width: 64px; }
+
+/* The table's minimum is 1023px — two chip columns and a company name that cannot shrink — so a
+   panel narrower than that pans inside its card. The wrapper is the query container, and Company
+   leaves before the pan can start: at 1280 with the rail expanded (970) and at 1194 pinned open
+   (900). The viewport fold at ≤1023 (foldNarrow) is unaffected. */
+.frame { container-type: inline-size; }
+@container (max-width: 1040px) {
+  .colCompany { display: none; }
+}
 
 /* Tablet landscape (1024–1279): email ownership folds and the fixed columns tighten.
    Portrait (768–1023) folds Company as well — see foldNarrow on that column. */
 @media (max-width: 1279px) {
+  .colUser { width: 250px; }
   .colPhone { width: 122px; }
   .colStatus { width: 138px; }
   .colRoles { width: 168px; }
   .colCompany { width: 116px; max-width: 116px; }
-  .colAction { width: 48px; }
 }
 @media (max-width: 1023px) {
   /* Fixed layout is what guarantees the table cannot exceed the card: User takes the remainder and
      long names, addresses and role lists ellipsise inside their cells. */
   .table { table-layout: fixed; }
+  /* User goes back to the remainder: with a declared width on every column, fixed layout would
+     spread the panel's spare width across them instead of giving it to the name and email. */
+  .colUser { width: auto; }
   .colPhone { width: 116px; }
-  .colStatus { width: 132px; }
+  /* Status holds "Registration rejected" — 140px of chip plus the cell's padding. */
+  .colStatus { width: 172px; }
   .colRoles { width: 152px; }
 }

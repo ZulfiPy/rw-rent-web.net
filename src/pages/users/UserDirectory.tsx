@@ -44,10 +44,10 @@ function SkeletonRows() {
     <>
       {[0, 1, 2, 3, 4].map((i) => (
         <tr key={i} className={table.row}>
-          {[0, 1, 2, 3, 4, 5, 6].map((c) => (
+          {[0, 1, 2, 3, 4, 5].map((c) => (
             <td
               key={c}
-              className={`${table.td} ${c === 3 ? table.foldTablet : ''} ${c === 5 ? table.foldNarrow : ''}`}
+              className={`${table.td} ${c === 3 ? table.foldTablet : ''} ${c === 5 ? `${table.foldNarrow} ${styles.colCompany}` : ''}`}
             >
               <div className={`${table.skeleton} ${c === 0 ? table.skeletonWide : table.skeletonNarrow}`} />
             </td>
@@ -166,35 +166,30 @@ export function UserDirectory() {
                         <span className={cards.factLabel}>Email</span>
                         <span className={cards.factValue}>{u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}</span>
                       </span>
-                      <span className={cards.fact}>
+                      <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                         <span className={cards.factLabel}>Phone</span>
                         <span className={cards.factMono}>{u.phoneNumber}</span>
                       </span>
-                      <span className={cards.fact}>
+                      <span className={`${cards.fact} ${cards.cardFactFull}`}>
                         <span className={cards.factLabel}>Effective roles</span>
-                        <span className={cards.factValue}>
-                          {rolesLabel(u.effectiveRoles)}
-                          {isProtected(u) ? ' · Protected account' : ''}
-                        </span>
+                        <span className={cards.factValue}>{rolesLabel(u.effectiveRoles)}</span>
+                        {isProtected(u) ? <span className={cards.sub}>Protected account</span> : null}
                       </span>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className={table.scroll}>
+              <div className={`${table.scroll} ${styles.frame}`}>
                 <table className={`${table.table} ${styles.table}`}>
                   <thead>
                     <tr>
-                      <th scope="col" className={`${table.th} ${styles.wide}`}>User</th>
-                      <th scope="col" className={`${table.th} ${styles.colPhone}`}>Phone</th>
+                      <th scope="col" className={`${table.th} ${styles.colUser}`}>User</th>
+                      <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldNarrow}`}>Phone</th>
                       <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
                       <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldTablet}`}>Email</th>
                       <th scope="col" className={`${table.th} ${styles.colRoles}`}>Effective roles</th>
                       <th scope="col" className={`${table.th} ${styles.colCompany} ${table.foldNarrow}`}>Company</th>
-                      <th scope="col" className={`${table.th} ${styles.colAction}`}>
-                        <span className={table.srOnly}>Open record</span>
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -203,11 +198,12 @@ export function UserDirectory() {
                       <tr key={u.id} {...rowNav(`/users/${u.id}`)}>
                         <td className={table.td}>
                           <span className={table.stack}>
-                            <span className={table.name}>{u.firstName} {u.lastName}</span>
+                            <Link to={`/users/${u.id}`} className={table.name}>{u.firstName} {u.lastName}</Link>
                             <span className={`${table.sub} ${table.oneLine}`} title={u.email}>{u.email}</span>
+                            <span className={`${table.subMono} ${table.showNarrow}`}>{u.phoneNumber}</span>
                           </span>
                         </td>
-                        <td className={`${table.td} ${table.mono}`}>{u.phoneNumber}</td>
+                        <td className={`${table.td} ${table.mono} ${table.foldNarrow}`}>{u.phoneNumber}</td>
                         <td className={table.td}>
                           <Chip tone={USER_STATUS_TONE[u.status]} dot={USER_STATUS_DOT[u.status]}>
                             {USER_STATUS_LABEL[u.status]}
@@ -224,19 +220,10 @@ export function UserDirectory() {
                             {isProtected(u) ? <span className={table.sub}>Protected account</span> : null}
                           </span>
                         </td>
-                        <td className={`${table.td} ${table.foldNarrow} ${u.companyId ? '' : table.dim}`}>
+                        <td className={`${table.td} ${table.foldNarrow} ${styles.colCompany} ${u.companyId ? '' : table.dim}`}>
                           <span className={table.oneLine} title={u.companyId ? companyName : 'Not assigned'}>
                             {u.companyId ? companyName : 'Not assigned'}
                           </span>
-                        </td>
-                        <td className={table.td}>
-                          <Link
-                            to={`/users/${u.id}`}
-                            className={table.link}
-                            aria-label={`Open the record for ${u.firstName} ${u.lastName}`}
-                          >
-                            <span data-icon aria-hidden="true">chevron_right</span>
-                          </Link>
                         </td>
                       </tr>
                     ))}
