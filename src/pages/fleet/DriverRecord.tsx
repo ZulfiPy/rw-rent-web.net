@@ -18,6 +18,7 @@ import {
   ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, STOP_REASON_LABEL, eventLabel, formatLocal,
   formatUtc,
 } from '@/format';
+import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -28,6 +29,7 @@ import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
 import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
 import { useRowNav } from '@/ui/rowNav';
+import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
 import { FleetDialogs, type Blocker, type FleetDialogState } from './FleetDialogs';
 import styles from './FleetRecord.module.css';
@@ -38,6 +40,8 @@ const cmp = (x: string, y: string) => (x < y ? -1 : x > y ? 1 : 0);
 export function DriverRecord() {
   const { driverId = '' } = useParams();
   const rowNav = useRowNav();
+  /** Below 768 the assignments table is cards, as the customer record's assignments are. */
+  const phone = useTier() === 'phone';
   const { can } = useAccess();
   const [dialog, setDialog] = useState<FleetDialogState | null>(null);
 
@@ -111,7 +115,10 @@ export function DriverRecord() {
   }
 
   const name = d ? `${d.firstName} ${d.lastName}` : 'Driver';
+  /* The customers query resolves after the driver, so a linked driver must not read as "Not linked
+     to a customer" in between — that state is only for a loaded list holding no link. */
   const linked = customers.data?.items.find((c) => c.driverId === driverId) ?? null;
+  const linkPending = !customers.data;
   const assignmentOf = (id: Uuid) => rows.find((a) => a.id === id) ?? null;
   const vehicleOf = (id: Uuid) => vehicles.data?.items.find((v) => v.id === id) ?? null;
   const customerTypeOf = (id: Uuid) => {
@@ -159,6 +166,12 @@ export function DriverRecord() {
     .sort((x, y) => cmp(y.occurredAtUtc, x.occurredAtUtc));
   const hasCreated = trail.some((x) => x.eventType === 'Driver.Created');
 
+  const reasonOf = (z: AssignmentDriverAuthorizationResponse) => z.stoppedAtUtc
+    ? z.stopReason === null || z.stopReason === undefined
+      ? 'Not recorded'
+      : STOP_REASON_LABEL[z.stopReason]
+    : '\u2014';
+
   return (
     <div className={shell.page}>
       <RecordHeader
@@ -193,14 +206,14 @@ export function DriverRecord() {
         note={canManage ? null : 'Read-only: changing drivers requires Fleet Manager.'}
         noteIcon="lock"
       >
-        <FactGrid>
+        <FactGrid columns={5}>
           <Fact label="First name">{d?.firstName ?? '—'}</Fact>
           <Fact label="Last name">{d?.lastName ?? '—'}</Fact>
           <Fact label="Personal identifier" mono dim={!d?.personalId}>{d?.personalId ?? 'Not recorded'}</Fact>
           <Fact label="Date of birth" dim={!d?.dateOfBirth}>
             {d?.dateOfBirth ? formatLocal(d.dateOfBirth, 'date') : 'Not recorded'}
           </Fact>
-          <Fact label="Driver licence number" mono span={2}>{d?.driverLicenseNumber ?? '—'}</Fact>
+          <Fact label="Licence number" mono>{d?.driverLicenseNumber ?? '—'}</Fact>
         </FactGrid>
       </Panel>
 
@@ -217,10 +230,8 @@ export function DriverRecord() {
         description="A private customer may link this driver record for their licence details."
       >
         <FactGrid>
-          <Fact label="Customer" dim={!linked}>
-            {linked
-              ? <Link to={`/customers/${linked.id}`}>{linked.displayName}</Link>
-              : 'Not linked to a customer'}
+          <Fact label="Customer" dim={!linked} to={linked ? `/customers/${linked.id}` : undefined}>
+            {linked ? linked.displayName : linkPending ? '—' : 'Not linked to a customer'}
           </Fact>
         </FactGrid>
       </Panel>
@@ -237,13 +248,75 @@ export function DriverRecord() {
           />
         ) : periods.length === 0 ? (
           <EmptyState variant="panel" icon="assignment_ind" title="Never authorized on an assignment." body="" />
+        ) : phone ? (
+          <div className={cards.cards}>
+            {periods.map((z) => {
+              const a = assignmentOf(z.rentalAssignmentId);
+              const v = a ? vehicleOf(a.vehicleId) : null;
+              return (
+                <div key={z.id} className={cards.card}>
+                  <div className={cards.head}>
+                    <span className={cards.heading}>
+                      {a ? (
+                        <Link
+                          to={`/rental-assignments/${a.id}`}
+                          className={`${cards.title} ${cards.cardPlate} ${cards.cardTitleLink}`}
+                        >
+                          {a.vehiclePlateNumber}
+                        </Link>
+                      ) : <span className={cards.title}>—</span>}
+                      <span className={cards.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
+                    </span>
+                    {a ? (
+                      <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
+                        {ASSIGNMENT_STATUS_LABEL[a.status]}
+                      </Chip>
+                    ) : null}
+                  </div>
+                  <div className={cards.facts}>
+                    <span className={cards.fact}>
+                      <span className={cards.factLabel}>Customer</span>
+                      {a ? (
+                        <Link to={`/customers/${a.customerId}`} className={`${table.name} ${table.nameLink}`}>
+                          {a.customerDisplayName}
+                        </Link>
+                      ) : <span className={cards.factValue}>—</span>}
+                      <span className={cards.sub}>{a ? customerTypeOf(a.customerId) ?? '' : ''}</span>
+                    </span>
+                    <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                      <span className={cards.factLabel}>Authorized from</span>
+                      <span className={cards.factMono}>{formatLocal(z.authorizedFromUtc)}</span>
+                    </span>
+                    <span className={`${cards.fact} ${cards.cardFactStart}`}>
+                      <span className={cards.factLabel}>Stopped</span>
+                      {z.stoppedAtUtc
+                        ? <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>
+                        : <Chip tone="ok" dot="50%">Open</Chip>}
+                    </span>
+                    {z.stoppedAtUtc ? (
+                      <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                        <span className={cards.factLabel}>Stop reason</span>
+                        <span className={cards.factValue}>{reasonOf(z)}</span>
+                      </span>
+                    ) : null}
+                    {z.note ? (
+                      <span className={`${cards.fact} ${cards.cardFactFull}`}>
+                        <span className={cards.factLabel}>Note</span>
+                        <span className={cards.factValue}>{z.note}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.assignments}`} data-panel>
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colPlate}`}>Plate number</th>
-                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${table.foldNarrow}`}>Customer</th>
+                  <th scope="col" className={`${table.th} ${styles.colCustomer} ${table.foldPhone}`}>Customer</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Assignment status</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Authorized from</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen} ${table.foldTablet}`}>Stopped</th>
@@ -254,11 +327,7 @@ export function DriverRecord() {
                 {periods.map((z) => {
                   const a = assignmentOf(z.rentalAssignmentId);
                   const v = a ? vehicleOf(a.vehicleId) : null;
-                  const reason = z.stoppedAtUtc
-                    ? z.stopReason === null || z.stopReason === undefined
-                      ? 'Not recorded'
-                      : STOP_REASON_LABEL[z.stopReason]
-                    : '—';
+                  const reason = reasonOf(z);
                   return (
                     <tr key={z.id} {...rowNav(a ? `/rental-assignments/${a.id}` : null)}>
                       <td className={table.td}>
@@ -269,14 +338,18 @@ export function DriverRecord() {
                             </Link>
                           ) : <span className={table.dim}>—</span>}
                           <span className={table.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
-                          <span className={`${table.sub} ${table.showNarrow}`}>
+                          <span className={`${table.sub} ${table.showPhone}`}>
                             {a ? a.customerDisplayName : ''}
                           </span>
                         </span>
                       </td>
-                      <td className={`${table.td} ${table.wrap} ${table.foldNarrow}`}>
+                      <td className={`${table.td} ${table.wrap} ${table.foldPhone}`}>
                         <span className={table.stack}>
-                          <span>{a ? a.customerDisplayName : '—'}</span>
+                          {a ? (
+                            <Link to={`/customers/${a.customerId}`} className={`${table.name} ${table.nameLink}`}>
+                              {a.customerDisplayName}
+                            </Link>
+                          ) : <span>—</span>}
                           <span className={table.sub}>
                             {a ? customerTypeOf(a.customerId) ?? '' : ''}
                           </span>
