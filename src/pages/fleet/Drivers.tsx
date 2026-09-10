@@ -5,6 +5,7 @@ import { qk } from '@/api';
 import { listDrivers } from '@/api/drivers';
 import type { DriversQuery } from '@/api/dto';
 import { toFailure } from '@/api/problem';
+import { EMPTY } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
@@ -134,6 +135,14 @@ export function Drivers() {
                 </div>
                 <div className={cards.facts}>
                   <span className={cards.fact}>
+                    <span className={cards.factLabel}>Personal identifier</span>
+                    <span className={cards.factMono}>{d.personalId || EMPTY}</span>
+                  </span>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                    <span className={cards.factLabel}>Licence number</span>
+                    <span className={cards.factMono}>{d.driverLicenseNumber || EMPTY}</span>
+                  </span>
+                  <span className={cards.fact}>
                     <span className={cards.factLabel}>Phone</span>
                     <span className={cards.factMono}>{d.phoneNumber}</span>
                   </span>
@@ -147,6 +156,8 @@ export function Drivers() {
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
+                  <th scope="col" className={`${table.th} ${styles.colId}`}>Personal ID</th>
+                  <th scope="col" className={`${table.th} ${styles.colLicence}`}>Licence number</th>
                   <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldNarrow}`}>Phone</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>Status</th>
                 </tr>
@@ -160,6 +171,12 @@ export function Drivers() {
                         <span className={`${table.sub} ${table.oneLine}`} title={d.email}>{d.email}</span>
                         <span className={`${table.subMono} ${table.showNarrow}`}>{d.phoneNumber}</span>
                       </span>
+                    </td>
+                    <td className={`${table.td} ${table.mono} ${d.personalId ? '' : table.dim}`}>
+                      {d.personalId || EMPTY}
+                    </td>
+                    <td className={`${table.td} ${table.mono} ${d.driverLicenseNumber ? '' : table.dim}`}>
+                      {d.driverLicenseNumber || EMPTY}
                     </td>
                     <td className={`${table.td} ${table.mono} ${table.foldNarrow}`}>{d.phoneNumber}</td>
                     <td className={table.td}>

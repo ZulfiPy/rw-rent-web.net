@@ -139,6 +139,8 @@ route('GET', '/api/drivers', (ctx) => {
       lastName: d.lastName,
       email: d.email,
       phoneNumber: d.phoneNumber,
+      personalId: d.personalId ?? null,
+      driverLicenseNumber: d.driverLicenseNumber,
       isActive: d.isActive,
     }));
   return page(rows, q);

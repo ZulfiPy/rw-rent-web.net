@@ -240,6 +240,13 @@ best-effort — an entry older than that window renders “That entry is not ava
 row from the list is the reliable path. A by-id read makes the link exact and drops the 100-row
 fetch behind every entry page.
 
+## Backend follow-ups
+
+**The drivers list projection.** `DriverListItemResponse` must carry `personalId` and
+`driverLicenseNumber`: the list shows both columns from 1024 up and as card facts below 768. Both
+are optional in `dto.ts` and the mock returns them from the seed, so the columns are populated in
+mock mode; against the real API the list renders “—” for them until the backend adds the fields.
+
 ## Seed
 
 `src/mock/seed.ts` is the reviewed prototype's `DB`: the same eleven people, their registration

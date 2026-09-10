@@ -444,6 +444,10 @@ export interface DriverListItemResponse {
   lastName: string;
   email: string;
   phoneNumber: string;
+  /* FOLLOW-UP: not in swagger's list projection yet. Optional so the list compiles against the
+     current contract and renders "—" until the backend adds both fields. */
+  personalId?: string | null;
+  driverLicenseNumber?: string;
   isActive: boolean;
 }
 

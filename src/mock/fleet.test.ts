@@ -9,7 +9,7 @@ import {
   AssignmentDriverAuthorizationType, AssignmentStatus, AuthorizationStopReason,
   BillingImpact, CustomerType, InterruptionReason, SortDirection,
   type AssignmentDriverAuthorizationResponse, type AssignmentInterruptionResponse,
-  type CustomerResponse, type DriverResponse, type PagedResponse,
+  type CustomerResponse, type DriverListItemResponse, type DriverResponse, type PagedResponse,
   type RentalAssignmentListItemResponse, type RentalAssignmentResponse,
   type VehicleListItemResponse, type VehicleResponse,
 } from '@/api/dto';
@@ -372,6 +372,19 @@ describe('list filters', () => {
       expect(hit.items.map((v) => v.id)).toContain(one!.id);
     }
     expect((await list('/api/vehicles', { Search: 'no-such-vehicle' })).totalCount).toBe(0);
+  });
+
+  test('the drivers list projection carries the identity columns the list renders', async () => {
+    const all = await list<DriverListItemResponse>('/api/drivers', { PageSize: 100 });
+    const one = all.items[0];
+    expect(one).toBeDefined();
+    expect(Object.keys(one!)).toEqual([
+      'id', 'firstName', 'lastName', 'email', 'phoneNumber', 'personalId', 'driverLicenseNumber',
+      'isActive',
+    ]);
+    const record = await transport().request<DriverResponse>('GET', `/api/drivers/${one!.id}`, {});
+    expect(one!.personalId ?? null).toBe(record.personalId ?? null);
+    expect(one!.driverLicenseNumber).toBe(record.driverLicenseNumber);
   });
 
   test('a planned-start bound compares the instant, not the string', async () => {

@@ -1,14 +1,23 @@
 .table { min-width: 0; }
 .wide { width: auto; }
+/* The header reads "Personal ID": the list header is mono uppercase at .1em, where the record's own
+   "Personal identifier" would need 168px of column on its own and push Driver off its auto width. */
+.colId { width: 150px; }
+.colLicence { width: 160px; }
 .colPhone { width: 168px; }
 .colState { width: 124px; }
 
 @media (max-width: 1279px) {
+  .colId { width: 142px; }
+  .colLicence { width: 150px; }
   .colPhone { width: 152px; }
   .colState { width: 118px; }
 }
-/* Portrait: the number moves into the name stack. */
+/* Portrait: the number moves into the name stack; both identity columns hold, with Driver taking
+   what the declared widths leave (402 at 834, 336 at 768). */
 @media (max-width: 1023px) {
   .table { table-layout: fixed; }
+  .colId { width: 136px; }
+  .colLicence { width: 148px; }
   .colState { width: 114px; }
 }
