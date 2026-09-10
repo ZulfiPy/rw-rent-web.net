@@ -47,7 +47,7 @@ const BODY_TYPES = Object.values(BodyType);
 const GEARBOXES = Object.values(GearboxType);
 const FUELS = Object.values(FuelType);
 
-function Text({ label, value, error, hint, required, optional, mono, maxLength, type = 'text', onChange }: {
+function Text({ label, value, error, hint, required, optional, mono, maxLength, max, type = 'text', onChange }: {
   label: string;
   value: string;
   error?: string | undefined;
@@ -56,6 +56,8 @@ function Text({ label, value, error, hint, required, optional, mono, maxLength, 
   optional?: boolean;
   mono?: boolean;
   maxLength?: number;
+  /** A date input's latest accepted value — today, for a date of birth. */
+  max?: string;
   type?: 'text' | 'email' | 'tel' | 'number' | 'date';
   onChange: (next: string) => void;
 }) {
@@ -67,11 +69,15 @@ function Text({ label, value, error, hint, required, optional, mono, maxLength, 
         {...invalidProps(error)}
         value={value}
         maxLength={maxLength}
+        max={max}
         onChange={(e) => onChange(e.target.value)}
       />
     </Field>
   );
 }
+
+/** Today, as a date input's `max`: a birth date is never in the future. */
+const TODAY = new Date().toISOString().slice(0, 10);
 
 function EnumSelect<T extends number>({ label, value, options, labels, error, required, onChange }: {
   label: string;
@@ -259,7 +265,7 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
           <Text label="First name" required value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
           <Text label="Last name" required value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
           <Text label="Personal identifier" value={personalId} error={m.fields.personalId} optional mono maxLength={50} onChange={setPersonalId} />
-          <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" onChange={setDob} />
+          <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" max={TODAY} onChange={setDob} />
         </Section>
       )}
 
@@ -357,7 +363,7 @@ function DriverForm({ driver, onClose }: { driver: DriverResponse | null; onClos
         <Text label="First name" required value={firstName} error={m.fields.firstName} maxLength={100} onChange={setFirst} />
         <Text label="Last name" required value={lastName} error={m.fields.lastName} maxLength={100} onChange={setLast} />
         <Text label="Personal identifier" value={personalId} error={m.fields.personalId} optional mono maxLength={50} onChange={setPersonalId} />
-        <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" onChange={setDob} />
+        <Text label="Date of birth" value={dateOfBirth} error={m.fields.dateOfBirth} optional type="date" max={TODAY} onChange={setDob} />
       </Section>
       <Section title="Licence" cols={1}>
         <Text label="Driver licence number" required value={driverLicenseNumber} error={m.fields.driverLicenseNumber} mono maxLength={50} onChange={setLicence} />

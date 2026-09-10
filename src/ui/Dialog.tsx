@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import type { Failure } from '@/api/problem';
 import { Button, type ButtonTone } from './Button';
 import styles from './Dialog.module.css';
@@ -102,6 +102,16 @@ function InfoBanner({ title, body }: { title: string; body: string }) {
 /** The prototype's dialog tones, driving the tinted glyph in the header. */
 export type DialogTone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'accent';
 
+/** Tab order inside the panel: the close button, the form's controls, then the footer actions. */
+const FOCUSABLE = [
+  'button:not([disabled])',
+  'a[href]',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
 export function Dialog({
   title, description, icon, tone = 'accent', width = 560, submitLabel, submitIcon, submitTone = 'primary',
   submitBlocked, busy, failure, children, info, footnote, onClose, onSubmit, onRefresh,
@@ -127,17 +137,72 @@ export function Dialog({
   onSubmit: () => void;
   onRefresh?: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLFormElement | null>(null);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  /**
+   * Focus enters the dialog on open and returns to whatever opened it on close — the record's own
+   * action button, so a keyboard user carries on where they left off.
+   */
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = bodyRef.current?.querySelector<HTMLElement>(FOCUSABLE) ?? closeRef.current;
+    first?.focus();
+    return () => opener?.focus();
+  }, []);
+
+  /**
+   * A field-error response leaves its message under an input that may be out of view in a sheet
+   * that scrolls inside. Bring the first invalid control to the middle of the body and focus it.
+   * The body's own scrollTop moves, so the page behind the dialog stays put.
+   */
+  useEffect(() => {
+    if (!failure || (failure.kind !== 'field' && failure.kind !== 'field-code')) return;
+    const body = bodyRef.current;
+    const el = body?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (!body || !el) return;
+    const eb = el.getBoundingClientRect();
+    const bb = body.getBoundingClientRect();
+    body.scrollTop += (eb.top - bb.top) - (bb.height - eb.height) / 2;
+    el.focus({ preventScroll: true });
+  }, [failure]);
+
+  /** Tab and Shift+Tab wrap inside the panel while it is open. */
+  const trap = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab' || !panelRef.current) return;
+    const items = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE))
+      .filter((x) => x.offsetParent !== null || x === document.activeElement);
+    if (!items.length) return;
+    const edge = e.shiftKey ? items[0] : items[items.length - 1];
+    const wrapTo = e.shiftKey ? items[items.length - 1] : items[0];
+    if (document.activeElement === edge) {
+      e.preventDefault();
+      wrapTo?.focus();
+    }
+  };
+
+  const showBanner = !!failure && failure.kind !== 'field' && failure.kind !== 'field-code';
+
   return (
     <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={styles.panel} style={{ maxWidth: width }} role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        ref={panelRef}
+        className={styles.panel}
+        style={{ maxWidth: width }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onKeyDown={trap}
+      >
         <div className={styles.head}>
           {icon ? (
             <span aria-hidden="true" className={styles.headIcon} data-tone={tone}>
@@ -148,19 +213,27 @@ export function Dialog({
             <h2 className={styles.title}>{title}</h2>
             {description ? <p className={styles.desc}>{description}</p> : null}
           </div>
-          <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
+          <button type="button" ref={closeRef} className={styles.close} aria-label="Close" onClick={onClose}>
             <span data-icon aria-hidden="true">close</span>
           </button>
         </div>
 
         <form
+          ref={bodyRef}
           className={styles.body}
           onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
         >
           {info ? <InfoBanner title={info.title} body={info.body} /> : null}
           {children}
-          {failure ? <FailureBanner failure={failure} onRefresh={onRefresh} /> : null}
         </form>
+
+        {/* Outside the scroll area: a stale or conflict answer must be readable beside the footer
+            action it disables, in a sheet whose body is taller than the window. */}
+        {showBanner && failure ? (
+          <div className={styles.alert}>
+            <FailureBanner failure={failure} onRefresh={onRefresh} />
+          </div>
+        ) : null}
 
         <div className={styles.footer}>
           {footnote ? <span className={styles.footnote}>{footnote}</span> : null}

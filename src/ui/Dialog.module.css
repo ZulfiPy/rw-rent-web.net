@@ -106,6 +106,15 @@
 .banner[data-tone='info'] { background: var(--info-soft); border-color: var(--info-line); }
 .banner[data-tone='info'] .bannerIcon { color: var(--info); }
 .footnote { font-size: 11.5px; color: var(--fg-4); }
+/* The failure banner's own block between the body and the footer: it takes the body's side padding
+   and the footer's hairline, so a stale or conflict answer stays in view while the body scrolls
+   behind it. The `info` banner is part of the form and scrolls with it. */
+.alert {
+  flex: none;
+  padding: 14px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
 
 .note {
   margin: 0;
