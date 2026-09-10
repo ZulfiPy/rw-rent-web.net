@@ -46,14 +46,39 @@ const sessionState = (s: SessionResponse) =>
       ? { label: 'Active', tone: 'ok' as const, dot: '50%' }
       : { label: 'Expired', tone: 'mute' as const, dot: '1px' };
 
-function CardFact({ label, value, mono }: { label: string; value: ReactNode; mono?: boolean }) {
+/**
+ * `end` puts the fact in the card grid's right column, flush with the card's right padding edge;
+ * `full` gives it the whole card width, for a revocation reason that would otherwise wrap to a
+ * half-column ribbon.
+ */
+function CardFact({ label, value, mono, end, full }: {
+  label: string;
+  value: ReactNode;
+  mono?: boolean;
+  end?: boolean;
+  full?: boolean;
+}) {
+  const cls = `${cards.fact}${end ? ` ${cards.cardFactEnd}` : ''}${full ? ` ${cards.cardFactFull}` : ''}`;
   return (
-    <span className={cards.fact}>
+    <span className={cls}>
       <span className={cards.factLabel}>{label}</span>
       <span className={mono ? cards.factMono : cards.factValue}>{value}</span>
     </span>
   );
 }
+
+/**
+ * Why the grant history is empty depends on where the account is: an account that was never
+ * activated could not have been granted anything, and the protected System Administrator holds its
+ * role outside grant history altogether.
+ */
+const rolesEmptyBody = (u: ApplicationUserResponse | undefined, guarded: boolean) => {
+  if (guarded) return 'The System Administrator role is held outside grant history.';
+  if (u && (u.status === ApplicationUserStatus.Active || u.status === ApplicationUserStatus.Suspended)) {
+    return 'No roles have been granted to this account.';
+  }
+  return 'Roles appear here once the account has been activated.';
+};
 
 export function UserRecord() {
   const { userId = '' } = useParams();
@@ -171,19 +196,6 @@ export function UserRecord() {
         <HeaderFact label="Phone" value={u?.phoneNumber ?? EMPTY} mono />
       </RecordHeader>
 
-      {guarded ? (
-        <div className={styles.banner}>
-          <span data-icon aria-hidden="true" className={styles.bannerIcon}>admin_panel_settings</span>
-          <div>
-            <p className={styles.bannerTitle}>Protected System Administrator</p>
-            <p className={styles.bannerBody}>
-              This account is outside ordinary Company administration. Changing who holds it uses the
-              audited transfer workflow under Administration.
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       <div className={styles.tabs} role="tablist">
         {tabs.map((t) => (
           <button
@@ -201,6 +213,19 @@ export function UserRecord() {
         ))}
       </div>
 
+      {guarded ? (
+        <div className={styles.banner}>
+          <span data-icon aria-hidden="true" className={styles.bannerIcon}>admin_panel_settings</span>
+          <div>
+            <p className={styles.bannerTitle}>Protected System Administrator</p>
+            <p className={styles.bannerBody}>
+              This account is outside ordinary Company administration. Changing who holds it uses the
+              audited transfer workflow under Administration.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {tab === 'summary' ? (
         <>
           <Panel
@@ -209,14 +234,14 @@ export function UserRecord() {
               <Button label="Correct name" icon="shield" tone="warn" small onClick={() => setDialog({ kind: 'correct-name' })} />
             ) : undefined}
           >
-            <FactGrid>
+            <FactGrid columns={4}>
               <Fact label="First name">{u?.firstName ?? EMPTY}</Fact>
               <Fact label="Last name">{u?.lastName ?? EMPTY}</Fact>
               <Fact label="Login email">{u?.email ?? EMPTY}</Fact>
               <Fact label="Email ownership">{u ? (u.emailConfirmed ? 'Confirmed' : 'Not confirmed') : EMPTY}</Fact>
               <Fact label="Phone" mono>{u?.phoneNumber ?? EMPTY}</Fact>
               <Fact label="Company" dim={!u?.companyId}>{u?.companyId ? companyName : 'Not assigned'}</Fact>
-              <Fact label="Security version" mono hint="Increments on credential and access changes.">
+              <Fact label="Security version" span={2} mono hint="Increments on credential and access changes.">
                 {u?.securityVersion ?? EMPTY}
               </Fact>
             </FactGrid>
@@ -276,7 +301,7 @@ export function UserRecord() {
             <EmptyState variant="panel"
               icon="shield_person"
               title="No role history"
-              body="Roles appear here once the account has been activated."
+              body={rolesEmptyBody(u, guarded)}
             />
           ) : phone ? (
             <div className={cards.cards}>
@@ -293,9 +318,9 @@ export function UserRecord() {
                     </div>
                     <div className={cards.facts}>
                       <CardFact label="Assigned" value={formatLocal(r.assignedAtUtc)} mono />
-                      <CardFact label="Expires" value={r.expiresAtUtc ? formatLocal(r.expiresAtUtc) : 'No expiry'} mono={!!r.expiresAtUtc} />
+                      <CardFact label="Expires" value={r.expiresAtUtc ? formatLocal(r.expiresAtUtc) : 'No expiry'} mono={!!r.expiresAtUtc} end />
                       {r.revokedAtUtc ? <CardFact label="Revoked" value={formatLocal(r.revokedAtUtc)} mono /> : null}
-                      {r.revocationReason ? <CardFact label="Reason" value={r.revocationReason} /> : null}
+                      {r.revocationReason ? <CardFact label="Reason" value={r.revocationReason} full /> : null}
                     </div>
                     {roleActionable(r) ? (
                       <div className={cards.actions}>
@@ -309,7 +334,7 @@ export function UserRecord() {
             </div>
           ) : (
             <div className={table.scroll}>
-              <table className={table.table}>
+              <table className={table.table} data-panel="">
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colRole}`}>Role</th>
@@ -404,8 +429,8 @@ export function UserRecord() {
                     </div>
                     <div className={cards.facts}>
                       <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
-                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono />
-                      {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} /> : null}
+                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono end />
+                      {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} full /> : null}
                     </div>
                     {s.isActive && canSessions ? (
                       <div className={cards.actions}>
@@ -418,7 +443,7 @@ export function UserRecord() {
             </div>
           ) : (
             <div className={table.scroll}>
-              <table className={table.table}>
+              <table className={table.table} data-panel="">
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colDevice}`}>Device</th>

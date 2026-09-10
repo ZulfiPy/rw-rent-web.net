@@ -56,11 +56,29 @@
 .colUtc { width: 168px; }
 .colActions { width: 210px; }
 
-@media (max-width: 1279px) {
+/* The Roles and Sessions tables choose their widths from the width of the panel they sit in, not the
+   window: `Panel` is a size container, so the rail state changes the layout exactly as a narrower
+   window does. Above 1040 the desktop widths, below it the compressed recipe — which is what a
+   1280 window with the rail expanded (panel 980) needs, where the viewport query left Revocation
+   86px and stacked the revoked row to 120px tall. The viewport folds at ≤1023 (Revocation and
+   Started leave as columns and return as sub-lines) stay on the window. */
+@container (max-width: 1040px) {
   .colRole { width: 150px; }
   .colWhen { width: 148px; }
   .colState { width: 132px; }
   .colDevice { width: 200px; }
   .colUtc { width: 148px; }
   .colActions { width: 180px; }
+}
+
+/* The desktop and landscape fold only. Those widths are floors, and under auto layout three of them
+   round up once the panel vocabulary applies: a 13px mono timestamp takes 157 of Assigned's 148 and
+   the two labelled row buttons take 201 of Actions' 180. What they take comes out of Revocation — at
+   a 980 panel it left 184, a pixel short of a one-line reason, and the revoked row stacked to 81px.
+   The State chip needs 80 of its 132, so that floor comes down and Revocation keeps the difference.
+   Portrait keeps 132: there Revocation has already folded and State is what the spare feeds. */
+@media (min-width: 1024px) {
+  @container (max-width: 1040px) {
+    .colState { width: 112px; }
+  }
 }
