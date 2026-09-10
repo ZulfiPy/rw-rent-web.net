@@ -448,6 +448,7 @@ export interface DriverListItemResponse {
      current contract and renders "—" until the backend adds both fields. */
   personalId?: string | null;
   driverLicenseNumber?: string;
+  address?: string;
   isActive: boolean;
 }
 

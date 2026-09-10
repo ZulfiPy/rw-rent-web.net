@@ -158,6 +158,7 @@ export function Drivers() {
                   <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
                   <th scope="col" className={`${table.th} ${styles.colId}`}>Personal ID</th>
                   <th scope="col" className={`${table.th} ${styles.colLicence}`}>Licence number</th>
+                  <th scope="col" className={`${table.th} ${styles.colAddress}`}>Address</th>
                   <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldNarrow}`}>Phone</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>Status</th>
                 </tr>
@@ -177,6 +178,9 @@ export function Drivers() {
                     </td>
                     <td className={`${table.td} ${table.mono} ${d.driverLicenseNumber ? '' : table.dim}`}>
                       {d.driverLicenseNumber || EMPTY}
+                    </td>
+                    <td className={`${table.td} ${table.wrap} ${d.address ? '' : table.dim}`}>
+                      {d.address || EMPTY}
                     </td>
                     <td className={`${table.td} ${table.mono} ${table.foldNarrow}`}>{d.phoneNumber}</td>
                     <td className={table.td}>

@@ -4,20 +4,29 @@
    "Personal identifier" would need 168px of column on its own and push Driver off its auto width. */
 .colId { width: 150px; }
 .colLicence { width: 160px; }
+/* Address is declared rather than auto: two auto columns split the panel's free width by their
+   content, which hands the address ~400px at 1512 and leaves Driver narrower than the address it
+   sits beside. 240px holds the longest seeded address on one line and gives Driver the rest; the
+   min-width is what the column compresses to before the address wraps, on a panel too tight for
+   the declared set (the rail pinned open at 1194). */
+.colAddress { width: 240px; min-width: 180px; }
 .colPhone { width: 168px; }
 .colState { width: 124px; }
 
 @media (max-width: 1279px) {
   .colId { width: 142px; }
   .colLicence { width: 150px; }
+  .colAddress { width: 240px; min-width: 160px; }
   .colPhone { width: 152px; }
   .colState { width: 118px; }
 }
-/* Portrait: the number moves into the name stack; both identity columns hold, with Driver taking
-   what the declared widths leave (402 at 834, 336 at 768). */
+/* Portrait: the number moves into the name stack; the identity columns and the address hold, with
+   Driver taking what the declared widths leave (274 at 834, 208 at 768). The address wraps to two
+   lines inside its 160. */
 @media (max-width: 1023px) {
   .table { table-layout: fixed; }
-  .colId { width: 136px; }
-  .colLicence { width: 148px; }
-  .colState { width: 114px; }
+  .colId { width: 126px; }
+  .colLicence { width: 138px; }
+  .colAddress { width: 160px; min-width: 0; }
+  .colState { width: 104px; }
 }

@@ -242,10 +242,12 @@ fetch behind every entry page.
 
 ## Backend follow-ups
 
-**The drivers list projection.** `DriverListItemResponse` must carry `personalId` and
-`driverLicenseNumber`: the list shows both columns from 1024 up and as card facts below 768. Both
-are optional in `dto.ts` and the mock returns them from the seed, so the columns are populated in
-mock mode; against the real API the list renders “—” for them until the backend adds the fields.
+**The drivers list projection.** `DriverListItemResponse` must carry `personalId`,
+`driverLicenseNumber` and `address`: the list shows all three columns from 1024 up, keeps them
+in the portrait tier, and renders the identifier, the licence and the phone as card facts below 768.
+All three are optional in `dto.ts` and the mock returns them from the seed, so the columns are
+populated in mock mode; against the real API the list renders “—” for them until the backend adds
+the fields.
 
 ## Seed
 

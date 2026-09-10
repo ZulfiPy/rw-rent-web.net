@@ -380,11 +380,12 @@ describe('list filters', () => {
     expect(one).toBeDefined();
     expect(Object.keys(one!)).toEqual([
       'id', 'firstName', 'lastName', 'email', 'phoneNumber', 'personalId', 'driverLicenseNumber',
-      'isActive',
+      'address', 'isActive',
     ]);
     const record = await transport().request<DriverResponse>('GET', `/api/drivers/${one!.id}`, {});
     expect(one!.personalId ?? null).toBe(record.personalId ?? null);
     expect(one!.driverLicenseNumber).toBe(record.driverLicenseNumber);
+    expect(one!.address).toBe(record.address);
   });
 
   test('a planned-start bound compares the instant, not the string', async () => {
