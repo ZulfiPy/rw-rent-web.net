@@ -158,7 +158,7 @@ export function Drivers() {
                       <span className={table.stack}>
                         <Link to={`/drivers/${d.id}`} className={table.name}>{d.firstName} {d.lastName}</Link>
                         <span className={`${table.sub} ${table.oneLine}`} title={d.email}>{d.email}</span>
-                        <span className={`${table.sub} ${table.showNarrow}`}>{d.phoneNumber}</span>
+                        <span className={`${table.subMono} ${table.showNarrow}`}>{d.phoneNumber}</span>
                       </span>
                     </td>
                     <td className={`${table.td} ${table.mono} ${table.foldNarrow}`}>{d.phoneNumber}</td>
