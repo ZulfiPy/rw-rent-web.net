@@ -255,8 +255,9 @@ export function DriverRecord() {
               const v = a ? vehicleOf(a.vehicleId) : null;
               return (
                 <div key={z.id} className={cards.card}>
-                  <div className={cards.head}>
-                    <span className={cards.heading}>
+                  <div className={cards.facts}>
+                    <span className={cards.fact}>
+                      <span className={cards.factLabel}>Vehicle</span>
                       {a ? (
                         <Link
                           to={`/rental-assignments/${a.id}`}
@@ -267,14 +268,7 @@ export function DriverRecord() {
                       ) : <span className={cards.title}>—</span>}
                       <span className={cards.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
                     </span>
-                    {a ? (
-                      <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
-                        {ASSIGNMENT_STATUS_LABEL[a.status]}
-                      </Chip>
-                    ) : null}
-                  </div>
-                  <div className={cards.facts}>
-                    <span className={cards.fact}>
+                    <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                       <span className={cards.factLabel}>Customer</span>
                       {a ? (
                         <Link to={`/customers/${a.customerId}`} className={`${table.name} ${table.nameLink}`}>
@@ -283,20 +277,31 @@ export function DriverRecord() {
                       ) : <span className={cards.factValue}>—</span>}
                       <span className={cards.sub}>{a ? customerTypeOf(a.customerId) ?? '' : ''}</span>
                     </span>
+                    <span className={`${cards.fact} ${cards.cardFactStart}`}>
+                      <span className={cards.factLabel}>Authorization</span>
+                      {z.stoppedAtUtc ? (
+                        <>
+                          <Chip tone="mute" dot="1px">Stopped</Chip>
+                          <span className={cards.sub}>{reasonOf(z)}</span>
+                        </>
+                      ) : <Chip tone="ok" dot="50%">Open</Chip>}
+                    </span>
                     <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                      <span className={cards.factLabel}>Assignment status</span>
+                      {a ? (
+                        <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
+                          {ASSIGNMENT_STATUS_LABEL[a.status]}
+                        </Chip>
+                      ) : <span className={cards.factValue}>—</span>}
+                    </span>
+                    <span className={cards.fact}>
                       <span className={cards.factLabel}>Authorized from</span>
                       <span className={cards.factMono}>{formatLocal(z.authorizedFromUtc)}</span>
                     </span>
-                    <span className={`${cards.fact} ${cards.cardFactStart}`}>
-                      <span className={cards.factLabel}>Stopped</span>
-                      {z.stoppedAtUtc
-                        ? <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>
-                        : <Chip tone="ok" dot="50%">Open</Chip>}
-                    </span>
                     {z.stoppedAtUtc ? (
                       <span className={`${cards.fact} ${cards.cardFactEnd}`}>
-                        <span className={cards.factLabel}>Stop reason</span>
-                        <span className={cards.factValue}>{reasonOf(z)}</span>
+                        <span className={cards.factLabel}>Stopped</span>
+                        <span className={cards.factMono}>{formatLocal(z.stoppedAtUtc)}</span>
                       </span>
                     ) : null}
                     {z.note ? (
