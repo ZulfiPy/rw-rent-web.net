@@ -155,7 +155,7 @@ export function Drivers() {
             <table className={`${table.table} ${styles.table}`}>
               <thead>
                 <tr>
-                  <th scope="col" className={`${table.th} ${styles.wide}`}>Driver</th>
+                  <th scope="col" className={`${table.th} ${styles.colDriver}`}>Driver</th>
                   <th scope="col" className={`${table.th} ${styles.colId}`}>Personal ID</th>
                   <th scope="col" className={`${table.th} ${styles.colLicence}`}>Licence number</th>
                   <th scope="col" className={`${table.th} ${styles.colAddress}`}>Address</th>
