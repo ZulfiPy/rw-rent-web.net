@@ -84,4 +84,6 @@
 }
 @media (max-width: 639px) {
   .facts { grid-template-columns: 1fr; }
+  /* One fact per row: nothing to keep level, so drop the sub-line reserve. */
+  .factBody { min-height: 0; }
 }

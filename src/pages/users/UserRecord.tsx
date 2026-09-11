@@ -159,25 +159,35 @@ export function UserRecord() {
   const roleActionable = (r: RoleAssignmentResponse) =>
     r.isEffective && r.role !== ApplicationUserRole.SystemAdministrator && canManageRole(r);
 
-  const lifecycleActions = u ? (
-    <>
-      {u.status === ApplicationUserStatus.PendingActivation && u.emailConfirmed && can('Users.ReviewRegistrations') ? (
-        <Button label="Activate" icon="how_to_reg" tone="primary" onClick={() => setDialog({ kind: 'activate' })} />
-      ) : null}
-      {u.status === ApplicationUserStatus.PendingActivation && can('Users.ManageRegistrations') ? (
-        <Button label="Reject" icon="person_off" tone="danger" onClick={() => setDialog({ kind: 'reject' })} />
-      ) : null}
-      {u.status === ApplicationUserStatus.RegistrationRejected && can('Users.ManageRegistrations') ? (
-        <Button label="Reopen" icon="restart_alt" onClick={() => setDialog({ kind: 'reopen' })} />
-      ) : null}
-      {u.status === ApplicationUserStatus.Active && !guarded && can('Users.SuspendRestoreOrdinary') ? (
-        <Button label="Suspend" icon="lock_person" tone="danger" onClick={() => setDialog({ kind: 'suspend' })} />
-      ) : null}
-      {u.status === ApplicationUserStatus.Suspended && !guarded && can('Users.SuspendRestoreOrdinary') ? (
-        <Button label="Restore" icon="lock_open" tone="primary" onClick={() => setDialog({ kind: 'restore' })} />
-      ) : null}
-    </>
-  ) : null;
+  const lifecycleButtons: ReactNode[] = [];
+  if (u) {
+    if (u.status === ApplicationUserStatus.PendingActivation && u.emailConfirmed && can('Users.ReviewRegistrations')) {
+      lifecycleButtons.push(
+        <Button key="activate" label="Activate" icon="how_to_reg" tone="primary" onClick={() => setDialog({ kind: 'activate' })} />,
+      );
+    }
+    if (u.status === ApplicationUserStatus.PendingActivation && can('Users.ManageRegistrations')) {
+      lifecycleButtons.push(
+        <Button key="reject" label="Reject" icon="person_off" tone="danger" onClick={() => setDialog({ kind: 'reject' })} />,
+      );
+    }
+    if (u.status === ApplicationUserStatus.RegistrationRejected && can('Users.ManageRegistrations')) {
+      lifecycleButtons.push(
+        <Button key="reopen" label="Reopen" icon="restart_alt" onClick={() => setDialog({ kind: 'reopen' })} />,
+      );
+    }
+    if (u.status === ApplicationUserStatus.Active && !guarded && can('Users.SuspendRestoreOrdinary')) {
+      lifecycleButtons.push(
+        <Button key="suspend" label="Suspend" icon="lock_person" tone="danger" onClick={() => setDialog({ kind: 'suspend' })} />,
+      );
+    }
+    if (u.status === ApplicationUserStatus.Suspended && !guarded && can('Users.SuspendRestoreOrdinary')) {
+      lifecycleButtons.push(
+        <Button key="restore" label="Restore" icon="lock_open" tone="primary" onClick={() => setDialog({ kind: 'restore' })} />,
+      );
+    }
+  }
+  const lifecycleActions = lifecycleButtons.length ? <>{lifecycleButtons}</> : undefined;
 
   return (
     <div className={styles.page}>
