@@ -162,19 +162,19 @@ export function UserRecord() {
   const lifecycleActions = u ? (
     <>
       {u.status === ApplicationUserStatus.PendingActivation && u.emailConfirmed && can('Users.ReviewRegistrations') ? (
-        <Button label="Activate" icon="how_to_reg" tone="primary" small onClick={() => setDialog({ kind: 'activate' })} />
+        <Button label="Activate" icon="how_to_reg" tone="primary" onClick={() => setDialog({ kind: 'activate' })} />
       ) : null}
       {u.status === ApplicationUserStatus.PendingActivation && can('Users.ManageRegistrations') ? (
-        <Button label="Reject" icon="person_off" tone="danger" small onClick={() => setDialog({ kind: 'reject' })} />
+        <Button label="Reject" icon="person_off" tone="danger" onClick={() => setDialog({ kind: 'reject' })} />
       ) : null}
       {u.status === ApplicationUserStatus.RegistrationRejected && can('Users.ManageRegistrations') ? (
-        <Button label="Reopen" icon="restart_alt" small onClick={() => setDialog({ kind: 'reopen' })} />
+        <Button label="Reopen" icon="restart_alt" onClick={() => setDialog({ kind: 'reopen' })} />
       ) : null}
       {u.status === ApplicationUserStatus.Active && !guarded && can('Users.SuspendRestoreOrdinary') ? (
-        <Button label="Suspend" icon="lock_person" tone="danger" small onClick={() => setDialog({ kind: 'suspend' })} />
+        <Button label="Suspend" icon="lock_person" tone="danger" onClick={() => setDialog({ kind: 'suspend' })} />
       ) : null}
       {u.status === ApplicationUserStatus.Suspended && !guarded && can('Users.SuspendRestoreOrdinary') ? (
-        <Button label="Restore" icon="lock_open" tone="primary" small onClick={() => setDialog({ kind: 'restore' })} />
+        <Button label="Restore" icon="lock_open" tone="primary" onClick={() => setDialog({ kind: 'restore' })} />
       ) : null}
     </>
   ) : null;
@@ -185,15 +185,18 @@ export function UserRecord() {
         backTo="/users"
         backLabel="User directory"
         title={u ? `${u.firstName} ${u.lastName}` : 'User'}
-        badges={u ? [{
+        chip={u ? {
           label: USER_STATUS_LABEL[u.status],
           tone: USER_STATUS_TONE[u.status],
           dot: USER_STATUS_DOT[u.status],
-        }] : undefined}
+        } : undefined}
+        actions={lifecycleActions}
       >
         <HeaderFact label="Email" value={u?.email ?? EMPTY} />
         <HeaderFact label="Effective roles" value={u ? rolesLabel(u.effectiveRoles) : EMPTY} />
         <HeaderFact label="Phone" value={u?.phoneNumber ?? EMPTY} mono />
+        <HeaderFact label="Company" value={u?.companyId ? companyName : 'Not assigned'} />
+        <HeaderFact label="Active sessions" value={sessions.data ? String(activeSessions) : EMPTY} mono />
       </RecordHeader>
 
       <div className={styles.tabs} role="tablist">
@@ -250,7 +253,6 @@ export function UserRecord() {
           <Panel
             title="Lifecycle"
             description="Registration and access state."
-            actions={lifecycleActions}
             note={
               guarded
                 ? 'Protected System Administrator account. Ordinary suspend, restore and role administration do not apply; use the System Administrator transfer workflow.'
