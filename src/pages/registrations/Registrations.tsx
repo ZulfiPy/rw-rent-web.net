@@ -191,7 +191,7 @@ export function Registrations() {
                     <span className={cards.factLabel}>Email</span>
                     <span className={cards.factValue}>{u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}</span>
                   </span>
-                  <span className={cards.fact}>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                     <span className={cards.factLabel}>Phone</span>
                     <span className={cards.factMono}>{u.phoneNumber}</span>
                   </span>
@@ -199,7 +199,7 @@ export function Registrations() {
                     <span className={cards.factLabel}>Registered</span>
                     <span className={cards.factMono}>{formatLocal(u.createdAtUtc)}</span>
                   </span>
-                  <span className={cards.fact}>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                     <span className={cards.factLabel}>Expires</span>
                     <span className={u.registrationExpiresAtUtc ? cards.factMono : cards.factValue}>
                       {u.registrationExpiresAtUtc ? formatLocal(u.registrationExpiresAtUtc) : 'No expiry'}
@@ -211,19 +211,17 @@ export function Registrations() {
             ))}
           </div>
         ) : (
-          <div className={table.scroll}>
+          <div className={`${table.scroll} ${styles.frame}`}>
             <table className={`${table.table} ${styles.table}`}>
               <thead>
                 <tr>
-                  <th scope="col" className={`${table.th} ${styles.wide}`}>Applicant</th>
-                  <th scope="col" className={`${table.th} ${styles.colPhone} ${table.foldTablet}`}>Phone</th>
+                  <th scope="col" className={`${table.th} ${styles.colApplicant}`}>Applicant</th>
+                  <th scope="col" className={`${table.th} ${styles.colPhone} ${styles.cellPhone}`}>Phone</th>
                   <th scope="col" className={`${table.th} ${styles.colEmail} ${table.foldNarrow}`}>Email ownership</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Registered</th>
-                  <th scope="col" className={`${table.th} ${styles.colExpires} ${table.foldTablet}`}>Expires</th>
+                  <th scope="col" className={`${table.th} ${styles.colExpires} ${styles.cellExpires}`}>Expires</th>
                   <th scope="col" className={`${table.th} ${styles.colStatus}`}>Status</th>
-                  <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>
-                    <span className={table.srOnly}>Actions</span>
-                  </th>
+                  <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -233,12 +231,13 @@ export function Registrations() {
                       <span className={table.stack}>
                         <Link to={`/users/${u.id}`} className={table.name}>{u.firstName} {u.lastName}</Link>
                         <span className={`${table.sub} ${table.oneLine}`} title={u.email}>{u.email}</span>
+                        <span className={`${table.subMono} ${styles.subPhone}`}>{u.phoneNumber}</span>
                         <span className={`${table.sub} ${table.showNarrow}`}>
                           {u.emailConfirmed ? 'Email confirmed' : 'Email not confirmed'}
                         </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.mono} ${table.foldTablet}`}>{u.phoneNumber}</td>
+                    <td className={`${table.td} ${table.mono} ${styles.cellPhone}`}>{u.phoneNumber}</td>
                     <td className={`${table.td} ${table.foldNarrow}`}>
                       <Chip tone={u.emailConfirmed ? 'ok' : 'warn'} dot={u.emailConfirmed ? '50%' : '2px'}>
                         {u.emailConfirmed ? 'Confirmed' : 'Not confirmed'}
@@ -248,14 +247,14 @@ export function Registrations() {
                       <span className={table.stack}>
                         <span className={table.mono}>{formatLocal(u.createdAtUtc)}</span>
                         <span className={table.sub}>{relative(u.createdAtUtc)}</span>
-                        <span className={`${table.sub} ${table.showTablet}`}>
+                        <span className={`${table.sub} ${styles.subExpires}`}>
                           {u.registrationExpiresAtUtc
                             ? `Expires ${formatLocal(u.registrationExpiresAtUtc)}`
                             : 'No expiry'}
                         </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldTablet}`}>
+                    <td className={`${table.td} ${styles.cellExpires}`}>
                       {u.registrationExpiresAtUtc
                         ? <span className={table.mono}>{formatLocal(u.registrationExpiresAtUtc)}</span>
                         : <span className={table.dim}>No expiry</span>}
