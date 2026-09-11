@@ -18,11 +18,13 @@
 .frame { container-type: inline-size; }
 .subExpires, .subPhone { display: none; }
 @media (min-width: 1024px) {
-  /* Expiry folds first, back under Registered as a sub-line — which needs 147 to stay on one line. */
+  /* Expiry folds first, back under Registered as a sub-line. The selector carries the frame so it
+     outweighs the single-class ≤1279 width below, which would otherwise win on order; the
+     min-width is the floor the sub-line needs when a narrow panel shrinks the declared widths. */
   @container (max-width: 1120px) {
     .cellExpires { display: none; }
     .subExpires { display: block; }
-    .colWhen { width: 147px; }
+    .frame .colWhen { width: 152px; min-width: 147px; }
   }
   /* Then the phone joins the applicant stack as a mono sub-line, the Drivers-list treatment. */
   @container (max-width: 1000px) {
