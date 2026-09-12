@@ -73,10 +73,16 @@
   .facts { order: 1; justify-content: space-between; flex-wrap: wrap; gap: 14px 16px; }
   .heroActions { margin-left: auto; }
 }
-/* Card tier: actions go full width, each button fills its row, facts drop to two up. */
+/* Card tier: actions go full width in two equal columns, facts drop to two up. */
 @media (max-width: 767px) {
-  .heroActions { width: 100%; }
-  .heroActions > * { flex: 1 1 100%; }
+  .heroActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+  /* One button takes the left cell only; a third wraps alone onto the next row at the same width. */
+  .heroActions > * { width: 100%; justify-content: center; }
   .facts { display: grid; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 14px; }
   /* Stacked facts have no shared centre line to hold, so the sub-line reserve goes back in the body. */
   .fact { min-height: 0; justify-content: flex-start; }
