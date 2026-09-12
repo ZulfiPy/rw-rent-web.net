@@ -13,7 +13,7 @@ import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
 import { Dialog, DialogNote, DialogSection as Section } from '@/ui/Dialog';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 
 /** Everything a user record can open. The record page owns which are offered. */
 export type UserDialogState =
@@ -46,7 +46,7 @@ function ReasonField({ value, error, onChange, label = 'Reason' }: {
     <Field label={label} required hint={REASON_HINT} error={error}>
       <textarea
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         value={value}
         rows={3}
         onChange={(e) => onChange(e.target.value)}
@@ -85,7 +85,7 @@ function CorrectName({ user, onClose }: Common) {
       <Field label="First name" required error={m.fields['firstName']}>
         <input
           className={f.control}
-          data-invalid={!!m.fields['firstName']}
+          {...invalidProps(m.fields['firstName'])}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
@@ -93,7 +93,7 @@ function CorrectName({ user, onClose }: Common) {
       <Field label="Last name" required error={m.fields['lastName']}>
         <input
           className={f.control}
-          data-invalid={!!m.fields['lastName']}
+          {...invalidProps(m.fields['lastName'])}
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
         />
@@ -188,7 +188,7 @@ function Activate({ user, onClose }: Common) {
                         <input
                           type="date"
                           className={f.date}
-                          data-invalid={!!(expiryError && date)}
+                          {...invalidProps(date ? expiryError : undefined)}
                           aria-label={`${ROLE_LABEL[role]} expiry`}
                           value={date}
                           onChange={(e) => setDraft(role, e.target.value)}
@@ -326,7 +326,7 @@ function RoleGrant({ user, onClose }: Common) {
         <input
           type="date"
           className={f.control}
-          data-invalid={!!m.fields['expiresAtUtc']}
+          {...invalidProps(m.fields['expiresAtUtc'])}
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
@@ -364,7 +364,7 @@ function RoleExpiry({ user, onClose, assignment }: Common & { assignment: RoleAs
         <input
           type="date"
           className={f.control}
-          data-invalid={!!m.fields['expiresAtUtc']}
+          {...invalidProps(m.fields['expiresAtUtc'])}
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
