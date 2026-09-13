@@ -76,6 +76,7 @@ export function SecurityAudit() {
     const u = directory.data?.items.find((x) => x.id === id);
     return u ? `${u.firstName} ${u.lastName}` : fallback;
   };
+  const person = (id: Uuid | null | undefined) => directory.data?.items.find((x) => x.id === id);
 
   const targetOptions: FilterOption[] = [
     { value: '', label: 'Any target' },
@@ -169,19 +170,16 @@ export function SecurityAudit() {
             ))}
           </div>
         ) : (
-          <div className={table.scroll}>
+          <div className={`${table.scroll} ${styles.frame}`}>
             <table className={`${table.table} ${table.tightWide} ${styles.table}`}>
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colEvent}`}>Event</th>
                   <th scope="col" className={`${table.th} ${styles.colActor}`}>Actor</th>
-                  <th scope="col" className={`${table.th} ${styles.colTarget} ${table.foldWide}`}>Target</th>
-                  <th scope="col" className={`${table.th} ${styles.colEntity} ${table.foldNarrow}`}>Entity</th>
+                  <th scope="col" className={`${table.th} ${styles.colTarget} ${styles.cellTarget}`}>Target</th>
+                  <th scope="col" className={`${table.th} ${styles.colEntity} ${styles.cellEntity} ${table.foldNarrow}`}>Entity</th>
                   <th scope="col" className={`${table.th} ${styles.wide} ${table.foldNarrow}`}>Reason</th>
                   <th scope="col" className={`${table.th} ${styles.colWhen}`}>Occurred (UTC)</th>
-                  <th scope="col" className={`${table.th} ${styles.colAction}`}>
-                    <span className={table.srOnly}>Open entry</span>
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +187,9 @@ export function SecurityAudit() {
                   <tr key={a.id} {...rowNav(`/security-audit/${a.id}`)}>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
-                        <span className={table.name}>{eventLabel(a.eventType)}</span>
+                        <Link to={`/security-audit/${a.id}`} className={table.name}>
+                          {eventLabel(a.eventType)}
+                        </Link>
                         <span className={`${table.sub} ${styles.reasonLine} ${a.reason ? '' : table.dim}`}>
                           {a.reason ?? 'No reason recorded'}
                         </span>
@@ -197,16 +197,26 @@ export function SecurityAudit() {
                     </td>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
-                        <span>{nameOf(a.actorUserId, 'System')}</span>
+                        {a.actorUserId && person(a.actorUserId) ? (
+                          <Link to={`/users/${a.actorUserId}`} className={`${table.name} ${table.nameLink}`}>
+                            {nameOf(a.actorUserId, 'System')}
+                          </Link>
+                        ) : (
+                          <span className={table.dim}>System</span>
+                        )}
                         <span className={`${table.sub} ${styles.targetLine}`}>
                           {a.targetUserId ? `on ${nameOf(a.targetUserId, 'Unknown')}` : 'Not user-scoped'}
                         </span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldWide} ${a.targetUserId ? '' : table.dim}`}>
-                      {a.targetUserId ? nameOf(a.targetUserId, 'Unknown') : 'Not user-scoped'}
+                    <td className={`${table.td} ${styles.cellTarget} ${a.targetUserId ? '' : table.dim}`}>
+                      {a.targetUserId && person(a.targetUserId) ? (
+                        <Link to={`/users/${a.targetUserId}`} className={`${table.name} ${table.nameLink}`}>
+                          {nameOf(a.targetUserId, 'Unknown')}
+                        </Link>
+                      ) : a.targetUserId ? 'Unknown' : 'Not user-scoped'}
                     </td>
-                    <td className={`${table.td} ${table.foldNarrow}`}>
+                    <td className={`${table.td} ${styles.cellEntity} ${table.foldNarrow}`}>
                       <span className={table.stack}>
                         <span>{entityLabel(a.entityType)}</span>
                         {a.entityId ? (
@@ -218,15 +228,6 @@ export function SecurityAudit() {
                       {a.reason ?? 'No reason recorded'}
                     </td>
                     <td className={`${table.td} ${table.mono}`}>{formatUtc(a.occurredAtUtc)}</td>
-                    <td className={table.td}>
-                      <Link
-                        to={`/security-audit/${a.id}`}
-                        className={table.link}
-                        aria-label={`Open the ${eventLabel(a.eventType)} entry`}
-                      >
-                        <span data-icon aria-hidden="true">chevron_right</span>
-                      </Link>
-                    </td>
                   </tr>
                 ))}
               </tbody>

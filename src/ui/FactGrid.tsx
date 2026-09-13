@@ -10,9 +10,11 @@ import styles from './FactGrid.module.css';
 export function FactGrid({ children, oneRow, columns }: {
   children: ReactNode;
   oneRow?: boolean;
-  columns?: 4 | 5;
+  columns?: 3 | 4 | 5;
 }) {
-  const fixed = columns === 4 ? ` ${styles.cols4}` : columns === 5 ? ` ${styles.cols5}` : '';
+  const fixed = columns === 3 ? ` ${styles.cols3}`
+    : columns === 4 ? ` ${styles.cols4}`
+    : columns === 5 ? ` ${styles.cols5}` : '';
   const cls = `${styles.grid}${oneRow ? ` ${styles.oneRow}` : ''}${fixed}`;
   return <div className={cls}>{children}</div>;
 }

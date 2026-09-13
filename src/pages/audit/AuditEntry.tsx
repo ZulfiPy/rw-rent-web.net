@@ -69,11 +69,12 @@ export function AuditEntry() {
         backTo="/security-audit"
         backLabel="Security audit"
         title={entry ? eventLabel(entry.eventType) : 'Audit entry'}
-        badges={[{ label: 'Audit entry', tone: 'mute', dot: '2px' }]}
       />
 
       <Panel title="Event" description="All times UTC.">
-        <FactGrid>
+        {/* Six facts as two rows of three: auto-fit laid five across and left the id alone beside
+            a grey remainder that moved with the panel. */}
+        <FactGrid columns={3}>
           <Fact label="Event">{entry ? eventLabel(entry.eventType) : '—'}</Fact>
           <Fact label="Occurred" mono>{formatUtc(entry?.occurredAtUtc)}</Fact>
           <Fact label="Actor" dim={!person(entry?.actorUserId)}>
@@ -83,7 +84,7 @@ export function AuditEntry() {
             {entry?.targetUserId ? personCell(entry.targetUserId, 'Unknown user') : 'Not user-scoped'}
           </Fact>
           <Fact label="Entity">{entityLabel(entry?.entityType)}</Fact>
-          <Fact label="Entity id" mono dim span={2}>{entry?.entityId ?? '—'}</Fact>
+          <Fact label="Entity id" mono dim>{entry?.entityId ?? '—'}</Fact>
         </FactGrid>
       </Panel>
 

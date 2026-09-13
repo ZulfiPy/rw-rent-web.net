@@ -221,8 +221,8 @@ token round-trip is separate: only DTOs that expose a `concurrencyToken` send on
 
 ## Asks for the backend
 
-Two contract changes the ported screens want. Both have an interim behaviour in the mock, so nothing
-is blocked — but both are visible in the UI as a compromise.
+Three contract changes the ported screens want. All have an interim behaviour in the mock, so nothing
+is blocked — but each is visible in the UI as a compromise.
 
 **`createdAtUtc` on the user list projection.** The Registrations queue sorts and shows *Registered*,
 which only the read model carries today. Interim: the mock's list projection adds the field, so the

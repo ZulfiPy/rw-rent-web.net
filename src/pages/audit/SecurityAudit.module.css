@@ -5,18 +5,35 @@
 .colTarget { width: 168px; }
 .colEntity { width: 186px; }
 .colWhen { width: 178px; }
-.colAction { width: 60px; }
 
 /* Each sub-line is bound to the fold that removes its column, so a value is never in two places:
    the target under the actor once TARGET is gone, the reason under the event once REASON is gone. */
 .targetLine, .reasonLine { display: none; }
 
+/* The wrapper is the query container: the 1024–1279 band folds by panel width, not viewport,
+   because one viewport carries three panel widths (1092 at 1194 rail collapsed, 980 at 1280 rail
+   expanded, 910 at 1194 pinned open). Scoped above 1023 so the portrait rules below are untouched.
+   The frame is on the selector so these widths outweigh the single-class ≤1279 block. */
+.frame { container-type: inline-size; }
+@media (min-width: 1024px) {
+  /* Target folds under the actor first. */
+  @container (max-width: 1120px) {
+    .cellTarget { display: none; }
+    .targetLine { display: block; }
+    .frame .colEvent { width: 240px; }
+    .frame .colActor { width: 150px; }
+    .frame .colWhen { width: 150px; }
+  }
+  /* Then Entity goes, so the reason keeps 300px or more at the two narrowest panels. */
+  @container (max-width: 1000px) {
+    .cellEntity { display: none; }
+  }
+}
+
 @media (max-width: 1279px) {
   .colEvent { width: 240px; }
   .colActor { width: 150px; }
   .colWhen { width: 150px; }
-  .colAction { width: 48px; }
-  .targetLine { display: block; }
 }
 
 /* Portrait (768–1023): entity and reason fold; the event column absorbs the remainder and carries
@@ -24,5 +41,8 @@
 @media (max-width: 1023px) {
   .table { table-layout: fixed; }
   .colEvent { width: auto; }
+  .cellTarget { display: none; }
+  .targetLine { display: block; }
+  .cellEntity { display: none; }
   .reasonLine { display: block; }
 }
