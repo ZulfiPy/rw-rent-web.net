@@ -198,7 +198,7 @@ export function SecurityAudit() {
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
                         {a.actorUserId && person(a.actorUserId) ? (
-                          <Link to={`/users/${a.actorUserId}`} className={`${table.name} ${table.nameLink}`}>
+                          <Link to={`/users/${a.actorUserId}`} className={`${table.name} ${table.quietLink}`}>
                             {nameOf(a.actorUserId, 'System')}
                           </Link>
                         ) : (
@@ -211,7 +211,7 @@ export function SecurityAudit() {
                     </td>
                     <td className={`${table.td} ${styles.cellTarget} ${a.targetUserId ? '' : table.dim}`}>
                       {a.targetUserId && person(a.targetUserId) ? (
-                        <Link to={`/users/${a.targetUserId}`} className={`${table.name} ${table.nameLink}`}>
+                        <Link to={`/users/${a.targetUserId}`} className={`${table.name} ${table.quietLink}`}>
                           {nameOf(a.targetUserId, 'Unknown')}
                         </Link>
                       ) : a.targetUserId ? 'Unknown' : 'Not user-scoped'}

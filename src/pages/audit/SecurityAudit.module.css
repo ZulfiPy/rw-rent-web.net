@@ -16,12 +16,14 @@
    The frame is on the selector so these widths outweigh the single-class ≤1279 block. */
 .frame { container-type: inline-size; }
 @media (min-width: 1024px) {
-  /* Target folds under the actor first. */
+  /* Target folds under the actor first. The widths hold the long event and actor names on one
+     line at the band's three panel widths; Reason keeps 292px or more throughout. */
   @container (max-width: 1120px) {
     .cellTarget { display: none; }
     .targetLine { display: block; }
-    .frame .colEvent { width: 240px; }
-    .frame .colActor { width: 150px; }
+    .frame .colEvent { width: 300px; }
+    .frame .colActor { width: 168px; }
+    .frame .colEntity { width: 170px; }
     .frame .colWhen { width: 150px; }
   }
   /* Then Entity goes, so the reason keeps 300px or more at the two narrowest panels. */
