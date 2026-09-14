@@ -1,4 +1,4 @@
-// Mirrors uploads/swagger.json (RWRentApi.Api v1, OpenAPI 3.1.1).
+// Mirrors the backend's OpenAPI document (RWRentApi.Api v1, OpenAPI 3.1.1), served by the running API at /openapi/v1.json.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.

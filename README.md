@@ -1,8 +1,8 @@
 # RW-Rent web — Phase 2
 
-React + Vite + TypeScript port of the reviewed prototype (`RW-Rent.dc.html`). The prototype is the
-design spec; `uploads/swagger.json` is the contract. Phase 3 wires the real API by changing one
-folder.
+React + Vite + TypeScript port of the reviewed prototype. The contract is the backend's live OpenAPI
+document (`GET /openapi/v1.json` on the running API, repo `rw-rent-api.net`). Phase 3 wires the real
+API by changing one folder.
 
 ```
 npm install
