@@ -161,9 +161,17 @@ export function SecurityAudit() {
                     <span className={cards.factLabel}>Actor</span>
                     <span className={cards.factValue}>{nameOf(a.actorUserId, 'System')}</span>
                   </span>
-                  <span className={cards.fact}>
+                  <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+                    <span className={cards.factLabel}>Target</span>
+                    <span className={`${cards.factValue} ${a.targetUserId ? '' : table.dim}`}>
+                      {a.targetUserId ? nameOf(a.targetUserId, 'Unknown') : 'Not user-scoped'}
+                    </span>
+                  </span>
+                  <span className={`${cards.fact} ${cards.cardFactFull}`}>
                     <span className={cards.factLabel}>Reason</span>
-                    <span className={cards.factValue}>{a.reason ?? 'No reason recorded'}</span>
+                    <span className={`${cards.factValue} ${a.reason ? '' : table.dim}`}>
+                      {a.reason ?? 'No reason recorded'}
+                    </span>
                   </span>
                 </div>
               </Link>
