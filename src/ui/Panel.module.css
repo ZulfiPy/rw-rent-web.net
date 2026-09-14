@@ -39,3 +39,10 @@
 .noteIcon { flex: none; margin-top: 1px; font-size: 16px; color: var(--fg-4); }
 .note[data-tone='warn'] { background: var(--warn-soft); border-top-color: var(--warn-line); color: var(--fg-2); }
 .note[data-tone='warn'] .noteIcon { color: var(--warn); }
+
+/* Phone: the head has 334px to spend, so a heading floor of 160 pushes a two-button action group
+   (Edit + Delete on Legal identity) onto a second row. The floor drops to 100 and the title shares
+   the row with the buttons; single-button heads keep the layout they already have. */
+@media (max-width: 767px) {
+  .heading { min-width: 100px; }
+}
