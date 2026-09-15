@@ -3,14 +3,19 @@ import { Link } from 'react-router-dom';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
-import { getRecentSecurityActivity } from '@/api/overview';
-import { AssignmentStatus, type VehicleListItemResponse } from '@/api/dto';
+import { listSecurityAudit } from '@/api/securityAudit';
+import {
+  AssignmentStatus, type SecurityAuditQuery, type VehicleListItemResponse,
+} from '@/api/dto';
 import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
 import { useOpenWork } from './useOpenWork';
 import { INSURANCE, SAMPLE_CHIP, TASKS, type SampleRow } from './sample';
 import styles from './Overview.module.css';
+
+/** The activity card shows the five newest audit entries. */
+const ACTIVITY: SecurityAuditQuery = { PageNumber: 1, PageSize: 5 };
 
 const PICK = { PageSize: 100 } as const;
 
@@ -71,8 +76,8 @@ export function Overview() {
     enabled: mayReadVehicles,
   });
   const audit = useQuery({
-    queryKey: qk.overviewActivity,
-    queryFn: getRecentSecurityActivity,
+    queryKey: qk.audit.list(ACTIVITY),
+    queryFn: () => listSecurityAudit(ACTIVITY),
     enabled: mayReadAudit,
   });
 
@@ -143,7 +148,7 @@ export function Overview() {
     };
   });
 
-  // The prototype's card: the audit store's first five rows, in stored order (see api/overview.ts).
+  // The five newest entries of the audit history, the card the prototype shows.
   const activity = (audit.data?.items ?? []).map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),

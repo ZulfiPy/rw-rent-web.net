@@ -326,7 +326,7 @@ function Cancel({ assignment: a, onClose }: Common) {
     mutationFn: () => cancelAssignment(a.id, {
       closedAtUtc: fromLocalInput(closedAt),
       noPhysicalHandoverOccurred: wasPlanned ? undefined : noHandover,
-      note: note.trim() || null,
+      cancellationNote: note.trim() || null,
     }),
     invalidate: INVALIDATE,
     onDone: onClose,

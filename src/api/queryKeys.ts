@@ -1,6 +1,7 @@
 import type {
-  AuthorizationsQuery, CustomersQuery, DriversQuery, InterruptionsQuery, RentalAssignmentsQuery,
-  SecurityAuditQuery, SessionsQuery, UsersQuery, VehiclesQuery, PagedQuery, Uuid,
+  AuthorizationsQuery, CompanyInterruptionsQuery, CustomersQuery, DriverAuthorizationsQuery,
+  DriversQuery, InterruptionsQuery, RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery,
+  SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery, PagedQuery, Uuid,
 } from './dto';
 
 /** One key factory per resource. Mutations invalidate by prefix: qk.users.all, qk.roles.of(id), … */
@@ -25,6 +26,7 @@ export const qk = {
   audit: {
     all: ['security-audit'] as const,
     list: (q: SecurityAuditQuery) => ['security-audit', 'list', q] as const,
+    entry: (id: Uuid) => ['security-audit', 'entry', id] as const,
   },
   vehicles: {
     all: ['vehicles'] as const,
@@ -40,6 +42,8 @@ export const qk = {
     all: ['drivers'] as const,
     list: (q: DriversQuery) => ['drivers', 'list', q] as const,
     detail: (id: Uuid) => ['drivers', 'detail', id] as const,
+    authorizations: (id: Uuid, q: DriverAuthorizationsQuery) =>
+      ['drivers', id, 'authorizations', q] as const,
   },
   assignments: {
     all: ['rental-assignments'] as const,
@@ -48,7 +52,15 @@ export const qk = {
     authorizations: (id: Uuid, q: AuthorizationsQuery) => ['rental-assignments', id, 'authorizations', q] as const,
     interruptions: (id: Uuid, q: InterruptionsQuery) => ['rental-assignments', id, 'interruptions', q] as const,
   },
-  transfers: ['system-administrator', 'transfers'] as const,
+  /** Company-wide, not the assignment-scoped list under qk.assignments.interruptions. */
+  interruptions: {
+    all: ['interruptions'] as const,
+    list: (q: CompanyInterruptionsQuery) => ['interruptions', 'list', q] as const,
+  },
+  transfers: {
+    all: ['system-administrator', 'transfers'] as const,
+    list: (q: SystemAdministratorTransferQuery) =>
+      ['system-administrator', 'transfers', q] as const,
+  },
   overview: ['overview'] as const,
-  overviewActivity: ['overview', 'security-activity'] as const,
 };

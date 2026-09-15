@@ -1,7 +1,8 @@
 import { transport, type AssertQuery, type Query } from './transport';
 import type {
-  AuthorizationsQuery, CustomersQuery, DriversQuery, InterruptionsQuery, PagedQuery,
-  RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery, UsersQuery, VehiclesQuery,
+  AuthorizationsQuery, CompanyInterruptionsQuery, CustomersQuery, DriverAuthorizationsQuery,
+  DriversQuery, InterruptionsQuery, PagedQuery, RentalAssignmentsQuery, SecurityAuditQuery,
+  SessionsQuery, SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery,
 } from './dto';
 
 /**
@@ -13,7 +14,8 @@ export type QueryContract = [
   AssertQuery<PagedQuery>, AssertQuery<UsersQuery>, AssertQuery<SessionsQuery>,
   AssertQuery<SecurityAuditQuery>, AssertQuery<VehiclesQuery>, AssertQuery<CustomersQuery>,
   AssertQuery<DriversQuery>, AssertQuery<RentalAssignmentsQuery>, AssertQuery<AuthorizationsQuery>,
-  AssertQuery<InterruptionsQuery>,
+  AssertQuery<InterruptionsQuery>, AssertQuery<CompanyInterruptionsQuery>,
+  AssertQuery<DriverAuthorizationsQuery>, AssertQuery<SystemAdministratorTransferQuery>,
 ];
 
 export const get = <T>(path: string, query?: Query) => transport().request<T>('GET', path, { query });

@@ -31,6 +31,8 @@ type DialogState =
   | null;
 
 const PICK = { PageSize: 100 } as const;
+/** Every transfer of the singleton administrator role fits on one page. */
+const TRANSFERS = { PageSize: 100 } as const;
 /** A transfer touches the transfer list, the audit trail and, on acceptance, the directory. */
 const INVALIDATE = [['system-administrator'], ['security-audit'], ['users']] as const;
 const REASON_HINT = 'At least 3 characters. Recorded in the audit trail.';
@@ -190,8 +192,8 @@ export function SystemAdministrator() {
   const [dialog, setDialog] = useState<DialogState>(null);
 
   const transfers = useQuery({
-    queryKey: qk.transfers,
-    queryFn: listTransfers,
+    queryKey: qk.transfers.list(TRANSFERS),
+    queryFn: () => listTransfers(TRANSFERS),
     enabled: can('SystemAdministration.Transfer'),
   });
   const directory = useQuery({

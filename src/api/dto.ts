@@ -1,4 +1,5 @@
-// Mirrors the backend's OpenAPI document (RWRentApi.Api v1, OpenAPI 3.1.1), served by the running API at /openapi/v1.json.
+// Mirrors the backend's OpenAPI document (RWRentApi.Api v1, OpenAPI 3.1.1), the contract this app
+// is written against: GET http://localhost:5001/openapi/v1.json on the running API in Development.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -32,6 +33,20 @@ export type ApplicationUserStatus = (typeof ApplicationUserStatus)[keyof typeof 
 
 export const AssignmentStatus = { Active: 1, Ended: 2, Cancelled: 3, Planned: 4 } as const;
 export type AssignmentStatus = (typeof AssignmentStatus)[keyof typeof AssignmentStatus];
+
+/** Derived at read time from the vehicle's own state and the assignments holding it. */
+export const VehicleAvailability = { Available: 1, InUse: 2, Reserved: 3, Retired: 4 } as const;
+export type VehicleAvailability = (typeof VehicleAvailability)[keyof typeof VehicleAvailability];
+
+/** Derived from the transfer's accepted, cancelled and expiry instants. */
+export const SystemAdministratorTransferStatus = {
+  AwaitingAcceptance: 1,
+  Accepted: 2,
+  Cancelled: 3,
+  Expired: 4,
+} as const;
+export type SystemAdministratorTransferStatus =
+  (typeof SystemAdministratorTransferStatus)[keyof typeof SystemAdministratorTransferStatus];
 
 export const AssignmentDriverAuthorizationType = { NamedDriver: 1, BusinessCustomerDrivers: 2 } as const;
 export type AssignmentDriverAuthorizationType =
@@ -216,23 +231,23 @@ export interface ApplicationUserListItemResponse {
   registrationExpiresAtUtc?: Instant | null;
   /** Current unrevoked, unexpired roles; effective only while the user is Active. */
   effectiveRoles: ApplicationUserRole[];
-  // FOLLOW-UP: not in swagger — the registration timestamp. The Registrations queue's Registered
-  // column and its "submitted N days ago" reading depend on it, and the list projection is the only
-  // call that screen makes. Served by the mock only.
-  createdAtUtc?: Instant;
+  createdAtUtc: Instant;
 }
 
 export interface ApplicationUserResponse extends ApplicationUserListItemResponse {
   securityVersion: number;
-  createdAtUtc: Instant;
   updatedAtUtc?: Instant | null;
-  // FOLLOW-UP: not in swagger — the latest registration-decision reason for reviewers without
-  // SecurityAudit access. Served by the mock only; see COVERAGE.md §5.6.
+  /** The newest registration rejection or reopening reason; null when the registration was never decided. */
   registrationDecisionReason?: string | null;
 }
 
 export type UsersQuery = PagedQuery & {
   Status?: ApplicationUserStatus;
+  /**
+   * Up to five effective statuses as a comma-separated string of the numeric values, e.g. "1,4,5".
+   * Exclusive with Status; the validator rejects both together under the key Statuses.
+   */
+  Statuses?: string;
   Role?: ApplicationUserRole;
 }
 
@@ -307,6 +322,15 @@ export type SecurityAuditQuery = PagedQuery & {
   TargetUserId?: Uuid;
   /** Exact, case-sensitive. */
   EventType?: string;
+  /** Exact, case-sensitive stored entity type, e.g. "RentalAssignment". */
+  EntityType?: string;
+  /** Exact stored entity identifier. */
+  EntityId?: Uuid;
+  /**
+   * The assignment's own entries plus those of its driver authorizations and interruptions,
+   * resolved on the server. Each entry keeps its own entityType and entityId.
+   */
+  RentalAssignmentId?: Uuid;
 }
 
 /* company --------------------------------------------------------------- */
@@ -345,8 +369,12 @@ export interface VehicleListItemResponse {
   bodyType: BodyType;
   fuelType: FuelType;
   isActive: boolean;
-  // FOLLOW-UP: not in swagger — upcoming customer + planned start for a Reserved vehicle.
-  // Served by the mock only; the reviewed list column depends on it.
+  availability: VehicleAvailability;
+  /** The Active assignment holding the vehicle; null when none does. */
+  currentAssignmentId?: Uuid | null;
+  currentCustomerDisplayName?: string | null;
+  /** The Planned assignment with the earliest planned start; null when none exists. */
+  upcomingAssignmentId?: Uuid | null;
   upcomingCustomerDisplayName?: string | null;
   upcomingPlannedStartAtUtc?: Instant | null;
 }
@@ -363,6 +391,12 @@ export interface VehicleResponse {
   fuelType: FuelType;
   color: string;
   isActive: boolean;
+  availability: VehicleAvailability;
+  currentAssignmentId?: Uuid | null;
+  currentCustomerDisplayName?: string | null;
+  upcomingAssignmentId?: Uuid | null;
+  upcomingCustomerDisplayName?: string | null;
+  upcomingPlannedStartAtUtc?: Instant | null;
   createdAtUtc: Instant;
   updatedAtUtc?: Instant | null;
 }
@@ -444,11 +478,9 @@ export interface DriverListItemResponse {
   lastName: string;
   email: string;
   phoneNumber: string;
-  /* FOLLOW-UP: not in swagger's list projection yet. Optional so the list compiles against the
-     current contract and renders "—" until the backend adds both fields. */
   personalId?: string | null;
-  driverLicenseNumber?: string;
-  address?: string;
+  driverLicenseNumber: string;
+  address: string;
   isActive: boolean;
 }
 
@@ -483,6 +515,13 @@ export type DriversQuery = PagedQuery & { IsActive?: boolean }
 
 /* rental assignments ---------------------------------------------------- */
 
+/** One open named driver on an assignment, in the list's coverage column. */
+export interface AuthorizedDriverSummary {
+  driverId: Uuid;
+  firstName: string;
+  lastName: string;
+}
+
 export interface RentalAssignmentListItemResponse {
   id: Uuid;
   customerId: Uuid;
@@ -494,10 +533,24 @@ export interface RentalAssignmentListItemResponse {
   startedAtUtc?: Instant | null;
   plannedEndAtUtc?: Instant | null;
   closedAtUtc?: Instant | null;
+  customerType: CustomerType;
+  vehicleMake: string;
+  vehicleModel: string;
+  /** Open authorizations of either kind; 0 means the assignment has no coverage. */
+  openAuthorizationCount: number;
+  /** Ordered by last name then first name; empty for collective or uncovered assignments. */
+  openNamedDrivers: AuthorizedDriverSummary[];
+  hasOpenCollectiveAuthorization: boolean;
+  openInterruptionCount: number;
 }
 
 export interface RentalAssignmentResponse extends RentalAssignmentListItemResponse {
   note?: string | null;
+  /** The explanation recorded when the assignment was cancelled; null when it was not. */
+  cancellationNote?: string | null;
+  vehicleVinCode: string;
+  /** The private customer's own driver record; null for a business or unlinked customer. */
+  customerDriverId?: Uuid | null;
   concurrencyToken: Uuid;
   createdAtUtc: Instant;
   updatedAtUtc?: Instant | null;
@@ -547,7 +600,8 @@ export interface EndRentalAssignmentRequest { closedAtUtc: Instant }
 export interface CancelRentalAssignmentRequest {
   closedAtUtc: Instant;
   noPhysicalHandoverOccurred?: boolean;
-  note?: string | null;
+  /** Required when the assignment is Active (ASSIGN-013); optional when it is Planned. */
+  cancellationNote?: string | null;
 }
 
 export interface CorrectRentalAssignmentPartiesRequest {
@@ -574,6 +628,10 @@ export interface AssignmentDriverAuthorizationResponse {
   rentalAssignmentId: Uuid;
   authorizationType: AssignmentDriverAuthorizationType;
   driverId?: Uuid | null;
+  /** The named driver's identity; null on a collective authorization. */
+  driverFirstName?: string | null;
+  driverLastName?: string | null;
+  driverLicenseNumber?: string | null;
   authorizedFromUtc: Instant;
   stoppedAtUtc?: Instant | null;
   stopReason?: AuthorizationStopReason | null;
@@ -586,6 +644,25 @@ export interface AssignmentDriverAuthorizationResponse {
 export type AuthorizationsQuery = PagedQuery & {
   AuthorizationType?: AssignmentDriverAuthorizationType;
   DriverId?: Uuid;
+  IsOpen?: boolean;
+}
+
+/**
+ * A driver's named authorizations across every assignment, newest first. Search is rejected and
+ * SortBy is ignored: the order is fixed.
+ */
+export interface DriverAuthorizationHistoryItemResponse extends AssignmentDriverAuthorizationResponse {
+  assignmentStatus: AssignmentStatus;
+  vehicleId: Uuid;
+  vehiclePlateNumber: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  customerId: Uuid;
+  customerDisplayName: string;
+  customerType: CustomerType;
+}
+
+export type DriverAuthorizationsQuery = PagedQuery & {
   IsOpen?: boolean;
 }
 
@@ -641,6 +718,26 @@ export type InterruptionsQuery = PagedQuery & {
   IsOpen?: boolean;
 }
 
+/**
+ * Interruptions across every assignment, oldest first. Search is rejected and SortBy is ignored:
+ * the order is fixed.
+ */
+export interface InterruptionListItemResponse extends AssignmentInterruptionResponse {
+  assignmentStatus: AssignmentStatus;
+  vehicleId: Uuid;
+  vehiclePlateNumber: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  customerId: Uuid;
+  customerDisplayName: string;
+}
+
+export type CompanyInterruptionsQuery = PagedQuery & {
+  IsOpen?: boolean;
+  RentalAssignmentId?: Uuid;
+  AssignmentStatus?: AssignmentStatus;
+}
+
 export interface CreateAssignmentInterruptionRequest {
   startedAtUtc: Instant;
   endedAtUtc?: Instant | null;
@@ -673,7 +770,15 @@ export interface SystemAdministratorTransferResponse {
   cancelledAtUtc?: Instant | null;
   acceptedAtUtc?: Instant | null;
   isRecovery: boolean;
+  targetEmail: string;
+  targetFirstName: string;
+  targetLastName: string;
+  /** Derived on the server from the three instants; the app never derives it again. */
+  status: SystemAdministratorTransferStatus;
 }
+
+/** The transfers read takes paging only. Search is rejected. */
+export type SystemAdministratorTransferQuery = PagedQuery
 
 export interface InitiateSystemAdministratorTransferRequest {
   currentPassword: string;
@@ -684,15 +789,15 @@ export interface ResendSystemAdministratorTransferRequest { currentPassword: str
 export interface CancelSystemAdministratorTransferRequest { reason: string }
 export interface AcceptSystemAdministratorTransferRequest { token: string; password: string }
 
-/* mock-only read models ------------------------------------------------- */
+/* overview -------------------------------------------------------------- */
 
-// FOLLOW-UP: not in swagger — the Overview summary counts. v1 derives them from four
-// PageSize=1 probes (see api/overview.ts); a real summary endpoint replaces that one file.
-// A count the persona may not read is null, not 0: the card is left out rather than shown empty.
-export interface OverviewSummary {
-  activeAssignments: number | null;
-  plannedAssignments: number | null;
-  /** Active in the fleet. Availability needs the assignments a vehicle is held by — derived per screen. */
-  activeVehicles: number | null;
-  pendingRegistrations: number | null;
+/**
+ * The Overview's four counts in one request. A count the caller may not read is null, not 0: the
+ * card is left out rather than shown empty.
+ */
+export interface OverviewSummaryResponse {
+  activeAssignments?: number | null;
+  plannedAssignments?: number | null;
+  activeVehicles?: number | null;
+  pendingRegistrations?: number | null;
 }

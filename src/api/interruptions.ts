@@ -1,11 +1,19 @@
 import { get, post, put } from './client';
 import type {
-  AssignmentInterruptionResponse, CorrectInterruptionRequest, CreateAssignmentInterruptionRequest,
-  EndAssignmentInterruptionRequest, InterruptionsQuery, PagedResponse,
+  AssignmentInterruptionResponse, CompanyInterruptionsQuery, CorrectInterruptionRequest,
+  CreateAssignmentInterruptionRequest, EndAssignmentInterruptionRequest,
+  InterruptionListItemResponse, InterruptionsQuery, PagedResponse,
   UpdateAssignmentInterruptionRequest, Uuid,
 } from './dto';
 
 const base = (assignmentId: Uuid) => `/api/rental-assignments/${assignmentId}/interruptions`;
+
+/**
+ * Interruptions across every assignment, oldest open first, each with its assignment's status,
+ * vehicle and customer. One request where the screen used to walk the assignments.
+ */
+export const listCompanyInterruptions = (query: CompanyInterruptionsQuery = {}) =>
+  get<PagedResponse<InterruptionListItemResponse>>('/api/interruptions', query);
 
 export const listInterruptions = (assignmentId: Uuid, query: InterruptionsQuery = {}) =>
   get<PagedResponse<AssignmentInterruptionResponse>>(base(assignmentId), query);
