@@ -1,11 +1,10 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
 import { useCompanyName } from './app/useCompanyName';
 import { consumeSessionEnd, getSessionEnd, subscribeSessionEnd } from './app/session';
 import { useAccess } from './permissions/usePermissions';
-import { useSignOut } from './app/useSignOut';
 import { UserDirectory } from './pages/users/UserDirectory';
 import { UserRecord } from './pages/users/UserRecord';
 import { Registrations } from './pages/registrations/Registrations';
@@ -31,31 +30,8 @@ import { ResetPassword } from './pages/account/ResetPassword';
 import { ConfirmEmailChange } from './pages/account/ConfirmEmailChange';
 import { AcceptAdministratorTransfer } from './pages/account/AcceptAdministratorTransfer';
 import { Profile } from './pages/account/Profile';
-import { Button } from './ui/Button';
+import { AccessPending } from './pages/account/AccessPending';
 import styles from './App.module.css';
-
-/** Active, but the account holds no permissions: the prototype's Access pending state. */
-function AccessPending() {
-  const { me } = useAccess();
-  const signOut = useSignOut();
-  return (
-    <main className={styles.centre}>
-      <div className={styles.card}>
-        <span data-icon aria-hidden="true" className={styles.icon}>hourglass_top</span>
-        <h1 className={styles.title}>Access pending</h1>
-        <p className={styles.body}>
-          Your account is active, but no permissions have been granted yet. An administrator assigns
-          a role before the workspace opens.
-        </p>
-        <p className={styles.mail}>{me?.email}</p>
-        <div className={styles.rowActions}>
-          <Link className={styles.textLink} to="/profile">Your profile</Link>
-          <Button label="Sign out" icon="logout" small onClick={() => signOut.mutate()} busy={signOut.isPending} />
-        </div>
-      </div>
-    </main>
-  );
-}
 
 function Unreachable({ message }: { message: string }) {
   return (
@@ -112,17 +88,16 @@ function Workspace() {
   const companyName = useCompanyName();
 
   /*
-   * An Active account with no permissions sees the Access pending card exactly as reviewed — but
-   * self-service is theirs, so /profile still opens, inside the shell whose navigation is empty
-   * for them.
+   * An Active account with no permissions: the prototype's Access pending route, inside the shell
+   * whose navigation is empty for them, with their own account reachable from the account button.
    */
   if (me && me.permissions.length === 0) {
     return (
       <Routes>
         <Route element={<AppShell companyName={companyName} />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<AccessPending />} />
         </Route>
-        <Route path="*" element={<AccessPending />} />
       </Routes>
     );
   }

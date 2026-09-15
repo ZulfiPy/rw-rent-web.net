@@ -10,7 +10,7 @@
 
 ## Follow-up 1 — 2026-09-15 — the account screens are ports of the prototype, not new designs
 
-> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED (plan Phase 8).**
+> **Status: IMPLEMENTED (Wiring 8, 2026-09-15). See `Context/wiring_report.md`.**
 
 ### 1. What went wrong
 
@@ -122,14 +122,16 @@ F1 implemented with its checks; report rewritten; branch pushed; working tree cl
 
 ## Carried forward — living list
 
-1. Owner's open questions from the report (2026-09-15): (a) the reset form's email field — keep, or
-   ask the backend to take the address from the token; (b) the Overview's activity card — hide
-   routine sign-in and sign-out events, or keep the newest five. Reviewer's recommendations: keep
-   the field; hide the routine events (app-side, over a larger page).
-2. Small findings from the reviewer's check of the first run: the Button `block` variant with the
-   primary tone has poor contrast in the light theme (the agent avoided it on the account screens;
-   phone-sized dialogs use it — verify on the phone in light); the cold-load theme on public pages
-   (covered by Follow-up 1 F1 step 1).
+1. Owner's open question from the first report (2026-09-15): the Overview's activity card — hide
+   routine sign-in and sign-out events, or keep the newest five. Reviewer's recommendation: hide
+   the routine events (app-side, over a larger page). **Closed by the port:** the reset form's
+   email field. The prototype's own `reset` screen shows it and its copy names it, which is also
+   what the API requires, so the question is settled in favour of keeping it.
+2. Small findings from the reviewer's check of the first run, both resolved in Wiring 8: the
+   cold-load theme on public pages (F1 step 1 — the theme is now one store applied before the first
+   paint); the Button `block` variant's contrast in the light theme (checked at 402 in light on the
+   account area's dialogs — the sheet's Cancel and its primary action both read correctly, so
+   nothing reproduces there. If the owner sees it elsewhere, it is a separate follow-up).
 3. Backend backlog items raised by this phase live in the backend's `Context/backlog.md`
    (`availableVehicles` on the overview summary).
 4. Merge gate (owner): both `feature/backend-wiring` branches merge only after the wired app and

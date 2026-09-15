@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { bootstrapApi } from './app/bootstrap';
+import { applyStoredTheme } from './app/theme';
 import { currentPath, endSession, isSessionEnded, ownsUnauthorized } from './app/session';
 import { AccessProvider } from './permissions/usePermissions';
 import { App } from './App';
@@ -28,6 +29,8 @@ const queryClient = new QueryClient({
 });
 
 bootstrapApi();
+// The chosen theme is on the document before the first paint, public pages included.
+applyStoredTheme();
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>

@@ -2,7 +2,7 @@ import {
   ApplicationUserStatus, AssignmentStatus, SystemAdministratorTransferStatus, VehicleAvailability,
 } from '@/api/dto';
 
-export type Tone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'plain';
+export type Tone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'accent' | 'plain';
 
 /** Status tones, ported from the prototype. */
 export const USER_STATUS_TONE: Record<ApplicationUserStatus, Tone> = {

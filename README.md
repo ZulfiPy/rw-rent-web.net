@@ -49,12 +49,17 @@ Development. Mailpit catches every development email at `http://localhost:8025`.
 
 ## The account area
 
-Six screens live outside the shell, in the same design vocabulary as everything else: `/sign-in`,
-`/register`, and the four the backend's emails link to — `/confirm-registration-email`,
-`/reset-password`, `/confirm-email-change` and `/accept-administrator-transfer`. Each link carries
-its single-use token after the `#`, so it never reaches a server log; the page reads it once and
-removes it from the address bar. `/profile` lives inside the shell and is open to every signed-in
-account, including one that is Active with no permissions yet.
+Six screens live outside the shell: `/sign-in`, `/register`, and the four the backend's emails link
+to — `/confirm-registration-email`, `/reset-password`, `/confirm-email-change` and
+`/accept-administrator-transfer`. They are ports of the reviewed prototype's authentication family,
+which lives in this repository at `Context/prototype/RW-Rent.dc.html`: the split page with the
+monogram art, the theme toggle, and one message screen per outcome. Each emailed link carries its
+single-use token after the `#`, so it never reaches a server log; the page reads it once and removes
+it from the address bar.
+
+"Your account" (`/profile`) and "Access pending" are ports of the same prototype and live inside the
+shell. Both are open to every signed-in account, including one that is Active with no permissions
+yet — such an account sees an empty navigation and its own account area.
 
 ## Signing in
 

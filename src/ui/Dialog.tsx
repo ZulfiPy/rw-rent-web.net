@@ -114,7 +114,7 @@ const FOCUSABLE = [
 
 export function Dialog({
   title, description, icon, tone = 'accent', width = 560, submitLabel, submitIcon, submitTone = 'primary',
-  submitBlocked, busy, failure, children, info, footnote, onClose, onSubmit, onRefresh,
+  submitBlocked, busy, failure, children, info, footnote, hideCancel, onClose, onSubmit, onRefresh,
 }: {
   title: string;
   description?: string;
@@ -133,6 +133,8 @@ export function Dialog({
   children?: ReactNode;
   info?: { title: string; body: string };
   footnote?: string;
+  /** A dialog that only reads — the prototype's access sheet — closes with one action, not two. */
+  hideCancel?: boolean;
   onClose: () => void;
   onSubmit: () => void;
   onRefresh?: () => void;
@@ -238,7 +240,7 @@ export function Dialog({
         <div className={styles.footer}>
           {footnote ? <span className={styles.footnote}>{footnote}</span> : null}
           <span className={styles.spacer} />
-          <Button label="Cancel" tone="ghost" onClick={onClose} />
+          {hideCancel ? null : <Button label="Cancel" tone="ghost" onClick={onClose} />}
           <Button
             label={submitLabel}
             icon={submitIcon}

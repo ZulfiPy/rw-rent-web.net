@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { me as meApi, qk } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { useAccess } from '@/permissions/usePermissions';
-import { AccountAlert, AccountLayout, accountStyles as styles } from './AccountLayout';
-import { isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
+import { AuthLayout, AuthOutcome } from './AuthLayout';
+import { OUTCOMES } from './outcomes';
+import { toAccountFailure, type AccountFailure } from './failure';
 import { readTokenFromHash, stripHash } from './token';
 
 /**
  * The link in the email-change confirmation. The endpoint lives under /api/me, so a signed-out
  * visitor is sent to the front door with this page as the return path — and the token, already
  * taken out of the address bar, is held in memory until they are back.
+ *
+ * The prototype's authentication family has no screen for this route; the three states below are
+ * built from the vocabulary of its registration-confirmation screens.
  */
 export function ConfirmEmailChange() {
   const { status } = useAccess();
@@ -46,45 +50,18 @@ export function ConfirmEmailChange() {
     }
   }, [status, navigate]);
 
-  if (done) {
-    return (
-      <AccountLayout
-        title="Your email is changed"
-        documentTitle="Email changed"
-        links={<Link className={styles.link} to="/profile">Go to your profile</Link>}
-      >
-        <div className={styles.outcome}>
-          <span data-icon aria-hidden="true" className={styles.outcomeIcon} data-tone="ok">mark_email_read</span>
-          <p className={styles.outcomeBody}>
-            Sign in with the new address from now on. Every other session was signed out.
-          </p>
-        </div>
-      </AccountLayout>
-    );
-  }
-
-  if (!token || (failure && isExpiredLink(failure))) {
-    return (
-      <AccountLayout
-        title="That link cannot be used"
-        intro="A confirmation link is valid once and for a limited time. Request the change again from your profile."
-        documentTitle="Email change"
-        links={<Link className={styles.link} to="/profile">Go to your profile</Link>}
-      />
-    );
-  }
+  const outcome = done
+    ? OUTCOMES['email-change-done']
+    : !token || failure
+      ? OUTCOMES['email-change-bad']
+      : OUTCOMES['email-change-checking'];
 
   return (
-    <AccountLayout
-      title="Confirming your new email"
-      documentTitle="Confirming your new email"
-      links={<Link className={styles.link} to="/profile">Go to your profile</Link>}
-    >
-      {failure?.message ? (
-        <AccountAlert tone="bad">{failure.message}</AccountAlert>
-      ) : (
-        <p className={styles.outcomeBody}>One moment…</p>
-      )}
-    </AccountLayout>
+    <AuthLayout documentTitle={outcome.title}>
+      <AuthOutcome
+        outcome={outcome}
+        {...(!done && failure?.code ? { meta: `code: ${failure.code}` } : {})}
+      />
+    </AuthLayout>
   );
 }

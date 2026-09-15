@@ -1,21 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
-import { AccountAlert, AccountLayout, AccountLink, accountStyles as styles } from './AccountLayout';
-import { isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
+import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
+import { OUTCOMES } from './outcomes';
+import { NO_FAILURE, toAccountFailure, type AccountFailure } from './failure';
 import { readTokenFromHash, stripHash } from './token';
-import { ResendConfirmation } from './ResendConfirmation';
 
 /**
- * The link in the registration email. The token is read once from the fragment and taken out of
- * the address bar; the page then confirms with it and shows what happened.
+ * The link in the registration email — the prototype's `confirm-checking`, `confirm-done` and
+ * `confirm-bad` screens — and, under `?resend=1`, its `resend` screen, which is where the other
+ * two send a person whose link no longer works.
+ *
+ * The token is read once from the fragment and taken out of the address bar before anything is
+ * sent, so a shared screenshot or a back-button visit no longer carries it.
  */
 export function ConfirmRegistrationEmail() {
+  const [params] = useSearchParams();
+  const resending = params.get('resend') !== null;
+
   const [failure, setFailure] = useState<AccountFailure | null>(null);
   const [done, setDone] = useState(false);
+  const [sent, setSent] = useState(false);
   const started = useRef(false);
   const [token] = useState(() => readTokenFromHash(window.location.hash));
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const confirm = useMutation({
     meta: OWNS_UNAUTHORIZED,
@@ -24,58 +36,70 @@ export function ConfirmRegistrationEmail() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
+  const resend = useMutation({
+    meta: OWNS_UNAUTHORIZED,
+    mutationFn: () => registrations.resendEmailConfirmation({ email: email.trim(), password }),
+    onSuccess: () => {
+      setFailure(NO_FAILURE);
+      setSent(true);
+    },
+    onError: (error) => setFailure(toAccountFailure(error)),
+  });
+
   const { mutate } = confirm;
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     stripHash();
-    if (token) mutate(token);
-  }, [token, mutate]);
+    if (token && !resending) mutate(token);
+  }, [token, resending, mutate]);
 
-  if (done) {
+  // The prototype's resend screen answers with the registration-submitted screen.
+  if (sent || done) {
+    const outcome = done ? OUTCOMES['confirm-done'] : OUTCOMES['register-submitted'];
     return (
-      <AccountLayout
-        title="Your email is confirmed"
-        documentTitle="Email confirmed"
-        links={<AccountLink to="/sign-in" label="Go to sign in" />}
-      >
-        <div className={styles.outcome}>
-          <span data-icon aria-hidden="true" className={styles.outcomeIcon} data-tone="ok">mark_email_read</span>
-          <p className={styles.outcomeBody}>
-            An administrator activates the account before the workspace opens. You will be able to
-            sign in once that is done.
-          </p>
-        </div>
-      </AccountLayout>
+      <AuthLayout documentTitle={outcome.title}>
+        <AuthOutcome outcome={outcome} />
+      </AuthLayout>
     );
   }
 
-  const unusable = !token || (failure && isExpiredLink(failure));
-
-  if (unusable) {
+  if (resending) {
     return (
-      <AccountLayout
-        title="That link cannot be used"
-        intro="A confirmation link is valid once and for 24 hours. Ask for a new one below."
-        documentTitle="Confirmation link"
-        links={<AccountLink to="/sign-in" label="Back to sign in" />}
-      >
-        <ResendConfirmation />
-      </AccountLayout>
+      <AuthLayout documentTitle="Resend confirmation email">
+        <ResetScreen
+          title="Resend confirmation email"
+          body="Enter the email and password you registered with. If the registration still needs confirming, a fresh link is sent."
+          {...(failure?.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
+          email={{ value: email, onChange: setEmail, error: failure?.fields['email'] }}
+          currentPassword={{
+            label: 'Password',
+            value: password,
+            onChange: setPassword,
+            error: failure?.fields['password'],
+          }}
+          cta="Resend link"
+          busy={resend.isPending}
+          onSubmit={() => resend.mutate()}
+        />
+      </AuthLayout>
+    );
+  }
+
+  if (!token || failure) {
+    return (
+      <AuthLayout documentTitle="Confirmation link">
+        <AuthOutcome
+          outcome={OUTCOMES['confirm-bad']}
+          {...(failure?.code ? { meta: `code: ${failure.code}` } : {})}
+        />
+      </AuthLayout>
     );
   }
 
   return (
-    <AccountLayout
-      title="Confirming your email"
-      documentTitle="Confirming your email"
-      links={<AccountLink to="/sign-in" label="Back to sign in" />}
-    >
-      {failure?.message ? (
-        <AccountAlert tone="bad">{failure.message}</AccountAlert>
-      ) : (
-        <p className={styles.outcomeBody}>One moment…</p>
-      )}
-    </AccountLayout>
+    <AuthLayout documentTitle="Confirming your email">
+      <AuthOutcome outcome={OUTCOMES['confirm-checking']} />
+    </AuthLayout>
   );
 }

@@ -23,4 +23,6 @@
 .chip[data-tone='warn'] { color: var(--warn); background: var(--warn-soft); border-color: var(--warn-line); }
 .chip[data-tone='bad'] { color: var(--bad); background: var(--bad-soft); border-color: var(--bad-line); }
 .chip[data-tone='mute'] { color: var(--mute); background: var(--mute-soft); border-color: var(--mute-line); }
+/* The prototype's accent chip: the session this browser is using, on Your account. */
+.chip[data-tone='accent'] { color: var(--accent-2); background: var(--accent-soft); border-color: var(--accent-line); }
 .chip[data-tone='plain'] { color: var(--fg-2); background: transparent; border-color: var(--line-2); }

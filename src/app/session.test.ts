@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ApiError } from '@/api';
 import {
-  consumeSessionEnd, endSession, getSessionEnd, isSessionEnded, ownsUnauthorized,
-  resetSessionEnd, samePathOnly, subscribeSessionEnd,
+  beginSignOut, consumeSessionEnd, endSession, endSignOut, getSessionEnd, isSessionEnded,
+  ownsUnauthorized, resetSessionEnd, samePathOnly, subscribeSessionEnd,
 } from './session';
 
 afterEach(() => resetSessionEnd());
@@ -31,6 +31,16 @@ describe('session end signal', () => {
     expect(getSessionEnd()).toBeNull();
     endSession('/sign-in?next=/vehicles');
     expect(getSessionEnd()).toBeNull();
+  });
+
+  it('raises nothing while the user is signing out on purpose', () => {
+    beginSignOut();
+    endSession('/profile');
+    expect(getSessionEnd()).toBeNull();
+
+    endSignOut();
+    endSession('/profile');
+    expect(getSessionEnd()).toEqual({ returnTo: '/profile' });
   });
 
   it('refuses anything that is not a same-origin path', () => {

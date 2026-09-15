@@ -1,0 +1,296 @@
+/*
+ * The authentication family, ported from the reviewed prototype
+ * (`Context/prototype/RW-Rent.dc.html`, the `showAuth` block). Every length, weight and colour
+ * below is transcribed from that file's inline styles; the tokens are the app's own, which are the
+ * prototype's own. Nothing here is designed.
+ */
+
+.page { display: flex; min-height: 100vh; align-items: stretch; }
+
+/* The form column: the rail surface under the prototype's 64px grid. */
+.column {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--rail);
+  border-right: 1px solid var(--line);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.head { display: flex; align-items: center; justify-content: space-between; padding: 26px 32px 0; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 11px; }
+.logo { width: 27px; height: 28px; flex: none; display: block; fill: var(--brand); }
+.mark {
+  font-family: 'Poppins', var(--font-sans);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.012em;
+  color: var(--fg);
+}
+
+.theme {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.theme:hover { background: var(--surface-2); color: var(--fg); }
+.themeIcon { font-size: 16px; }
+.themeLabel { white-space: nowrap; }
+
+.body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 32px; }
+.screen { width: 100%; max-width: 400px; animation: rwUp 0.32s ease both; }
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 0 32px 26px;
+  font-size: 12px;
+  color: var(--fg-4);
+}
+.footDot { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-4); }
+.footVersion { font-family: var(--font-mono); }
+
+/* The art panel. The prototype shows it while `!isNarrow() && w >= 900`, which is 1024 and up. */
+.art { position: relative; flex: 0 0 46%; max-width: 760px; overflow: hidden; background: var(--canvas); }
+.pattern { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.2; }
+.artFade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--canvas) 6%, rgba(0, 0, 0, 0) 100%);
+}
+.artText {
+  position: absolute;
+  left: 38px;
+  bottom: 38px;
+  right: 38px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.artKicker { display: flex; align-items: center; gap: 9px; }
+.artRule { width: 22px; height: 1px; background: var(--accent); }
+.artLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.artLine {
+  margin: 0;
+  max-width: 22ch;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.32;
+  color: var(--fg);
+}
+@media (max-width: 1023px) {
+  .art { display: none; }
+}
+
+/* ---------------------------------------------------------------- the screens */
+
+/* `scSignin` stacks at 26, `scRegister` and `scReset` at 24, `scMessage` at 22. */
+.stack { display: flex; flex-direction: column; gap: 26px; }
+.stack[data-gap='24'] { gap: 24px; }
+.stack[data-gap='22'] { gap: 22px; }
+
+.heading { display: flex; flex-direction: column; gap: 9px; }
+.heading[data-gap='10'] { gap: 10px; }
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+/* `scReset` sets 22px and `scMessage` 21px with a looser line. */
+.title[data-size='22'] { font-size: 22px; letter-spacing: normal; }
+.title[data-size='21'] { font-size: 21px; line-height: 1.35; letter-spacing: normal; }
+.intro { margin: 0; color: var(--fg-2); font-size: 14px; }
+
+/* The sign-in alert: the one place a refusal is shown beside the form rather than instead of it. */
+.alert {
+  display: flex;
+  gap: 10px;
+  padding: 12px 13px;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-line);
+  border-radius: 10px;
+}
+.alertIcon { font-size: 18px; color: var(--bad); flex: none; }
+.alertBody { min-width: 0; }
+.alertTitle { font-size: 13px; font-weight: 500; color: var(--fg); }
+.alertText { font-size: 13px; color: var(--fg-2); }
+.alertTitle + .alertText { margin-top: 2px; }
+
+.fields { display: flex; flex-direction: column; gap: 16px; }
+.fields[data-gap='15'] { gap: 15px; }
+/* Create account puts the two names on one row while there is room for both. */
+.names { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+
+.field { display: flex; flex-direction: column; gap: 7px; }
+.label { font-size: 12.5px; font-weight: 500; color: var(--fg-2); }
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-2);
+}
+.required { color: var(--fg-4); font-weight: 400; }
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--fg);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px var(--ring); }
+.input[data-invalid='true'] { border-color: var(--bad-line); }
+.hint { font-size: 12.5px; color: var(--fg-3); }
+.fieldError { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; color: var(--bad); }
+.fieldErrorIcon { font-size: 15px; margin-top: 1px; }
+
+/* The accent text buttons: "Forgot password?", "Create one", "Sign in". */
+.textLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.textLink:hover { color: var(--accent-2); text-decoration: underline; }
+.textLink[data-size='13'] { font-size: 13px; }
+.textLink:disabled { color: var(--fg-4); cursor: default; text-decoration: none; }
+
+/* The live password checklist under a new-password field. */
+.rules { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.rule { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fg-4); }
+.rule[data-ok='true'] { color: var(--ok); }
+.ruleIcon { font-size: 15px; }
+
+.actions { display: flex; flex-direction: column; gap: 14px; }
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--btn);
+  color: var(--btn-fg);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.12s;
+}
+.submit:hover { background: var(--btn-hover); }
+.submit:disabled { opacity: 0.62; cursor: default; }
+.submitIcon { font-size: 17px; }
+.ghost {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--fg-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13.5px;
+  text-align: center;
+}
+.ghost:hover { background: var(--surface-2); color: var(--fg); }
+.switch { margin: 0; text-align: center; font-size: 13px; color: var(--fg-2); }
+
+/* The single-use token, read from the link and already out of the address bar. */
+.token {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.tokenIcon { font-size: 17px; color: var(--ok); flex: none; }
+.tokenText { font-size: 12.5px; color: var(--fg-2); }
+
+/* ---------------------------------------------------------------- outcome screens */
+
+.outcomeIcon { font-size: 30px; }
+.facts {
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.fact { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: var(--fg-2); }
+.factIcon { font-size: 16px; margin-top: 1px; flex: none; }
+.meta {
+  padding: 11px 13px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  word-break: break-all;
+}
+.outcomeActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--fg-2);
+  border: 1px solid var(--line-2);
+  text-decoration: none;
+}
+.action[data-kind='primary'] { background: var(--btn); color: var(--btn-fg); border-color: transparent; }
+.action:hover { filter: brightness(1.08); text-decoration: none; color: var(--fg-2); }
+.action[data-kind='primary']:hover { color: var(--btn-fg); }
+.actionIcon { font-size: 17px; }
+
+/* The prototype's `msgColor` / fact colours, as tones rather than repeated literals. */
+.toneInfo { color: var(--info); }
+.toneOk { color: var(--ok); }
+.toneWarn { color: var(--warn); }
+.toneBad { color: var(--bad); }
+.toneMute { color: var(--mute); }
+.toneAccent { color: var(--accent); }
+.toneMuted { color: var(--fg-3); }

@@ -1,21 +1,33 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth, registrations } from '@/api';
 import { OWNS_UNAUTHORIZED, samePathOnly } from '@/app/session';
 import { useAccess } from '@/permissions/usePermissions';
-import { Button } from '@/ui/Button';
-import { Field, fieldStyles, invalidProps } from '@/ui/Field';
-import { AccountAlert, AccountLayout, AccountLink, accountStyles as styles } from './AccountLayout';
+import {
+  AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
+  authStyles as styles,
+} from './AuthLayout';
+import { OUTCOMES, signInOutcome, type OutcomeName } from './outcomes';
 import { NEEDS_EMAIL_CONFIRMATION, NO_FAILURE, toAccountFailure, type AccountFailure } from './failure';
 
-export const SESSION_ENDED = 'Your session has ended. Sign in again to continue.';
+/** The prototype's own refusal when the form is submitted empty. */
+const EMPTY_FORM: [string, string] = [
+  'Enter your email and password',
+  'Both fields are required before signing in.',
+];
 
 interface SignInState {
   from?: string;
   sessionEnded?: boolean;
 }
 
+/**
+ * The prototype's `signin` screen, and the message screens the API's own refusals land on: an
+ * account awaiting activation, a rejected or expired registration, a suspended account, a paused
+ * location, and the session that ended while the person was working. A wrong password and an
+ * unconfirmed email keep the form and are answered in its alert.
+ */
 export function SignIn() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,7 +46,10 @@ export function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
-  const [resent, setResent] = useState(false);
+  const [empty, setEmpty] = useState(false);
+  const [outcome, setOutcome] = useState<OutcomeName | null>(
+    state.sessionEnded ? 'session-expired' : null,
+  );
 
   const signIn = useMutation({
     // A 401 here is a wrong password, not an ended session: this request owns it.
@@ -49,92 +64,124 @@ export function SignIn() {
       await queryClient.resetQueries();
     },
     onError: (error) => {
-      setResent(false);
-      setFailure(toAccountFailure(error));
+      const next = toAccountFailure(error);
+      const screen = signInOutcome(next.status, next.code);
+      if (screen) {
+        setFailure(NO_FAILURE);
+        setOutcome(screen);
+        return;
+      }
+      setFailure(next);
     },
   });
 
   const resend = useMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => registrations.resendEmailConfirmation({ email: email.trim(), password }),
-    onSuccess: () => setResent(true),
+    // What the prototype does when the resend screen succeeds: the registration-submitted screen.
+    onSuccess: () => {
+      setFailure(NO_FAILURE);
+      setOutcome('register-submitted');
+    },
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (signIn.isPending) return;
+    if (!email.trim() || !password) {
+      setFailure(NO_FAILURE);
+      setEmpty(true);
+      return;
+    }
+    setEmpty(false);
     signIn.mutate();
   };
 
-  const busy = signIn.isPending;
+  if (outcome) {
+    return (
+      <AuthLayout documentTitle={OUTCOMES[outcome].title}>
+        <AuthOutcome
+          outcome={OUTCOMES[outcome]}
+          onAction={(to) => {
+            if (to !== '/sign-in') return false;
+            setOutcome(null);
+            return true;
+          }}
+        />
+      </AuthLayout>
+    );
+  }
 
   return (
-    <AccountLayout
-      title="Sign in"
-      intro="Use the email and password of your RW-Rent account."
-      links={
-        <>
-          <AccountLink to="/reset-password" label="Forgot your password" />
-          <AccountLink to="/register" label="Create an account" />
-        </>
-      }
-    >
-      {state.sessionEnded && !failure.message ? (
-        <AccountAlert tone="warn">{SESSION_ENDED}</AccountAlert>
-      ) : null}
-      {resent ? (
-        <AccountAlert tone="ok">
-          If the account is waiting for confirmation, a new link is on its way to that address.
-        </AccountAlert>
-      ) : null}
-      {failure.message ? (
-        <AccountAlert tone="bad">
-          {failure.message}
-          {failure.code === NEEDS_EMAIL_CONFIRMATION ? (
-            <>
-              {' '}
-              <button
-                type="button"
-                className={styles.linkButton}
-                disabled={resend.isPending}
-                onClick={() => resend.mutate()}
-              >
-                {resend.isPending ? 'Sending…' : 'Resend the confirmation email'}
-              </button>
-            </>
-          ) : null}
-        </AccountAlert>
-      ) : null}
+    <AuthLayout documentTitle="Sign in">
+      <form className={styles.stack} onSubmit={submit} noValidate>
+        <AuthHeading
+          title="Sign in"
+          body="Fleet and rental operations for RW-Rent. Your session stays signed in on this browser until it expires."
+        />
 
-      <form className={styles.form} onSubmit={submit} noValidate>
-        <Field label="Email" required error={failure.fields.email}>
-          <input
-            className={fieldStyles.control}
-            type="email"
-            name="email"
-            autoComplete="username"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            {...invalidProps(failure.fields.email)}
-          />
-        </Field>
-        <Field label="Password" required error={failure.fields.password}>
-          <input
-            className={fieldStyles.control}
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            {...invalidProps(failure.fields.password)}
-          />
-        </Field>
+        {empty ? <AuthAlert title={EMPTY_FORM[0]}>{EMPTY_FORM[1]}</AuthAlert> : null}
+        {failure.message ? (
+          <AuthAlert>
+            {failure.message}
+            {failure.code === NEEDS_EMAIL_CONFIRMATION ? (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  className={styles.textLink}
+                  disabled={resend.isPending}
+                  onClick={() => resend.mutate()}
+                >
+                  {resend.isPending ? 'Sending…' : 'Resend the confirmation email'}
+                </button>
+              </>
+            ) : null}
+          </AuthAlert>
+        ) : null}
+
+        <div className={styles.fields}>
+          <AuthField label="Email address" error={failure.fields['email']}>
+            <input
+              className={styles.input}
+              type="email"
+              autoComplete="username"
+              placeholder="you@company.com"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              data-invalid={!!failure.fields['email']}
+              aria-invalid={failure.fields['email'] ? true : undefined}
+            />
+          </AuthField>
+          <AuthField
+            label="Password"
+            error={failure.fields['password']}
+            action={<Link to="/reset-password" className={styles.textLink}>Forgot password?</Link>}
+          >
+            <input
+              className={styles.input}
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              data-invalid={!!failure.fields['password']}
+              aria-invalid={failure.fields['password'] ? true : undefined}
+            />
+          </AuthField>
+        </div>
+
         <div className={styles.actions}>
-          <Button label="Sign in" tone="primary" type="submit" busy={busy} />
+          <AuthSubmit
+            label={signIn.isPending ? 'Signing in…' : 'Sign in'}
+            icon="arrow_forward"
+            busy={signIn.isPending}
+          />
+          <AuthSwitch text="No account yet?" label="Create one" to="/register" />
         </div>
       </form>
-    </AccountLayout>
+    </AuthLayout>
   );
 }

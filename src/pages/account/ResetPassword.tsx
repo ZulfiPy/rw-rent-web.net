@@ -1,27 +1,25 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { auth } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
-import { Button } from '@/ui/Button';
-import { Field, fieldStyles, invalidProps } from '@/ui/Field';
-import { AccountAlert, AccountLayout, AccountLink, accountStyles as styles } from './AccountLayout';
-import { PASSWORD_POLICY } from './Register';
+import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
+import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
 import { readTokenFromHash, stripHash } from './token';
 
 /**
- * Two screens behind one route, as the emailed link expects: without a token it asks for the
- * address; with one it sets the new password. The API takes the address on both halves, so the
- * second form asks for it as well rather than guessing it from the token.
+ * The prototype's `forgot` and `reset` screens behind one route, as the emailed link expects:
+ * without a token it asks for the address, with one it sets the new password. The prototype's
+ * reset screen asks for the address on both halves, which is also what the API requires of the
+ * completing call.
  */
 export function ResetPassword() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [mismatch, setMismatch] = useState<string | undefined>(undefined);
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
   const [requested, setRequested] = useState(false);
+  const [changed, setChanged] = useState(false);
 
   /*
    * The token is read from the fragment whenever one arrives, not only on the first render: a
@@ -36,8 +34,6 @@ export function ResetPassword() {
     setRequested(false);
     stripHash();
   }, [hash]);
-
-  const [changed, setChanged] = useState(false);
 
   const request = useMutation({
     meta: OWNS_UNAUTHORIZED,
@@ -65,135 +61,72 @@ export function ResetPassword() {
 
   if (changed) {
     return (
-      <AccountLayout
-        title="Your password is changed"
-        documentTitle="Password changed"
-        links={<AccountLink to="/sign-in" label="Go to sign in" />}
-      >
-        <div className={styles.outcome}>
-          <span data-icon aria-hidden="true" className={styles.outcomeIcon} data-tone="ok">lock_reset</span>
-          <p className={styles.outcomeBody}>
-            Every other session was signed out. Sign in again with the new password.
-          </p>
-        </div>
-      </AccountLayout>
+      <AuthLayout documentTitle="Password changed">
+        <AuthOutcome outcome={OUTCOMES['password-changed']} />
+      </AuthLayout>
     );
   }
 
   if (requested) {
     return (
-      <AccountLayout
-        title="Check your email"
-        intro="If the address is known, an email with a link is on its way. The link is valid for one hour."
-        documentTitle="Check your email"
-        links={<AccountLink to="/sign-in" label="Back to sign in" />}
-      >
-        <AccountAlert tone="info">
-          Nothing changes until the link is opened and a new password is set.
-        </AccountAlert>
-      </AccountLayout>
+      <AuthLayout documentTitle="Check your email">
+        <AuthOutcome outcome={OUTCOMES['forgot-sent']} />
+      </AuthLayout>
     );
   }
 
-  const expired = isExpiredLink(failure);
-
-  // With a usable token: the new password. Without one, or once it is refused: the request form.
-  if (token && !expired) {
-    const submit = (event: FormEvent) => {
-      event.preventDefault();
-      if (complete.isPending) return;
-      if (password !== confirmation) {
-        setMismatch('The two passwords are different.');
-        return;
-      }
-      setMismatch(undefined);
-      setFailure(NO_FAILURE);
-      complete.mutate();
-    };
-
+  // A refused token is the prototype's `reset-bad`; its first action comes back to this page.
+  if (token && isExpiredLink(failure)) {
     return (
-      <AccountLayout
-        title="Set a new password"
-        intro="Use the address the link was sent to, then choose the new password."
-        documentTitle="Set a new password"
-        links={<AccountLink to="/sign-in" label="Back to sign in" />}
-      >
-        {failure.message ? <AccountAlert tone="bad">{failure.message}</AccountAlert> : null}
-        <form className={styles.form} onSubmit={submit} noValidate>
-          <Field label="Email" required error={failure.fields.email}>
-            <input
-              className={fieldStyles.control}
-              type="email"
-              autoComplete="username"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              {...invalidProps(failure.fields.email)}
-            />
-          </Field>
-          <Field label="New password" required hint={PASSWORD_POLICY} error={failure.fields.newPassword}>
-            <input
-              className={fieldStyles.control}
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              {...invalidProps(failure.fields.newPassword)}
-            />
-          </Field>
-          <Field label="Repeat the new password" required error={mismatch}>
-            <input
-              className={fieldStyles.control}
-              type="password"
-              autoComplete="new-password"
-              value={confirmation}
-              onChange={(e) => setConfirmation(e.target.value)}
-              {...invalidProps(mismatch)}
-            />
-          </Field>
-          <div className={styles.actions}>
-            <Button label="Change the password" tone="primary" type="submit" busy={complete.isPending} />
-          </div>
-        </form>
-      </AccountLayout>
+      <AuthLayout documentTitle="Reset link">
+        <AuthOutcome
+          outcome={OUTCOMES['reset-bad']}
+          {...(failure.code ? { meta: `code: ${failure.code}` } : {})}
+          onAction={(to) => {
+            if (to !== '/reset-password') return false;
+            setToken(null);
+            setPassword('');
+            setFailure(NO_FAILURE);
+            return true;
+          }}
+        />
+      </AuthLayout>
     );
   }
 
-  const submitRequest = (event: FormEvent) => {
-    event.preventDefault();
-    if (!request.isPending) request.mutate();
-  };
+  if (token) {
+    return (
+      <AuthLayout documentTitle="Set a new password">
+        <ResetScreen
+          title="Set a new password"
+          body="Completing the reset needs the account email, the link token and your new password."
+          {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
+          email={{ value: email, onChange: setEmail, error: failure.fields['email'] }}
+          newPassword={{
+            value: password,
+            onChange: setPassword,
+            error: failure.fields['newPassword'],
+          }}
+          hasToken
+          cta="Change password"
+          busy={complete.isPending}
+          onSubmit={() => complete.mutate()}
+        />
+      </AuthLayout>
+    );
+  }
 
   return (
-    <AccountLayout
-      title="Reset your password"
-      intro="Give the address of your account and we will send a link for setting a new password."
-      documentTitle="Reset your password"
-      links={<AccountLink to="/sign-in" label="Back to sign in" />}
-    >
-      {expired ? (
-        <AccountAlert tone="warn" title="That link cannot be used">
-          A reset link is valid once and for one hour. Ask for a new one below.
-        </AccountAlert>
-      ) : failure.message ? (
-        <AccountAlert tone="bad">{failure.message}</AccountAlert>
-      ) : null}
-      <form className={styles.form} onSubmit={submitRequest} noValidate>
-        <Field label="Email" required error={failure.fields.email}>
-          <input
-            className={fieldStyles.control}
-            type="email"
-            autoComplete="username"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            {...invalidProps(failure.fields.email)}
-          />
-        </Field>
-        <div className={styles.actions}>
-          <Button label="Send the link" tone="primary" type="submit" busy={request.isPending} />
-        </div>
-      </form>
-    </AccountLayout>
+    <AuthLayout documentTitle="Reset your password">
+      <ResetScreen
+        title="Reset your password"
+        body="Enter the email address on your account. We will send a single-use reset link."
+        {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
+        email={{ value: email, onChange: setEmail, error: failure.fields['email'] }}
+        cta="Send reset link"
+        busy={request.isPending}
+        onSubmit={() => request.mutate()}
+      />
+    </AuthLayout>
   );
 }

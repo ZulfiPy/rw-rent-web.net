@@ -1,34 +1,48 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { me as meApi, qk } from '@/api';
-import { useActionMutation } from '@/app/useActionMutation';
-import { useTier } from '@/app/useViewport';
-import { useAccess } from '@/permissions/usePermissions';
-import { formatUtc } from '@/format';
 import type { SessionResponse, Uuid } from '@/api/dto';
+import { useActionMutation } from '@/app/useActionMutation';
+import { useCompanyName } from '@/app/useCompanyName';
+import { useSheetTier } from '@/app/useViewport';
+import { useAccess } from '@/permissions/usePermissions';
+import { EMPTY, formatUtc } from '@/format';
+import { NO_ROLE_LABEL, USER_STATUS_LABEL, rolesLabel } from '@/format/labels';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
-import { Dialog } from '@/ui/Dialog';
+import { Dialog, DialogSection, dialogStyles } from '@/ui/Dialog';
 import { EmptyState } from '@/ui/EmptyState';
+import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 import { PageHeader } from '@/ui/PageHeader';
 import { Panel } from '@/ui/Panel';
-import { recordStyles as shell } from '@/ui/RecordTabs';
+import { RecordTabs, recordStyles as shell, type RecordTab } from '@/ui/RecordTabs';
 import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
-import { AccountAlert, accountStyles as account } from './AccountLayout';
-import { PASSWORD_POLICY } from './Register';
+import styles from './Profile.module.css';
 
-const EMPTY = '—';
+type TabId = 'profile' | 'security' | 'sessions';
+
+const TABS: Array<RecordTab<TabId>> = [
+  { id: 'profile', label: 'Profile', icon: 'person' },
+  { id: 'security', label: 'Sign-in & security', icon: 'lock' },
+  { id: 'sessions', label: 'Your sessions', icon: 'devices' },
+];
+
 const SESSIONS = { IncludeEnded: true, PageSize: 100 } as const;
 const INVALIDATE = [['me'], ['sessions']] as const;
 
+const PASSWORD_RULE = 'At least 12 characters with upper case, lower case, a digit and a symbol.';
+
 const sessionState = (s: SessionResponse) =>
-  s.revokedAtUtc
-    ? { label: 'Revoked', tone: 'bad' as const, dot: '1px' }
-    : s.isActive
-      ? { label: 'Active', tone: 'ok' as const, dot: '50%' }
-      : { label: 'Expired', tone: 'mute' as const, dot: '1px' };
+  s.isCurrent
+    ? { label: 'Current', tone: 'accent' as const, dot: '50%' }
+    : s.revokedAtUtc
+      ? { label: 'Revoked', tone: 'bad' as const, dot: '1px' }
+      : s.isActive
+        ? { label: 'Active', tone: 'ok' as const, dot: '50%' }
+        : { label: 'Expired', tone: 'mute' as const, dot: '1px' };
 
 function CardFact({ label, value, mono, end, full }: {
   label: string;
@@ -46,381 +60,476 @@ function CardFact({ label, value, mono, end, full }: {
   );
 }
 
-type Confirm =
+type DialogState =
+  | { kind: 'phone' }
+  | { kind: 'password' }
+  | { kind: 'email' }
+  | { kind: 'access' }
   | { kind: 'session-revoke'; sessionId: Uuid }
   | { kind: 'revoke-others' }
   | null;
 
 /**
- * Your own account, inside the shell. Four panels in the record vocabulary: what an administrator
- * owns is read-only, what you own is a small form of its own, and your sessions read exactly as a
- * user record's do — with the one you are using marked rather than offered for revocation.
+ * "Your account", ported from the prototype's `profile` route: three tabs, panels that read what
+ * the API reports, and a dialog for every change. What an administrator owns is not editable here;
+ * what the account owns is one action away.
  */
 export function Profile() {
   const { me } = useAccess();
-  const phone = useTier() === 'phone';
+  const companyName = useCompanyName();
+  const phone = useSheetTier();
   const queryClient = useQueryClient();
-  const [confirm, setConfirm] = useState<Confirm>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [dialog, setDialog] = useState<DialogState>(null);
+
+  const requested = params.get('tab');
+  const tab: TabId = requested === 'security' || requested === 'sessions' ? requested : 'profile';
+  const selectTab = (next: TabId) => {
+    const q = new URLSearchParams(params);
+    if (next === 'profile') q.delete('tab');
+    else q.set('tab', next);
+    setParams(q, { replace: true });
+  };
 
   const sessions = useQuery({
     queryKey: qk.meSessions(SESSIONS),
     queryFn: () => meApi.listOwnSessions(SESSIONS),
   });
 
-  const [phoneNumber, setPhoneNumber] = useState(me?.phoneNumber ?? '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [repeatPassword, setRepeatPassword] = useState('');
-  const [passwordMismatch, setPasswordMismatch] = useState<string | undefined>(undefined);
-  const [newEmail, setNewEmail] = useState('');
-  const [emailPassword, setEmailPassword] = useState('');
+  const rows = sessions.data?.items ?? [];
+  /** The API marks the session this browser is using; its row is labelled, never revocable here. */
+  const others = rows.filter((s) => s.isActive && !s.isCurrent).length;
+  const active = rows.filter((s) => s.isActive).length;
 
-  const savePhone = useActionMutation({
-    op: 'profile-phone',
-    mutationFn: () => meApi.updateOwnPhone({ phoneNumber: phoneNumber.trim() }),
-    invalidate: INVALIDATE,
-    onDone: () => setDone('Your phone number is saved.'),
-  });
-
-  const changePassword = useActionMutation({
-    op: 'profile-password',
-    mutationFn: () => meApi.changeOwnPassword({ currentPassword, newPassword }),
-    invalidate: INVALIDATE,
-    onDone: () => {
-      setCurrentPassword('');
-      setNewPassword('');
-      setRepeatPassword('');
-      setDone('Your password is changed. Every other session was signed out.');
-    },
-  });
-
-  const requestEmail = useActionMutation({
-    op: 'profile-email',
-    mutationFn: () => meApi.requestOwnEmailChange({
-      newEmail: newEmail.trim(),
-      currentPassword: emailPassword,
-    }),
-    invalidate: INVALIDATE,
-    onDone: () => {
-      setEmailPassword('');
-      setDone('Confirm the change through the link we sent to the new address.');
-    },
-  });
+  const close = () => setDialog(null);
 
   const revokeOne = useActionMutation({
     op: 'session-revoke',
     mutationFn: (sessionId: Uuid) => meApi.revokeOwnSession(sessionId),
     invalidate: INVALIDATE,
-    onDone: () => setConfirm(null),
+    onDone: close,
   });
 
   const revokeOthers = useActionMutation({
     op: 'session-revoke-others',
     mutationFn: () => meApi.revokeOtherOwnSessions(),
     invalidate: INVALIDATE,
-    onDone: () => {
-      setConfirm(null);
-      setDone('Every other session was signed out.');
-    },
+    onDone: close,
   });
 
-  const rows = sessions.data?.items ?? [];
-  /** The API marks the session this browser is using; its row is labelled, never revocable here. */
-  const others = rows.filter((s) => s.isActive && !s.isCurrent).length;
-
-  const submit = (run: () => void) => (event: FormEvent) => {
-    event.preventDefault();
-    setDone(null);
-    run();
-  };
+  const tabs = TABS.map((t) => (t.id === 'sessions' ? { ...t, count: active } : t));
 
   return (
     <div className={shell.page}>
-      <PageHeader
-        title="Your profile"
-        description="The details of your own account, and the devices it is signed in on."
-      />
+      <PageHeader title="Your account" />
 
-      {done ? <AccountAlert tone="ok">{done}</AccountAlert> : null}
+      <RecordTabs tabs={tabs} active={tab} onSelect={selectTab} />
 
-      <Panel
-        title="Account"
-        description="Your identity on every record you touch."
-        note="Names are corrected by an administrator; ask one if yours is wrong."
-        noteIcon="lock"
-      >
-        <form className={account.form} onSubmit={submit(() => savePhone.submit(undefined))}>
-          <Field label="First name">
-            <input className={f.control} value={me?.firstName ?? ''} readOnly disabled />
-          </Field>
-          <Field label="Last name">
-            <input className={f.control} value={me?.lastName ?? ''} readOnly disabled />
-          </Field>
-          <Field label="Email" hint="Changing it needs a confirmation link; see Email below.">
-            <input className={f.control} value={me?.email ?? ''} readOnly disabled />
-          </Field>
-          <Field label="Phone number" required error={savePhone.fields['phoneNumber']}>
-            <input
-              className={f.control}
-              autoComplete="tel"
-              inputMode="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              {...invalidProps(savePhone.fields['phoneNumber'])}
+      {tab === 'profile' ? (
+        <>
+          <Panel
+            title="Your details"
+            description="Name changes go through a privileged correction; ask a Company Principal."
+            actions={<Button label="Update phone" icon="call" tone="primary" small onClick={() => setDialog({ kind: 'phone' })} />}
+          >
+            <FactGrid columns={4}>
+              <Fact label="First name">{me?.firstName ?? EMPTY}</Fact>
+              <Fact label="Last name">{me?.lastName ?? EMPTY}</Fact>
+              <Fact label="Login email">{me?.email ?? EMPTY}</Fact>
+              <Fact label="Phone" mono hint="Required on every account.">{me?.phoneNumber ?? EMPTY}</Fact>
+            </FactGrid>
+          </Panel>
+
+          <Panel
+            title="Access"
+            description="What the API reports for your account right now."
+            actions={<Button label="Show permissions" icon="verified_user" small onClick={() => setDialog({ kind: 'access' })} />}
+          >
+            <FactGrid columns={4}>
+              <Fact label="Roles">{me && me.roles.length ? rolesLabel(me.roles) : NO_ROLE_LABEL}</Fact>
+              <Fact label="Effective permissions" mono>{`${me?.permissions.length ?? 0} granted`}</Fact>
+              <Fact label="Company" dim={!me?.companyId}>{me?.companyId ? companyName : 'Not assigned'}</Fact>
+              <Fact label="Status">{me ? USER_STATUS_LABEL[me.status] : EMPTY}</Fact>
+            </FactGrid>
+          </Panel>
+        </>
+      ) : null}
+
+      {tab === 'security' ? (
+        <>
+          <Panel
+            title="Password"
+            description={PASSWORD_RULE}
+            actions={<Button label="Change password" icon="password" tone="primary" small onClick={() => setDialog({ kind: 'password' })} />}
+            note="Changing your password refreshes this session and signs out the others."
+          >
+            <FactGrid>
+              <Fact label="Password" mono>••••••••••••</Fact>
+              <Fact label="Last changed" dim hint="The API does not report this yet.">{EMPTY}</Fact>
+            </FactGrid>
+          </Panel>
+
+          <Panel
+            title="Login email"
+            description="A change applies only after you confirm it from the new address."
+            actions={<Button label="Change email" icon="alternate_email" small onClick={() => setDialog({ kind: 'email' })} />}
+            note="The confirmation link opens /confirm-email-change and needs an authenticated session."
+            noteIcon="mail"
+          >
+            <FactGrid>
+              <Fact label="Current address">{me?.email ?? EMPTY}</Fact>
+              <Fact label="Pending change" dim hint="The API does not report this yet.">{EMPTY}</Fact>
+            </FactGrid>
+          </Panel>
+        </>
+      ) : null}
+
+      {tab === 'sessions' ? (
+        <Panel
+          title="Where you are signed in"
+          description="Times in UTC. Sessions end after two hours idle or twelve hours in total."
+          actions={(
+            <Button
+              label="Revoke other sessions"
+              icon="no_accounts"
+              tone="danger"
+              small
+              blockedReason={others === 0 ? 'This is your only active session.' : null}
+              onClick={() => setDialog({ kind: 'revoke-others' })}
             />
-          </Field>
-          {savePhone.failure && 'message' in savePhone.failure ? (
-            <AccountAlert tone="bad">{savePhone.failure.message}</AccountAlert>
-          ) : null}
-          <div className={account.actions}>
-            <Button label="Save the phone number" tone="primary" type="submit" busy={savePhone.busy} />
-          </div>
-        </form>
-      </Panel>
-
-      <Panel title="Password" description="Changing it signs out every other session.">
-        <form
-          className={account.form}
-          onSubmit={submit(() => {
-            if (newPassword !== repeatPassword) {
-              setPasswordMismatch('The two passwords are different.');
-              return;
-            }
-            setPasswordMismatch(undefined);
-            changePassword.submit(undefined);
-          })}
+          )}
         >
-          <Field label="Current password" required error={changePassword.fields['currentPassword']}>
-            <input
-              className={f.control}
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              {...invalidProps(changePassword.fields['currentPassword'])}
+          {sessions.data && rows.length === 0 ? (
+            <EmptyState
+              variant="panel"
+              icon="devices_off"
+              title="No sessions"
+              body="Signing in creates one."
             />
-          </Field>
-          <Field label="New password" required hint={PASSWORD_POLICY} error={changePassword.fields['newPassword']}>
-            <input
-              className={f.control}
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              {...invalidProps(changePassword.fields['newPassword'])}
-            />
-          </Field>
-          <Field label="Repeat the new password" required error={passwordMismatch}>
-            <input
-              className={f.control}
-              type="password"
-              autoComplete="new-password"
-              value={repeatPassword}
-              onChange={(e) => setRepeatPassword(e.target.value)}
-              {...invalidProps(passwordMismatch)}
-            />
-          </Field>
-          {changePassword.failure && 'message' in changePassword.failure ? (
-            <AccountAlert tone="bad">{changePassword.failure.message}</AccountAlert>
-          ) : null}
-          <div className={account.actions}>
-            <Button label="Change the password" tone="primary" type="submit" busy={changePassword.busy} />
-          </div>
-        </form>
-      </Panel>
-
-      <Panel
-        title="Email"
-        description="The new address has to confirm the change before it takes effect."
-      >
-        <form className={account.form} onSubmit={submit(() => requestEmail.submit(undefined))}>
-          <Field label="New email" required error={requestEmail.fields['newEmail']}>
-            <input
-              className={f.control}
-              type="email"
-              autoComplete="email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              {...invalidProps(requestEmail.fields['newEmail'])}
-            />
-          </Field>
-          <Field label="Current password" required error={requestEmail.fields['currentPassword']}>
-            <input
-              className={f.control}
-              type="password"
-              autoComplete="current-password"
-              value={emailPassword}
-              onChange={(e) => setEmailPassword(e.target.value)}
-              {...invalidProps(requestEmail.fields['currentPassword'])}
-            />
-          </Field>
-          {requestEmail.failure && 'message' in requestEmail.failure ? (
-            <AccountAlert tone="bad">{requestEmail.failure.message}</AccountAlert>
-          ) : null}
-          <div className={account.actions}>
-            <Button label="Send the confirmation link" tone="primary" type="submit" busy={requestEmail.busy} />
-          </div>
-        </form>
-      </Panel>
-
-      <Panel
-        title="Sessions"
-        description="Every device this account is signed in on. Times in UTC."
-        actions={others > 0 ? (
-          <Button
-            label="Sign out other sessions"
-            icon="link_off"
-            tone="danger"
-            small
-            onClick={() => setConfirm({ kind: 'revoke-others' })}
-          />
-        ) : undefined}
-      >
-        {sessions.data && rows.length === 0 ? (
-          <EmptyState
-            variant="panel"
-            icon="devices_off"
-            title="No sessions"
-            body="Signing in creates one."
-          />
-        ) : phone ? (
-          <div className={cards.cards}>
-            {rows.map((s) => {
-              const state = sessionState(s);
-              return (
-                <div key={s.id} className={cards.card}>
-                  <div className={cards.head}>
-                    <span className={cards.heading}>
-                      <span className={cards.title}>{s.deviceDescription ?? EMPTY}</span>
-                      <span className={cards.sub}>{s.ipAddress ?? ''}</span>
-                    </span>
-                    <span className={cards.actions}>
-                      {s.isCurrent ? <Chip tone="info" dot="50%">This session</Chip> : null}
+          ) : phone ? (
+            <div className={cards.cards}>
+              {rows.map((s) => {
+                const state = sessionState(s);
+                return (
+                  <div key={s.id} className={cards.card}>
+                    <div className={cards.head}>
+                      <span className={cards.heading}>
+                        <span className={cards.title}>{s.deviceDescription ?? EMPTY}</span>
+                        <span className={cards.sub}>
+                          {s.isCurrent ? `This device · ${s.ipAddress ?? ''}` : s.ipAddress ?? ''}
+                        </span>
+                      </span>
                       <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
-                    </span>
-                  </div>
-                  <div className={cards.facts}>
-                    <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
-                    <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono end />
-                    {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} full /> : null}
-                  </div>
-                  {s.isActive && !s.isCurrent ? (
-                    <div className={cards.actions}>
-                      <Button
-                        label="Revoke"
-                        icon="link_off"
-                        tone="danger"
-                        small
-                        row
-                        onClick={() => setConfirm({ kind: 'session-revoke', sessionId: s.id })}
-                      />
                     </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className={table.scroll}>
-            <table className={table.table} data-panel="">
-              <thead>
-                <tr>
-                  <th scope="col" className={table.th}>Device</th>
-                  <th scope="col" className={`${table.th} ${table.foldTablet}`}>Started (UTC)</th>
-                  <th scope="col" className={table.th}>Last seen (UTC)</th>
-                  <th scope="col" className={table.th}>State</th>
-                  <th scope="col" className={table.th}>Reason</th>
-                  <th scope="col" className={`${table.th} ${table.right}`}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => {
-                  const state = sessionState(s);
-                  return (
-                    <tr key={s.id} className={table.row}>
-                      <td className={`${table.td} ${table.wrap}`}>
-                        <span className={table.stack}>
-                          <span className={table.name}>{s.deviceDescription ?? EMPTY}</span>
-                          <span className={table.subMono}>{s.ipAddress ?? ''}</span>
-                        </span>
-                      </td>
-                      <td className={`${table.td} ${table.foldTablet}`}>
-                        <span className={table.mono}>{formatUtc(s.createdAtUtc)}</span>
-                      </td>
-                      <td className={table.td}>
-                        <span className={table.mono}>{formatUtc(s.lastSeenAtUtc)}</span>
-                      </td>
-                      <td className={table.td}>
-                        <span className={table.stack}>
+                    <div className={cards.facts}>
+                      <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
+                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono end />
+                      {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} full /> : null}
+                    </div>
+                    {s.isActive && !s.isCurrent ? (
+                      <div className={cards.actions}>
+                        <Button
+                          label="Revoke"
+                          icon="link_off"
+                          tone="danger"
+                          small
+                          row
+                          onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={table.scroll}>
+              <table className={table.table} data-panel="">
+                <thead>
+                  <tr>
+                    <th scope="col" className={`${table.th} ${styles.colDevice}`}>Device</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Started (UTC)</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen (UTC)</th>
+                    <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
+                    <th scope="col" className={table.th}>Reason</th>
+                    <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((s) => {
+                    const state = sessionState(s);
+                    return (
+                      <tr key={s.id} className={table.row}>
+                        <td className={`${table.td} ${table.wrap}`}>
+                          <span className={table.stack}>
+                            <span className={table.name}>{s.deviceDescription ?? EMPTY}</span>
+                            <span className={table.subMono}>
+                              {s.isCurrent ? `This device · ${s.ipAddress ?? ''}` : s.ipAddress ?? ''}
+                            </span>
+                          </span>
+                        </td>
+                        <td className={`${table.td} ${table.foldTablet}`}>
+                          <span className={table.mono}>{formatUtc(s.createdAtUtc)}</span>
+                        </td>
+                        <td className={table.td}>
+                          <span className={table.stack}>
+                            <span className={table.mono}>{formatUtc(s.lastSeenAtUtc)}</span>
+                            <span className={table.subMono}>idle until {formatUtc(s.idleExpiresAtUtc).slice(11)}</span>
+                          </span>
+                        </td>
+                        <td className={table.td}>
                           <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
-                          {s.isCurrent ? <span className={table.sub}>This session</span> : null}
-                        </span>
-                      </td>
-                      <td className={`${table.td} ${table.wrap}`}>
-                        <span className={table.stack}>
-                          <span>{s.revocationReason ?? EMPTY}</span>
-                          {s.revokedAtUtc ? (
-                            <span className={table.subMono}>{formatUtc(s.revokedAtUtc)}</span>
+                        </td>
+                        <td className={`${table.td} ${table.wrap}`}>
+                          <span className={table.stack}>
+                            <span>{s.revocationReason ?? EMPTY}</span>
+                            {s.revokedAtUtc ? (
+                              <span className={table.subMono}>{formatUtc(s.revokedAtUtc)}</span>
+                            ) : null}
+                          </span>
+                        </td>
+                        <td className={table.td}>
+                          {s.isActive && !s.isCurrent ? (
+                            <span className={table.actionsCell}>
+                              <Button
+                                label="Revoke"
+                                icon="link_off"
+                                tone="danger"
+                                small
+                                row
+                                onClick={() => setDialog({ kind: 'session-revoke', sessionId: s.id })}
+                              />
+                            </span>
                           ) : null}
-                        </span>
-                      </td>
-                      <td className={`${table.td} ${table.right}`}>
-                        {s.isActive && !s.isCurrent ? (
-                          <Button
-                            label="Revoke"
-                            icon="link_off"
-                            tone="danger"
-                            small
-                            row
-                            onClick={() => setConfirm({ kind: 'session-revoke', sessionId: s.id })}
-                          />
-                        ) : null}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+      ) : null}
 
-      {confirm?.kind === 'session-revoke' ? (
+      {dialog?.kind === 'phone' ? <PhoneDialog onClose={close} /> : null}
+      {dialog?.kind === 'password' ? <PasswordDialog onClose={close} /> : null}
+      {dialog?.kind === 'email' ? <EmailDialog onClose={close} /> : null}
+
+      {dialog?.kind === 'access' ? (
         <Dialog
-          title="Revoke this session"
-          icon="link_off"
+          title="Your effective access"
+          description="The frontend renders actions from the permissions returned by GET /api/me, not from role names."
+          icon="verified_user"
+          width={560}
+          submitLabel="Close"
+          hideCancel
+          busy={false}
+          failure={null}
+          onClose={close}
+          onSubmit={close}
+        >
+          <DialogSection title="Roles held" cols={1}>
+            <Field label="Roles">
+              <p className={styles.permissions}>
+                {me && me.roles.length ? rolesLabel(me.roles) : NO_ROLE_LABEL}
+              </p>
+            </Field>
+          </DialogSection>
+          <DialogSection title={`Effective permissions (${me?.permissions.length ?? 0})`} cols={1}>
+            <Field label="Permissions">
+              <p className={styles.permissions}>
+                {me && me.permissions.length
+                  ? [...me.permissions].sort().join('\n')
+                  : 'None — no business permissions are in effect.'}
+              </p>
+            </Field>
+          </DialogSection>
+        </Dialog>
+      ) : null}
+
+      {dialog?.kind === 'session-revoke' ? (
+        <Dialog
+          title="Revoke session"
+          description="Ends this server session immediately."
+          icon="no_accounts"
           tone="bad"
-          description="The device using it is signed out at once."
-          submitLabel="Revoke"
-          submitIcon="link_off"
+          width={460}
+          submitLabel="Revoke session"
+          submitIcon="no_accounts"
           submitTone="danger-solid"
           busy={revokeOne.busy}
           failure={revokeOne.failure}
-          onClose={() => setConfirm(null)}
-          onSubmit={() => revokeOne.submit(confirm.sessionId)}
+          onClose={close}
+          onSubmit={() => revokeOne.submit(dialog.sessionId)}
           onRefresh={() => {
             void queryClient.refetchQueries({ queryKey: qk.meSessions(SESSIONS) });
-            setConfirm(null);
+            close();
           }}
         />
       ) : null}
 
-      {confirm?.kind === 'revoke-others' ? (
+      {dialog?.kind === 'revoke-others' ? (
         <Dialog
-          title="Sign out other sessions"
-          icon="link_off"
+          title="Sign out everywhere"
+          description="Revokes every session except the one you are using now."
+          icon="no_accounts"
           tone="bad"
-          description={`${others} other session${others === 1 ? '' : 's'} will be signed out. This one stays.`}
-          submitLabel="Sign them out"
-          submitIcon="link_off"
+          width={500}
+          submitLabel="Revoke other sessions"
+          submitIcon="no_accounts"
           submitTone="danger-solid"
           busy={revokeOthers.busy}
           failure={revokeOthers.failure}
-          onClose={() => setConfirm(null)}
+          onClose={close}
           onSubmit={() => revokeOthers.submit(undefined)}
-        />
+        >
+          <ul className={dialogStyles.consequences}>
+            <li className={dialogStyles.consequence}>Your current session stays signed in.</li>
+          </ul>
+        </Dialog>
       ) : null}
     </div>
+  );
+}
+
+function PhoneDialog({ onClose }: { onClose: () => void }) {
+  const { me } = useAccess();
+  const [phoneNumber, setPhoneNumber] = useState(me?.phoneNumber ?? '');
+  const save = useActionMutation({
+    op: 'profile-phone',
+    mutationFn: () => meApi.updateOwnPhone({ phoneNumber: phoneNumber.trim() }),
+    invalidate: INVALIDATE,
+    onDone: onClose,
+  });
+
+  return (
+    <Dialog
+      title="Update phone number"
+      description="Your phone number is required on every account."
+      icon="call"
+      width={460}
+      submitLabel="Save"
+      busy={save.busy}
+      failure={save.failure}
+      onClose={onClose}
+      onSubmit={() => save.submit(undefined)}
+    >
+      <DialogSection cols={1}>
+        <Field label="Phone number" required error={save.fields['phoneNumber']}>
+          <input
+            className={f.control}
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            maxLength={30}
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            {...invalidProps(save.fields['phoneNumber'])}
+          />
+        </Field>
+      </DialogSection>
+    </Dialog>
+  );
+}
+
+function PasswordDialog({ onClose }: { onClose: () => void }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const change = useActionMutation({
+    op: 'profile-password',
+    mutationFn: () => meApi.changeOwnPassword({ currentPassword, newPassword }),
+    invalidate: INVALIDATE,
+    onDone: onClose,
+  });
+
+  return (
+    <Dialog
+      title="Change password"
+      description="A successful change refreshes your session."
+      icon="password"
+      width={500}
+      submitLabel="Change password"
+      busy={change.busy}
+      failure={change.failure}
+      onClose={onClose}
+      onSubmit={() => change.submit(undefined)}
+    >
+      <DialogSection cols={1}>
+        <Field label="Current password" required error={change.fields['currentPassword']}>
+          <input
+            className={f.control}
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            {...invalidProps(change.fields['currentPassword'])}
+          />
+        </Field>
+        <Field label="New password" required hint={PASSWORD_RULE} error={change.fields['newPassword']}>
+          <input
+            className={f.control}
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            {...invalidProps(change.fields['newPassword'])}
+          />
+        </Field>
+      </DialogSection>
+    </Dialog>
+  );
+}
+
+function EmailDialog({ onClose }: { onClose: () => void }) {
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const request = useActionMutation({
+    op: 'profile-email',
+    mutationFn: () => meApi.requestOwnEmailChange({
+      newEmail: newEmail.trim(),
+      currentPassword,
+    }),
+    invalidate: INVALIDATE,
+    onDone: onClose,
+  });
+
+  return (
+    <Dialog
+      title="Change login email"
+      description="A confirmation link is sent to the new address. The change applies only after you confirm it."
+      icon="alternate_email"
+      width={520}
+      submitLabel="Send confirmation"
+      footnote="Your current address keeps working until confirmation."
+      busy={request.busy}
+      failure={request.failure}
+      onClose={onClose}
+      onSubmit={() => request.submit(undefined)}
+    >
+      <DialogSection cols={1}>
+        <Field label="New email address" required error={request.fields['newEmail']}>
+          <input
+            className={f.control}
+            type="email"
+            autoComplete="email"
+            maxLength={254}
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            {...invalidProps(request.fields['newEmail'])}
+          />
+        </Field>
+        <Field label="Current password" required error={request.fields['currentPassword']}>
+          <input
+            className={f.control}
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            {...invalidProps(request.fields['currentPassword'])}
+          />
+        </Field>
+      </DialogSection>
+    </Dialog>
   );
 }

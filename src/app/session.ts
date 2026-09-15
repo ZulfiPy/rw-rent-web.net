@@ -13,6 +13,7 @@ export interface SessionEndSignal {
 }
 
 let signal: SessionEndSignal | null = null;
+let signingOut = false;
 const listeners = new Set<() => void>();
 
 const emit = () => {
@@ -35,13 +36,26 @@ export function currentPath(): string {
  * Raises the signal once. Repeated 401s while one is pending — a page with several queries in
  * flight — collapse into that first one, and a 401 that arrives once the sign-in page is already
  * open raises nothing: the door is open and the first signal's path is the one worth keeping.
+ *
+ * A deliberate sign-out raises nothing at all: emptying the cache refetches the page's watched
+ * queries, and the 401s they come back with are the expected answer to the sign-out, not a
+ * session that ended under someone.
  */
 export function endSession(returnTo: string | undefined): void {
-  if (signal) return;
+  if (signal || signingOut) return;
   const path = samePathOnly(returnTo);
   if (path?.startsWith('/sign-in')) return;
   signal = { returnTo: path ?? '/overview' };
   emit();
+}
+
+/** Signing out on purpose: nothing between here and `endSignOut()` is an ended session. */
+export function beginSignOut(): void {
+  signingOut = true;
+}
+
+export function endSignOut(): void {
+  signingOut = false;
 }
 
 export function consumeSessionEnd(): void {
@@ -64,6 +78,7 @@ export function subscribeSessionEnd(listener: () => void): () => void {
 /** Test seam: forget any pending signal between cases. */
 export function resetSessionEnd(): void {
   signal = null;
+  signingOut = false;
   listeners.clear();
 }
 

@@ -8,6 +8,7 @@ import { Chip } from '@/ui/Chip';
 import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
 import { useSignOut } from './useSignOut';
 import { useRailMode } from './useViewport';
+import { themeIcon, themeLabel, themeTip, toggleTheme, useTheme } from './theme';
 import styles from './AppShell.module.css';
 
 interface NavItem {
@@ -121,27 +122,7 @@ function HeaderId({ value }: { value: string }) {
   );
 }
 
-const THEME_KEY = 'rwrent.theme';
 const NAV_KEY = 'rwrent.nav';
-
-function useTheme() {
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try {
-      return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem(THEME_KEY, theme);
-    } catch {
-      /* private mode */
-    }
-  }, [theme]);
-  return [theme, setTheme] as const;
-}
 
 /** The prototype's `nav` state: 'auto' follows the viewport, an explicit choice overrides it. */
 function useNavChoice() {
@@ -167,7 +148,7 @@ function useNavChoice() {
 export function AppShell({ companyName }: { companyName: string }) {
   const { me, can } = useAccess();
   const mode = useRailMode();
-  const [theme, setTheme] = useTheme();
+  const theme = useTheme();
   const [choice, setChoice] = useNavChoice();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
@@ -187,9 +168,15 @@ export function AppShell({ companyName }: { companyName: string }) {
     return undefined;
   };
 
-  const groups = NAV
-    .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || can(i.permission)) }))
-    .filter((g) => g.items.length > 0);
+  /*
+   * The prototype's `navModel()`: an account with no effective permission has no navigation at all
+   * — not even the ungated entries — because every destination behind them is Access pending.
+   */
+  const groups = me && me.permissions.length === 0
+    ? []
+    : NAV
+      .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || can(i.permission)) }))
+      .filter((g) => g.items.length > 0);
 
   const roleLabel = me ? primaryRoleLabel(me.roles) : '';
   const initials = me ? `${me.firstName[0] ?? ''}${me.lastName[0] ?? ''}`.toUpperCase() : '—';
@@ -262,14 +249,12 @@ export function AppShell({ companyName }: { companyName: string }) {
         <button
           type="button"
           className={styles.util}
-          title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          title={themeTip(theme)}
+          aria-label={themeTip(theme)}
+          onClick={toggleTheme}
         >
-          <span data-icon aria-hidden="true" className={styles.utilIcon}>
-            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-          </span>
-          {expanded ? <span className={styles.utilLabel}>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</span> : null}
+          <span data-icon aria-hidden="true" className={styles.utilIcon}>{themeIcon(theme)}</span>
+          {expanded ? <span className={styles.utilLabel}>{themeLabel(theme)}</span> : null}
         </button>
         <button
           type="button"

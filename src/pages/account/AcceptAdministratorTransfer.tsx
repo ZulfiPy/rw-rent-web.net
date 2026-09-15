@@ -1,27 +1,24 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { systemAdministrator } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
-import { Button } from '@/ui/Button';
-import { Field, fieldStyles, invalidProps } from '@/ui/Field';
-import { AccountAlert, AccountLayout, AccountLink, accountStyles as styles } from './AccountLayout';
+import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
+import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
 import { readTokenFromHash, stripHash } from './token';
 
 /**
- * Accepting the System Administrator role. The link's token proves the invitation; the account's
- * own password proves the person. Accepting activates the account and ends the previous
- * administrator's hold on the role, so the page sends them to sign in afterwards.
+ * The prototype's `transfer-accept` screen. The link's token proves the invitation and the
+ * account's own password proves the person; accepting ends the previous administrator's hold on
+ * the role, so the screen sends them to sign in afterwards.
+ *
+ * The prototype's state also carries an email and a new-password field. The endpoint takes the
+ * token and the existing password and nothing else, so neither is shown here.
  */
 export function AcceptAdministratorTransfer() {
-  const [token, setToken] = useState<string | null>(null);
-  const read = useRef(false);
-  useEffect(() => {
-    if (read.current) return;
-    read.current = true;
-    setToken(readTokenFromHash(window.location.hash));
-    stripHash();
-  }, []);
+  // Read before the first paint, so the screen never flashes the unusable state on its way in.
+  const [token] = useState(() => readTokenFromHash(window.location.hash));
+  useEffect(stripHash, []);
 
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
@@ -39,65 +36,41 @@ export function AcceptAdministratorTransfer() {
 
   if (done) {
     return (
-      <AccountLayout
-        title="You are now the System Administrator"
-        documentTitle="Transfer accepted"
-        links={<AccountLink to="/sign-in" label="Go to sign in" />}
-      >
-        <div className={styles.outcome}>
-          <span data-icon aria-hidden="true" className={styles.outcomeIcon} data-tone="ok">admin_panel_settings</span>
-          <p className={styles.outcomeBody}>
-            Sign in to continue. The account that held the role before no longer has it.
-          </p>
-        </div>
-      </AccountLayout>
+      <AuthLayout documentTitle="Transfer accepted">
+        <AuthOutcome outcome={OUTCOMES['transfer-accepted']} />
+      </AuthLayout>
     );
   }
 
   if (!token || isExpiredLink(failure)) {
     return (
-      <AccountLayout
-        title="That link cannot be used"
-        intro="A transfer link is valid once and for a limited time. The administrator who sent it can issue a new one."
-        documentTitle="Administrator transfer"
-        links={<AccountLink to="/sign-in" label="Back to sign in" />}
-      />
+      <AuthLayout documentTitle="Administrator transfer">
+        <AuthOutcome
+          outcome={OUTCOMES['transfer-bad']}
+          {...(failure.code ? { meta: `code: ${failure.code}` } : {})}
+        />
+      </AuthLayout>
     );
   }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!accept.isPending) accept.mutate();
-  };
-
   return (
-    <AccountLayout
-      title="Accept the administrator role"
-      intro="Confirm with your own password. Accepting makes this account the System Administrator."
-      documentTitle="Accept the administrator role"
-      links={<AccountLink to="/sign-in" label="Back to sign in" />}
-    >
-      {failure.message ? <AccountAlert tone="bad">{failure.message}</AccountAlert> : null}
-      <AccountAlert tone="warn">
-        The role belongs to one account at a time. The administrator who sent this link loses it the
-        moment you accept.
-      </AccountAlert>
-      <form className={styles.form} onSubmit={submit} noValidate>
-        <Field label="Your password" required error={failure.fields.password}>
-          <input
-            className={fieldStyles.control}
-            type="password"
-            autoComplete="current-password"
-            autoFocus
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            {...invalidProps(failure.fields.password)}
-          />
-        </Field>
-        <div className={styles.actions}>
-          <Button label="Accept the role" tone="primary" type="submit" busy={accept.isPending} />
-        </div>
-      </form>
-    </AccountLayout>
+    <AuthLayout documentTitle="Accept System Administrator role">
+      <ResetScreen
+        title="Accept System Administrator role"
+        body="You have been named as the next System Administrator. Confirm with your existing account password."
+        {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
+        currentPassword={{
+          label: 'Your existing account password',
+          hint: 'Accepting the transfer requires the password of the account named in the invitation email.',
+          value: password,
+          onChange: setPassword,
+          error: failure.fields['password'],
+        }}
+        hasToken
+        cta="Accept transfer"
+        busy={accept.isPending}
+        onSubmit={() => accept.mutate()}
+      />
+    </AuthLayout>
   );
 }

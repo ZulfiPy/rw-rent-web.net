@@ -2,27 +2,26 @@ import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
-import { Button } from '@/ui/Button';
-import { Field, fieldStyles, invalidProps } from '@/ui/Field';
-import { AccountAlert, AccountLayout, AccountLink, accountStyles as styles } from './AccountLayout';
+import {
+  AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
+  PasswordChecklist, authStyles as styles,
+} from './AuthLayout';
+import { OUTCOMES } from './outcomes';
+import { EMAIL_INVALID, PASSWORD_NOT_MET, emailLooksValid, passwordMeetsRules } from './password';
 import { NO_FAILURE, toAccountFailure, type AccountFailure } from './failure';
-import { ResendConfirmation } from './ResendConfirmation';
 
 /**
- * What the API enforces: twelve characters, an uppercase letter, a digit and a symbol, and the
- * password must not be a commonly used one. Spaces are allowed but do not count as the symbol.
+ * The prototype's `register` screen. It checks the address and the password rules before it sends,
+ * exactly as the prototype does, and answers with the registration-submitted screen whatever the
+ * API knows about the address — the endpoint never says whether one is already registered.
  */
-export const PASSWORD_POLICY =
-  'At least 12 characters with an uppercase letter, a digit and a symbol. Spaces are allowed.';
-
 export function Register() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [mismatch, setMismatch] = useState<string | undefined>(undefined);
+  const [local, setLocal] = useState<{ email?: string; password?: string }>({});
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
   const [submitted, setSubmitted] = useState(false);
 
@@ -42,109 +41,110 @@ export function Register() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (register.isPending) return;
-    if (password !== confirmation) {
-      setMismatch('The two passwords are different.');
-      return;
-    }
-    setMismatch(undefined);
+    const errors: { email?: string; password?: string } = {};
+    if (!emailLooksValid(email.trim())) errors.email = EMAIL_INVALID;
+    if (!passwordMeetsRules(password)) errors.password = PASSWORD_NOT_MET;
+    setLocal(errors);
+    if (errors.email || errors.password) return;
     setFailure(NO_FAILURE);
     register.mutate();
   };
 
   if (submitted) {
     return (
-      <AccountLayout
-        title="Check your email"
-        intro={`If ${email.trim()} can be registered, a confirmation link is on its way. The link is valid for 24 hours.`}
-        documentTitle="Check your email"
-        links={<AccountLink to="/sign-in" label="Back to sign in" />}
-      >
-        <AccountAlert tone="info">
-          Confirming your email does not open the workspace on its own. An administrator activates
-          the account afterwards.
-        </AccountAlert>
-        <ResendConfirmation initialEmail={email.trim()} />
-      </AccountLayout>
+      <AuthLayout documentTitle="Confirm your email">
+        <AuthOutcome outcome={OUTCOMES['register-submitted']} />
+      </AuthLayout>
     );
   }
 
-  return (
-    <AccountLayout
-      title="Create an account"
-      intro="Register with your work details. An administrator reviews the account before it opens."
-      links={<AccountLink to="/sign-in" label="Back to sign in" />}
-    >
-      {failure.message ? <AccountAlert tone="bad">{failure.message}</AccountAlert> : null}
+  const emailError = local.email ?? failure.fields['email'];
+  const passwordError = local.password ?? failure.fields['password'];
 
-      <form className={styles.form} onSubmit={submit} noValidate>
-        <Field label="First name" required error={failure.fields.firstName}>
-          <input
-            className={fieldStyles.control}
-            name="given-name"
-            autoComplete="given-name"
-            autoFocus
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            {...invalidProps(failure.fields.firstName)}
-          />
-        </Field>
-        <Field label="Last name" required error={failure.fields.lastName}>
-          <input
-            className={fieldStyles.control}
-            name="family-name"
-            autoComplete="family-name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            {...invalidProps(failure.fields.lastName)}
-          />
-        </Field>
-        <Field label="Phone number" required error={failure.fields.phoneNumber}>
-          <input
-            className={fieldStyles.control}
-            name="tel"
-            autoComplete="tel"
-            inputMode="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            {...invalidProps(failure.fields.phoneNumber)}
-          />
-        </Field>
-        <Field label="Email" required error={failure.fields.email}>
-          <input
-            className={fieldStyles.control}
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            {...invalidProps(failure.fields.email)}
-          />
-        </Field>
-        <Field label="Password" required hint={PASSWORD_POLICY} error={failure.fields.password}>
-          <input
-            className={fieldStyles.control}
-            type="password"
-            name="new-password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            {...invalidProps(failure.fields.password)}
-          />
-        </Field>
-        <Field label="Repeat the password" required error={mismatch}>
-          <input
-            className={fieldStyles.control}
-            type="password"
-            autoComplete="new-password"
-            value={confirmation}
-            onChange={(e) => setConfirmation(e.target.value)}
-            {...invalidProps(mismatch)}
-          />
-        </Field>
+  return (
+    <AuthLayout documentTitle="Create account">
+      <form className={styles.stack} data-gap="24" onSubmit={submit} noValidate>
+        <AuthHeading
+          title="Create account"
+          body="Registration confirms your email first. An administrator then activates your access."
+        />
+
+        {failure.message ? <AuthAlert>{failure.message}</AuthAlert> : null}
+
+        <div className={styles.fields} data-gap="15">
+          <div className={styles.names}>
+            <AuthField label="First name" required error={failure.fields['firstName']}>
+              <input
+                className={styles.input}
+                autoComplete="given-name"
+                maxLength={100}
+                autoFocus
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                data-invalid={!!failure.fields['firstName']}
+                aria-invalid={failure.fields['firstName'] ? true : undefined}
+              />
+            </AuthField>
+            <AuthField label="Last name" required error={failure.fields['lastName']}>
+              <input
+                className={styles.input}
+                autoComplete="family-name"
+                maxLength={100}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                data-invalid={!!failure.fields['lastName']}
+                aria-invalid={failure.fields['lastName'] ? true : undefined}
+              />
+            </AuthField>
+          </div>
+
+          <AuthField label="Phone number" required error={failure.fields['phoneNumber']}>
+            <input
+              className={styles.input}
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              maxLength={30}
+              placeholder="+371 20 000 000"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              data-invalid={!!failure.fields['phoneNumber']}
+              aria-invalid={failure.fields['phoneNumber'] ? true : undefined}
+            />
+          </AuthField>
+
+          <AuthField label="Email address" required error={emailError}>
+            <input
+              className={styles.input}
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              data-invalid={!!emailError}
+              aria-invalid={emailError ? true : undefined}
+            />
+          </AuthField>
+
+          <AuthField label="Password" required error={passwordError}>
+            <input
+              className={styles.input}
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              data-invalid={!!passwordError}
+              aria-invalid={passwordError ? true : undefined}
+            />
+            <PasswordChecklist value={password} />
+          </AuthField>
+        </div>
+
         <div className={styles.actions}>
-          <Button label="Create account" tone="primary" type="submit" busy={register.isPending} />
+          <AuthSubmit label="Create account" busy={register.isPending} />
+          <AuthSwitch text="Already registered?" label="Sign in" to="/sign-in" />
         </div>
       </form>
-    </AccountLayout>
+    </AuthLayout>
   );
 }

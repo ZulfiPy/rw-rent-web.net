@@ -1,0 +1,27 @@
+/* "Your account" — the prototype's session table widths, the same recipe as the user record's. */
+.colDevice { width: 240px; }
+.colUtc { width: 160px; }
+.colState { width: 130px; }
+.colActions { width: 110px; }
+
+@container (max-width: 1040px) {
+  .colDevice { width: 200px; }
+  .colUtc { width: 148px; }
+  .colState { width: 112px; }
+  .colActions { width: 100px; }
+}
+
+/* The effective-permission list in the access dialog: one permission per line, as stored. */
+.permissions {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
