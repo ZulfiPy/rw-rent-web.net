@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { qk } from '@/api';
-import { listSecurityAudit } from '@/api/securityAudit';
+import { getAuditEntry } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import type { Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
@@ -12,18 +12,14 @@ import { Panel } from '@/ui/Panel';
 import { RecordHeader } from '@/ui/RecordHeader';
 import styles from './AuditEntry.module.css';
 
-/**
- * FOLLOW-UP: swagger has no `GET /api/security-audit/{id}`, so the entry is located in the first
- * page of the unfiltered list. A by-id endpoint would make a deep link exact rather than best-effort.
- */
-const LOOKUP = { PageSize: 100 };
-
 export function AuditEntry() {
   const { entryId = '' } = useParams();
 
+  /** The entry itself. An unknown id and one outside the reader's scope both answer 404. */
   const entries = useQuery({
-    queryKey: qk.audit.list(LOOKUP),
-    queryFn: () => listSecurityAudit(LOOKUP),
+    queryKey: qk.audit.entry(entryId),
+    queryFn: () => getAuditEntry(entryId),
+    enabled: !!entryId,
   });
   const directory = useQuery({
     queryKey: qk.users.list({ PageSize: 100 }),
@@ -31,7 +27,7 @@ export function AuditEntry() {
     staleTime: 60_000,
   });
 
-  const entry = entries.data?.items.find((x) => x.id === entryId);
+  const entry = entries.data;
   const failure = entries.error ? toFailure(entries.error) : null;
 
   const person = (id: Uuid | null | undefined) => directory.data?.items.find((u) => u.id === id);
@@ -52,7 +48,7 @@ export function AuditEntry() {
           body={
             failure && 'message' in failure
               ? failure.message
-              : 'The entry is not in the current audit window. Open it from the list to be certain of the row.'
+              : 'The entry does not exist, or it is outside the history you may read.'
           }
           onRetry={() => void entries.refetch()}
         />

@@ -5,9 +5,12 @@ import { listUsers } from '@/api/users';
 import {
   cancelTransfer, initiateTransfer, listTransfers, resendTransfer,
 } from '@/api/systemAdministrator';
-import { ApplicationUserRole, type SystemAdministratorTransferResponse, type Uuid } from '@/api/dto';
+import {
+  ApplicationUserRole, SystemAdministratorTransferStatus,
+  type SystemAdministratorTransferResponse, type Uuid,
+} from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { formatUtcLabelled } from '@/format';
+import { TRANSFER_STATUS_LABEL, formatUtcLabelled } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useSheetTier } from '@/app/useViewport';
@@ -22,6 +25,7 @@ import { Panel } from '@/ui/Panel';
 import { PageHeader } from '@/ui/PageHeader';
 import { RecordBanner, recordStyles as shell } from '@/ui/RecordTabs';
 import table from '@/ui/table.module.css';
+import { TRANSFER_STATUS_DOT, TRANSFER_STATUS_TONE } from '@/ui/status';
 import styles from './SystemAdministrator.module.css';
 
 type DialogState =
@@ -37,7 +41,9 @@ const TRANSFERS = { PageSize: 100 } as const;
 const INVALIDATE = [['system-administrator'], ['security-audit'], ['users']] as const;
 const REASON_HINT = 'At least 3 characters. Recorded in the audit trail.';
 
-const isOpen = (t: SystemAdministratorTransferResponse) => !t.cancelledAtUtc && !t.acceptedAtUtc;
+/** Only an awaiting transfer can still be resent or cancelled. */
+const isOpen = (t: SystemAdministratorTransferResponse) =>
+  t.status === SystemAdministratorTransferStatus.AwaitingAcceptance;
 
 function PasswordField({ value, error, onChange }: {
   value: string;
@@ -217,13 +223,18 @@ export function SystemAdministrator() {
     ? `${admin.firstName} ${admin.lastName}`
     : me ? `${me.firstName} ${me.lastName}` : '—';
   const adminEmail = admin?.email ?? me?.email ?? '—';
-  const person = (id: Uuid) => people.find((u) => u.id === id) ?? null;
-
-  const state = (t: SystemAdministratorTransferResponse) => (t.acceptedAtUtc
-    ? { label: 'Accepted', tone: 'ok' as const, dot: '50%' }
-    : t.cancelledAtUtc
-      ? { label: 'Cancelled', tone: 'mute' as const, dot: '2px' }
-      : { label: 'Awaiting acceptance', tone: 'warn' as const, dot: '2px' });
+  /**
+   * The state is the server's: awaiting, accepted, cancelled, and the expired one the client-side
+   * derivation could not show. The row also names its own target, so the directory is only read for
+   * the account currently holding the role.
+   */
+  const state = (t: SystemAdministratorTransferResponse) => ({
+    label: TRANSFER_STATUS_LABEL[t.status],
+    tone: TRANSFER_STATUS_TONE[t.status],
+    dot: TRANSFER_STATUS_DOT[t.status],
+  });
+  const targetName = (t: SystemAdministratorTransferResponse) =>
+    `${t.targetFirstName} ${t.targetLastName}`;
 
   return (
     <div className={shell.page}>
@@ -278,15 +289,12 @@ export function SystemAdministrator() {
         ) : sheet ? (
           <div className={styles.blocks}>
             {rows.map((t) => {
-              const target = person(t.targetUserId);
               const s = state(t);
               return (
                 <div key={t.id} className={styles.block}>
                   <div className={styles.blockHeading}>
-                    <span className={styles.blockTitle}>
-                      {target ? `${target.firstName} ${target.lastName}` : 'Unknown account'}
-                    </span>
-                    {target?.email ? <span className={styles.blockSub}>{target.email}</span> : null}
+                    <span className={styles.blockTitle}>{targetName(t)}</span>
+                    <span className={styles.blockSub}>{t.targetEmail}</span>
                   </div>
                   <div className={styles.blockFacts}>
                     <div className={styles.blockFact}>
@@ -336,16 +344,13 @@ export function SystemAdministrator() {
               </thead>
               <tbody>
                 {rows.map((t) => {
-                  const target = person(t.targetUserId);
                   const s = state(t);
                   return (
                     <tr key={t.id} className={table.row}>
                       <td className={`${table.td} ${table.wrap}`}>
                         <span className={table.stack}>
-                          <span className={table.name}>
-                            {target ? `${target.firstName} ${target.lastName}` : 'Unknown account'}
-                          </span>
-                          <span className={table.sub}>{target?.email ?? ''}</span>
+                          <span className={table.name}>{targetName(t)}</span>
+                          <span className={table.sub}>{t.targetEmail}</span>
                         </span>
                       </td>
                       {/* Both instants read alike: Geist Mono 12.5px/400 in --fg-3, matching the

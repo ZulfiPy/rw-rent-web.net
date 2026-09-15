@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
-import { listAuthorizations } from '@/api/authorizations';
 import { listCustomers } from '@/api/customers';
-import { listDrivers } from '@/api/drivers';
-import { listInterruptions } from '@/api/interruptions';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import {
-  AssignmentDriverAuthorizationType, AssignmentStatus, SortDirection,
-  type RentalAssignmentsQuery,
+  AssignmentStatus, SortDirection,
+  type RentalAssignmentListItemResponse, type RentalAssignmentsQuery,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
@@ -162,11 +159,10 @@ export function Assignments() {
   const rows = page?.items ?? [];
 
   /*
-   * The list projection carries the plate and the customer's display name and nothing else the
-   * prototype's row shows. The three directories below name the vehicle model, the customer type and
-   * the driver surnames; the two fan-outs read each row's open authorizations and open interruptions,
-   * the way the Overview's open-work queue does. Every source is gated on its own permission, so a
-   * persona reads exactly the columns its role allows and the rest stay blank.
+   * Every column of the row comes from the row: the vehicle's make and model, the customer's type,
+   * the open coverage and the count of open interruptions are all in the list projection. One
+   * request serves the page; nothing is read per row. The two directory reads below fill the
+   * customer and vehicle filter menus, not the rows, and each is gated on its own permission.
    */
   const customerList = useQuery({
     queryKey: qk.customers.list(DIRECTORY),
@@ -180,52 +176,17 @@ export function Assignments() {
     enabled: can('Vehicles.Read'),
     staleTime: 60_000,
   });
-  const driverList = useQuery({
-    queryKey: qk.drivers.list(DIRECTORY),
-    queryFn: () => listDrivers(DIRECTORY),
-    enabled: can('Drivers.Read'),
-    staleTime: 60_000,
-  });
 
-  const mayReadAuths = can('DriverAuthorizations.Read');
-  const mayReadInterruptions = can('Interruptions.Read');
-
-  const authorizations = useQueries({
-    queries: (mayReadAuths ? rows : []).map((a) => ({
-      queryKey: qk.assignments.authorizations(a.id, { IsOpen: true }),
-      queryFn: () => listAuthorizations(a.id, { IsOpen: true }),
-      staleTime: 30_000,
-    })),
-  });
-  const interruptions = useQueries({
-    queries: (mayReadInterruptions ? rows : []).map((a) => ({
-      queryKey: qk.assignments.interruptions(a.id, { IsOpen: true }),
-      queryFn: () => listInterruptions(a.id, { IsOpen: true }),
-      staleTime: 30_000,
-    })),
-  });
-
-  const models = new Map((vehicleList.data?.items ?? []).map((v) => [v.id, `${v.make} ${v.model}`]));
-  const types = new Map((customerList.data?.items ?? []).map((c) => [c.id, CUSTOMER_TYPE_LABEL[c.type]]));
-  const surnames = new Map((driverList.data?.items ?? []).map((d) => [d.id, d.lastName]));
+  const model = (a: RentalAssignmentListItemResponse) => `${a.vehicleMake} ${a.vehicleModel}`;
 
   /** The prototype's coverage line: the open authorizations, named by surname, or none at all. */
-  const coverage = (index: number) => {
-    // Without DriverAuthorizations.Read the column is not readable at all, so it says so with a dash
-    // rather than claiming the assignment has no authorized driver.
-    if (!mayReadAuths) return { text: '—', none: true };
-    const open = authorizations[index]?.data;
-    if (!open) return null;
-    if (open.items.length === 0) return { text: 'None authorized', none: true };
-    const names = open.items.map((z) => (
-      z.authorizationType === AssignmentDriverAuthorizationType.BusinessCustomerDrivers
-        ? 'Company-authorized drivers'
-        : surnames.get(z.driverId ?? '') ?? 'Named driver'
-    ));
-    return { text: names.join(', '), none: false };
+  const coverage = (a: RentalAssignmentListItemResponse) => {
+    if (a.hasOpenCollectiveAuthorization) return { text: 'Company-authorized drivers', none: false };
+    if (a.openNamedDrivers.length > 0) {
+      return { text: a.openNamedDrivers.map((d) => d.lastName).join(', '), none: false };
+    }
+    return { text: 'None authorized', none: true };
   };
-
-  const openInterruptions = (index: number) => interruptions[index]?.data?.totalCount ?? 0;
 
   const failure = assignments.error ? toFailure(assignments.error) : null;
 
@@ -339,8 +300,8 @@ export function Assignments() {
           />
         ) : phone ? (
           <div className={cards.cards}>
-            {rows.map((a, i) => {
-              const model = models.get(a.vehicleId) ?? '';
+            {rows.map((a) => {
+              const vehicleModel = model(a);
               return (
                 <div key={a.id} className={cards.card}>
                   <div className={cards.head}>
@@ -352,7 +313,7 @@ export function Assignments() {
                         >
                           {a.vehiclePlateNumber}
                         </Link>
-                        {model ? <span className={styles.cardModel}>{model}</span> : null}
+                        {vehicleModel.trim() ? <span className={styles.cardModel}>{vehicleModel}</span> : null}
                       </span>
                       <span className={cards.sub}>{a.customerDisplayName}</span>
                     </span>
@@ -362,7 +323,7 @@ export function Assignments() {
                       </Chip>
                       {/* The prototype's companion chip: an open interruption sits beside the status,
                           in the warn tone with the cut-corner dot, and never replaces it. */}
-                      {openInterruptions(i) ? (
+                      {a.openInterruptionCount > 0 ? (
                         <Chip tone="warn" dot="50% 50% 50% 0">Interrupted</Chip>
                       ) : null}
                     </span>
@@ -416,23 +377,23 @@ export function Assignments() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((a, i) => {
+                {rows.map((a) => {
                   const starts = when(a.startedAtUtc ?? a.plannedStartAtUtc);
                   const ends = when(a.closedAtUtc ?? a.plannedEndAtUtc);
-                  const cover = coverage(i);
-                  const open = openInterruptions(i);
+                  const cover = coverage(a);
+                  const open = a.openInterruptionCount;
                   return (
                     <tr key={a.id} {...rowNav(`/rental-assignments/${a.id}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
                           <span className={table.plate}>{a.vehiclePlateNumber}</span>
-                          <span className={table.sub}>{models.get(a.vehicleId) ?? ''}</span>
+                          <span className={table.sub}>{model(a)}</span>
                         </span>
                       </td>
                       <td className={table.td}>
                         <span className={table.stack}>
                           <span className={table.wrap}>{a.customerDisplayName}</span>
-                          <span className={table.sub}>{types.get(a.customerId) ?? ''}</span>
+                          <span className={table.sub}>{CUSTOMER_TYPE_LABEL[a.customerType]}</span>
                         </span>
                       </td>
                       <td className={table.td}>
@@ -456,7 +417,7 @@ export function Assignments() {
                       </td>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          <span className={cover?.none ? table.dim : undefined}>{cover?.text ?? ''}</span>
+                          <span className={cover.none ? table.dim : undefined}>{cover.text}</span>
                           {open ? (
                             <span className={table.sub}>
                               {`${open} open interruption${open === 1 ? '' : 's'}`}

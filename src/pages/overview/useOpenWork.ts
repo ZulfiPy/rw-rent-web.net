@@ -1,13 +1,9 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/api';
-import { listAuthorizations } from '@/api/authorizations';
-import { listInterruptions } from '@/api/interruptions';
+import { listCompanyInterruptions } from '@/api/interruptions';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listUsers } from '@/api/users';
-import {
-  ApplicationUserStatus, AssignmentStatus,
-  type AssignmentInterruptionResponse, type RentalAssignmentListItemResponse,
-} from '@/api/dto';
+import { ApplicationUserStatus, AssignmentStatus } from '@/api/dto';
 import { BILLING_IMPACT_LABEL, INTERRUPTION_REASON_LABEL, relative } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Tone } from '@/ui/status';
@@ -25,13 +21,13 @@ export interface QueueItem {
 const PAGE = { PageSize: 100 } as const;
 const THREE_DAYS = 3 * 24 * 3_600_000;
 
+const OPEN_INTERRUPTIONS = { PageSize: 100, IsOpen: true } as const;
+
 /**
  * The open queue, assembled from the lists the persona may read. Every part is permission-gated on
- * its own, so a Viewer sees the registrations they can act on and nothing they cannot.
- *
- * FOLLOW-UP: interruptions and authorizations are assignment-scoped in swagger, so an open-work view
- * fans out one request per open assignment. A company-wide `GET /api/interruptions?IsOpen=true`
- * would collapse the fan-out to a single call — the same shape of gap as the Registrations queue.
+ * its own, so a Viewer sees the registrations they can act on and nothing they cannot. Four list
+ * requests, none of them per row: the open interruptions come from the company-wide read and a
+ * planned handover's coverage from the planned list's own openAuthorizationCount.
  */
 export function useOpenWork() {
   const { can } = useAccess();
@@ -44,40 +40,21 @@ export function useOpenWork() {
     enabled: mayReview,
   });
 
-  const active = useQuery({
-    queryKey: qk.assignments.list({ ...PAGE, Status: AssignmentStatus.Active }),
-    queryFn: () => listAssignments({ ...PAGE, Status: AssignmentStatus.Active }),
-    enabled: mayReadAssignments,
-  });
-
   const planned = useQuery({
     queryKey: qk.assignments.list({ ...PAGE, Status: AssignmentStatus.Planned }),
     queryFn: () => listAssignments({ ...PAGE, Status: AssignmentStatus.Planned }),
     enabled: mayReadAssignments,
   });
 
-  const activeRows = active.data?.items ?? [];
+  const interruptions = useQuery({
+    queryKey: qk.interruptions.list(OPEN_INTERRUPTIONS),
+    queryFn: () => listCompanyInterruptions(OPEN_INTERRUPTIONS),
+    enabled: can('Interruptions.Read'),
+  });
+
   const plannedRows = planned.data?.items ?? [];
-
-  const interruptions = useQueries({
-    queries: (can('Interruptions.Read') ? activeRows : []).map((a) => ({
-      queryKey: qk.assignments.interruptions(a.id, { IsOpen: true }),
-      queryFn: () => listInterruptions(a.id, { IsOpen: true }),
-    })),
-  });
-
-  /** A planned handover with no open authorization has no one cleared to drive it. */
-  const cover = useQueries({
-    queries: (can('DriverAuthorizations.Read') ? plannedRows : []).map((a) => ({
-      queryKey: qk.assignments.authorizations(a.id, { IsOpen: true }),
-      queryFn: () => listAuthorizations(a.id, { IsOpen: true }),
-    })),
-  });
-
-  const openInterruptions = interruptions.reduce(
-    (sum, r) => sum + (r.data?.totalCount ?? 0),
-    0,
-  );
+  const openInterruptionRows = interruptions.data?.items ?? [];
+  const openInterruptions = interruptions.data?.totalCount ?? 0;
 
   const items: QueueItem[] = [];
 
@@ -106,28 +83,23 @@ export function useOpenWork() {
     });
   }
 
-  const openRows: Array<{ a: RentalAssignmentListItemResponse; int: AssignmentInterruptionResponse }> = [];
-  activeRows.forEach((a: RentalAssignmentListItemResponse, i) => {
-    for (const int of interruptions[i]?.data?.items ?? []) openRows.push({ a, int });
-  });
-  openRows
-    .sort((x, y) => (x.int.startedAtUtc < y.int.startedAtUtc ? -1 : x.int.startedAtUtc > y.int.startedAtUtc ? 1 : 0))
-    .forEach(({ a, int }) => {
-      items.push({
-        id: `int-${int.id}`,
-        icon: 'pause_circle',
-        tone: 'bad',
-        title: `Open interruption — ${INTERRUPTION_REASON_LABEL[int.reason]}`,
-        sub: `${a.vehiclePlateNumber} · ${a.customerDisplayName} · ${BILLING_IMPACT_LABEL[int.billingImpact]}`,
-        when: relative(int.startedAtUtc),
-        to: `/rental-assignments/${a.id}?tab=interruptions`,
-      });
+  // Served oldest open first; the row carries its own vehicle and customer.
+  for (const int of openInterruptionRows) {
+    items.push({
+      id: `int-${int.id}`,
+      icon: 'pause_circle',
+      tone: 'bad',
+      title: `Open interruption — ${INTERRUPTION_REASON_LABEL[int.reason]}`,
+      sub: `${int.vehiclePlateNumber} · ${int.customerDisplayName} · ${BILLING_IMPACT_LABEL[int.billingImpact]}`,
+      when: relative(int.startedAtUtc),
+      to: `/rental-assignments/${int.rentalAssignmentId}?tab=interruptions`,
     });
+  }
 
-  plannedRows.forEach((a, i) => {
+  plannedRows.forEach((a) => {
     const start = a.plannedStartAtUtc;
     if (!start || new Date(start).getTime() > Date.now() + THREE_DAYS) return;
-    const covered = (cover[i]?.data?.totalCount ?? 0) > 0;
+    const covered = a.openAuthorizationCount > 0;
     items.push({
       id: `plan-${a.id}`,
       icon: 'event_upcoming',
@@ -142,9 +114,7 @@ export function useOpenWork() {
   // The prototype's queueModel caps the queue at seven rows; both surfaces show the same list.
   const capped = items.slice(0, 7);
 
-  const isPending =
-    (mayReview && registrations.isPending) ||
-    (mayReadAssignments && (active.isPending || planned.isPending));
+  const isPending = (mayReview && registrations.isPending) || (mayReadAssignments && planned.isPending);
 
   return {
     items: capped,
@@ -153,8 +123,5 @@ export function useOpenWork() {
     mayReadInterruptions: can('Interruptions.Read'),
     /** The sidebar's Registrations badge: confirmed registrations waiting for a decision. */
     pendingRegistrations: (registrations.data?.items ?? []).filter((u) => u.emailConfirmed).length,
-    /** Denominators the Overview's metric cards show next to their counts. */
-    activeAssignments: activeRows.length,
-    plannedAssignments: plannedRows.length,
   };
 }

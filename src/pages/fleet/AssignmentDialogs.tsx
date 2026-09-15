@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/api';
 import { listCustomers } from '@/api/customers';
-import { getDriver, listDrivers } from '@/api/drivers';
+import { listDrivers } from '@/api/drivers';
 import { listVehicles } from '@/api/vehicles';
 import {
   activateAssignment, cancelAssignment, correctAssignmentParties, correctAssignmentTimeline,
@@ -97,16 +97,17 @@ function DateTimeField({ label, value, error, hint, required, optional, onChange
 }
 
 /**
- * A driver list item carries no licence, so the chosen driver's own record supplies it. Every driver
- * select names the driver in its options and puts the licence in the helper slot once one is chosen.
+ * The driver list carries the licence, so the picker names the driver in its options and puts that
+ * driver's licence in the helper slot once one is chosen. No record is read per selection.
  */
 function useDriverLicence(driverId: string) {
   const q = useQuery({
-    queryKey: qk.drivers.detail(driverId),
-    queryFn: () => getDriver(driverId),
+    queryKey: qk.drivers.list({ ...PICK, IsActive: true }),
+    queryFn: () => listDrivers({ ...PICK, IsActive: true }),
     enabled: !!driverId,
+    staleTime: 60_000,
   });
-  return driverId && q.data ? q.data.driverLicenseNumber : null;
+  return q.data?.items.find((d) => d.id === driverId)?.driverLicenseNumber ?? null;
 }
 
 function EnumSelect<T extends number>({ label, value, options, labels, error, required, onChange }: {
@@ -365,10 +366,16 @@ function Cancel({ assignment: a, onClose }: Common) {
       <Field
         label={wasPlanned ? 'Cancellation note' : 'What happened'}
         hint={wasPlanned ? 'Kept with the record as a separate value.' : 'Required: the correction records why the activation was wrong.'}
-        error={m.fields['note']}
+        error={m.fields['cancellationNote']}
         required
       >
-        <textarea className={f.control} data-invalid={!!m.fields['note']} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea
+          className={f.control}
+          data-invalid={!!m.fields['cancellationNote']}
+          rows={3}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
       </Field>
       {wasPlanned ? null : (
         <DialogNote icon="warning">

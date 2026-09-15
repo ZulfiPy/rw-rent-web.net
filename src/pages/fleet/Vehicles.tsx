@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
-import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import {
-  AssignmentStatus, BodyType, FuelType, GearboxType,
+  BodyType, FuelType, GearboxType, VehicleAvailability,
   type VehicleListItemResponse, type VehiclesQuery,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { BODY_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL, formatLocal } from '@/format';
+import {
+  BODY_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL, VEHICLE_AVAILABILITY_LABEL, formatLocal,
+} from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
@@ -20,7 +21,7 @@ import {
 } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
-import type { Tone } from '@/ui/status';
+import { VEHICLE_AVAILABILITY_DOT, VEHICLE_AVAILABILITY_TONE, type Tone } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
@@ -59,6 +60,20 @@ const ACTIVE_OPTIONS: FilterOption[] = [
 ];
 
 interface Availability { label: string; tone: Tone; dot: string; sub: string | null }
+
+/**
+ * The line under the chip: who holds the vehicle now, or who it is reserved for and from when.
+ * Retired says so; available has nothing to add.
+ */
+function availabilitySub(v: VehicleListItemResponse): string | null {
+  if (v.availability === VehicleAvailability.Retired) return 'Not in the fleet';
+  if (v.availability === VehicleAvailability.InUse) return v.currentCustomerDisplayName ?? null;
+  if (v.availability === VehicleAvailability.Reserved) {
+    const who = v.upcomingCustomerDisplayName ?? 'Reserved';
+    return v.upcomingPlannedStartAtUtc ? `${who} · from ${formatLocal(v.upcomingPlannedStartAtUtc)}` : who;
+  }
+  return null;
+}
 
 export function Vehicles() {
   const [params, setParams] = useSearchParams();
@@ -109,40 +124,15 @@ export function Vehicles() {
   });
 
   /**
-   * FOLLOW-UP: swagger has no availability field. A vehicle is In use when an active assignment
-   * holds it, Reserved when the next planned one does (the mock's upcoming* projection), otherwise
-   * Available — so the list reads the open assignments rather than inventing a status.
+   * Availability is decided by the server (VEHICLE-009) and read from the row, together with the
+   * customer holding the vehicle now and the one it is reserved for. No assignment read here.
    */
-  const mayReadAssignments = can('RentalAssignments.Read');
-  const open = useQuery({
-    queryKey: qk.assignments.list({ PageSize: 100, Status: AssignmentStatus.Active }),
-    queryFn: () => listAssignments({ PageSize: 100, Status: AssignmentStatus.Active }),
-    enabled: mayReadAssignments,
-    staleTime: 30_000,
+  const availability = (v: VehicleListItemResponse): Availability => ({
+    label: VEHICLE_AVAILABILITY_LABEL[v.availability],
+    tone: VEHICLE_AVAILABILITY_TONE[v.availability],
+    dot: VEHICLE_AVAILABILITY_DOT[v.availability],
+    sub: availabilitySub(v),
   });
-
-  const inUse = new Map<string, string>();
-  for (const a of open.data?.items ?? []) inUse.set(a.vehicleId, a.customerDisplayName);
-
-  const availability = (v: VehicleListItemResponse): Availability => {
-    if (!v.isActive) return { label: 'Retired', tone: 'mute', dot: '1px', sub: 'Not in the fleet' };
-    const holder = inUse.get(v.id);
-    if (holder) return { label: 'In use', tone: 'info', dot: '50%', sub: holder };
-    if (v.upcomingPlannedStartAtUtc) {
-      return {
-        label: 'Reserved',
-        tone: 'warn',
-        dot: '2px',
-        sub: `${v.upcomingCustomerDisplayName ?? 'Reserved'} · from ${formatLocal(v.upcomingPlannedStartAtUtc)}`,
-      };
-    }
-    return {
-      label: mayReadAssignments ? 'Available' : 'In the fleet',
-      tone: 'ok',
-      dot: '50%',
-      sub: null,
-    };
-  };
 
   const page = vehicles.data;
   const failure = vehicles.error ? toFailure(vehicles.error) : null;

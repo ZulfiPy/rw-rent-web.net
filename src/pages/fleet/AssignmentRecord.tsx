@@ -1,15 +1,13 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useState, type ReactNode } from 'react';
 import { qk } from '@/api';
 import { getAssignment } from '@/api/rentalAssignments';
-import { getCustomer } from '@/api/customers';
-import { getVehicle } from '@/api/vehicles';
-import { getDriver, listDrivers } from '@/api/drivers';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import {
-  AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType, type Uuid,
+  AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType,
+  type AssignmentDriverAuthorizationResponse, type Uuid,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
@@ -63,47 +61,22 @@ export function AssignmentRecord() {
   });
   const a = record.data;
 
-  const customer = useQuery({
-    queryKey: qk.customers.detail(a?.customerId ?? ''),
-    queryFn: () => getCustomer(a?.customerId ?? ''),
-    enabled: !!a?.customerId && can('Customers.Read'),
-  });
-  const vehicle = useQuery({
-    queryKey: qk.vehicles.detail(a?.vehicleId ?? ''),
-    queryFn: () => getVehicle(a?.vehicleId ?? ''),
-    enabled: !!a?.vehicleId && can('Vehicles.Read'),
-  });
-  const drivers = useQuery({
-    queryKey: qk.drivers.list(PICK),
-    queryFn: () => listDrivers(PICK),
-    enabled: can('Drivers.Read'),
-    staleTime: 60_000,
-  });
-
-  /** The list projection carries no licence number, so each named driver's own record supplies it. */
-  const namedDriverIds = [...new Set(
-    (record.data?.driverAuthorizations ?? [])
-      .filter((z) => z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver && z.driverId)
-      .map((z) => z.driverId as Uuid),
-  )];
-  const driverRecords = useQueries({
-    queries: namedDriverIds.map((id) => ({
-      queryKey: qk.drivers.detail(id),
-      queryFn: () => getDriver(id),
-      enabled: can('Drivers.Read'),
-      staleTime: 60_000,
-    })),
-  });
+  /*
+   * One request for the record. The customer's type, the vehicle's make, model and VIN, the
+   * customer's own driver link and each authorization's driver name and licence are all in the
+   * detail projection, so nothing here is read per party or per row.
+   */
 
   const canCorrect = can('PrivilegedCorrections.Execute');
   const canManage = can('RentalAssignments.Manage');
   const canAuth = can('DriverAuthorizations.Manage');
   const canInt = can('Interruptions.Manage');
 
-  /** FOLLOW-UP: the audit list has no EntityId filter, so this page's history is filtered here. */
+  /** The assignment's own entries and those of its authorizations and interruptions, server-side. */
+  const auditQuery = { RentalAssignmentId: assignmentId, PageSize: 100 };
   const audit = useQuery({
-    queryKey: qk.audit.list(PICK),
-    queryFn: () => listSecurityAudit(PICK),
+    queryKey: qk.audit.list(auditQuery),
+    queryFn: () => listSecurityAudit(auditQuery),
     enabled: canCorrect,
   });
   const actors = useQuery({
@@ -137,14 +110,11 @@ export function AssignmentRecord() {
   const planned = a?.status === AssignmentStatus.Planned;
   const active = a?.status === AssignmentStatus.Active;
   const historic = a?.status === AssignmentStatus.Ended || a?.status === AssignmentStatus.Cancelled;
-  const business = customer.data?.type === CustomerType.Business;
+  const business = a?.customerType === CustomerType.Business;
 
-  const driverName = (id: Uuid | null | undefined) => {
-    const d = drivers.data?.items.find((x) => x.id === id);
-    return d ? `${d.firstName} ${d.lastName}` : null;
-  };
-  const driverLicence = (id: Uuid | null | undefined) =>
-    driverRecords.find((q) => q.data?.id === id)?.data?.driverLicenseNumber ?? null;
+  /** The authorization carries its driver's identity; null on a collective one. */
+  const driverName = (z: AssignmentDriverAuthorizationResponse) =>
+    z.driverFirstName && z.driverLastName ? `${z.driverFirstName} ${z.driverLastName}` : null;
   const actorName = (id: Uuid | null | undefined) => {
     const u = actors.data?.items.find((x) => x.id === id);
     return u ? `${u.firstName} ${u.lastName}` : 'System';
@@ -165,11 +135,7 @@ export function AssignmentRecord() {
     setParams(merged, { replace: true });
   };
 
-  const history = (audit.data?.items ?? []).filter(
-    (x) => x.entityId === a?.id
-      || auths.some((z) => z.id === x.entityId)
-      || ints.some((i) => i.id === x.entityId),
-  );
+  const history = audit.data?.items ?? [];
 
   return (
     <div className={shell.page}>
@@ -215,10 +181,7 @@ export function AssignmentRecord() {
         ) : undefined}
       >
         <HeaderFact label="Plate number" value={a?.vehiclePlateNumber ?? '—'} mono />
-        <HeaderFact
-          label="Vehicle"
-          value={vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : '—'}
-        />
+        <HeaderFact label="Vehicle" value={a ? `${a.vehicleMake} ${a.vehicleModel}` : '—'} />
         <HeaderFact label="Customer" value={a?.customerDisplayName ?? '—'} />
         <HeaderFact label="Open authorizations" value={String(openAuths.length)} mono />
         <HeaderFact label="Open interruptions" value={String(openInts.length)} mono />
@@ -250,17 +213,17 @@ export function AssignmentRecord() {
               <Fact
                 label="Customer"
                 to={a ? `/customers/${a.customerId}` : undefined}
-                sub={customer.data ? CUSTOMER_TYPE_LABEL[customer.data.type] : null}
+                sub={a ? CUSTOMER_TYPE_LABEL[a.customerType] : null}
               >
                 {a?.customerDisplayName ?? '—'}
               </Fact>
               <Fact label="Vehicle">
-                {vehicle.data ? `${vehicle.data.make} ${vehicle.data.model}` : '—'}
+                {a ? `${a.vehicleMake} ${a.vehicleModel}` : '—'}
               </Fact>
               <Fact label="Plate number" mono to={a ? `/vehicles/${a.vehicleId}` : undefined}>
                 {a?.vehiclePlateNumber ?? '—'}
               </Fact>
-              <Fact label="VIN" mono dim>{vehicle.data?.vinCode ?? '—'}</Fact>
+              <Fact label="VIN" mono dim>{a?.vehicleVinCode ?? '—'}</Fact>
             </FactGrid>
           </Panel>
 
@@ -304,6 +267,9 @@ export function AssignmentRecord() {
               <Fact label="Assignment note" span="full">
                 {a?.note ?? '—'}
               </Fact>
+              <Fact label="Cancellation note" span="full">
+                {a?.cancellationNote ?? '—'}
+              </Fact>
             </FactGrid>
           </Panel>
         </>
@@ -333,7 +299,7 @@ export function AssignmentRecord() {
             <div className={cards.cards}>
               {auths.map((z) => {
                 const named = z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver;
-                const licence = named ? driverLicence(z.driverId) : null;
+                const licence = z.driverLicenseNumber ?? null;
                 const stoppable = canAuth && !z.stoppedAtUtc;
                 return (
                   <div key={z.id} className={cards.card}>
@@ -341,7 +307,7 @@ export function AssignmentRecord() {
                       <span className={cards.heading}>
                         {named && z.driverId ? (
                           <Link to={`/drivers/${z.driverId}`} className={`${cards.title} ${cards.cardTitleLink}`}>
-                            {driverName(z.driverId) ?? 'Named driver'}
+                            {driverName(z) ?? 'Named driver'}
                           </Link>
                         ) : (
                           <span className={cards.title}>
@@ -402,7 +368,7 @@ export function AssignmentRecord() {
                 <tbody>
                   {auths.map((z) => {
                     const named = z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver;
-                    const licence = named ? driverLicence(z.driverId) : null;
+                    const licence = z.driverLicenseNumber ?? null;
                     return (
                       <tr key={z.id} className={table.row}>
                         <td className={table.td}>
@@ -414,7 +380,7 @@ export function AssignmentRecord() {
                           <span className={table.stack}>
                             {named && z.driverId ? (
                               <Link to={`/drivers/${z.driverId}`} className={`${table.name} ${table.nameLink}`}>
-                                {driverName(z.driverId) ?? 'Named driver'}
+                                {driverName(z) ?? 'Named driver'}
                               </Link>
                             ) : (
                               <span className={table.name}>
@@ -672,7 +638,7 @@ export function AssignmentRecord() {
         <AssignmentDialogs
           state={dialog}
           assignment={a}
-          customerType={customer.data?.type ?? null}
+          customerType={a.customerType}
           onClose={() => setDialog(null)}
         />
       ) : null}

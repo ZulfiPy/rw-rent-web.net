@@ -1,17 +1,14 @@
 import { useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { qk } from '@/api';
-import { listAuthorizations } from '@/api/authorizations';
 import { listCustomers } from '@/api/customers';
-import { getDriver } from '@/api/drivers';
-import { listAssignments } from '@/api/rentalAssignments';
+import { getDriver, listDriverAuthorizations } from '@/api/drivers';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
-import { listVehicles } from '@/api/vehicles';
 import {
-  AssignmentDriverAuthorizationType, AssignmentStatus,
-  type AssignmentDriverAuthorizationResponse, type RentalAssignmentListItemResponse, type Uuid,
+  AssignmentStatus,
+  type DriverAuthorizationHistoryItemResponse, type Uuid,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
@@ -35,6 +32,8 @@ import { FleetDialogs, type Blocker, type FleetDialogState } from './FleetDialog
 import styles from './FleetRecord.module.css';
 
 const PICK = { PageSize: 100 } as const;
+/** One page holds a driver's whole authorization history in this dataset. */
+const HISTORY = { PageSize: 100 } as const;
 const cmp = (x: string, y: string) => (x < y ? -1 : x > y ? 1 : 0);
 
 export function DriverRecord() {
@@ -55,22 +54,14 @@ export function DriverRecord() {
   const mayReadAuths = can('DriverAuthorizations.Read');
   const mayReadAudit = can('SecurityAudit.ReadCompany');
 
-  const assignments = useQuery({
-    queryKey: qk.assignments.list(PICK),
-    queryFn: () => listAssignments(PICK),
-    enabled: can('RentalAssignments.Read'),
-  });
-  const rows = assignments.data?.items ?? [];
-
   /**
-   * FOLLOW-UP: authorizations are assignment-scoped in swagger, so a driver's own history fans out
-   * one request per assignment. A company-wide `GET /api/authorizations?DriverId=` would collapse it.
+   * The driver's own authorization history: one request, newest first, each row carrying the
+   * assignment's status and its vehicle and customer. Nothing is read per assignment.
    */
-  const perAssignment = useQueries({
-    queries: (mayReadAuths ? rows : []).map((a) => ({
-      queryKey: qk.assignments.authorizations(a.id, { DriverId: driverId }),
-      queryFn: () => listAuthorizations(a.id, { DriverId: driverId }),
-    })),
+  const authorizations = useQuery({
+    queryKey: qk.drivers.authorizations(driverId, HISTORY),
+    queryFn: () => listDriverAuthorizations(driverId, HISTORY),
+    enabled: !!driverId && mayReadAuths,
   });
 
   const customers = useQuery({
@@ -79,15 +70,11 @@ export function DriverRecord() {
     enabled: can('Customers.Read'),
     staleTime: 60_000,
   });
-  const vehicles = useQuery({
-    queryKey: qk.vehicles.list(PICK),
-    queryFn: () => listVehicles(PICK),
-    enabled: can('Vehicles.Read'),
-    staleTime: 60_000,
-  });
+  /** This record's own entries, filtered on the server by entity type and identifier. */
+  const auditQuery = { EntityType: 'Driver', EntityId: driverId, PageSize: 100 };
   const audit = useQuery({
-    queryKey: qk.audit.list(PICK),
-    queryFn: () => listSecurityAudit(PICK),
+    queryKey: qk.audit.list(auditQuery),
+    queryFn: () => listSecurityAudit(auditQuery),
     enabled: mayReadAudit,
   });
   const actors = useQuery({
@@ -119,20 +106,9 @@ export function DriverRecord() {
      to a customer" in between — that state is only for a loaded list holding no link. */
   const linked = customers.data?.items.find((c) => c.driverId === driverId) ?? null;
   const linkPending = !customers.data;
-  const assignmentOf = (id: Uuid) => rows.find((a) => a.id === id) ?? null;
-  const vehicleOf = (id: Uuid) => vehicles.data?.items.find((v) => v.id === id) ?? null;
-  const customerTypeOf = (id: Uuid) => {
-    const c = customers.data?.items.find((x) => x.id === id);
-    return c ? CUSTOMER_TYPE_LABEL[c.type] : null;
-  };
 
   /** One row per authorization period, open first, then by the most recent boundary. */
-  const periods: AssignmentDriverAuthorizationResponse[] = [];
-  perAssignment.forEach((q) => {
-    for (const z of q.data?.items ?? []) {
-      if (z.authorizationType === AssignmentDriverAuthorizationType.NamedDriver) periods.push(z);
-    }
-  });
+  const periods = [...(authorizations.data?.items ?? [])];
   periods.sort((x, y) =>
     (x.stoppedAtUtc ? 1 : 0) - (y.stoppedAtUtc ? 1 : 0)
     || cmp(y.stoppedAtUtc ?? y.authorizedFromUtc ?? '', x.stoppedAtUtc ?? x.authorizedFromUtc ?? '')
@@ -140,11 +116,11 @@ export function DriverRecord() {
 
   /** An open named-driver authorization on an active assignment blocks deactivation. */
   const blockers: Blocker[] = periods
-    .filter((z) => !z.stoppedAtUtc)
-    .map((z) => ({ z, a: assignmentOf(z.rentalAssignmentId) }))
-    .filter((x): x is { z: AssignmentDriverAuthorizationResponse; a: RentalAssignmentListItemResponse } =>
-      !!x.a && x.a.status === AssignmentStatus.Active)
-    .map(({ a }) => ({ label: a.vehiclePlateNumber, state: ASSIGNMENT_STATUS_LABEL[a.status] }));
+    .filter((z) => !z.stoppedAtUtc && z.assignmentStatus === AssignmentStatus.Active)
+    .map((z) => ({
+      label: z.vehiclePlateNumber,
+      state: ASSIGNMENT_STATUS_LABEL[z.assignmentStatus],
+    }));
 
   const blockedReason = blockers.length
     ? `This driver holds an open named-driver authorization on ${blockers.length} active assignment(s). Stop the authorization first.`
@@ -160,13 +136,11 @@ export function DriverRecord() {
    * Created row when none is stored. Editing a driver is not an audited operation, so in practice
    * this panel holds the creation and any activation change.
    */
-  const trail = (audit.data?.items ?? [])
-    .filter((x) => x.entityType === 'Driver' && x.entityId === driverId)
-    .slice()
+  const trail = [...(audit.data?.items ?? [])]
     .sort((x, y) => cmp(y.occurredAtUtc, x.occurredAtUtc));
   const hasCreated = trail.some((x) => x.eventType === 'Driver.Created');
 
-  const reasonOf = (z: AssignmentDriverAuthorizationResponse) => z.stoppedAtUtc
+  const reasonOf = (z: DriverAuthorizationHistoryItemResponse) => z.stoppedAtUtc
     ? z.stopReason === null || z.stopReason === undefined
       ? 'Not recorded'
       : STOP_REASON_LABEL[z.stopReason]
@@ -250,32 +224,25 @@ export function DriverRecord() {
           <EmptyState variant="panel" icon="assignment_ind" title="Never authorized on an assignment." body="" />
         ) : phone ? (
           <div className={cards.cards}>
-            {periods.map((z) => {
-              const a = assignmentOf(z.rentalAssignmentId);
-              const v = a ? vehicleOf(a.vehicleId) : null;
-              return (
+            {periods.map((z) => (
                 <div key={z.id} className={cards.card}>
                   <div className={cards.facts}>
                     <span className={cards.fact}>
                       <span className={cards.factLabel}>Vehicle</span>
-                      {a ? (
-                        <Link
-                          to={`/rental-assignments/${a.id}`}
-                          className={`${cards.title} ${cards.cardPlate} ${cards.cardTitleLink}`}
-                        >
-                          {a.vehiclePlateNumber}
-                        </Link>
-                      ) : <span className={cards.title}>—</span>}
-                      <span className={cards.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
+                      <Link
+                        to={`/rental-assignments/${z.rentalAssignmentId}`}
+                        className={`${cards.title} ${cards.cardPlate} ${cards.cardTitleLink}`}
+                      >
+                        {z.vehiclePlateNumber}
+                      </Link>
+                      <span className={cards.sub}>{`${z.vehicleMake} ${z.vehicleModel}`}</span>
                     </span>
                     <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                       <span className={cards.factLabel}>Customer</span>
-                      {a ? (
-                        <Link to={`/customers/${a.customerId}`} className={`${table.name} ${table.nameLink}`}>
-                          {a.customerDisplayName}
-                        </Link>
-                      ) : <span className={cards.factValue}>—</span>}
-                      <span className={cards.sub}>{a ? customerTypeOf(a.customerId) ?? '' : ''}</span>
+                      <Link to={`/customers/${z.customerId}`} className={`${table.name} ${table.nameLink}`}>
+                        {z.customerDisplayName}
+                      </Link>
+                      <span className={cards.sub}>{CUSTOMER_TYPE_LABEL[z.customerType]}</span>
                     </span>
                     <span className={`${cards.fact} ${cards.cardFactStart}`}>
                       <span className={cards.factLabel}>Authorization</span>
@@ -288,11 +255,12 @@ export function DriverRecord() {
                     </span>
                     <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                       <span className={cards.factLabel}>Assignment status</span>
-                      {a ? (
-                        <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
-                          {ASSIGNMENT_STATUS_LABEL[a.status]}
-                        </Chip>
-                      ) : <span className={cards.factValue}>—</span>}
+                      <Chip
+                        tone={ASSIGNMENT_STATUS_TONE[z.assignmentStatus]}
+                        dot={ASSIGNMENT_STATUS_DOT[z.assignmentStatus]}
+                      >
+                        {ASSIGNMENT_STATUS_LABEL[z.assignmentStatus]}
+                      </Chip>
                     </span>
                     <span className={cards.fact}>
                       <span className={cards.factLabel}>Authorized from</span>
@@ -312,8 +280,7 @@ export function DriverRecord() {
                     ) : null}
                   </div>
                 </div>
-              );
-            })}
+            ))}
           </div>
         ) : (
           <div className={table.scroll}>
@@ -330,42 +297,38 @@ export function DriverRecord() {
               </thead>
               <tbody>
                 {periods.map((z) => {
-                  const a = assignmentOf(z.rentalAssignmentId);
-                  const v = a ? vehicleOf(a.vehicleId) : null;
                   const reason = reasonOf(z);
                   return (
-                    <tr key={z.id} {...rowNav(a ? `/rental-assignments/${a.id}` : null)}>
+                    <tr key={z.id} {...rowNav(`/rental-assignments/${z.rentalAssignmentId}`)}>
                       <td className={table.td}>
                         <span className={table.stack}>
-                          {a ? (
-                            <Link to={`/rental-assignments/${a.id}`} className={`${table.monoName} ${table.nameLink}`}>
-                              {a.vehiclePlateNumber}
-                            </Link>
-                          ) : <span className={table.dim}>—</span>}
-                          <span className={table.sub}>{v ? `${v.make} ${v.model}` : ''}</span>
+                          <Link
+                            to={`/rental-assignments/${z.rentalAssignmentId}`}
+                            className={`${table.monoName} ${table.nameLink}`}
+                          >
+                            {z.vehiclePlateNumber}
+                          </Link>
+                          <span className={table.sub}>{`${z.vehicleMake} ${z.vehicleModel}`}</span>
                           <span className={`${table.sub} ${table.showPhone}`}>
-                            {a ? a.customerDisplayName : ''}
+                            {z.customerDisplayName}
                           </span>
                         </span>
                       </td>
                       <td className={`${table.td} ${table.wrap} ${table.foldPhone}`}>
                         <span className={table.stack}>
-                          {a ? (
-                            <Link to={`/customers/${a.customerId}`} className={`${table.name} ${table.nameLink}`}>
-                              {a.customerDisplayName}
-                            </Link>
-                          ) : <span>—</span>}
-                          <span className={table.sub}>
-                            {a ? customerTypeOf(a.customerId) ?? '' : ''}
-                          </span>
+                          <Link to={`/customers/${z.customerId}`} className={`${table.name} ${table.nameLink}`}>
+                            {z.customerDisplayName}
+                          </Link>
+                          <span className={table.sub}>{CUSTOMER_TYPE_LABEL[z.customerType]}</span>
                         </span>
                       </td>
                       <td className={table.td}>
-                        {a ? (
-                          <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
-                            {ASSIGNMENT_STATUS_LABEL[a.status]}
-                          </Chip>
-                        ) : '—'}
+                        <Chip
+                          tone={ASSIGNMENT_STATUS_TONE[z.assignmentStatus]}
+                          dot={ASSIGNMENT_STATUS_DOT[z.assignmentStatus]}
+                        >
+                          {ASSIGNMENT_STATUS_LABEL[z.assignmentStatus]}
+                        </Chip>
                       </td>
                       <td className={table.td}>
                         <span className={table.stack}>

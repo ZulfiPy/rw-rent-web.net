@@ -4,9 +4,8 @@ import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import { listSecurityAudit } from '@/api/securityAudit';
-import {
-  AssignmentStatus, type SecurityAuditQuery, type VehicleListItemResponse,
-} from '@/api/dto';
+import { getOverviewSummary } from '@/api/overview';
+import { AssignmentStatus, VehicleAvailability, type SecurityAuditQuery } from '@/api/dto';
 import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
@@ -80,44 +79,44 @@ export function Overview() {
     queryFn: () => listSecurityAudit(ACTIVITY),
     enabled: mayReadAudit,
   });
+  // The four counts in one request; a count the caller may not read comes back null and its card
+  // is left out, exactly as a missing permission used to leave it out.
+  const summary = useQuery({ queryKey: qk.overview, queryFn: getOverviewSummary });
 
   const rows = assignments.data?.items ?? [];
   const totalAssignments = assignments.data?.totalCount ?? rows.length;
-  const heldNow = new Set(
-    rows.filter((a) => a.status === AssignmentStatus.Active).map((a) => a.vehicleId),
-  );
-
-  /** The prototype's availability(): retired, in use, reserved, otherwise available. */
-  const isAvailable = (v: VehicleListItemResponse) =>
-    v.isActive && !heldNow.has(v.id) && !v.upcomingPlannedStartAtUtc;
   const fleet = vehicles.data?.items ?? [];
-  const activeVehicles = fleet.filter((v) => v.isActive).length;
+  /** Availability is decided by the server and read from the row. */
+  const available = fleet.filter((v) => v.availability === VehicleAvailability.Available).length;
+  const counts = summary.data;
 
   // metricsModel(): the permitted counts in order, capped at four, then the two sample cards.
   const metrics: Metric[] = [];
-  if (mayReadAssignments) {
+  if (counts?.activeAssignments != null) {
     metrics.push({
       key: 'act', icon: 'play_circle', color: 'var(--ok)', label: 'Active assignments',
-      value: String(work.activeAssignments), unit: `of ${totalAssignments}`,
+      value: String(counts.activeAssignments), unit: `of ${totalAssignments}`,
       to: `/rental-assignments?status=${AssignmentStatus.Active}`,
     });
+  }
+  if (counts?.plannedAssignments != null) {
     metrics.push({
       key: 'pl', icon: 'event_upcoming', color: 'var(--info)', label: 'Planned, not started',
-      value: String(work.plannedAssignments), unit: 'assignments',
+      value: String(counts.plannedAssignments), unit: 'assignments',
       to: `/rental-assignments?status=${AssignmentStatus.Planned}`,
     });
   }
-  if (mayReadVehicles) {
+  if (counts?.activeVehicles != null) {
     metrics.push({
       key: 'veh', icon: 'directions_car', color: 'var(--fg-2)', label: 'Vehicles available',
-      value: String(fleet.filter(isAvailable).length), unit: `of ${activeVehicles} active`,
+      value: String(available), unit: `of ${counts.activeVehicles} active`,
       to: '/vehicles?active=true',
     });
   }
-  if (can('Users.ReviewRegistrations')) {
+  if (counts?.pendingRegistrations != null) {
     metrics.push({
       key: 'reg', icon: 'how_to_reg', color: 'var(--warn)', label: 'Registrations to review',
-      value: String(work.pendingRegistrations), unit: 'confirmed', to: '/registrations',
+      value: String(counts.pendingRegistrations), unit: 'confirmed', to: '/registrations',
     });
   }
   if (can('Interruptions.Read')) {

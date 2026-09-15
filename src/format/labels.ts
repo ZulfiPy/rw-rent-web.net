@@ -1,7 +1,7 @@
 import {
   ApplicationUserRole, ApplicationUserStatus, AssignmentDriverAuthorizationType, AssignmentStatus,
   AuthorizationStopReason, BillingImpact, BodyType, CustomerType, FuelType, GearboxType,
-  InterruptionReason,
+  InterruptionReason, SystemAdministratorTransferStatus, VehicleAvailability,
 } from '@/api/dto';
 
 /** Display strings, keyed by raw wire value. No component builds a label itself. */
@@ -115,18 +115,38 @@ export const INTERRUPTION_REASON_LABEL: Record<InterruptionReason, string> = {
   [InterruptionReason.Other]: 'Other',
 };
 
-/** Internal entity type names never reach the UI. */
+export const VEHICLE_AVAILABILITY_LABEL: Record<VehicleAvailability, string> = {
+  [VehicleAvailability.Available]: 'Available',
+  [VehicleAvailability.InUse]: 'In use',
+  [VehicleAvailability.Reserved]: 'Reserved',
+  [VehicleAvailability.Retired]: 'Retired',
+};
+
+export const TRANSFER_STATUS_LABEL: Record<SystemAdministratorTransferStatus, string> = {
+  [SystemAdministratorTransferStatus.AwaitingAcceptance]: 'Awaiting acceptance',
+  [SystemAdministratorTransferStatus.Accepted]: 'Accepted',
+  [SystemAdministratorTransferStatus.Cancelled]: 'Cancelled',
+  [SystemAdministratorTransferStatus.Expired]: 'Expired',
+};
+
+/**
+ * Internal entity type names never reach the UI. The keys are the strings the API stores — the
+ * backend's own entity names — and the first group is exactly what the audit history carries.
+ */
 export const ENTITY_LABEL: Record<string, string> = {
   ApplicationUser: 'User',
-  RentalAssignment: 'Rental assignment',
+  ApplicationUserRoleAssignment: 'Role assignment',
+  ApplicationUserSession: 'Session',
   AssignmentDriverAuthorization: 'Driver authorisation',
-  RoleAssignment: 'Role',
-  Session: 'Session',
-  Driver: 'Driver',
+  AssignmentInterruption: 'Interruption',
   Company: 'Company',
-  Vehicle: 'Vehicle',
-  Customer: 'Customer',
+  RegistrationEmailConfirmationChallenge: 'Registration email confirmation',
+  RentalAssignment: 'Rental assignment',
   SystemAdministratorTransfer: 'System Administrator transfer',
+  // Names the fleet screens use when they label a record of their own.
+  Customer: 'Customer',
+  Driver: 'Driver',
+  Vehicle: 'Vehicle',
 };
 export const entityLabel = (t?: string | null) => (t ? ENTITY_LABEL[t] ?? t : '—');
 
@@ -148,7 +168,7 @@ export const AUDIT_EVENTS: Array<[string, string[], string?]> = [
   ['RoleAssignment', ['Granted', 'Revoked', 'ExpiryChanged'], 'Role'],
   ['Session', ['RevokedByAdministrator', 'AllRevokedByAdministrator']],
   ['Company', ['Created', 'Updated', 'Deleted']],
-  ['RentalAssignment', ['TimelineCorrected', 'PartiesCorrected'], 'Rental assignment'],
+  ['RentalAssignment', ['Cancelled', 'TimelineCorrected', 'PartiesCorrected'], 'Rental assignment'],
   ['DriverAuthorization', ['Corrected'], 'Driver authorisation'],
   ['Interruption', ['Corrected']],
   ['SystemAdministrator', ['Bootstrapped', 'OfflineRecovery', 'TransferInitiated', 'TransferAccepted', 'TransferCancelled', 'TransferConfirmationRotated'], 'System Administrator'],

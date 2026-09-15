@@ -4,12 +4,11 @@ import { Link, useParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { getVehicle } from '@/api/vehicles';
 import { listAssignments } from '@/api/rentalAssignments';
-import { listCustomers } from '@/api/customers';
-import { AssignmentStatus } from '@/api/dto';
+import { CustomerType, VehicleAvailability } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, BODY_TYPE_LABEL, CUSTOMER_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL,
-  formatLocal,
+  VEHICLE_AVAILABILITY_LABEL, formatLocal,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -20,7 +19,10 @@ import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Panel } from '@/ui/Panel';
 import { RecordHeader } from '@/ui/RecordHeader';
 import { recordStyles as shell } from '@/ui/RecordTabs';
-import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
+import {
+  ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE, VEHICLE_AVAILABILITY_DOT,
+  VEHICLE_AVAILABILITY_TONE,
+} from '@/ui/status';
 import { useRowNav } from '@/ui/rowNav';
 import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
@@ -52,12 +54,6 @@ export function VehicleRecord() {
     queryFn: () => listAssignments({ ...PICK, VehicleId: vehicleId }),
     enabled: !!vehicleId && mayReadAssignments,
   });
-  const customers = useQuery({
-    queryKey: qk.customers.list(PICK),
-    queryFn: () => listCustomers(PICK),
-    enabled: mayReadAssignments && can('Customers.Read'),
-    staleTime: 60_000,
-  });
 
   const blockers = useAssignmentBlockers('vehicleId', vehicleId, !!v?.isActive && canManage);
 
@@ -79,31 +75,29 @@ export function VehicleRecord() {
   }
 
   const rows = sortHistory(history.data?.items ?? []);
-  const holder = rows.find((a) => a.status === AssignmentStatus.Active);
-  const next = rows.find((a) => a.status === AssignmentStatus.Planned);
 
-  /** The prototype's availability(): retired, in use, reserved, otherwise available. */
-  const availability = !v || !v.isActive
-    ? { label: 'Retired', tone: 'mute' as const, dot: '1px', sub: 'Not in the fleet' }
-    : holder
-      ? { label: 'In use', tone: 'info' as const, dot: '50%', sub: holder.customerDisplayName }
-      : next?.plannedStartAtUtc
-        ? {
-          label: 'Reserved',
-          tone: 'warn' as const,
-          dot: '2px',
-          sub: `${next.customerDisplayName} · from ${formatLocal(next.plannedStartAtUtc)}`,
-        }
-        : { label: mayReadAssignments ? 'Available' : 'In the fleet', tone: 'ok' as const, dot: '50%', sub: null };
+  /** Availability is the server's (VEHICLE-009); the record shows the same chip as the list. */
+  const availability = v
+    ? {
+      label: VEHICLE_AVAILABILITY_LABEL[v.availability],
+      tone: VEHICLE_AVAILABILITY_TONE[v.availability],
+      dot: VEHICLE_AVAILABILITY_DOT[v.availability],
+      sub: v.availability === VehicleAvailability.Retired
+        ? 'Not in the fleet'
+        : v.availability === VehicleAvailability.InUse
+          ? v.currentCustomerDisplayName ?? null
+          : v.availability === VehicleAvailability.Reserved && v.upcomingPlannedStartAtUtc
+            ? `${v.upcomingCustomerDisplayName ?? 'Reserved'} · from ${formatLocal(v.upcomingPlannedStartAtUtc)}`
+            : null,
+    }
+    : { label: 'Retired', tone: 'mute' as const, dot: '1px', sub: 'Not in the fleet' };
 
   const blockedReason = blockers.length
     ? `This vehicle is on ${blockers.length} planned or active assignment(s). Cancel, reassign or end these first.`
     : null;
 
-  const customerType = (id: string) => {
-    const c = customers.data?.items.find((x) => x.id === id);
-    return c ? CUSTOMER_TYPE_LABEL[c.type] : null;
-  };
+  /** The assignment row carries its customer's type. */
+  const customerType = (a: { customerType: CustomerType }) => CUSTOMER_TYPE_LABEL[a.customerType];
 
   return (
     <div className={shell.page}>
@@ -172,7 +166,7 @@ export function VehicleRecord() {
                     <Link to={`/rental-assignments/${a.id}`} className={`${cards.title} ${cards.cardTitleLink}`}>
                       {a.customerDisplayName}
                     </Link>
-                    <span className={cards.sub}>{customerType(a.customerId) ?? ''}</span>
+                    <span className={cards.sub}>{customerType(a)}</span>
                   </span>
                   <Chip tone={ASSIGNMENT_STATUS_TONE[a.status]} dot={ASSIGNMENT_STATUS_DOT[a.status]}>
                     {ASSIGNMENT_STATUS_LABEL[a.status]}
@@ -212,7 +206,7 @@ export function VehicleRecord() {
                         <Link to={`/rental-assignments/${a.id}`} className={`${table.name} ${table.nameLink}`}>
                           {a.customerDisplayName}
                         </Link>
-                        <span className={table.sub}>{customerType(a.customerId) ?? ''}</span>
+                        <span className={table.sub}>{customerType(a)}</span>
                       </span>
                     </td>
                     <td className={table.td}>

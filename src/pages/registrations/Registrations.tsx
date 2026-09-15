@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { getUser, listUsers } from '@/api/users';
 import {
   ApplicationUserStatus,
-  type ApplicationUserListItemResponse, type PagedResponse, type UsersQuery,
+  type ApplicationUserListItemResponse, type UsersQuery,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import { formatLocal, relative, USER_STATUS_LABEL } from '@/format';
@@ -82,38 +82,31 @@ export function Registrations() {
   const anyFilter = !!search || !!status;
   const clear = () => patch({ search: '', status: '' });
 
-  // FOLLOW-UP: GET /api/users takes one Status. "All lifecycle states" therefore fans out into one
-  // request per state and pages the merged result here; a multi-status filter would remove the
-  // fan-out and hand paging back to the server.
-  const statuses = status ? [Number(status) as ApplicationUserStatus] : LIFECYCLE;
-  const queryFor = (s: ApplicationUserStatus): UsersQuery => ({
-    PageSize: 100,
-    Status: s,
+  /*
+   * One request, and the server pages it. "All lifecycle states" is the Statuses filter — the three
+   * lifecycle states as a comma-separated string — and a single state is the Status filter it always
+   * was. Nothing is merged or paged here.
+   */
+  const query: UsersQuery = {
+    PageNumber: pageNumber,
+    PageSize: pageSize,
+    ...(status
+      ? { Status: Number(status) as ApplicationUserStatus }
+      : { Statuses: LIFECYCLE.join(',') }),
     ...(search ? { Search: search } : {}),
-  });
-
-  const results = useQueries({
-    queries: statuses.map((s) => ({
-      queryKey: qk.users.list(queryFor(s)),
-      queryFn: () => listUsers(queryFor(s)),
-    })),
-  });
-
-  const isPending = results.some((r) => r.isPending);
-  const error = results.find((r) => r.error)?.error;
-  const failure = error ? toFailure(error) : null;
-
-  const merged = results
-    .flatMap((r) => r.data?.items ?? [])
-    .sort((a, b) => `${a.firstName}${a.lastName}${a.id}`.localeCompare(`${b.firstName}${b.lastName}${b.id}`));
-  const totalCount = merged.length;
-  const page: PagedResponse<ApplicationUserListItemResponse> = {
-    items: merged.slice((pageNumber - 1) * pageSize, pageNumber * pageSize),
-    pageNumber,
-    pageSize,
-    totalCount,
-    totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
   };
+
+  const users = useQuery({
+    queryKey: qk.users.list(query),
+    queryFn: () => listUsers(query),
+    placeholderData: keepPreviousData,
+  });
+
+  const isPending = users.isPending;
+  const failure = users.error ? toFailure(users.error) : null;
+  const page = users.data;
+  const rows = page?.items ?? [];
+  const totalCount = page?.totalCount ?? 0;
 
   const rowActions = (u: ApplicationUserListItemResponse) => (
     <>
@@ -165,7 +158,7 @@ export function Registrations() {
                 ? 'Reviewing registrations needs Users.ReviewRegistrations.'
                 : 'message' in failure ? failure.message : 'The request was refused.'
             }
-            onRetry={failure.kind === 'forbidden' ? undefined : () => results.forEach((r) => void r.refetch())}
+            onRetry={failure.kind === 'forbidden' ? undefined : () => void users.refetch()}
           />
         ) : totalCount === 0 && !isPending ? (
           <EmptyState
@@ -175,7 +168,7 @@ export function Registrations() {
           />
         ) : phone ? (
           <div className={cards.cards}>
-            {page.items.map((u) => (
+            {rows.map((u) => (
               <div key={u.id} className={cards.card}>
                 <div className={cards.head}>
                   <span className={cards.heading}>
@@ -225,7 +218,7 @@ export function Registrations() {
                 </tr>
               </thead>
               <tbody>
-                {page.items.map((u) => (
+                {rows.map((u) => (
                   <tr key={u.id} {...rowNav(`/users/${u.id}`)}>
                     <td className={table.td}>
                       <span className={table.stack}>
@@ -274,7 +267,7 @@ export function Registrations() {
           </div>
         )}
 
-        {totalCount > 0 ? (
+        {page && totalCount > 0 ? (
           <Pagination
             page={page}
             onPage={(n) => patch({ page: String(n) })}
