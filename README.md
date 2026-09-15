@@ -1,15 +1,66 @@
-# RW-Rent web — Phase 2
+# RW-Rent web
 
-React + Vite + TypeScript port of the reviewed prototype. The contract is the backend's live OpenAPI
-document (`GET /openapi/v1.json` on the running API, repo `rw-rent-api.net`). Phase 3 wires the real
-API by changing one folder.
+React + Vite + TypeScript front end for the RW-Rent API. The contract is the backend's live OpenAPI
+document, `GET /openapi/v1.json` on the running API. There is no in-app fake backend: the app talks
+to the real API with cookies and the antiforgery header.
 
 ```
 npm install
-npm run dev        # VITE_API_MODE=mock by default
-npm test           # dto/mock round-trip, formatting, permission gate, error mapping
+npm run dev -- --port 5173 --strictPort
+npm test
 npm run typecheck
 ```
+
+The backend has to be running first; see "Running the app" below.
+
+## Running the app
+
+The API and its seeded database come first. From the backend's main folder and worktree:
+
+```sh
+# 1. PostgreSQL and Mailpit, from the backend's main checkout only
+cd /Users/zulf/rw-rent-api/RWRentApi && docker compose up -d postgres mailpit
+
+# 2. the environment the API reads (the database password lives in that folder's .env)
+set -a; source /Users/zulf/rw-rent-api/RWRentApi/.env; set +a
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5433;Database=rwrent_v1;Username=rwrent;Password=${RWRENT_POSTGRES_PASSWORD}"
+export EmailDelivery__FromAddress="dev@rwrent.local"
+
+# 3. migrations, then the sample dataset (the password is yours; it is never committed)
+cd /Users/zulf/rw-rent-api/RWRentApi-wiring
+dotnet ef database update --project src/RWRentApi.Infrastructure --startup-project src/RWRentApi.Api
+dotnet run --project src/RWRentApi.Api -- seed-development-data --password '<your seed password>' --replace true
+
+# 4. the API on http://localhost:5001
+dotnet run --project src/RWRentApi.Api --launch-profile http
+```
+
+Then the app:
+
+```sh
+npm run dev -- --port 5173 --strictPort
+```
+
+Port 5173 is not optional: it is the only origin the API trusts for credentialed requests in
+Development. Mailpit catches every development email at `http://localhost:8025`.
+
+`VITE_API_BASE_URL` is the only environment variable. `.env.development` is committed with
+`http://localhost:5001`; `.env.example` mirrors it for other environments.
+
+## Signing in
+
+Every seeded person shares the password given to `seed-development-data`. The dataset is the
+reviewed sample data, so these accounts show the screens the prototype was reviewed with:
+
+| Account | Email | What they see |
+|---|---|---|
+| System Administrator | `sysadmin@rwrent.example` | everything, including privileged corrections and the System Administrator page |
+| Company Principal | `signe.priede@rwrent.example` | the company's records, role administration and the company's audit history |
+| Fleet Manager | `karlis.zvaigzne@rwrent.example` | fleet and rental work, registrations to review |
+| Viewer | `toms.rudzitis@rwrent.example` | read-only across the fleet |
+
+Re-seed before a review session: the sample instants are relative to the seeding moment, so the
+dates drift once the data has been sitting for a while.
 
 ## Porting rule
 
@@ -76,18 +127,6 @@ src/
   dev/            PROTOTYPE panel (dev-only)
   styles/         tokens.css ported from the prototype + base resets
 ```
-
-## The swap point
-
-`src/app/bootstrap.ts` installs a transport once:
-
-```ts
-VITE_API_MODE=mock  → createMockTransport()      // src/mock
-VITE_API_MODE=http  → createHttpTransport(url)   // src/api/http.ts
-```
-
-Both satisfy `Transport.request(method, path, {query, body})`, so `src/api/*.ts` keeps the real
-verbs and URLs in mock mode too, and no component or api function changes in Phase 3.
 
 ## Rules the code enforces
 
