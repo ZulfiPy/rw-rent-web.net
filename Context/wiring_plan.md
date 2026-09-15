@@ -243,3 +243,15 @@ The agent's final chat message is a plain-language overview for the owner — wh
 was not and why, what the owner should check first — without the technical report, which stays in
 the file. There is only ever one report file; a later run rewrites it completely and never adds a
 second one.
+
+## 10. Follow-up phases
+
+### Phase 8 — follow-up 1 (`Context/wiring_followups.md`, section "Follow-up 1")
+
+Goal: replace the agent-designed account screens with ports of the prototype's authentication
+family, "Your account" and "Access pending" from `Context/prototype/RW-Rent.dc.html`, keeping the
+API behaviour already built. Rules and guardrails of §1 and §4 apply; the porting rule is
+"port, don't recreate".
+
+Checkpoint: the acceptance criteria of Follow-up 1 §4; typecheck, tests, build green; the report
+rewritten. Commit `Wiring 8: …`, push.

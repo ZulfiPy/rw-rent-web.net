@@ -6,6 +6,8 @@
 > run); decisions taken after a report go into `Context/wiring_followups.md`, created by the
 > reviewer when first needed.
 >
+> The prototype (design source) is `Context/prototype/RW-Rent.dc.html`.
+>
 > Working folders of the wiring phase: `/Users/zulf/rw-rent-api/rw-rent-web-wiring` (this app,
 > branch `feature/backend-wiring`) and `/Users/zulf/rw-rent-api/RWRentApi-wiring` (the backend,
 > branch `feature/backend-wiring`, **read-only** for the frontend agent). The main checkouts
@@ -253,6 +255,13 @@ derivation): 1 Awaiting acceptance (warn), 2 Accepted (ok), 3 Cancelled (mute), 
 new visible state). Initiate, resend and cancel unchanged.
 
 ## 8. Account area — shared design (C)
+
+> **Correction (2026-09-15, Follow-up 1 in `Context/wiring_followups.md`).** This section and
+> §9–§10 were written on the wrong premise that the prototype had no account screens. It has them:
+> an authentication family of sixteen states, "Your account" with three tabs and "Access
+> pending", in `Context/prototype/RW-Rent.dc.html`. The layout and copy guidance below is
+> superseded by the prototype — port, don't recreate. The routes, API calls, outcomes and flows
+> described in §8–§10 remain valid.
 
 - Standalone screens outside the shell: the centred card of `App.module.css` on the page background,
   a maximum width around 420px, the app's Field / Button / note vocabulary, the title in the display
