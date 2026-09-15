@@ -132,7 +132,7 @@ export function SignIn() {
           />
         </Field>
         <div className={styles.actions}>
-          <Button label="Sign in" tone="primary" type="submit" block busy={busy} />
+          <Button label="Sign in" tone="primary" type="submit" busy={busy} />
         </div>
       </form>
     </AccountLayout>

@@ -25,6 +25,11 @@ import { DriverRecord } from './pages/fleet/DriverRecord';
 import { CompanyProfile } from './pages/admin/CompanyProfile';
 import { SystemAdministrator } from './pages/admin/SystemAdministrator';
 import { SignIn } from './pages/account/SignIn';
+import { Register } from './pages/account/Register';
+import { ConfirmRegistrationEmail } from './pages/account/ConfirmRegistrationEmail';
+import { ResetPassword } from './pages/account/ResetPassword';
+import { ConfirmEmailChange } from './pages/account/ConfirmEmailChange';
+import { AcceptAdministratorTransfer } from './pages/account/AcceptAdministratorTransfer';
 import { Button } from './ui/Button';
 import styles from './App.module.css';
 
@@ -146,6 +151,11 @@ export function App() {
       <Routes>
         {/* The public routes render in every session state; the backend's emails link to them. */}
         <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/confirm-registration-email" element={<ConfirmRegistrationEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
+        <Route path="/accept-administrator-transfer" element={<AcceptAdministratorTransfer />} />
         <Route path="*" element={<RequireSession><Workspace /></RequireSession>} />
       </Routes>
     </>

@@ -39,7 +39,8 @@ export function AccountLayout({ title, intro, documentTitle, children, links }: 
   title: string;
   intro?: ReactNode;
   documentTitle?: string;
-  children: ReactNode;
+  /** Some outcomes are the title and the intro alone. */
+  children?: ReactNode;
   links?: ReactNode;
 }) {
   useEffect(() => {
