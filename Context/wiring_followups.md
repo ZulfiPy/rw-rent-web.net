@@ -10,7 +10,8 @@
 
 ## Follow-up 1 — 2026-09-15 — the account screens are ports of the prototype, not new designs
 
-> **Status: IMPLEMENTED (Wiring 8, 2026-09-15). See `Context/wiring_report.md`.**
+> **Status: IMPLEMENTED (plan Phase 8, commit `0e49285` "Wiring 8"; verified by the reviewer on
+> 2026-09-15 at 1512 and 402 against the prototype's values; owner checked on their devices).**
 
 ### 1. What went wrong
 
@@ -122,11 +123,22 @@ F1 implemented with its checks; report rewritten; branch pushed; working tree cl
 
 ## Carried forward — living list
 
-1. Owner's open question from the first report (2026-09-15): the Overview's activity card — hide
-   routine sign-in and sign-out events, or keep the newest five. Reviewer's recommendation: hide
-   the routine events (app-side, over a larger page). **Closed by the port:** the reset form's
-   email field. The prototype's own `reset` screen shows it and its copy names it, which is also
-   what the API requires, so the question is settled in favour of keeping it.
+1. Decided by the owner (2026-09-15): (a) the reset form keeps its email field; (b) the Overview's
+   activity card hides routine sign-in and sign-out events (app-side, over a larger page; the audit
+   page keeps everything) — scheduled as Follow-up 2 once the questions below are answered.
+   Awaiting the owner, raised by the report after the port: (c) the password checklist shows the
+   prototype's five rules but the API needs four (no lowercase rule) — keep five or drop the
+   lowercase line; (d) the reset-family note "The reset must be completed with the address the link
+   was sent to" also appears on the resend and transfer screens — everywhere as the prototype has
+   it, or only on the two reset screens; (e) the prototype's transfer-acceptance screen shows an
+   email and a new-password field the API does not take — the port shows the existing-password
+   field only; accept the port and correct the prototype, or keep the prototype's fields; (f) the
+   prototype's resend screen lacks the password field the API requires — the port added it; accept.
+   Reviewer's recommendations: (c) drop the lowercase line; (d) reset screens only; (e) accept the
+   port; (f) accept.
+1b. Backend additions the port revealed, for the backend backlog: `passwordChangedAtUtc` and the
+   pending email-change address on `GET /api/me` (the Sign-in & security tab shows "—" for both
+   until then), beside `availableVehicles` on the overview summary.
 2. Small findings from the reviewer's check of the first run, both resolved in Wiring 8: the
    cold-load theme on public pages (F1 step 1 — the theme is now one store applied before the first
    paint); the Button `block` variant's contrast in the light theme (checked at 402 in light on the
