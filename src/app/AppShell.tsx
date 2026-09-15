@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { logout } from '@/api/auth';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
 import { primaryRoleLabel } from '@/format/labels';
 import { useOpenWork } from '@/pages/overview/useOpenWork';
 import { Chip } from '@/ui/Chip';
 import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
+import { useSignOut } from './useSignOut';
 import { useRailMode } from './useViewport';
 import styles from './AppShell.module.css';
 
@@ -176,10 +175,7 @@ export function AppShell({ companyName }: { companyName: string }) {
 
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search]);
 
-  const signOut = useMutation({
-    mutationFn: () => logout(),
-    onSettled: () => window.location.reload(),
-  });
+  const signOut = useSignOut();
 
   // Narrow keeps the drawer expanded; wider follows the persona's choice, defaulting to the viewport.
   const narrow = mode === 'drawer';
@@ -249,7 +245,12 @@ export function AppShell({ companyName }: { companyName: string }) {
       </nav>
 
       <div className={styles.foot}>
-        <button type="button" className={styles.util} title="Account and sessions">
+        <Link
+          to="/profile"
+          className={styles.util}
+          title="Your profile and sessions"
+          aria-label="Your profile and sessions"
+        >
           <span className={styles.initials}>{initials}</span>
           {expanded ? (
             <span className={styles.who}>
@@ -257,7 +258,7 @@ export function AppShell({ companyName }: { companyName: string }) {
               <span className={styles.role}>{roleLabel}</span>
             </span>
           ) : null}
-        </button>
+        </Link>
         <button
           type="button"
           className={styles.util}

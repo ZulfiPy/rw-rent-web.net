@@ -2,15 +2,16 @@ import { installTransport } from '@/api';
 import { createHttpTransport } from '@/api/http';
 
 /**
- * The single swap point. Phase 3 sets VITE_API_MODE=http and this file stops importing src/mock —
- * no component changes.
+ * The app has one backend: the real API at VITE_API_BASE_URL. There is no mode switch and no
+ * in-app fake; a missing base URL is a configuration error the console names at start.
  */
-export async function bootstrapApi(): Promise<void> {
-  const mode = import.meta.env.VITE_API_MODE ?? 'mock';
-  if (mode === 'http') {
-    installTransport(createHttpTransport(import.meta.env.VITE_API_BASE_URL ?? ''));
-    return;
+export function bootstrapApi(): void {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!baseUrl) {
+    console.error(
+      'VITE_API_BASE_URL is not set. Copy .env.example to .env.local or use the committed ' +
+        '.env.development, then restart the dev server.',
+    );
   }
-  const { createMockTransport } = await import('@/mock');
-  installTransport(createMockTransport());
+  installTransport(createHttpTransport(baseUrl ?? ''));
 }
