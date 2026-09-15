@@ -30,6 +30,7 @@ import { ConfirmRegistrationEmail } from './pages/account/ConfirmRegistrationEma
 import { ResetPassword } from './pages/account/ResetPassword';
 import { ConfirmEmailChange } from './pages/account/ConfirmEmailChange';
 import { AcceptAdministratorTransfer } from './pages/account/AcceptAdministratorTransfer';
+import { Profile } from './pages/account/Profile';
 import { Button } from './ui/Button';
 import styles from './App.module.css';
 
@@ -110,7 +111,21 @@ function Workspace() {
   const { me } = useAccess();
   const companyName = useCompanyName();
 
-  if (me && me.permissions.length === 0) return <AccessPending />;
+  /*
+   * An Active account with no permissions sees the Access pending card exactly as reviewed — but
+   * self-service is theirs, so /profile still opens, inside the shell whose navigation is empty
+   * for them.
+   */
+  if (me && me.permissions.length === 0) {
+    return (
+      <Routes>
+        <Route element={<AppShell companyName={companyName} />}>
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+        <Route path="*" element={<AccessPending />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
@@ -134,6 +149,7 @@ function Workspace() {
         <Route path="/system-administrator" element={<SystemAdministrator />} />
         <Route path="/security-audit" element={<SecurityAudit />} />
         <Route path="/security-audit/:entryId" element={<AuditEntry />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/overview" replace />} />
       </Route>
     </Routes>
