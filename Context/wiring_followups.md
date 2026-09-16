@@ -163,8 +163,12 @@ checkouts stay untouched and the developer database keeps the seeded dataset.
 
 ## 8. Follow-up 3 — found in the review of 2026-09-16
 
-> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED** (decision 8, 2026-09-16). One defect, same
-> family as Wiring 10. Nothing else from the review needs a frontend change. Feedback to the agent
+> **Status: IMPLEMENTED** (commits `d61ebbd` Wiring 12 and `53df077` Wiring 13, 2026-09-16). Verified
+> by the reviewer the same day: both helpers return the instant in UTC, no offset is written anywhere
+> under `src/`, the tests cover both helpers in both offset seasons and the picker round trip,
+> typecheck, 91 tests and the build green; the report carries run 4 with the two live rows and the
+> corrected deviation 9; the database was re-seeded after the agent's check. One defect, same family
+> as Wiring 10. Nothing else from the review needed a frontend change. Feedback to the agent
 > that goes with it: the joint check of run 3 filtered the assignments list by status only and
 > granted no role with an expiry, so the two paths that still carry an offset were never exercised;
 > and the report's deviation 9 assumed the API tolerates an offset on a value it only compares —
