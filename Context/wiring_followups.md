@@ -26,10 +26,16 @@
 | 6 | The resend-confirmation screen keeps the password field the port added (the API requires it); a prototype omission, noted in §7. |
 | 7 | The three values the app shows as dashes or computes itself come from the backend's round 2 (`RWRentApi-wiring/Context/wiring2_spec.md`): `availableVehicles` on the overview summary, `passwordChangedAtUtc` and `pendingEmail` on `GET /api/me`. |
 
-## 2. Follow-up 2 — to implement after the backend's round 2 has landed
+## 2. Follow-up 2 — implemented
 
-> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED.** Runs in the same agent run as the
-> backend's round 2, after it, in this worktree.
+> **Status: IMPLEMENTED** (commits `12b11c3` Wiring 9 and `238c8bb` Wiring 10, 2026-09-16; report
+> `Context/wiring_report.md`). Verified on 2026-09-16 by the reviewer: typecheck, 89 tests and the
+> build green; the register checklist shows four rules; the reset note renders on the two reset
+> screens only and not on the resend or transfer screens; the summary's `availableVehicles` equals
+> the vehicles list's Available count on the live API; `GET /api/me` carries both profile facts.
+> Wiring 10 was not on the list below: the agent's joint check found that every lifecycle dialog sent
+> its instant with the zone's offset, which the API cannot store (500), and `fromLocalInput` now
+> reports UTC. The same defect survives in two other helpers — Follow-up 3 (§8).
 
 - F1. Activity card (decision 2): the Overview's Recent security activity card requests a larger page
   of the audit list (`PageSize=25`), drops entries whose event type is `Authentication.SessionCreated`
@@ -82,7 +88,7 @@ prototype or the mock found here become Follow-up 3.
 | Prototype screen | App route | What to compare |
 |---|---|---|
 | `signin` | `/sign-in` | title, the two fields, "Forgot password?" on the password's label row, the black Sign in with its arrow, "No account yet? Create one", the footer line, the art panel |
-| `register` | `/register` | the two names on one row, the phone placeholder, the five-rule checklist filling in as you type |
+| `register` | `/register` | the two names on one row, the phone placeholder, the four-rule checklist filling in as you type (decision 3; the prototype still shows five) |
 | `register-submitted` | `/register` after Create account | the mail glyph, both facts, the two actions |
 | `confirm-checking` · `confirm-done` · `confirm-bad` | `/confirm-registration-email` | the glyph and its colour, the fact list, the mono `code:` line |
 | `resend` | `/confirm-registration-email?resend=1` | title and body; the app adds the password field the API requires (§3) |
@@ -104,7 +110,7 @@ prototype or the mock found here become Follow-up 3.
 |---|---|---|
 | Overview | metric cards, Needs attention, assignment mix, activity card | the counts: 4 active of 12, 2 planned, 2 vehicles available of 8 active, 3 registrations |
 | Needs attention | the same five rows in the same order | open each row; the two interruptions and the planned handover without a driver |
-| Rental assignments | coverage column, Interrupted chip, model and type sub-lines | filter by status; open 552 KLM (collective coverage, one open interruption) |
+| Rental assignments | coverage column, Interrupted chip, model and type sub-lines | filter by status; filter by a planned or started date range (Follow-up 3); open 552 KLM (collective coverage, one open interruption) |
 | Assignment record | Parties, Lifecycle, Notes, the two tabs, Corrections | cancel a Planned assignment with a note; then read Notes and Corrections |
 | Assignment record, Active | the mistaken-activation cancel | cancel without a note: the message appears under the note field, not above the form |
 | Vehicles | availability chips and their sub-lines | in use 482 TKL, 770 HDV, 552 KLM, 204 JLM; reserved 444 WKS and 335 SNB; retired 881 GRT, 660 BYH |
@@ -112,7 +118,7 @@ prototype or the mock found here become Follow-up 3.
 | Drivers | personal identifier, licence, address columns | search; open Janis Krumins |
 | Driver record | the authorization history table | vehicle, customer and status come from the row; the audit panel shows the creation |
 | Customers, Customer record | unchanged | open a business and a private customer |
-| User directory, User record | Registered column, roles, sessions | open Dita Smite (four role rows) and Imants Gailis (the rejection reason) |
+| User directory, User record | Registered column, roles, sessions | open Dita Smite (four role rows) and Imants Gailis (the rejection reason); grant a role with an expiry date and revoke it (Follow-up 3) |
 | Registrations | All lifecycle states in one page | the five people; then each single-status filter; activate Gatis Lapsa with a role |
 | Security audit | list filters, entity chips | filter by event type and by entity type; open any row |
 | Audit entry | the payload diff | open the Registration · Activated entry: the role grant reads "Viewer — no expiry" |
@@ -151,3 +157,27 @@ checkouts stay untouched and the developer database keeps the seeded dataset.
 5. The shell's open-work queue runs three list requests on every page; cheap on the seeded data,
    the first thing to look at if a page ever feels slow.
 6. Tasks and Insurance cases remain sample-data placeholders until their backend exists.
+
+## 8. Follow-up 3 — found in the review of 2026-09-16, awaiting the owner's go
+
+> **Status: OPEN.** One defect, same family as Wiring 10. Nothing else from the review needs a
+> frontend change.
+
+- F3-1. **Two helpers still send instants with the zone's offset.** `startOfDayLocal` and
+  `endOfDayLocal` in `src/format/datetime.ts` write `…T00:00:00.000+03:00` / `…T23:59:59.999+03:00`.
+  They feed the assignments list's four date filters (`PlannedFromUtc`, `PlannedToUtc`,
+  `StartedFromUtc`, `StartedToUtc` in `src/pages/fleet/Assignments.tsx`) and the role expiry in the
+  three user dialogs of `src/pages/users/UserDialogs.tsx` (activate with roles, grant a role, change
+  an expiry). The report's deviation 9 assumed the API only compares a filter bound and so tolerates
+  the offset; it does not. Verified against the live round-2 API on 2026-09-16:
+  `GET /api/rental-assignments?StartedFromUtc=2026-09-01T00:00:00.000+03:00` answers 500 and the same
+  bound in UTC answers 200; `POST /api/users/{id}/roles` with `expiresAtUtc`
+  `2026-12-31T23:59:59.999+02:00` answers 500 and the UTC form 201. So today a date filter on the
+  assignments list and any role granted with an expiry date fail with the unexpected-error card.
+  Change: both helpers resolve the same instant and return it in UTC (`toISOString()`), exactly as
+  `fromLocalInput` does since Wiring 10; a test for each (the September and January offsets, the
+  trailing `Z`); the report's deviation 9 corrected. Acceptance: a planned-date filter on the
+  assignments list narrows the list without an error; a role granted with an expiry date appears in
+  the user record with that date; typecheck, tests and build green. Side: frontend. The backend keeps
+  its own hardening item (its backlog, item 10: accept any offset), so a future client cannot hit the
+  same wall.
