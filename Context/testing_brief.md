@@ -8,9 +8,17 @@
 >
 > Working folders: the app in `/Users/zulf/rw-rent-api/rw-rent-web-wiring` (branch
 > `feature/backend-wiring`) and the API in `/Users/zulf/rw-rent-api/RWRentApi-wiring` (same branch
-> name). Both are read-only for you except the one report file named in §11. The main checkouts
-> `/Users/zulf/rw-rent-api/rw-rent-web` and `/Users/zulf/rw-rent-api/RWRentApi` are never touched.
-> Docker compose runs only from `/Users/zulf/rw-rent-api/RWRentApi`.
+> name). **Only these two folders, and only the running instances started from them, are under
+> test.** Both are read-only for you except the one report file named in §11. The main checkouts
+> `/Users/zulf/rw-rent-api/rw-rent-web` and `/Users/zulf/rw-rent-api/RWRentApi` are never touched,
+> never started, never tested. Docker compose runs only from `/Users/zulf/rw-rent-api/RWRentApi`.
+>
+> **You test both sides**: the API directly, and the app in a browser, always against each other.
+>
+> If you have worked on this codebase before, forget it: since then the authentication was rebuilt
+> (V6), the API gained a wiring phase of new fields, filters and endpoints, and the app was rebuilt
+> from a design prototype and switched from a mock to the real API. Trust only the files in the two
+> folders and the running system, never your memory of an earlier version.
 
 ## 1. The mission, in the owner's words
 
@@ -78,6 +86,22 @@ the session; vehicles are retired, never deleted; assignments, authorizations an
 historical and never deleted; the Overview's activity card hides routine sign-in and sign-out
 events while the audit page shows everything.
 
+### 3.1 What changed most recently — look hardest here
+
+Defects hide in fresh code. In the last days, on these branches: the app switched from a mock
+backend to the real API (cookies, antiforgery, the 401 handling that ends a session); the whole
+account area was ported from the prototype (sixteen sign-in outcome screens, registration, the
+emailed links, password reset, email change, the profile with sessions, the transfer acceptance);
+the API gained `availableVehicles` on the overview summary and `passwordChangedAtUtc` /
+`pendingEmail` on `GET /api/me`; every instant the app sends was changed to UTC after two rounds of
+500s; assignment cancellation gained its own note field and an audit entry; audit payload keys were
+changed to PascalCase at every level; privileged corrections and cancellations were given the
+operating Company; the drivers list, the assignment list and record, the vehicle availability, the
+security-audit filters and entry page, `GET /api/interruptions`, the transfers list and the
+registrations multi-status filter were added or reshaped for the app; a routing change was made so
+that sensitive endpoints answer unsupported content types with a problem body. Every one of these
+deserves the adversary's and the accountant's attention.
+
 ## 4. Where the truth is — read these before testing
 
 1. `RWRentApi-wiring/Context/business_rules.md` — the rule catalogue, the contract you test against.
@@ -109,10 +133,14 @@ events while the audit page shows everything.
 |---|---|---|
 | API | `http://localhost:5001` | `/health` answers `{"status":"healthy"}`; `/openapi/v1.json` is the contract |
 | App | `http://localhost:5173` | Vite dev server with hot reload; **5173 is the only origin the API trusts** for credentialed requests |
-| Mailpit | `http://localhost:8025` | every email the API sends (registration, reset, email change, transfer) lands here; links in them point at the app |
+| Mailpit | `http://localhost:8025` | every email the API sends (registration, reset, email change, transfer) lands here; links in them point at the app. Its REST API reads them without a browser: `GET http://localhost:8025/api/v1/messages` (list), `GET http://localhost:8025/api/v1/message/{ID}` (one message, HTML and text bodies with the links), `DELETE http://localhost:8025/api/v1/messages` (clear) |
 | PostgreSQL | `localhost:5433` | container `rwrent_v5_postgres`, database `rwrent_v1`, user `rwrent`, password in `/Users/zulf/rw-rent-api/RWRentApi/.env` as `RWRENT_POSTGRES_PASSWORD` |
 
-Both apps are normally already running from the worktrees. If one is not:
+Both apps are normally already running from the worktrees (`lsof -nP -iTCP:5001 -iTCP:5173
+-sTCP:LISTEN` shows them; the process's working directory tells you which folder it was started
+from). To stop one before restarting it: `kill $(lsof -ti :5001)` or `kill $(lsof -ti :5173)`.
+Never start a second instance on the same port and never start either from the main checkouts. If
+one is not running:
 
 ```sh
 # database + mailpit (from the main backend folder only)
@@ -177,6 +205,24 @@ Active 482 TKL Baltic Freight Partners; Active 770 HDV Ilze Berzina; Active 204 
 Planned 335 SNB Daugava Construction (in five days); four Ended and two Cancelled in the past. So the
 Overview reads 4 active, 2 planned, 8 active vehicles of which 2 available, 3 pending registrations.
 One open System Administrator transfer targets Liga Brice and expires 24 hours after seeding.
+
+### 5.2a The machine and your tools
+
+macOS with zsh; `dotnet` SDK 10, `node`/`npm`, `docker`, `python3` and `git` (push over SSH works;
+`gh` is not installed) are available. Both folders are git worktrees that share one stash stack
+with the main checkouts: never use `git stash`. Keep every file of your own — scripts, cookie jars,
+screenshots, notes — in a scratch folder **outside both worktrees**, for example
+`/Users/zulf/rw-rent-api/testing-scratch/` (create it; it is not a git repository). You may install
+tools for yourself there (a Python virtual environment, Playwright with `npm init -y && npm i
+playwright && npx playwright install chromium`), never inside a worktree. If you have no browser
+tool of your own, drive the app headless with Playwright from that folder; screenshots stay there
+and are named in the report. Evidence in the report is text: response bodies, page text, `psql`
+output. The clock: the machine and the app render Europe/Tallinn time (the zone the app's code
+uses; the same offsets as Riga, UTC+3 in summer, UTC+2 in winter); the API speaks UTC.
+
+If your session runs out of context or restarts, the report file is your memory: read it, continue
+from the coverage section, and say in the summary that the run was continued. Do not start over
+and do not lose what was found.
 
 ### 5.3 Security numbers you will test against
 
@@ -322,6 +368,7 @@ the audit actually contains.
 **G. Time and data.** Instants sent by the app are UTC; the app renders Europe/Riga; filters by
 date narrow correctly at the day boundaries; retroactive edits obey the rules; ordering of lists
 (newest first where promised); the seeded relative instants still make sense on the day you test.
+Where this brief says Europe/Riga it means the same offsets as the app's Europe/Tallinn.
 
 **H. Robustness.** API stopped: the app shows its unreachable state and recovers when it is back;
 a request that times out; double submit; navigation away mid-request; browser back and forward
