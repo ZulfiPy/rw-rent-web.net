@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, isFuture, toDateOnlyLocal, zoneOffset,
+  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, isFuture, startOfDayLocal,
+  toDateOnlyLocal, zoneOffset,
 } from './datetime';
 
 const year = new Date().getUTCFullYear();
@@ -42,13 +43,33 @@ describe('audit and sessions surfaces render UTC', () => {
 });
 
 describe('date-only expiries resolve to the end of the chosen local day', () => {
-  test('summer dates carry +03:00', () => {
-    expect(endOfDayLocal('2026-07-15')).toBe('2026-07-15T23:59:59.999+03:00');
+  // The bounds used to be written with the zone's offset. The instants below are the same moments;
+  // only the representation changed, because Npgsql takes an offset of zero and nothing else — as
+  // a query parameter just as much as on a stored value (the review of 2026-09-16).
+  test('a summer date resolves through +03:00 and reports UTC', () => {
+    expect(endOfDayLocal('2026-07-15')).toBe('2026-07-15T20:59:59.999Z');
+    expect(startOfDayLocal('2026-07-15')).toBe('2026-07-14T21:00:00.000Z');
   });
 
-  test('winter dates carry +02:00', () => {
-    expect(endOfDayLocal('2026-01-15')).toBe('2026-01-15T23:59:59.999+02:00');
+  test('a winter date resolves through +02:00 and reports UTC', () => {
+    expect(endOfDayLocal('2026-01-15')).toBe('2026-01-15T21:59:59.999Z');
+    expect(startOfDayLocal('2026-01-15')).toBe('2026-01-14T22:00:00.000Z');
     expect(zoneOffset(new Date('2026-01-15T12:00:00Z'))).toBe('+02:00');
+  });
+
+  test('neither bound ever carries an offset, because the API refuses one', () => {
+    for (const dateOnly of ['2026-07-15', '2026-01-15']) {
+      expect(startOfDayLocal(dateOnly).endsWith('Z')).toBe(true);
+      expect(endOfDayLocal(dateOnly).endsWith('Z')).toBe(true);
+    }
+  });
+
+  test('the picker gets the chosen day back from the bound it produced', () => {
+    // The whole point of the end-of-day bound: a date input seeded from a stored expiry shows the
+    // day the person chose, in either offset season.
+    expect(toDateOnlyLocal(endOfDayLocal('2026-07-15'))).toBe('2026-07-15');
+    expect(toDateOnlyLocal(endOfDayLocal('2026-01-15'))).toBe('2026-01-15');
+    expect(toDateOnlyLocal(endOfDayLocal('2026-12-31'))).toBe('2026-12-31');
   });
 
   test('the chosen day is the last valid one, so it is still in the future all day', () => {

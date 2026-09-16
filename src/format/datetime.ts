@@ -75,16 +75,26 @@ export function zoneOffset(at: Date): string {
   return offset === '' ? '+00:00' : offset;
 }
 
-/** yyyy-MM-dd → the instant at 00:00:00.000 local on that day; a filter's lower bound. */
+/**
+ * yyyy-MM-dd → the instant at 00:00:00.000 local on that day, in UTC; a filter's lower bound.
+ *
+ * In UTC for the same reason as `fromLocalInput`: Npgsql accepts a `DateTimeOffset` only at offset
+ * zero, and that holds for a query parameter exactly as it holds for a stored value. The instant is
+ * resolved through the zone's offset for that day and then rendered with a `Z`.
+ */
 export function startOfDayLocal(dateOnly: string): string {
   const offset = zoneOffset(new Date(`${dateOnly}T12:00:00Z`));
-  return `${dateOnly}T00:00:00.000${offset}`;
+  return new Date(`${dateOnly}T00:00:00.000${offset}`).toISOString();
 }
 
-/** yyyy-MM-dd → the instant at 23:59:59.999 local on that day, with its offset. */
+/**
+ * yyyy-MM-dd → the instant at 23:59:59.999 local on that day, in UTC. The chosen date is the last
+ * valid day of an expiry, so the bound is its final millisecond; `toDateOnlyLocal` gives the same
+ * day back from it.
+ */
 export function endOfDayLocal(dateOnly: string): string {
   const offset = zoneOffset(new Date(`${dateOnly}T12:00:00Z`));
-  return `${dateOnly}T23:59:59.999${offset}`;
+  return new Date(`${dateOnly}T23:59:59.999${offset}`).toISOString();
 }
 
 /** The local calendar date of an instant — seeds a date input from a stored expiry. */
@@ -115,8 +125,10 @@ export function toLocalInput(iso: string | null | undefined): string {
  * is resolved exactly as before, through the zone's offset for that day, and then rendered in UTC,
  * which is also what every `…AtUtc` field promises.
  *
- * `startOfDayLocal` and `endOfDayLocal` keep their offset form: those two are filter bounds that
- * the API only ever compares, never stores.
+ * `startOfDayLocal` and `endOfDayLocal` report UTC too. They were left carrying the offset at
+ * first, on the assumption that a bound the API only compares would be tolerated; it is not —
+ * Npgsql refuses a non-zero offset as a query parameter just as it refuses one on a stored value
+ * (found in the review of 2026-09-16). Every instant this module hands the API is UTC.
  */
 export function fromLocalInput(value: string): string {
   if (!value) return '';
