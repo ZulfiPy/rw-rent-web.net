@@ -4,7 +4,7 @@
 > `feature/backend-wiring`. What remains of the phase lives in `Context/wiring_followups.md`; the
 > prototype `Context/prototype/RW-Rent.dc.html` is the design source for the account screens. The
 > backend's worktree `/Users/zulf/rw-rent-api/RWRentApi-wiring` was run and read, never changed
-> from here. Covers all three runs. Rewritten 2026-09-16; one report file, rewritten completely by
+> from here. Covers all four runs. Rewritten 2026-09-16; one report file, rewritten completely by
 > each run.
 
 ## 1. Summary
@@ -27,12 +27,22 @@ being reset, and the three values the app used to compute or leave blank now com
 backend's round 2 — `availableVehicles` on the summary, `passwordChangedAtUtc` and `pendingEmail`
 on `GET /api/me`. Driving the app against the round-2 API then turned up a defect of its own: every
 lifecycle dialog sent its instant with the zone's offset, which the API cannot store, so cancelling
-an assignment answered 500. Fixed in Wiring 10 (§8, §10 deviation 9).
+an assignment answered 500. Fixed in Wiring 10 — though not completely; see run 4.
 
-Commits `2a2cece` (Wiring 1) … `f338131` (Wiring 7), `0e49285` (Wiring 8), `12b11c3` (Wiring 9) and
-`238c8bb` (Wiring 10), with the follow-up documents in `5bcd87d`, `aca9647` and `b4373d8`, on top of
-`850eb1f`. Tests went from 88 before the phase (56 of them the mock's own) to 89, every one of them
-about the app. `npm run typecheck`, `npx vitest run` and `npm run build` are green.
+**Run 4 — follow-up 3 (Wiring 12–13, 2026-09-16).** The review of run 3 found that the fix of
+Wiring 10 had stopped one helper short of the family. `startOfDayLocal` and `endOfDayLocal` were
+left writing the zone's offset on the reasoning — recorded as deviation 9 — that a bound the API
+only compares would be tolerated. It is not: Npgsql refuses a non-zero offset as a query parameter
+exactly as it refuses one on a stored value. So the assignments list's four date filters and every
+role expiry answered 500, and run 3's joint check had exercised neither: it filtered by status only
+and granted no role with an expiry. Both helpers now report UTC, and all seven of their callers
+were driven against the live API this time (§8.1).
+
+Commits `2a2cece` (Wiring 1) … `f338131` (Wiring 7), `0e49285` (Wiring 8), `12b11c3` (Wiring 9),
+`238c8bb` (Wiring 10), `d33d14e` (Wiring 11) and `d61ebbd` (Wiring 12), with the follow-up documents
+in `5bcd87d`, `aca9647`, `b4373d8`, `fb80a8f` and `8066c9e`, on top of `850eb1f`. Tests went from 88
+before the phase (56 of them the mock's own) to 91, every one of them about the app.
+`npm run typecheck`, `npx vitest run` and `npm run build` are green.
 
 ## 2. Implemented
 
@@ -119,7 +129,7 @@ permissions.
 |---|---|---|
 | Overview | metric cards, Needs attention, assignment mix, activity card | the counts: 4 active of 12, 2 planned, 2 vehicles available of 8 active, 3 registrations |
 | Needs attention | the same five rows in the same order | open each row; the two interruptions and the planned handover without a driver |
-| Rental assignments | coverage column, Interrupted chip, model and type sub-lines | filter by status; open 552 KLM (collective coverage, one open interruption) |
+| Rental assignments | coverage column, Interrupted chip, model and type sub-lines | filter by status; filter by a planned or started date range (follow-up 3); open 552 KLM (collective coverage, one open interruption) |
 | Assignment record | Parties, Lifecycle, Notes, the two tabs, Corrections | cancel a Planned assignment with a note; then read Notes and Corrections |
 | Assignment record, Active | the mistaken-activation cancel | cancel without a note: the message appears under the note field, not above the form |
 | Vehicles | availability chips and their sub-lines | in use 482 TKL, 770 HDV, 552 KLM, 204 JLM; reserved 444 WKS and 335 SNB; retired 881 GRT, 660 BYH |
@@ -127,7 +137,7 @@ permissions.
 | Drivers | personal identifier, licence, address columns | search; open Janis Krumins |
 | Driver record | the authorization history table | vehicle, customer and status come from the row; the audit panel shows the creation |
 | Customers, Customer record | unchanged | open a business and a private customer |
-| User directory, User record | Registered column, roles, sessions | open Dita Smite (four role rows) and Imants Gailis (the rejection reason) |
+| User directory, User record | Registered column, roles, sessions | open Dita Smite (four role rows) and Imants Gailis (the rejection reason); grant a role with an expiry date and revoke it (follow-up 3) |
 | Registrations | All lifecycle states in one page | the five people; then each single-status filter; activate Gatis Lapsa with a role |
 | Security audit | list filters, entity chips | filter by event type and by entity type; open any row |
 | Audit entry | the payload diff | open the Registration · Activated entry: the role grant reads "Viewer — no expiry" |
@@ -157,12 +167,13 @@ see it, revoke a Viewer's only role from their user record, sign in as them, and
    its resend screen lacks the password field the API requires. The app is right and the prototype
    stays the reference for looks only. Side that has to change: the prototype, if it is ever edited
    again.
-3. **The backend answers 500, not 400, for an instant whose offset it cannot store** (§8, and §10
-   deviation 9). The app no longer sends one, so nothing malfunctions today, but any other client
-   that sends a legitimate `+03:00` instant gets an unexpected-error page instead of a validation
-   message. Side that has to change: backend. Proposed option: normalise an incoming
-   `DateTimeOffset` to UTC before persisting, or refuse a non-zero offset in the validators with
-   the usual coded 400.
+3. **The backend answers 500, not 400, for an instant whose offset it cannot store** (§8.1, and
+   §10 deviation 9) — on a stored value and on a query parameter alike. The app no longer sends one
+   anywhere, so nothing malfunctions today, but any other client that sends a legitimate `+03:00`
+   instant gets an unexpected-error page instead of a validation message. Side that has to change:
+   backend, where it is scheduled after the merge (its backlog item 10, owner decision 9). Proposed
+   option: normalise an incoming `DateTimeOffset` to UTC at the boundary, which fixes both halves at
+   once, rather than refusing a non-zero offset in each validator.
 
 ## 4. Decisions needed
 
@@ -276,6 +287,24 @@ seeded database.
 | A record page opened with an id that does not exist | pass: the error card "That assignment is not available" with Try again, not a blank page |
 | Database re-seeded afterwards | pass, with `--replace true` |
 
+Follow-up 3, 2026-09-16, against the same API with the app reloaded. Every caller of the two helpers
+was driven this time, not a sample of them — the lesson of the run-3 check, which exercised none of
+them.
+
+| Check | Outcome |
+|---|---|
+| Assignments list, filter by a planned date range | pass: `PlannedFromUtc=2026-08-31T21:00:00.000Z` narrowed 12 rows to 5 and answered 200; adding `PlannedToUtc=2026-09-30T20:59:59.999Z` answered 200 |
+| Assignments list, filter by a started date range | pass: `StartedFromUtc=2026-09-04T21:00:00.000Z` with `StartedToUtc=2026-09-16T20:59:59.999Z` narrowed the list to 2 rows and answered 200 |
+| The same bound in the old offset form, for the record | confirmed still broken on the API: `StartedFromUtc=2026-09-01T00:00:00.000+03:00` answers 500, the UTC form 200 |
+| Grant Fleet Manager to Toms Rudzitis with an expiry of 31 Dec 2026 | pass: 201, and the role row reads "31 Dec, 23:59" |
+| Re-open the expiry dialog | pass: pre-seeded with `2026-12-31` — the picker gets the chosen day back from the UTC bound that was stored |
+| Change that expiry to 30 Jun 2027 (the other offset season) | pass: 200, and the row reads "30 Jun 2027, 23:59" |
+| Change it to a date in the past | pass: a coded 400 rendered as the API's own message in the dialog — "Role expiry must be later than the assignment time." — not the unexpected-error card |
+| Revoke the granted role | pass: the row turned Revoked, the Viewer role stayed Effective |
+| Activate Gatis Lapsa with a role and an expiry of 31 Mar 2027 | pass: 200, the account is Active and the granted role reads "31 Mar 2027, 23:59" — the third expiry caller |
+| The console and network over the whole check | pass: 61 requests, no 500; the only non-2xx are the deliberate 400 above and one aborted revoke that had already answered 204. No JavaScript error |
+| Database re-seeded afterwards | pass, with `--replace true` |
+
 ### 8.2 Carried from the earlier runs
 
 | Check | Outcome |
@@ -300,7 +329,7 @@ $ npm run typecheck
 (no output)
 
 $ npx vitest run
- ✓ src/format/datetime.test.ts (14 tests)
+ ✓ src/format/datetime.test.ts (16 tests)
  ✓ src/api/problem.test.ts (12 tests)
  ✓ src/permissions/can.test.ts (9 tests)
  ✓ src/pages/account/outcomes.test.ts (8 tests)
@@ -314,7 +343,7 @@ $ npx vitest run
  ✓ src/pages/account/token.test.ts (4 tests)
 
  Test Files  12 passed (12)
-      Tests  89 passed (89)
+      Tests  91 passed (91)
 
 $ npm run build
 dist/assets/index-CXhrh6EP.css   75.25 kB │ gzip:  13.93 kB
@@ -324,7 +353,10 @@ dist/assets/index-MdpkvBYm.js   562.25 kB │ gzip: 158.79 kB
 
 Run 3 added nine tests — five for the activity filter, one for a password with no lowercase letter,
 four for the two profile facts, three for the UTC conversion — and changed three assertions of
-`password.test.ts` to the four-rule checklist the owner decided on. No test was removed or weakened.
+`password.test.ts` to the four-rule checklist the owner decided on. Run 4 added two more, covering
+both day-bound helpers across the two offset seasons, the absence of an offset in either, and the
+day the expiry picker reads back; the two assertions that described the old offset form now assert
+the same instants in UTC. No test has been removed or weakened in any run.
 
 The build warns that the single chunk is over 500 kB, as it did before this phase. Code splitting is
 a hosting decision, not part of the wiring.
@@ -352,11 +384,16 @@ a hosting decision, not part of the wiring.
 8. **A deliberate sign-out no longer raises the session-end signal.** Emptying the cache refetches
    the page's watched queries, whose 401s used to raise it, so signing out reached the sign-in page
    carrying "your session has ended".
-9. **`fromLocalInput` now reports UTC, not the zone's offset.** Every value it produces is stored by
-   the API in a `timestamp with time zone` column, and Npgsql writes a `DateTimeOffset` only at
-   offset zero, so the lifecycle dialogs failed with a 500 (§8.1). The instant is resolved exactly
-   as before. `startOfDayLocal` and `endOfDayLocal` keep their offset form: those are filter bounds
-   the API only compares, never stores.
+9. **Every instant the app sends is UTC, day bounds included.** `fromLocalInput`,
+   `startOfDayLocal` and `endOfDayLocal` all resolve the wall-clock value through the zone's offset
+   for that day and then report it with a `Z`. Npgsql accepts a `DateTimeOffset` only at offset
+   zero, so anything else answers 500.
+
+   This deviation said something narrower and wrong in the report of run 3: that the two day-bound
+   helpers could keep the offset because the API "only compares" a filter bound and never stores it.
+   The restriction is Npgsql's own and applies to a query parameter just as much — the review of
+   2026-09-16 demonstrated it, and the assignments list's date filters and every role expiry were
+   failing with a 500 in the meantime. Wiring 12 corrected the helpers; the claim is withdrawn.
 10. **`AccessProvider` has a fourth state.** An API that does not answer at all is neither signed in
     nor signed out, so it has its own state and its own card.
 11. **Two additions to shared components.** `Chip` gained the prototype's `accent` tone for the
