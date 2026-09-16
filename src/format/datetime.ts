@@ -104,11 +104,24 @@ export function toLocalInput(iso: string | null | undefined): string {
   return `${f.year}-${pad(f.month)}-${pad(f.day)}T${pad(f.hour)}:${pad(f.minute)}`;
 }
 
-/** The instant a datetime-local value names in Europe/Tallinn, with its offset written out. */
+/**
+ * The instant a datetime-local value names in Europe/Tallinn, in UTC.
+ *
+ * It used to be written with the zone's own offset (`…T08:01:00.000+03:00`), which names the same
+ * instant but is not what the API can store: every one of these values lands in a
+ * `timestamp with time zone` column, and Npgsql writes a `DateTimeOffset` only at offset zero. The
+ * lifecycle dialogs — activate, end, cancel, authorize, stop, the interruptions and the
+ * corrections — therefore failed with a 500 (found in the joint check of 2026-09-16). The instant
+ * is resolved exactly as before, through the zone's offset for that day, and then rendered in UTC,
+ * which is also what every `…AtUtc` field promises.
+ *
+ * `startOfDayLocal` and `endOfDayLocal` keep their offset form: those two are filter bounds that
+ * the API only ever compares, never stores.
+ */
 export function fromLocalInput(value: string): string {
   if (!value) return '';
   const offset = zoneOffset(new Date(`${value.slice(0, 10)}T12:00:00Z`));
-  return `${value}:00.000${offset}`;
+  return new Date(`${value}:00.000${offset}`).toISOString();
 }
 
 export function relative(iso: string | null | undefined, now: Date = new Date()): string {

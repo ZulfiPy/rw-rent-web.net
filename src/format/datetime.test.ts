@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { endOfDayLocal, formatLocal, formatUtc, isFuture, toDateOnlyLocal, zoneOffset } from './datetime';
+import {
+  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, isFuture, toDateOnlyLocal, zoneOffset,
+} from './datetime';
 
 const year = new Date().getUTCFullYear();
 
@@ -57,5 +59,23 @@ describe('date-only expiries resolve to the end of the chosen local day', () => 
   test('a stored expiry seeds the picker with its local calendar date', () => {
     // 21:30 UTC on 30 June is already 1 July in Tallinn.
     expect(toDateOnlyLocal('2026-06-30T21:30:00Z')).toBe('2026-07-01');
+  });
+});
+
+describe('fromLocalInput', () => {
+  it('resolves the wall clock through the zone and reports it in UTC', () => {
+    // Europe/Tallinn is UTC+3 in September and UTC+2 in January.
+    expect(fromLocalInput('2026-09-16T08:01')).toBe('2026-09-16T05:01:00.000Z');
+    expect(fromLocalInput('2026-01-16T08:01')).toBe('2026-01-16T06:01:00.000Z');
+  });
+
+  it('never reports an offset, because the API stores these values', () => {
+    // Npgsql writes a DateTimeOffset into `timestamp with time zone` only at offset zero, so an
+    // instant carrying +03:00 was refused by the server with a 500.
+    expect(fromLocalInput('2026-09-16T08:01').endsWith('Z')).toBe(true);
+  });
+
+  it('passes an empty input through', () => {
+    expect(fromLocalInput('')).toBe('');
   });
 });
