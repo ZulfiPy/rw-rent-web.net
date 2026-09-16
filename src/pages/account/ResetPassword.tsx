@@ -8,6 +8,9 @@ import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
 import { readTokenFromHash, stripHash } from './token';
 
+/** The prototype's note under the address, on these two screens only (owner decision, 2026-09-16). */
+const RESET_NOTE = 'The reset must be completed with the address the link was sent to.';
+
 /**
  * The prototype's `forgot` and `reset` screens behind one route, as the emailed link expects:
  * without a token it asks for the address, with one it sets the new password. The prototype's
@@ -101,7 +104,7 @@ export function ResetPassword() {
           title="Set a new password"
           body="Completing the reset needs the account email, the link token and your new password."
           {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
-          email={{ value: email, onChange: setEmail, error: failure.fields['email'] }}
+          email={{ value: email, onChange: setEmail, error: failure.fields['email'], note: RESET_NOTE }}
           newPassword={{
             value: password,
             onChange: setPassword,
@@ -122,7 +125,7 @@ export function ResetPassword() {
         title="Reset your password"
         body="Enter the email address on your account. We will send a single-use reset link."
         {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
-        email={{ value: email, onChange: setEmail, error: failure.fields['email'] }}
+        email={{ value: email, onChange: setEmail, error: failure.fields['email'], note: RESET_NOTE }}
         cta="Send reset link"
         busy={request.isPending}
         onSubmit={() => request.mutate()}

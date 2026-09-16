@@ -20,6 +20,7 @@ import { Panel } from '@/ui/Panel';
 import { RecordTabs, recordStyles as shell, type RecordTab } from '@/ui/RecordTabs';
 import cards from '@/ui/cards.module.css';
 import table from '@/ui/table.module.css';
+import { passwordChangedFact, pendingEmailFact } from './profileFacts';
 import styles from './Profile.module.css';
 
 type TabId = 'profile' | 'security' | 'sessions';
@@ -33,7 +34,7 @@ const TABS: Array<RecordTab<TabId>> = [
 const SESSIONS = { IncludeEnded: true, PageSize: 100 } as const;
 const INVALIDATE = [['me'], ['sessions']] as const;
 
-const PASSWORD_RULE = 'At least 12 characters with upper case, lower case, a digit and a symbol.';
+const PASSWORD_RULE = 'At least 12 characters with upper case, a digit and a symbol.';
 
 const sessionState = (s: SessionResponse) =>
   s.isCurrent
@@ -165,7 +166,7 @@ export function Profile() {
           >
             <FactGrid>
               <Fact label="Password" mono>••••••••••••</Fact>
-              <Fact label="Last changed" dim hint="The API does not report this yet.">{EMPTY}</Fact>
+              <Fact label="Last changed" mono dim>{passwordChangedFact(me)}</Fact>
             </FactGrid>
           </Panel>
 
@@ -178,7 +179,7 @@ export function Profile() {
           >
             <FactGrid>
               <Fact label="Current address">{me?.email ?? EMPTY}</Fact>
-              <Fact label="Pending change" dim hint="The API does not report this yet.">{EMPTY}</Fact>
+              <Fact label="Pending change" dim={!me?.pendingEmail}>{pendingEmailFact(me?.pendingEmail)}</Fact>
             </FactGrid>
           </Panel>
         </>

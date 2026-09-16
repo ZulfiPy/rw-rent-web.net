@@ -276,8 +276,7 @@ export function AuthOutcome({ outcome, meta, onAction }: {
 /**
  * The prototype's `scReset`: one screen behind four states — the forgotten-password request, the
  * new password behind a reset link, the confirmation resend and the administrator transfer. The
- * email field and its note are part of the screen in every one of them; the password fields and
- * the token note appear as the state needs them.
+ * password fields, the token note and the email field's own note appear as the state needs them.
  */
 export function ResetScreen({
   title, body, alert, email, newPassword, currentPassword, hasToken, cta, busy, onSubmit,
@@ -286,7 +285,13 @@ export function ResetScreen({
   body: string;
   alert?: ReactNode;
   /** Absent on the transfer acceptance, whose endpoint takes the token and a password only. */
-  email?: { value: string; onChange: (next: string) => void; error?: string | undefined };
+  email?: {
+    value: string;
+    onChange: (next: string) => void;
+    error?: string | undefined;
+    /** The prototype's note under the field. Only the two password-reset screens carry it. */
+    note?: string;
+  };
   newPassword?: { value: string; onChange: (next: string) => void; error?: string | undefined };
   currentPassword?: {
     label: string;
@@ -312,7 +317,7 @@ export function ResetScreen({
         {email ? (
           <AuthField
             label="Email address"
-            hint="The reset must be completed with the address the link was sent to."
+            {...(email.note ? { hint: email.note } : {})}
             error={email.error}
           >
             <input

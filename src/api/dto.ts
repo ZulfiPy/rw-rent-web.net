@@ -196,6 +196,13 @@ export interface CurrentUserResponse {
   phoneNumber: string;
   companyId?: Uuid | null;
   status: ApplicationUserStatus;
+  /**
+   * When the password in force was set (round 2): the newest password-history instant, or the
+   * account's registration instant while it still holds the password it registered with.
+   */
+  passwordChangedAtUtc: Instant;
+  /** The address of an email change still waiting for its confirmation, or null (round 2). */
+  pendingEmail?: string | null;
   roles: ApplicationUserRole[];
   /** Effective code-owned permission strings; the only capability source the UI reads. */
   permissions: string[];
@@ -799,5 +806,7 @@ export interface OverviewSummaryResponse {
   activeAssignments?: number | null;
   plannedAssignments?: number | null;
   activeVehicles?: number | null;
+  /** Of the active vehicles, the ones with no Active assignment and no Planned one (round 2). */
+  availableVehicles?: number | null;
   pendingRegistrations?: number | null;
 }

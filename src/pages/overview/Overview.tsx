@@ -2,19 +2,22 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
-import { listVehicles } from '@/api/vehicles';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { getOverviewSummary } from '@/api/overview';
-import { AssignmentStatus, VehicleAvailability, type SecurityAuditQuery } from '@/api/dto';
+import { AssignmentStatus, type SecurityAuditQuery } from '@/api/dto';
 import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
 import { useOpenWork } from './useOpenWork';
+import { activityRows } from './activity';
 import { INSURANCE, SAMPLE_CHIP, TASKS, type SampleRow } from './sample';
 import styles from './Overview.module.css';
 
-/** The activity card shows the five newest audit entries. */
-const ACTIVITY: SecurityAuditQuery = { PageNumber: 1, PageSize: 5 };
+/**
+ * The activity card shows five entries, but asks for a larger page: the routine session events are
+ * dropped in `activityRows`, and the newest five rows of a used database are often all sessions.
+ */
+const ACTIVITY: SecurityAuditQuery = { PageNumber: 1, PageSize: 25 };
 
 const PICK = { PageSize: 100 } as const;
 
@@ -60,7 +63,6 @@ export function Overview() {
   const work = useOpenWork();
 
   const mayReadAssignments = can('RentalAssignments.Read');
-  const mayReadVehicles = can('Vehicles.Read');
   const mayReadAudit = can('SecurityAudit.ReadCompany');
 
   // One page of assignments feeds both the mix and the metric denominators.
@@ -68,11 +70,6 @@ export function Overview() {
     queryKey: qk.assignments.list(PICK),
     queryFn: () => listAssignments(PICK),
     enabled: mayReadAssignments,
-  });
-  const vehicles = useQuery({
-    queryKey: qk.vehicles.list(PICK),
-    queryFn: () => listVehicles(PICK),
-    enabled: mayReadVehicles,
   });
   const audit = useQuery({
     queryKey: qk.audit.list(ACTIVITY),
@@ -85,9 +82,6 @@ export function Overview() {
 
   const rows = assignments.data?.items ?? [];
   const totalAssignments = assignments.data?.totalCount ?? rows.length;
-  const fleet = vehicles.data?.items ?? [];
-  /** Availability is decided by the server and read from the row. */
-  const available = fleet.filter((v) => v.availability === VehicleAvailability.Available).length;
   const counts = summary.data;
 
   // metricsModel(): the permitted counts in order, capped at four, then the two sample cards.
@@ -107,9 +101,10 @@ export function Overview() {
     });
   }
   if (counts?.activeVehicles != null) {
+    // Both numbers come from the summary: the card reads no page of vehicles of its own.
     metrics.push({
       key: 'veh', icon: 'directions_car', color: 'var(--fg-2)', label: 'Vehicles available',
-      value: String(available), unit: `of ${counts.activeVehicles} active`,
+      value: String(counts.availableVehicles ?? 0), unit: `of ${counts.activeVehicles} active`,
       to: '/vehicles?active=true',
     });
   }
@@ -147,8 +142,8 @@ export function Overview() {
     };
   });
 
-  // The five newest entries of the audit history, the card the prototype shows.
-  const activity = (audit.data?.items ?? []).map((a) => ({
+  // The five newest entries that are not a routine sign-in or sign-out.
+  const activity = activityRows(audit.data?.items ?? []).map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),
     when: formatUtcHuman(a.occurredAtUtc),
