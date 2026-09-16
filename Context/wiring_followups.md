@@ -13,9 +13,12 @@
 
 ## 1. The owner's manual check (the gate before the merge)
 
-Deferred by the owner on 2026-09-16 until the remaining screens — Tasks and Insurance cases — are
-delivered by the backend and wired here, and the seed data is replaced with real data. Then the
-owner works through the tables of §2 on their devices, with the accounts listed there (or the real
+Deferred by the owner on 2026-09-16. Decided the same day: the app ships without Tasks and Insurance
+cases for now (their brainstorm is parked), and an **independent testing phase** runs first, by a
+separate agent in a fresh session, against both the API and the app as they are: brief in
+`Context/testing_brief.md`, report in `Context/testing_report.md`. Its findings become the next
+follow-ups on the side they name. After that, and after the seed data is replaced with real data,
+the owner works through the tables of §2 on their devices, with the accounts listed there (or the real
 ones by then), the app at `http://localhost:5173`, the API at `http://localhost:5001`, emails at
 `http://localhost:8025`, the seed password kept outside the repository. Differences from the
 prototype found there become the next follow-up.
@@ -97,5 +100,6 @@ database keeps the seeded dataset.
 5. The shell's open-work queue runs three list requests on every page; cheap on the seeded data,
    the first thing to look at if a page ever feels slow.
 6. Tasks and Insurance cases are sample-data placeholders (`src/pages/overview/sample.ts`,
-   `src/pages/simple/`); their backend is the next phase, specified in the backend's `Context`,
-   and the two pages and the two Overview cards are wired when it lands.
+   `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
+   defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
+   road-tax or inspection dates). The app ships without them until that phase is opened.
