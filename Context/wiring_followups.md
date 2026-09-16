@@ -25,6 +25,9 @@
 | 5 | The transfer-acceptance screen keeps the port's single existing-password field (the API takes the token and that password only); the prototype's extra email and new-password fields are a prototype error, noted in §7. |
 | 6 | The resend-confirmation screen keeps the password field the port added (the API requires it); a prototype omission, noted in §7. |
 | 7 | The three values the app shows as dashes or computes itself come from the backend's round 2 (`RWRentApi-wiring/Context/wiring2_spec.md`): `availableVehicles` on the overview summary, `passwordChangedAtUtc` and `pendingEmail` on `GET /api/me`. |
+| 8 | Follow-up 3 (§8, the two day-bound helpers report UTC) runs now, before the owner's manual check. |
+| 9 | The backend's own hardening for offsets (its `Context/backlog.md` item 10, accept any offset) waits until after the merge, in the next backend round together with the seed revision. |
+| 10 | The seed revision also writes one password-history entry per seeded account, so "Last changed" on a seeded database reads the seeding moment (backend backlog item 1). |
 
 ## 2. Follow-up 2 — implemented
 
@@ -79,7 +82,7 @@ dataset, and leave both apps running.
 The owner works through the two tables of §5 on their devices, with the accounts listed there, the
 app at `http://localhost:5173`, the API at `http://localhost:5001`, emails at
 `http://localhost:8025`, the seed password kept outside the repository. Differences from the
-prototype or the mock found here become Follow-up 3.
+prototype or the mock found here become Follow-up 4.
 
 ## 5. Verification tables and accounts (carried from the report of 2026-09-15)
 
@@ -158,10 +161,15 @@ checkouts stay untouched and the developer database keeps the seeded dataset.
    the first thing to look at if a page ever feels slow.
 6. Tasks and Insurance cases remain sample-data placeholders until their backend exists.
 
-## 8. Follow-up 3 — found in the review of 2026-09-16, awaiting the owner's go
+## 8. Follow-up 3 — found in the review of 2026-09-16
 
-> **Status: OPEN.** One defect, same family as Wiring 10. Nothing else from the review needs a
-> frontend change.
+> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED** (decision 8, 2026-09-16). One defect, same
+> family as Wiring 10. Nothing else from the review needs a frontend change. Feedback to the agent
+> that goes with it: the joint check of run 3 filtered the assignments list by status only and
+> granted no role with an expiry, so the two paths that still carry an offset were never exercised;
+> and the report's deviation 9 assumed the API tolerates an offset on a value it only compares —
+> Npgsql refuses a non-zero offset as a query parameter exactly as it refuses one on a stored value.
+> A check of a fix has to drive every caller of the thing that was fixed.
 
 - F3-1. **Two helpers still send instants with the zone's offset.** `startOfDayLocal` and
   `endOfDayLocal` in `src/format/datetime.ts` write `…T00:00:00.000+03:00` / `…T23:59:59.999+03:00`.
@@ -181,3 +189,12 @@ checkouts stay untouched and the developer database keeps the seeded dataset.
   the user record with that date; typecheck, tests and build green. Side: frontend. The backend keeps
   its own hardening item (its backlog, item 10: accept any offset), so a future client cannot hit the
   same wall.
+- F3-2. Report: rewrite `Context/wiring_report.md` (one file, all runs): the summary gains run 4; §8.1
+  gains the two live rows (a planned-date and a started-date filter on the assignments list; a role
+  granted with an expiry date, read back, then revoked); §10 deviation 9 is corrected to say that
+  every instant the app sends is UTC, day bounds included, and why; §3 item 3 stays as the backend's
+  hardening item. This document is not edited by the agent.
+
+Acceptance: the two rows of §8.1 pass against the running round-2 API; `grep` finds no instant
+written with an offset anywhere under `src/`; the tests cover both helpers; re-seeded with
+`--replace true` afterwards; both apps left running.
