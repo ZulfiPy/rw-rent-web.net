@@ -104,7 +104,7 @@ database keeps the seeded dataset.
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
    road-tax or inspection dates). The app ships without them until that phase is opened.
 
-## 5. Testing run 1 — reviewed 2026-09-17, awaiting the owner's decisions
+## 5. Testing run 1 — reviewed 2026-09-17; decisions taken the same day (§6, and the backend's round 3)
 
 The independent tester's report is `Context/testing_report.md` (run 1, 2026-09-16: 82 operations ×
 four roles and anonymous, every rule id, 522 route/width/theme combinations, the scenario
@@ -129,3 +129,61 @@ staff, accepting the transfer through the app, the correction dialogs' mutations
 password-change and email-change click-throughs); expiries that need real waiting (2 h idle, 12 h
 absolute, 15 min lockout release, 1 h reset, 24 h confirmation); an induced email failure; a whole
 browser restart.
+
+## 6. Follow-up 4 — the testing run's frontend findings
+
+> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED (2026-09-17).** Runs in the same agent run
+> as the backend's round 3 (`RWRentApi-wiring/Context/round3_spec_and_plan.md`), after it, in this
+> worktree, against the API rebuilt from that round with its migration applied. Owner decisions of
+> 2026-09-17 behind it: a named driver must be at least 18 on the authorization date; the API also
+> refuses an exact duplicate interruption; a second testing run follows the fixes.
+> The reproduction steps of every finding are in `Context/testing_report.md` §2; use them.
+
+- F4-1. **Routes are guarded by permission, not only the menu (T-001, Major).** Every route is
+  reachable by typing its address, and `/system-administrator` then shows the signed-in person as
+  the "Current System Administrator" with an enabled Initiate transfer. One guard, fed from the same
+  permission the navigation already carries for that destination (`src/app/AppShell.tsx`), wraps
+  every route; a record route takes its list's permission. A person without the permission gets the
+  restricted state the app already uses for a refused list (the lock icon, "Not available to you"),
+  inside the shell, with no page content behind it and no request sent. `/overview`,
+  `/needs-attention`, `/profile`, `/tasks` and `/insurance-cases` need no permission. Separately,
+  the System Administrator page never falls back to the signed-in person when it cannot resolve the
+  administrator: it shows the app's dash.
+- F4-2. **Every submission happens once (T-004, rated Major by the reviewer).** Enter pressed twice
+  sends the request twice, because nothing blocks the second submit before React has re-rendered the
+  busy state. All 42 dialog submissions go through `useActionMutation`: give its `submit` a
+  synchronous in-flight guard, and make `Dialog` ignore a submit while busy. The account pages that
+  use `useMutation` directly (sign in, register, reset, resend, the emailed-link pages, transfer
+  acceptance) and any other form that submits get the same guard through one small shared helper.
+  The consequence that matters: the interruption dialog created two identical permanent records.
+- F4-3. **An emailed-link page starts over when a new link arrives (T-005).** After a link has been
+  used, opening a link again in the same tab keeps the finished screen and sends nothing, so a
+  second, valid link is ignored. All four pages (`/confirm-registration-email`, `/reset-password`,
+  `/confirm-email-change`, `/accept-administrator-transfer`) reset their state and read the new
+  token when the fragment changes, then remove it from the address bar as before.
+- F4-4. **The backend's round-3 refusals are shown where they belong.** Three new conflict codes:
+  `assignment_authorizations.driver_birth_date_required` and
+  `assignment_authorizations.driver_underage` appear under the driver field wherever a named
+  authorization is started or corrected (the new-assignment form, the start and replace dialogs,
+  the authorization correction); `drivers.birth_date_breaks_open_authorization` under the date of
+  birth in the driver dialog; `assignment_interruptions.duplicate` under the start field of the
+  interruption create, update and correction dialogs. Messages are the API's own. Nothing else in
+  the UI changes; `dto.ts` follows the live OpenAPI document.
+- F4-5. Tests: the guard's decision as a pure function over a route and a permission list; the
+  submit-once helper (two synchronous submits, one call); the link page's reset on a new fragment;
+  the three codes' field mapping.
+- F4-6. Report: `Context/wiring_report.md`, created anew for this run (the phase's earlier report was
+  removed when the phase closed): summary; implemented; not implemented or partial; decisions
+  needed; verification; tests and build; deviations; open risks. One file; a later run rewrites it.
+
+**The joint check**, after F4-1…F4-5, against the round-3 API and the seeded database: repeat the
+tester's own steps for T-001 as each of the three ordinary roles (restricted state, no
+administrator panel, no request); type every guarded address as a Viewer; T-004 on the phone dialog
+and on the interruption dialog (exactly one request, exactly one record); T-005 for the confirmation
+and the reset link, including a second valid reset link in the same tab; an authorization for a
+driver without a birth date and for one aged 17 (the messages under the driver field); the same
+interruption entered twice by hand (the message under the start field); then every route once as
+each role to prove nothing else moved. Re-seed with `--replace true`; leave both apps running.
+
+Acceptance: the checks above pass; typecheck, tests and build green; reviewed screens keep their
+markup and CSS.

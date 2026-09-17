@@ -619,6 +619,64 @@ stays in the file.
 
 Commit the report after steps 3, 5 and 7 at least.
 
+## 13. Run 2 — after the fixes (owner decision, 2026-09-17)
+
+Run 1 (`Context/testing_report.md`, 2026-09-16) found T-001…T-006. The fixes are the backend's round
+3 (`RWRentApi-wiring/Context/round3_spec_and_plan.md` and its report) and the app's Follow-up 4
+(`Context/wiring_followups.md` §6). Run 2 is a full run under every rule of this brief, with four
+points of focus. The report is rewritten completely as run 2 and committed as
+`Testing: report of run 2`; its §2 opens with a table of the run-1 findings and what became of each
+(fixed, not fixed, changed, regressed). The scratch folder still holds run 1's scripts; reuse them.
+
+**A. The fixes, attacked.** Repeat every run-1 finding by its own steps, then push on it: every
+guarded address typed by every role, including record addresses; double and triple Enter, a double
+click, and Enter plus click, on every kind of dialog and on the public forms, with the record count
+read back; a second valid link, a spent link and an altered link in a tab that already finished;
+the three new rules like any other rule (AUTH-011: no birth date, 17, exactly 18, the correction
+and the replace paths, the collective authorization untouched; DRIVER-012: clearing and moving the
+date with open and with only closed authorizations; INTERRUPT-014: sequential, parallel, update and
+correction into a duplicate, a legitimate overlap still accepted); VINs and every other normalised
+field with stray spaces and mixed case at the length limits; the contract's `anyOf`.
+
+**B. The first start on an empty database — the go-live rehearsal.** The seed will be replaced by
+real data, so the path from nothing has to be walked once in full. For this part only, the rule
+"never write to the database" has one exception: you may drop and recreate the developer database.
+
+```sh
+kill $(lsof -ti :5001)                                   # stop the API
+docker exec rwrent_v5_postgres psql -U rwrent -d postgres -c 'DROP DATABASE rwrent_v1 WITH (FORCE);'
+docker exec rwrent_v5_postgres psql -U rwrent -d postgres -c 'CREATE DATABASE rwrent_v1 OWNER rwrent;'
+# with the environment of §5.1 exported, from RWRentApi-wiring:
+dotnet ef database update --project src/RWRentApi.Infrastructure --startup-project src/RWRentApi.Api
+dotnet run --project src/RWRentApi.Api --launch-profile http
+```
+
+Then, in the app wherever the app offers the step and on the API otherwise, following the backend
+README's "Register and bootstrap the first administrator": what the app shows to a visitor of an
+empty installation; register the administrator; confirm through Mailpit; try to sign in before the
+bootstrap; run `bootstrap-system-administrator` (before confirmation: refused; for an unknown email:
+refused; correctly; a second time: refused); sign in; what every page shows with no Company and no
+data (the Overview with zeros, every empty list, every create button); create the Company in the
+app; a second Company (refused); register, confirm and activate the first Company Principal
+(COMPANY-011, ROLE-015 and the Principal-protection rules while there is exactly one Principal:
+revoke, expire, suspend); a Fleet Manager and a Viewer; the first vehicle, customer, driver and
+rental, from planning to return, on the empty system; the offline recovery command of the README
+with a reason, and what the audit says afterwards. Every wrong order you can think of. When done:
+re-seed with `--replace true`; if the command refuses the state you left, drop and recreate once
+more, migrate, then seed. Record both moments in the report.
+
+**C. Through the app, not only the API.** Run 1 proved these on the API and only sampled them in the
+app; run 2 clicks them through: the private-customer day; the double booking; promotion, expiry and
+suspension of a new staff member; accepting the administrator transfer in the app (then re-seed);
+every correction dialog changing a record; the signed-in password change; the email change clicked
+through Mailpit in the browser; list filters in combination at all three widths; browser back and
+forward through dialogs on the main routes; the long business-customer day as one uninterrupted run
+at 402 px in the light theme.
+
+**D. The regression sweep.** Re-run run 1's suites unchanged and compare: the endpoint × role matrix,
+the rule matrix, the route × role × width × theme matrix. Anything that passed in run 1 and fails now
+is a finding of its own, marked Regressed.
+
 ## Appendix A — API endpoints under test
 
 ```
