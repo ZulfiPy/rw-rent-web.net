@@ -6,15 +6,24 @@
  * path or code names an input, and as the form-level validation message when it does not.
  *
  * A 409 conflict is looked up the same way: a refusal that names one input belongs under that
- * input, whatever status carried it. That is what the round-3 refusals need (a driver too young, a
- * date of birth an authorization relies on, an interruption entered twice), and it is what the
- * `driver_inactive` entry below always meant.
+ * input, whatever status carried it.
  *
- * Entries are added only for codes the backend actually returns — never a guessed field.
+ * **Every key below is a code the backend really returns.** That was not true until Follow-up 5:
+ * sixteen of the thirty-eight entries named codes that do not exist in the backend's catalogues, so
+ * those refusals could only ever appear in the dialog's banner, never under the field they are
+ * about. Each key here was checked against the `*Errors.cs` and `*Conflicts.cs` files of
+ * `RWRentApi.Application` and the codes its services raise inline; `Context/wiring_report.md` lists
+ * what changed. Add nothing here without finding it in that catalogue first — a guessed code is
+ * silently dead, which is exactly how the sixteen survived a review and a test suite.
  *
  * Keys are the field paths the dialogs use for their inputs. `roles[].expiresAtUtc` addresses every
  * role-expiry input in the activation dialog: the backend does not say which grant failed. Indexed
  * paths from `errors` resolve against the same key through fieldMessages().
+ *
+ * A value that is simply missing needs no entry: the request validators refuse it with an `errors`
+ * entry keyed by its own property name, which already lands under the input. That is why no
+ * `*_required` key for `startedAtUtc`, `stoppedAtUtc` or `closedAtUtc` appears here — the five that
+ * did were dead twice over.
  */
 const GLOBAL: Record<string, string> = {
   // The role's expiry input; the activation dialog highlights every role-expiry field.
@@ -25,7 +34,6 @@ const GLOBAL: Record<string, string> = {
 const PARTIES: Record<string, string> = {
   'rental_assignments.customer_not_found': 'customerId',
   'rental_assignments.customer_inactive': 'customerId',
-  'rental_assignments.collective_not_valid_for_customer': 'customerId',
   'rental_assignments.vehicle_not_found': 'vehicleId',
   'rental_assignments.vehicle_inactive': 'vehicleId',
   'rental_assignments.vehicle_already_active': 'vehicleId',
@@ -34,37 +42,43 @@ const PARTIES: Record<string, string> = {
 const PLANNED_DATES: Record<string, string> = {
   'rental_assignments.planned_start_required': 'plannedStartAtUtc',
   'rental_assignments.planned_range_overlap': 'plannedStartAtUtc',
-  'rental_assignments.planned_end_before_start': 'plannedEndAtUtc',
+  // "PlannedEndAtUtc must be later than PlannedStartAtUtc."
+  'rental_assignments.planned_range_invalid': 'plannedEndAtUtc',
 };
 
-/** AUTH-002/003/006/009 name an input; the coverage refusal is form-level by design. */
+/** AUTH-002/003/006/009/011 name an input; the coverage refusal is form-level by design. */
 const AUTH_SHAPE: Record<string, string> = {
   'assignment_authorizations.driver_required': 'driverId',
   'assignment_authorizations.driver_not_found': 'driverId',
   'assignment_authorizations.driver_inactive': 'driverId',
-  // AUTH-011, round 3: both refusals are about the driver who was named.
+  // AUTH-011, the backend's round 3: both refusals are about the driver who was named.
   'assignment_authorizations.driver_birth_date_required': 'driverId',
   'assignment_authorizations.driver_underage': 'driverId',
-  'assignment_authorizations.driver_already_open': 'driverId',
-  'assignment_authorizations.collective_requires_business': 'authorizationType',
-  'assignment_authorizations.collective_already_open': 'authorizationType',
-  'assignment_authorizations.named_and_collective_exclusive': 'authorizationType',
-  'assignment_authorizations.from_required': 'authorizedFromUtc',
+  // AUTH-006: "This driver already has an open authorization on the assignment."
+  'assignment_authorizations.duplicate_open_named': 'driverId',
+  // AUTH-009 and AUTH-003: these four are about which kind of coverage was chosen.
+  'assignment_authorizations.collective_requires_business_customer': 'authorizationType',
+  'assignment_authorizations.duplicate_open_collective': 'authorizationType',
+  'assignment_authorizations.mixed_open_modes': 'authorizationType',
+  'assignment_authorizations.driver_forbidden': 'authorizationType',
 };
 
 const INTERRUPTION: Record<string, string> = {
-  'assignment_interruptions.started_at_required': 'startedAtUtc',
-  // INTERRUPT-014, round 3: the start is what makes one interruption the same as another, so the
-  // message belongs under it.
+  // INTERRUPT-012: "The interruption period must remain inside the assignment's actual rental
+  // period." One code covers both ends of the period, so it is shown on the start, beside the
+  // duplicate refusal.
+  'assignment_interruptions.period_outside_rental': 'startedAtUtc',
+  // INTERRUPT-014, the backend's round 3: the start is what makes one interruption another's twin.
   'assignment_interruptions.duplicate': 'startedAtUtc',
-  'assignment_interruptions.before_assignment_start': 'startedAtUtc',
-  'assignment_interruptions.ended_at_required': 'endedAtUtc',
-  'assignment_interruptions.ended_before_start': 'endedAtUtc',
-  'assignment_interruptions.after_assignment_close': 'endedAtUtc',
-  'assignment_interruptions.reason_required': 'reason',
-  'assignment_interruptions.billing_impact_required': 'billingImpact',
+  // INTERRUPT-003: "EndedAtUtc must be later than StartedAtUtc."
+  'assignment_interruptions.end_time_invalid': 'endedAtUtc',
+  // "An ended assignment accepts only closed historical interruptions."
+  'assignment_interruptions.ended_assignment_requires_closed_period': 'endedAtUtc',
+  // INTERRUPT-006 and INTERRUPT-013.
+  'assignment_interruptions.note_required': 'note',
 };
 
+/** DRIVER-012, the backend's round 3: the date of birth is the field the refusal is about. */
 const DRIVER: Record<string, string> = {
   'drivers.birth_date_breaks_open_authorization': 'dateOfBirth',
 };
@@ -79,33 +93,41 @@ const BY_OP: Record<string, Record<string, string>> = {
   'assignment-edit': { ...PARTIES, ...PLANNED_DATES },
   'assignment-activate': { 'rental_assignments.started_at_required': 'startedAtUtc' },
   'assignment-end': {
-    'rental_assignments.closed_at_required': 'closedAtUtc',
-    'rental_assignments.closed_before_start': 'closedAtUtc',
+    // "The return time must be later than the actual handover time."
+    'rental_assignments.return_time_invalid': 'closedAtUtc',
+    // "The return time must include every recorded interruption period."
+    'rental_assignments.interruption_outside_closure': 'closedAtUtc',
   },
-  'assignment-cancel': { 'rental_assignments.closed_at_required': 'closedAtUtc' },
+  'assignment-cancel': {
+    // ASSIGN-013: cancelling a mistaken activation needs its explanatory note.
+    'rental_assignments.correction_note_required': 'cancellationNote',
+  },
   'auth-start': AUTH_SHAPE,
   'auth-stop': {
     ...AUTH_SHAPE,
-    'assignment_authorizations.stopped_at_required': 'stoppedAtUtc',
-    'assignment_authorizations.stopped_before_start': 'stoppedAtUtc',
-    'assignment_authorizations.stop_reason_required': 'stopReason',
+    // AUTH-004: "The stop time must be later than the authorization start time."
+    'assignment_authorizations.stop_time_invalid': 'stoppedAtUtc',
+    'assignment_authorizations.invalid_stop_reason': 'stopReason',
+    // AUTH-010: selecting Other requires a note.
+    'assignment_authorizations.stop_note_required': 'note',
   },
   'auth-correct': {
     ...AUTH_SHAPE,
-    'assignment_authorizations.stopped_before_start': 'stoppedAtUtc',
-    'assignment_authorizations.stop_reason_required': 'stopReason',
+    'assignment_authorizations.stop_time_invalid': 'stoppedAtUtc',
+    'assignment_authorizations.invalid_stop_reason': 'stopReason',
+    'assignment_authorizations.stop_note_required': 'note',
   },
-  // DRIVER-012, round 3: the date of birth is the field the refusal is about.
-  'driver-create': DRIVER,
-  'driver-edit': DRIVER,
   'interruption-create': INTERRUPTION,
   'interruption-edit': INTERRUPTION,
   'interruption-end': INTERRUPTION,
   'interruption-correct': INTERRUPTION,
+  'driver-create': DRIVER,
+  'driver-edit': DRIVER,
   'correct-parties': PARTIES,
   'correct-timeline': {
     ...PLANNED_DATES,
-    'rental_assignments.closed_before_start': 'closedAtUtc',
+    'rental_assignments.return_time_invalid': 'closedAtUtc',
+    'rental_assignments.interruption_outside_closure': 'closedAtUtc',
   },
 };
 
@@ -113,3 +135,8 @@ export function codeToField(code: string, op?: string): string | undefined {
   if (op && BY_OP[op] && BY_OP[op][code]) return BY_OP[op][code];
   return GLOBAL[code];
 }
+
+/** Every code the table knows, for the test that checks them against the backend's catalogue. */
+export const KNOWN_CODES: readonly string[] = [
+  ...new Set([...Object.keys(GLOBAL), ...Object.values(BY_OP).flatMap((t) => Object.keys(t))]),
+];

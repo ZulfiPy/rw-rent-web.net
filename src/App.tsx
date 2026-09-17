@@ -1,29 +1,12 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
+import { ROUTES } from './app/routes';
 import { useCompanyName } from './app/useCompanyName';
 import { consumeSessionEnd, getSessionEnd, subscribeSessionEnd } from './app/session';
 import { useAccess } from './permissions/usePermissions';
-import { routePermission } from './permissions/routeAccess';
-import { UserDirectory } from './pages/users/UserDirectory';
-import { UserRecord } from './pages/users/UserRecord';
-import { Registrations } from './pages/registrations/Registrations';
-import { SecurityAudit } from './pages/audit/SecurityAudit';
-import { AuditEntry } from './pages/audit/AuditEntry';
-import { Overview } from './pages/overview/Overview';
-import { NeedsAttention } from './pages/overview/NeedsAttention';
-import { InsuranceCases, Tasks } from './pages/simple/Placeholders';
-import { Assignments } from './pages/fleet/Assignments';
-import { AssignmentRecord } from './pages/fleet/AssignmentRecord';
-import { Vehicles } from './pages/fleet/Vehicles';
-import { VehicleRecord } from './pages/fleet/VehicleRecord';
-import { Customers } from './pages/fleet/Customers';
-import { CustomerRecord } from './pages/fleet/CustomerRecord';
-import { Drivers } from './pages/fleet/Drivers';
-import { DriverRecord } from './pages/fleet/DriverRecord';
-import { CompanyProfile } from './pages/admin/CompanyProfile';
-import { SystemAdministrator } from './pages/admin/SystemAdministrator';
+import type { Permission } from './permissions/permissions';
 import { SignIn } from './pages/account/SignIn';
 import { Register } from './pages/account/Register';
 import { ConfirmRegistrationEmail } from './pages/account/ConfirmRegistrationEmail';
@@ -71,18 +54,19 @@ function SessionWatcher() {
 }
 
 /**
- * The permission gate on every route (T-001). One layout route wraps the whole workspace, so a
- * destination cannot be reachable by address while its menu item is hidden — which is exactly what
- * the tester found. The guarded page is never rendered when the persona lacks the permission, so no
- * request goes out and no content sits behind the lock.
+ * The permission gate (T-001, and the review of Follow-up 4).
  *
- * The state is the one a refused list already shows, inside the shell: the lock, "Not available to
- * you", and the permission it would take.
+ * It is handed the permission of the route that matched, and never looks at the address. That is
+ * the whole correction: the first version read the raw first path segment, while the router matches
+ * without regard to letter case and after decoding — so a differently spelled address reached the
+ * page and the lookup found nothing to require. Here there is nothing to spell; the permission
+ * arrives with the element, from `ROUTES`.
+ *
+ * The guarded page is never rendered without the permission, so no request goes out and no content
+ * sits behind the lock. The state is the one a refused list already shows, inside the shell.
  */
-function GuardedOutlet() {
+function Guarded({ permission, children }: { permission: Permission | null; children: ReactNode }) {
   const { can } = useAccess();
-  const { pathname } = useLocation();
-  const permission = routePermission(pathname);
 
   if (permission && !can(permission)) {
     return (
@@ -94,11 +78,11 @@ function GuardedOutlet() {
     );
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 }
 
 /** A protected route while signed out: to the front door, remembering where the user was going. */
-function RequireSession({ children }: { children: React.ReactNode }) {
+function RequireSession({ children }: { children: ReactNode }) {
   const { status } = useAccess();
   const location = useLocation();
 
@@ -134,29 +118,13 @@ function Workspace() {
   return (
     <Routes>
       <Route element={<AppShell companyName={companyName} />}>
-        <Route element={<GuardedOutlet />}>
-          <Route path="/overview" element={<Overview />} />
-          <Route path="/needs-attention" element={<NeedsAttention />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/insurance-cases" element={<InsuranceCases />} />
-          <Route path="/rental-assignments" element={<Assignments />} />
-          <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
-          <Route path="/vehicles" element={<Vehicles />} />
-          <Route path="/vehicles/:vehicleId" element={<VehicleRecord />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/customers/:customerId" element={<CustomerRecord />} />
-          <Route path="/drivers" element={<Drivers />} />
-          <Route path="/drivers/:driverId" element={<DriverRecord />} />
-          <Route path="/users" element={<UserDirectory />} />
-          <Route path="/users/:userId" element={<UserRecord />} />
-          <Route path="/registrations" element={<Registrations />} />
-          <Route path="/company" element={<CompanyProfile />} />
-          <Route path="/system-administrator" element={<SystemAdministrator />} />
-          <Route path="/security-audit" element={<SecurityAudit />} />
-          <Route path="/security-audit/:entryId" element={<AuditEntry />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<Navigate to="/overview" replace />} />
-        </Route>
+        {ROUTES.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<Guarded permission={route.permission}>{route.element}</Guarded>}
+          />
+        ))}
       </Route>
     </Routes>
   );

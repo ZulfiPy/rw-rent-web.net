@@ -1,76 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAccess } from '@/permissions/usePermissions';
-import { routePermission } from '@/permissions/routeAccess';
 import { primaryRoleLabel } from '@/format/labels';
 import { useOpenWork } from '@/pages/overview/useOpenWork';
 import { Chip } from '@/ui/Chip';
+import { NAV_GROUPS, type NavItem } from './routes';
 import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
 import { useSignOut } from './useSignOut';
 import { useRailMode } from './useViewport';
 import { themeIcon, themeLabel, themeTip, toggleTheme, useTheme } from './theme';
 import styles from './AppShell.module.css';
-
-interface NavItem {
-  to: string;
-  label: string;
-  icon: string;
-  badge?: 'queue' | 'registrations';
-}
-
-/**
- * The prototype's `navModel()`, group for group. A permission the persona lacks removes its item
- * entirely; a group whose items all disappear disappears with them.
- *
- * Which permission each destination needs is not written here: it lives in `ROUTE_PERMISSIONS`,
- * which the route guard reads too. Keeping it in one place is the fix for the tester's T-001, where
- * a hidden menu item still had a reachable page behind it.
- */
-const NAV: Array<{ label: string; items: NavItem[] }> = [
-  {
-    label: 'Overview',
-    items: [
-      { to: '/overview', label: 'Overview', icon: 'space_dashboard' },
-      { to: '/needs-attention', label: 'Needs attention', icon: 'flag', badge: 'queue' },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { to: '/rental-assignments', label: 'Rental assignments', icon: 'assignment' },
-      { to: '/tasks', label: 'Tasks', icon: 'checklist' },
-      { to: '/insurance-cases', label: 'Insurance cases', icon: 'shield' },
-    ],
-  },
-  {
-    label: 'Fleet',
-    items: [
-      { to: '/vehicles', label: 'Vehicles', icon: 'directions_car' },
-    ],
-  },
-  {
-    label: 'Business relationships',
-    items: [
-      { to: '/customers', label: 'Customers', icon: 'contacts' },
-      { to: '/drivers', label: 'Drivers', icon: 'badge' },
-    ],
-  },
-  {
-    label: 'Users & access',
-    items: [
-      { to: '/users', label: 'User directory', icon: 'group' },
-      { to: '/registrations', label: 'Registrations', icon: 'how_to_reg', badge: 'registrations' },
-      { to: '/security-audit', label: 'Security audit', icon: 'policy' },
-    ],
-  },
-  {
-    label: 'Administration',
-    items: [
-      { to: '/company', label: 'Company profile', icon: 'apartment' },
-      { to: '/system-administrator', label: 'System Administrator', icon: 'admin_panel_settings' },
-    ],
-  },
-];
 
 /**
  * The prototype's identifier row: the record's own id and a copy button. The prototype confirms the
@@ -176,14 +115,8 @@ export function AppShell({ companyName }: { companyName: string }) {
    */
   const groups = me && me.permissions.length === 0
     ? []
-    : NAV
-      .map((g) => ({
-        ...g,
-        items: g.items.filter((i) => {
-          const permission = routePermission(i.to);
-          return !permission || can(permission);
-        }),
-      }))
+    : NAV_GROUPS
+      .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || can(i.permission)) }))
       .filter((g) => g.items.length > 0);
 
   const roleLabel = me ? primaryRoleLabel(me.roles) : '';
