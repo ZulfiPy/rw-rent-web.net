@@ -201,8 +201,17 @@ markup and CSS.
 
 ## 7. Follow-up 5 — the guard and the router must agree (found in the review of Follow-up 4)
 
-> **Status: PROPOSED by the reviewer, 2026-09-17; authorised when the owner sends its prompt.**
-> Frontend only. The backend is not touched.
+> **Status: IMPLEMENTED 2026-09-17** (commits `06b6027` Wiring 16, `3f31cad` Wiring 17, `d9d4f07`
+> Wiring 18; report `Context/wiring_report.md`, which covers Follow-ups 4 and 5). Frontend only. The
+> agent ran the joint check in full this time and found and fixed one defect of its own on the way:
+> the same link arriving a second time in a finished tab left the page on its spinner (Wiring 17).
+> Verified by the reviewer the same day: typecheck, 149 tests and the build green; as a Viewer every
+> spelling of the guarded addresses (`/System-Administrator`, `/SYSTEM-ADMINISTRATOR`,
+> `/%73ystem-administrator`, `/REGISTRATIONS`, `/Registrations/`, `/Security-Audit`, a trailing
+> slash) shows the lock with no request sent, and an extra segment falls to the Overview like any
+> unknown address; the double-submit and duplicate-interruption checks still hold. The permission
+> now comes from one route table (`src/app/routes.tsx`) that the routes and the navigation are both
+> generated from. Next: testing run 2 (`Context/testing_brief.md` §13).
 
 - F5-1. **An address written differently walks past the guard.** Verified by the reviewer as a
   Viewer: `/System-Administrator`, `/SYSTEM-ADMINISTRATOR` and `/%73ystem-administrator` render the
