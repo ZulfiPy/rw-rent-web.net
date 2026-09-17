@@ -14,16 +14,45 @@ Finding counts and the owner's three priorities will be finalized after all laye
 
 | Run-1 id | Former result | Run-2 result | Run-2 evidence |
 |---|---|---|---|
-| T-001 | Major frontend defect: guarded route exposed System Administrator page | Preliminary pass; adversarial retest continues | The canonical route is locked for all three ordinary roles and makes no page request; alternate spellings and all guarded routes remain under attack. |
+| T-001 | Major frontend defect: guarded route exposed System Administrator page | **Fixed** | 540 live browser combinations covered every guarded list/record destination as all four roles, with canonical, upper/mixed-case, percent-encoded, trailing-slash, query, fragment, doubled-slash and extra-segment addresses. All 540 landed correctly; all 56 forbidden matched-route cases showed the lock, rendered no page content and made no protected page request. |
 | T-002 | Minor backend defect: validation responses failed documented `oneOf` | **Fixed** | All 142 documented `400` media types use `anyOf`; 97 live validation samples across 42 operations produced zero schema failures. |
-| T-003 | Minor backend defect: spaced valid VIN failed before normalization | Retest pending | Create, update, duplicate and boundary normalization are scheduled. |
-| T-004 | Minor frontend defect, later rated Major: rapid submission sent duplicate writes | Retest pending | Multi-gesture dialog and public-form sweep is scheduled. |
+| T-003 | Minor backend defect: spaced valid VIN failed before normalization | **Fixed** | Create and update accepted a spaced 17-character VIN and stored the trimmed, upper-case value; a spaced lower-case existing VIN reached the normalized `409 vehicles.vin_code_conflict`; trimmed 100/101-character boundaries also passed. |
+| T-004 | Minor frontend defect, later rated Major: rapid submission sent duplicate writes | Dialog path fixed; public-form fix regressed as T-008 | The original 402 px double-Enter phone reproduction sent exactly one `PUT` and read back the stored phone. The shared public-form gate never reopens after a refused request, producing T-008; further dialog gesture coverage continues. |
 | T-005 | Minor frontend defect: same-tab link arrival retained stale success | Retest pending | Same, altered, spent and second-valid link sequences are scheduled. |
-| T-006 | Owner question: under-age drivers could be authorized | Retest pending | AUTH-011 and DRIVER-012 paths and race are scheduled. |
+| T-006 | Owner question: under-age drivers could be authorized | **Decision implemented, but concurrency defect T-007 remains** | All ordinary standalone, initial, replacement and correction paths enforce the new age rule at the authorization date; DRIVER-012 protects relied-on birth dates sequentially. A simultaneous birth-date change and authorization defeats both checks. |
 
 ### 2.2 New run-2 findings
 
-No new finding recorded yet.
+| ID | Class | Severity | Side | Area | Rule | Title |
+|---|---|---|---|---|---|---|
+| T-007 | Defect | Major | Backend | Driver authorization concurrency | AUTH-011, DRIVER-012 | Concurrent birth-date lowering and authorization create persist an open authorization for a 17-year-old driver |
+| T-008 | Defect | Major | Frontend | Public account forms | — | A refused public-form request permanently disables all corrected retries until the page is reloaded |
+
+### T-007 · Defect · Major · Backend · AUTH-011, DRIVER-012
+**Title**: Concurrent birth-date lowering and authorization create persist an open authorization for a 17-year-old driver
+
+**Steps**: Sign in twice as Fleet Manager and obtain a fresh antiforgery token in each session. Create an active driver born `1996-09-27`, a business customer, an active vehicle and a Planned assignment starting `2026-09-27T10:00:00Z`. Release these two requests at the same instant from the two sessions: (1) `PUT /api/drivers/e86658b8-6668-4ae8-803c-6452c513ac98` with the driver's unchanged required fields and `"dateOfBirth":"2009-09-27"`; (2) `POST /api/rental-assignments/cbf7ceb2-4591-419a-9895-2004b1e5cfba/authorizations` with `{"authorizationType":1,"driverId":"e86658b8-6668-4ae8-803c-6452c513ac98","authorizedFromUtc":"2026-09-27T10:00:00Z","note":"Run 2 age rule"}`. Then read `GET /api/drivers/{id}` and `GET /api/rental-assignments/{id}/authorizations?PageSize=100`.
+
+**Expected**: The pair is serialized or one request is refused. AUTH-011 requires a named driver to be at least 18 on the authorization date, and DRIVER-012 forbids changing a relied-on birth date so the authorization would violate AUTH-011. It must be impossible to commit both writes into an invalid final state.
+
+**Actual**: Both requests succeed. The driver update returns `200` and stores `2009-09-27`; the authorization returns `201`. Readback shows the 17-year-old birth date and one open named authorization beginning on `2026-09-27`, when that driver is exactly 17. The authorization was created at `06:45:30.274294Z` and the driver update committed at `06:45:30.276479Z`, demonstrating the interleaving. The two equivalent checks both pass against stale state and leave the rule violation persisted.
+
+**Evidence**: `/Users/zulf/rw-rent-api/testing-scratch/run2/fixes-api.json`, `race[0]`, contains both exact request bodies, responses and the post-write readback. The controlled start barrier reproduced the invalid state on its first attempt. Sequential no-birth-date, age-17, exact-18 and adult paths all behaved correctly, isolating this to concurrency rather than the basic validation.
+
+**Role**: Fleet Manager in two simultaneous sessions · **Where**: `PUT /api/drivers/{id}` racing `POST /api/rental-assignments/{id}/authorizations` · **Seen**: 1 of 1 barrier-controlled attempts
+
+### T-008 · Defect · Major · Frontend · public account forms
+**Title**: A refused public-form request permanently disables all corrected retries until the page is reloaded
+
+**Steps**: Open `/sign-in`. Enter `toms.rudzitis@rwrent.example` with `WrongPassword1!` and click **Sign in**; wait for the `POST /api/auth/login` response and the invalid-credentials message. Replace only the password with the correct current password and click **Sign in** again, then press Enter. Watch requests and the address. A second reproduction reached `/reset-password` through a valid Mailpit link, submitted new password `short`, received its field-validation response, replaced it with a valid strong password, and clicked **Change password** again.
+
+**Expected**: The synchronous duplicate-submit gate blocks only submissions already in flight. Once a response—success or failure—settles, the corrected form can be submitted again without reloading. The corrected sign-in should make a second login request and reach Overview; the corrected reset should make a second completion request.
+
+**Actual**: The first sign-in request returns `401` and the form remains visible. After correcting the password, neither click nor Enter sends another request: the count stays at one and the page remains on `/sign-in`. In the password-reset reproduction, the weak-password response is shown, but the corrected **Change password** action sends no request and the unchanged run-1 browser suite times out waiting for it. Reloading/remounting the page is the only way to obtain a new gate.
+
+**Evidence**: `/Users/zulf/rw-rent-api/testing-scratch/run2/public-retry-ui.json` contains the exact sign-in request count, URL and page text before and after the corrected click/Enter. The unchanged `/Users/zulf/rw-rent-api/testing-scratch/public_flows_ui.js` stopped at its corrected post-validation retry after 30 seconds with no second `/api/auth/password-reset/complete` request.
+
+**Role**: Public visitor/account holder · **Where**: `/sign-in` and token-bearing `/reset-password`; the same shared public form pattern also fronts reset request and transfer acceptance · **Seen**: 2 of 2 refused-then-corrected flows
 
 ## 3. Coverage
 
@@ -31,11 +60,11 @@ No new finding recorded yet.
 
 | Layer | Status | Evidence / next boundary |
 |---|---|---|
-| Run-1 fixes attacked | In progress | T-002 is fixed; canonical T-001 route passed; the deeper route, submission, link and new-rule attacks continue. |
+| Run-1 fixes attacked | In progress | T-001, T-002 and T-003 are fixed. T-006's normal paths are fixed, but its deliberate cross-aggregate race fails as T-007. T-004's original dialog path is fixed, but its public-form extension causes T-008. Link attacks continue. |
 | Empty-database first start | Pending | Authorized drop/recreate rehearsal follows the first seeded regression checkpoint. |
 | App-only completion scenarios | Pending | Private customer, double booking, staff lifecycle, transfer acceptance, corrections, password/email changes, filters/navigation and uninterrupted phone day. |
 | API endpoint × role regression | Complete | All 82 operations called as four roles and anonymous; authorization reached the expected boundary, every protected anonymous call was `401`, and public operations remained public while signed in. |
-| Rule regression | Pending | Current catalogue includes AUTH-011, DRIVER-012 and INTERRUPT-014. |
+| Rule regression | In progress | The unchanged 96-case domain suite passed. Targeted AUTH-011/DRIVER-012/INTERRUPT-014 testing passed 64/65 checks; the one failure is T-007. |
 | Route × role × width × theme regression | Pending | 1512, 834 and 402 px in light and dark. |
 
 ### 3.2 Endpoint and role matrix
