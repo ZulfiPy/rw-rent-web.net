@@ -7,7 +7,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { AuthLayout, AuthOutcome } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { toAccountFailure, type AccountFailure } from './failure';
-import { readTokenFromHash, stripHash } from './token';
+import { useLinkToken } from './useLinkToken';
 
 /**
  * The link in the email-change confirmation. The endpoint lives under /api/me, so a signed-out
@@ -15,7 +15,8 @@ import { readTokenFromHash, stripHash } from './token';
  * taken out of the address bar, is held in memory until they are back.
  *
  * The prototype's authentication family has no screen for this route; the three states below are
- * built from the vocabulary of its registration-confirmation screens.
+ * built from the vocabulary of its registration-confirmation screens. Another link arriving in this
+ * same tab starts the screen over rather than leaving its old outcome in place (T-005).
  */
 export function ConfirmEmailChange() {
   const { status } = useAccess();
@@ -23,8 +24,12 @@ export function ConfirmEmailChange() {
   const queryClient = useQueryClient();
   const [failure, setFailure] = useState<AccountFailure | null>(null);
   const [done, setDone] = useState(false);
-  const [token] = useState(() => readTokenFromHash(window.location.hash));
   const started = useRef(false);
+  const [token] = useLinkToken(() => {
+    setFailure(null);
+    setDone(false);
+    started.current = false;
+  });
 
   const confirm = useMutation({
     meta: OWNS_UNAUTHORIZED,
@@ -38,7 +43,6 @@ export function ConfirmEmailChange() {
 
   const { mutate } = confirm;
   useEffect(() => {
-    stripHash();
     if (status !== 'signed-in' || started.current) return;
     started.current = true;
     if (token) mutate(token);

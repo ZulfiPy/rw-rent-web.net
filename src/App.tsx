@@ -1,10 +1,11 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
 import { useCompanyName } from './app/useCompanyName';
 import { consumeSessionEnd, getSessionEnd, subscribeSessionEnd } from './app/session';
 import { useAccess } from './permissions/usePermissions';
+import { routePermission } from './permissions/routeAccess';
 import { UserDirectory } from './pages/users/UserDirectory';
 import { UserRecord } from './pages/users/UserRecord';
 import { Registrations } from './pages/registrations/Registrations';
@@ -31,6 +32,7 @@ import { ConfirmEmailChange } from './pages/account/ConfirmEmailChange';
 import { AcceptAdministratorTransfer } from './pages/account/AcceptAdministratorTransfer';
 import { Profile } from './pages/account/Profile';
 import { AccessPending } from './pages/account/AccessPending';
+import { EmptyState } from './ui/EmptyState';
 import styles from './App.module.css';
 
 function Unreachable({ message }: { message: string }) {
@@ -66,6 +68,33 @@ function SessionWatcher() {
   }, [signal, navigate, queryClient]);
 
   return null;
+}
+
+/**
+ * The permission gate on every route (T-001). One layout route wraps the whole workspace, so a
+ * destination cannot be reachable by address while its menu item is hidden — which is exactly what
+ * the tester found. The guarded page is never rendered when the persona lacks the permission, so no
+ * request goes out and no content sits behind the lock.
+ *
+ * The state is the one a refused list already shows, inside the shell: the lock, "Not available to
+ * you", and the permission it would take.
+ */
+function GuardedOutlet() {
+  const { can } = useAccess();
+  const { pathname } = useLocation();
+  const permission = routePermission(pathname);
+
+  if (permission && !can(permission)) {
+    return (
+      <EmptyState
+        icon="lock"
+        title="Not available to you"
+        body={`Opening this page needs ${permission}.`}
+      />
+    );
+  }
+
+  return <Outlet />;
 }
 
 /** A protected route while signed out: to the front door, remembering where the user was going. */
@@ -105,27 +134,29 @@ function Workspace() {
   return (
     <Routes>
       <Route element={<AppShell companyName={companyName} />}>
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/needs-attention" element={<NeedsAttention />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/insurance-cases" element={<InsuranceCases />} />
-        <Route path="/rental-assignments" element={<Assignments />} />
-        <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/vehicles/:vehicleId" element={<VehicleRecord />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/:customerId" element={<CustomerRecord />} />
-        <Route path="/drivers" element={<Drivers />} />
-        <Route path="/drivers/:driverId" element={<DriverRecord />} />
-        <Route path="/users" element={<UserDirectory />} />
-        <Route path="/users/:userId" element={<UserRecord />} />
-        <Route path="/registrations" element={<Registrations />} />
-        <Route path="/company" element={<CompanyProfile />} />
-        <Route path="/system-administrator" element={<SystemAdministrator />} />
-        <Route path="/security-audit" element={<SecurityAudit />} />
-        <Route path="/security-audit/:entryId" element={<AuditEntry />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="*" element={<Navigate to="/overview" replace />} />
+        <Route element={<GuardedOutlet />}>
+          <Route path="/overview" element={<Overview />} />
+          <Route path="/needs-attention" element={<NeedsAttention />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/insurance-cases" element={<InsuranceCases />} />
+          <Route path="/rental-assignments" element={<Assignments />} />
+          <Route path="/rental-assignments/:assignmentId" element={<AssignmentRecord />} />
+          <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/vehicles/:vehicleId" element={<VehicleRecord />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/customers/:customerId" element={<CustomerRecord />} />
+          <Route path="/drivers" element={<Drivers />} />
+          <Route path="/drivers/:driverId" element={<DriverRecord />} />
+          <Route path="/users" element={<UserDirectory />} />
+          <Route path="/users/:userId" element={<UserRecord />} />
+          <Route path="/registrations" element={<Registrations />} />
+          <Route path="/company" element={<CompanyProfile />} />
+          <Route path="/system-administrator" element={<SystemAdministrator />} />
+          <Route path="/security-audit" element={<SecurityAudit />} />
+          <Route path="/security-audit/:entryId" element={<AuditEntry />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<Navigate to="/overview" replace />} />
+        </Route>
       </Route>
     </Routes>
   );

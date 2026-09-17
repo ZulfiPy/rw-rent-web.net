@@ -193,7 +193,7 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
 }
 
 export function SystemAdministrator() {
-  const { can, me } = useAccess();
+  const { can } = useAccess();
   const sheet = useSheetTier();
   const [dialog, setDialog] = useState<DialogState>(null);
 
@@ -215,14 +215,16 @@ export function SystemAdministrator() {
 
   const people = directory.data?.items ?? [];
   /**
-   * The account holding the role. The directory read is the only source for it; without
-   * Users.ReadDirectory the page still works and names the signed-in administrator instead.
+   * The account holding the role. The directory read is the only source for it, and when it cannot
+   * be resolved the page says so with the app's dash — it never names the signed-in person instead.
+   *
+   * It used to (the tester's T-001): reaching this address without the permission showed the reader
+   * their own name and email under "Current System Administrator", which is a claim the app has no
+   * grounds for and the wrong claim for everyone except the one account that really holds the role.
    */
   const admin = people.find((u) => u.effectiveRoles.includes(ApplicationUserRole.SystemAdministrator)) ?? null;
-  const adminName = admin
-    ? `${admin.firstName} ${admin.lastName}`
-    : me ? `${me.firstName} ${me.lastName}` : '—';
-  const adminEmail = admin?.email ?? me?.email ?? '—';
+  const adminName = admin ? `${admin.firstName} ${admin.lastName}` : '—';
+  const adminEmail = admin?.email ?? '—';
   /**
    * The state is the server's: awaiting, accepted, cancelled, and the expired one the client-side
    * derivation could not show. The row also names its own target, so the directory is only read for

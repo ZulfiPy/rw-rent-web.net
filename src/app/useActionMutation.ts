@@ -2,11 +2,16 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fieldMessages, toFailure, type Failure } from '@/api/problem';
 import { useReseed } from './reseed';
+import { useSubmitGate } from './submitOnce';
 
 /**
  * One mutation, wired the way every dialog needs it: the rejection becomes a Failure (with the op's
  * code→field table applied), field messages are ready to hang under inputs, and a success
  * invalidates the affected caches before the dialog closes.
+ *
+ * Every dialog submission in the app comes through here, so this is where one submission at a time
+ * is enforced (the tester's T-004). `busy` is still what the dialog renders; the gate is what
+ * actually decides, because it closes before React re-renders and `isPending` does not.
  */
 export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }: {
   op: string;
@@ -16,6 +21,7 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
 }) {
   const queryClient = useQueryClient();
   const reseed = useReseed();
+  const gate = useSubmitGate();
   const [failure, setFailure] = useState<Failure | null>(null);
 
   const mutation = useMutation({
@@ -26,13 +32,15 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
       await Promise.all(invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
       onDone();
     },
+    // Settled, not succeeded: a refusal has to reopen the gate or the dialog could never retry.
+    onSettled: () => gate.settle(),
   });
 
   return {
-    submit: (vars: TVars) => {
+    submit: (vars: TVars) => gate.attempt(() => {
       setFailure(null);
       mutation.mutate(vars);
-    },
+    }),
     busy: mutation.isPending,
     failure,
     fields: failure ? fieldMessages(failure) : {},

@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 import { auth } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
-import { readTokenFromHash, stripHash } from './token';
+import { useLinkToken } from './useLinkToken';
 
 /** The prototype's note under the address, on these two screens only (owner decision, 2026-09-16). */
 const RESET_NOTE = 'The reset must be completed with the address the link was sent to.';
@@ -26,17 +25,18 @@ export function ResetPassword() {
 
   /*
    * The token is read from the fragment whenever one arrives, not only on the first render: a
-   * person who asked for the link with this tab open and then clicked it lands on the same page.
+   * person who asked for the link with this tab open and then clicked it lands on the same page,
+   * and so does one who opens a second link after finishing with the first (T-005). Everything a
+   * finished or refused screen is made of is cleared, so the new token is answered on its merits;
+   * the address is kept, because the API needs it with the completing call and it is the same
+   * person's.
    */
-  const { hash } = useLocation();
-  const [token, setToken] = useState<string | null>(null);
-  useEffect(() => {
-    const found = readTokenFromHash(hash || window.location.hash);
-    if (!found) return;
-    setToken(found);
+  const [token, discardToken] = useLinkToken(() => {
     setRequested(false);
-    stripHash();
-  }, [hash]);
+    setChanged(false);
+    setPassword('');
+    setFailure(NO_FAILURE);
+  });
 
   const request = useMutation({
     meta: OWNS_UNAUTHORIZED,
@@ -87,7 +87,7 @@ export function ResetPassword() {
           {...(failure.code ? { meta: `code: ${failure.code}` } : {})}
           onAction={(to) => {
             if (to !== '/reset-password') return false;
-            setToken(null);
+            discardToken();
             setPassword('');
             setFailure(NO_FAILURE);
             return true;

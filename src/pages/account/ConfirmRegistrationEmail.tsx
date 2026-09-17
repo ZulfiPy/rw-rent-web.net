@@ -6,15 +6,16 @@ import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, toAccountFailure, type AccountFailure } from './failure';
-import { readTokenFromHash, stripHash } from './token';
+import { useLinkToken } from './useLinkToken';
 
 /**
  * The link in the registration email — the prototype's `confirm-checking`, `confirm-done` and
  * `confirm-bad` screens — and, under `?resend=1`, its `resend` screen, which is where the other
  * two send a person whose link no longer works.
  *
- * The token is read once from the fragment and taken out of the address bar before anything is
- * sent, so a shared screenshot or a back-button visit no longer carries it.
+ * The token is read from the fragment and taken out of the address bar before anything is sent, so
+ * a shared screenshot or a back-button visit no longer carries it. Another link arriving in this
+ * same tab starts the screen over rather than leaving its old outcome in place (T-005).
  */
 export function ConfirmRegistrationEmail() {
   const [params] = useSearchParams();
@@ -24,10 +25,17 @@ export function ConfirmRegistrationEmail() {
   const [done, setDone] = useState(false);
   const [sent, setSent] = useState(false);
   const started = useRef(false);
-  const [token] = useState(() => readTokenFromHash(window.location.hash));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Everything a finished screen is made of, so the next link is answered on its own merits.
+  const [token] = useLinkToken(() => {
+    setFailure(null);
+    setDone(false);
+    setSent(false);
+    started.current = false;
+  });
 
   const confirm = useMutation({
     meta: OWNS_UNAUTHORIZED,
@@ -50,7 +58,6 @@ export function ConfirmRegistrationEmail() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    stripHash();
     if (token && !resending) mutate(token);
   }, [token, resending, mutate]);
 

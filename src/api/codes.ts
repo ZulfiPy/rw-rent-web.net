@@ -1,9 +1,14 @@
 /**
- * code → input mapping for the coded 400 shape.
+ * code → input mapping for a coded refusal.
  *
  * Two 400 shapes reach here. A filter-level rejection carries `errors` and no `code`; a service-level
  * validation refusal carries `code` + `detail` and no `errors`. Both end up as field errors when the
  * path or code names an input, and as the form-level validation message when it does not.
+ *
+ * A 409 conflict is looked up the same way: a refusal that names one input belongs under that
+ * input, whatever status carried it. That is what the round-3 refusals need (a driver too young, a
+ * date of birth an authorization relies on, an interruption entered twice), and it is what the
+ * `driver_inactive` entry below always meant.
  *
  * Entries are added only for codes the backend actually returns — never a guessed field.
  *
@@ -37,6 +42,9 @@ const AUTH_SHAPE: Record<string, string> = {
   'assignment_authorizations.driver_required': 'driverId',
   'assignment_authorizations.driver_not_found': 'driverId',
   'assignment_authorizations.driver_inactive': 'driverId',
+  // AUTH-011, round 3: both refusals are about the driver who was named.
+  'assignment_authorizations.driver_birth_date_required': 'driverId',
+  'assignment_authorizations.driver_underage': 'driverId',
   'assignment_authorizations.driver_already_open': 'driverId',
   'assignment_authorizations.collective_requires_business': 'authorizationType',
   'assignment_authorizations.collective_already_open': 'authorizationType',
@@ -46,12 +54,19 @@ const AUTH_SHAPE: Record<string, string> = {
 
 const INTERRUPTION: Record<string, string> = {
   'assignment_interruptions.started_at_required': 'startedAtUtc',
+  // INTERRUPT-014, round 3: the start is what makes one interruption the same as another, so the
+  // message belongs under it.
+  'assignment_interruptions.duplicate': 'startedAtUtc',
   'assignment_interruptions.before_assignment_start': 'startedAtUtc',
   'assignment_interruptions.ended_at_required': 'endedAtUtc',
   'assignment_interruptions.ended_before_start': 'endedAtUtc',
   'assignment_interruptions.after_assignment_close': 'endedAtUtc',
   'assignment_interruptions.reason_required': 'reason',
   'assignment_interruptions.billing_impact_required': 'billingImpact',
+};
+
+const DRIVER: Record<string, string> = {
+  'drivers.birth_date_breaks_open_authorization': 'dateOfBirth',
 };
 
 const BY_OP: Record<string, Record<string, string>> = {
@@ -80,6 +95,9 @@ const BY_OP: Record<string, Record<string, string>> = {
     'assignment_authorizations.stopped_before_start': 'stoppedAtUtc',
     'assignment_authorizations.stop_reason_required': 'stopReason',
   },
+  // DRIVER-012, round 3: the date of birth is the field the refusal is about.
+  'driver-create': DRIVER,
+  'driver-edit': DRIVER,
   'interruption-create': INTERRUPTION,
   'interruption-edit': INTERRUPTION,
   'interruption-end': INTERRUPTION,

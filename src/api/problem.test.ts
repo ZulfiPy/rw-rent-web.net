@@ -107,7 +107,7 @@ describe('409', () => {
     }
   });
 
-  test('any other conflict keeps the server explanation', () => {
+  test('a conflict whose code names no input keeps the server explanation', () => {
     const failure = toFailure(
       new ApiError(409, { status: 409, detail: 'The user is already suspended.', code: 'users.suspend_invalid_state' }),
     );
@@ -116,6 +116,79 @@ describe('409', () => {
       message: 'The user is already suspended.',
       code: 'users.suspend_invalid_state',
     });
+  });
+
+  /*
+   * The three refusals the backend's round 3 added. All three are conflicts, and all three are
+   * about one field the operator filled in, so they belong under that field rather than in a banner
+   * at the foot of the dialog.
+   */
+  test('a named driver refused for age sits under the driver field, on every path', () => {
+    for (const code of [
+      'assignment_authorizations.driver_birth_date_required',
+      'assignment_authorizations.driver_underage',
+    ]) {
+      for (const op of ['assignment-create', 'auth-start', 'auth-stop', 'auth-correct']) {
+        const failure = toFailure(
+          new ApiError(409, { status: 409, detail: 'A named authorization requires the driver.', code }),
+          op,
+        );
+        expect(failure, `${code} / ${op}`).toEqual({
+          kind: 'field-code',
+          field: 'driverId',
+          message: 'A named authorization requires the driver.',
+          code,
+        });
+        expect(fieldMessages(failure).driverId).toBe('A named authorization requires the driver.');
+      }
+    }
+  });
+
+  test('a protected date of birth sits under the date of birth', () => {
+    for (const op of ['driver-create', 'driver-edit']) {
+      const failure = toFailure(
+        new ApiError(409, {
+          status: 409,
+          detail: 'The date of birth cannot be changed while an open authorization depends on it.',
+          code: 'drivers.birth_date_breaks_open_authorization',
+        }),
+        op,
+      );
+      expect(failure.kind, op).toBe('field-code');
+      expect(fieldMessages(failure).dateOfBirth)
+        .toBe('The date of birth cannot be changed while an open authorization depends on it.');
+    }
+  });
+
+  test('a duplicate interruption sits under the start, on create, update and correction', () => {
+    for (const op of ['interruption-create', 'interruption-edit', 'interruption-correct']) {
+      const failure = toFailure(
+        new ApiError(409, {
+          status: 409,
+          detail: 'This interruption already exists on the assignment.',
+          code: 'assignment_interruptions.duplicate',
+        }),
+        op,
+      );
+      expect(failure.kind, op).toBe('field-code');
+      expect(fieldMessages(failure).startedAtUtc)
+        .toBe('This interruption already exists on the assignment.');
+    }
+  });
+
+  test('the same conflict without an op stays a banner, because no table was selected', () => {
+    const failure = toFailure(
+      new ApiError(409, { status: 409, detail: 'Too young.', code: 'assignment_authorizations.driver_underage' }),
+    );
+    expect(failure.kind).toBe('conflict');
+  });
+
+  test('a concurrency conflict is still the stale banner, whatever table is selected', () => {
+    const failure = toFailure(
+      new ApiError(409, { status: 409, code: 'assignment_interruptions.concurrency_conflict' }),
+      'interruption-edit',
+    );
+    expect(failure.kind).toBe('stale');
   });
 });
 

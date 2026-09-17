@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
+import { useSubmitGate } from '@/app/submitOnce';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
   PasswordChecklist, authStyles as styles,
@@ -38,6 +39,7 @@ export function Register() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
+  const gate = useSubmitGate();
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (register.isPending) return;
@@ -47,7 +49,8 @@ export function Register() {
     setLocal(errors);
     if (errors.email || errors.password) return;
     setFailure(NO_FAILURE);
-    register.mutate();
+    // The gate, not `isPending`, is what stops a second Enter inside the same tick (T-004).
+    gate.attempt(() => register.mutate());
   };
 
   if (submitted) {

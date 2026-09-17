@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth, registrations } from '@/api';
 import { OWNS_UNAUTHORIZED, samePathOnly } from '@/app/session';
+import { useSubmitGate } from '@/app/submitOnce';
 import { useAccess } from '@/permissions/usePermissions';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
@@ -86,6 +87,7 @@ export function SignIn() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
+  const gate = useSubmitGate();
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (signIn.isPending) return;
@@ -95,7 +97,8 @@ export function SignIn() {
       return;
     }
     setEmpty(false);
-    signIn.mutate();
+    // The gate, not `isPending`, is what stops a second Enter inside the same tick (T-004).
+    gate.attempt(() => signIn.mutate());
   };
 
   if (outcome) {

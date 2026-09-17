@@ -220,10 +220,19 @@ export function Dialog({
           </button>
         </div>
 
+        {/* The footer's action lives outside this form and is a plain button, so Enter in a field
+            submits the form directly — which is how the tester's double Enter reached the API twice
+            (T-004). The disabled button never stood in its way. `busy` turns the second one away
+            here; the synchronous gate in useActionMutation turns away the one that arrives before
+            `busy` has even been re-rendered. */}
         <form
           ref={bodyRef}
           className={styles.body}
-          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (busy) return;
+            onSubmit();
+          }}
         >
           {info ? <InfoBanner title={info.title} body={info.body} /> : null}
           {children}

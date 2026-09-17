@@ -25,7 +25,7 @@ export const isApiError = (e: unknown): e is ApiError => e instanceof ApiError;
 export type Failure =
   /** 400 with errors → messages under their fields. */
   | { kind: 'field'; errors: Record<string, string[]> }
-  /** 400 with a code that maps to one input. */
+  /** A coded 400 or 409 whose code maps to one input; the message hangs under that input. */
   | { kind: 'field-code'; field: string; message: string; code: string }
   /** 400 with a code that maps to no input → validation message above the footer. */
   | { kind: 'form'; message: string; code?: string }
@@ -37,7 +37,7 @@ export type Failure =
    * the banner and its Refresh apply either way.
    */
   | { kind: 'stale'; message: string }
-  /** any other 409 → red conflict banner above the footer. */
+  /** a 409 whose code names no input → red conflict banner above the footer. */
   | { kind: 'conflict'; message: string; code?: string }
   /** 403 → the action should never have been offered. */
   | { kind: 'forbidden'; message: string }
@@ -96,9 +96,13 @@ export function toFailure(error: unknown, op?: string): Failure {
   }
 
   if (status === 409) {
-    return isConcurrency(error.code)
-      ? { kind: 'stale', message: STALE_MESSAGE }
-      : { kind: 'conflict', message, code: error.code };
+    if (isConcurrency(error.code)) return { kind: 'stale', message: STALE_MESSAGE };
+    // A conflict that names one input belongs under that input, exactly like a coded 400. The
+    // round-3 refusals are all conflicts: a named driver under eighteen, a date of birth an open
+    // authorization relies on, an interruption that already exists.
+    const field = error.code ? codeToField(error.code, op) : undefined;
+    if (field) return { kind: 'field-code', field, message, code: error.code as string };
+    return { kind: 'conflict', message, code: error.code };
   }
 
   return { kind: 'unknown', message };

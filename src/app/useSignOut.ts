@@ -2,15 +2,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '@/api';
 import { OWNS_UNAUTHORIZED, beginSignOut, endSignOut } from './session';
+import { useSubmitGate } from './submitOnce';
 
 /**
  * Sign out (§6.5): the API clears the cookie — 204 even for a stale one — then the cache goes and
  * the app moves to the front door. No page reload: the app keeps its theme and rail preferences.
+ *
+ * The rail's button is never disabled, so repeated clicks used to send repeated logouts. Harmless —
+ * logout is idempotent (SESSION-009) — but it is a submission like any other, and it goes through
+ * the same gate as the rest (T-004).
  */
 export function useSignOut() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  return useMutation({
+  const gate = useSubmitGate();
+  const mutation = useMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => {
       // The page's own queries refetch in a moment and answer 401. That is this sign-out, not a
@@ -24,6 +30,9 @@ export function useSignOut() {
       await queryClient.resetQueries();
       navigate('/sign-in', { replace: true });
       endSignOut();
+      gate.settle();
     },
   });
+
+  return { ...mutation, mutate: () => gate.attempt(() => mutation.mutate()) };
 }

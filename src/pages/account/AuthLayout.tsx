@@ -1,6 +1,7 @@
 import { useEffect, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { themeIcon, themeLabel, themeTip, toggleTheme, useTheme } from '@/app/theme';
+import { useSubmitGate } from '@/app/submitOnce';
 import { passwordRules } from './password';
 import type { Outcome } from './outcomes';
 import styles from './Auth.module.css';
@@ -305,9 +306,16 @@ export function ResetScreen({
   busy?: boolean;
   onSubmit: () => void;
 }) {
+  /*
+   * `busy` is a rendered prop, so on its own it cannot stop a second Enter that arrives before the
+   * first has re-rendered (the tester's T-004, on the dialogs). The gate decides synchronously; the
+   * `busy` check stays as the readable statement of intent.
+   */
+  const gate = useSubmitGate();
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!busy) onSubmit();
+    if (busy) return;
+    gate.attempt(onSubmit);
   };
   return (
     <form className={styles.stack} data-gap="24" onSubmit={submit} noValidate>

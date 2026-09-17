@@ -15,6 +15,30 @@ export function readTokenFromHash(hash: string): string | null {
   }
 }
 
+/**
+ * What a link page should do with the fragment it can see.
+ *
+ * `consumed` says whether the page has already taken a token from the address bar. The distinction
+ * is the whole of the tester's T-005: the first fragment is simply the page's own reason for
+ * existing, while a later one means a second link was opened in a tab that is already finished —
+ * and a page that ignores it keeps showing the old outcome and sends nothing. The second link may
+ * be a fresh, valid one, or the same spent one again; either way the page must start over and let
+ * the API answer, because only the API knows whether a single-use token is still good.
+ */
+export type TokenArrival =
+  /** No token in the fragment: the page shows whatever its own state says. */
+  | { kind: 'none' }
+  /** The fragment the page was opened with. */
+  | { kind: 'first'; token: string }
+  /** A fragment that arrived later, in a tab that already used one: start over with it. */
+  | { kind: 'again'; token: string };
+
+export function tokenArrival(hash: string, consumed: boolean): TokenArrival {
+  const token = readTokenFromHash(hash);
+  if (!token) return { kind: 'none' };
+  return consumed ? { kind: 'again', token } : { kind: 'first', token };
+}
+
 /** Removes the fragment without adding a history entry and without reloading the page. */
 export function stripHash(): void {
   if (typeof window === 'undefined' || !window.location.hash) return;

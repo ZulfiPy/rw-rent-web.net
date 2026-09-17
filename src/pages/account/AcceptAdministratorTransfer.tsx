@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { systemAdministrator } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
-import { readTokenFromHash, stripHash } from './token';
+import { useLinkToken } from './useLinkToken';
 
 /**
  * The prototype's `transfer-accept` screen. The link's token proves the invitation and the
@@ -14,15 +14,20 @@ import { readTokenFromHash, stripHash } from './token';
  *
  * The prototype's state also carries an email and a new-password field. The endpoint takes the
  * token and the existing password and nothing else, so neither is shown here.
+ *
+ * Another link arriving in this same tab starts the screen over rather than leaving its old
+ * outcome in place (T-005); the password is cleared with it, because a second invitation may well
+ * be for a different account.
  */
 export function AcceptAdministratorTransfer() {
-  // Read before the first paint, so the screen never flashes the unusable state on its way in.
-  const [token] = useState(() => readTokenFromHash(window.location.hash));
-  useEffect(stripHash, []);
-
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
   const [done, setDone] = useState(false);
+  const [token] = useLinkToken(() => {
+    setPassword('');
+    setFailure(NO_FAILURE);
+    setDone(false);
+  });
 
   const accept = useMutation({
     meta: OWNS_UNAUTHORIZED,
