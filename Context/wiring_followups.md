@@ -103,3 +103,29 @@ database keeps the seeded dataset.
    `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
    road-tax or inspection dates). The app ships without them until that phase is opened.
+
+## 5. Testing run 1 — reviewed 2026-09-17, awaiting the owner's decisions
+
+The independent tester's report is `Context/testing_report.md` (run 1, 2026-09-16: 82 operations ×
+four roles and anonymous, every rule id, 522 route/width/theme combinations, the scenario
+catalogue). No blocker, no unauthorized write, no data loss, no unexpected 500. Six items; all five
+defects were confirmed in the code by the reviewer. Only the report was committed; both apps kept
+running from the wiring folders; the dataset was re-seeded.
+
+| Id | Side | What | Reviewer's note |
+|---|---|---|---|
+| T-001 | Frontend | `/system-administrator` typed into the address bar shows any signed-in person as the "Current System Administrator" with an enabled Initiate transfer; the API refuses the action with 403 | Confirmed: `App.tsx` has no per-route permission guard, and the page falls back to `me` when it cannot resolve the administrator. Fix: a route guard from the permission the navigation already carries, for every route, and no fallback to `me`. Major. |
+| T-004 | Frontend | Enter pressed twice sends the request twice | Confirmed: `useActionMutation.submit` has no in-flight guard and all 42 dialog submissions go through it, so one fix covers them all. **The reviewer rates it Major, not Minor**: the API accepts two identical interruptions (verified live, 201 and 201; INTERRUPT-007 allows overlaps) and interruptions are never deleted, so a double Enter leaves a permanent duplicate. |
+| T-005 | Frontend | A spent confirmation or reset link reopened in the same tab keeps showing the old success screen and sends nothing | Confirmed: the pages read the token once and keep their finished state. The practical case is a second, valid link opened in the same tab being ignored. Fix: reset the page when a new fragment arrives. Minor. |
+| T-002 | Backend | The contract documents validation errors as `oneOf` two shapes that both match | Backend backlog item 11. Documentation only. |
+| T-003 | Backend | A 17-character VIN with a space around it is refused for length before it is trimmed | Backend backlog item 12. The app trims before sending, so an operator never meets it. |
+| T-006 | Both | A driver born today can be created and authorised; the rules only refuse a future birth date | Owner question: backend backlog item 13. |
+
+Coverage the run did not reach, for a second run after the fixes: the first-run path on an empty
+database (bootstrap of the first administrator, creating the Company, the first Principal — the
+go-live path once the seed is replaced by real data); several scenarios driven on the API only and
+not through the app (the private-customer day, the double booking, promotion and suspension of new
+staff, accepting the transfer through the app, the correction dialogs' mutations, the signed-in
+password-change and email-change click-throughs); expiries that need real waiting (2 h idle, 12 h
+absolute, 15 min lockout release, 1 h reset, 24 h confirmation); an induced email failure; a whole
+browser restart.
