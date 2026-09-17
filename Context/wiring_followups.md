@@ -132,7 +132,18 @@ browser restart.
 
 ## 6. Follow-up 4 — the testing run's frontend findings
 
-> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED (2026-09-17).** Runs in the same agent run
+> **Status: IMPLEMENTED 2026-09-17** (commits `9127ea1` Wiring 14 and `6329f0e` Wiring 15; report
+> `Context/wiring_report.md`), **with one hole found in the review: Follow-up 5 (§7).** The agent
+> built F4-1…F4-5 and ran no joint check, because it never had the seed password. The reviewer ran
+> it the same day in a headless browser: `/system-administrator` as Principal, Fleet Manager and
+> Viewer shows the lock, no administrator panel, no transfer button and sends nothing; a Viewer's
+> typed `/registrations`, `/security-audit` and an audit record are locked while the pages they may
+> read open; three Enters on the phone dialog send one request; two Enters plus a click on the
+> interruption dialog send one request and store one row; the same interruption entered again
+> answers 409 with the API's message in the dialog and no new row; the two age refusals appear under
+> the Driver field; after a finished reset a second valid link in the same tab brings the form back
+> and completes, and the spent link is sent again and refused. Typecheck, 119 tests and the build
+> are green. Originally authorised to run in the same agent run
 > as the backend's round 3 (`RWRentApi-wiring/Context/round3_spec_and_plan.md`), after it, in this
 > worktree, against the API rebuilt from that round with its migration applied. Owner decisions of
 > 2026-09-17 behind it: a named driver must be at least 18 on the authorization date; the API also
@@ -187,3 +198,38 @@ each role to prove nothing else moved. Re-seed with `--replace true`; leave both
 
 Acceptance: the checks above pass; typecheck, tests and build green; reviewed screens keep their
 markup and CSS.
+
+## 7. Follow-up 5 — the guard and the router must agree (found in the review of Follow-up 4)
+
+> **Status: PROPOSED by the reviewer, 2026-09-17; authorised when the owner sends its prompt.**
+> Frontend only. The backend is not touched.
+
+- F5-1. **An address written differently walks past the guard.** Verified by the reviewer as a
+  Viewer: `/System-Administrator`, `/SYSTEM-ADMINISTRATOR` and `/%73ystem-administrator` render the
+  System Administrator page with an enabled Initiate transfer again (the name is a dash now, the
+  page and the action are back); `/REGISTRATIONS` renders the registrations page; `/Security-Audit`
+  renders the audit page, which sends its request and gets the API's 403. The lower-case addresses,
+  a trailing slash and an extra segment are guarded correctly. Cause: React Router matches a path
+  without regard to letter case and after decoding it, while `routePermission` looks the raw first
+  segment up exactly as typed. Change: the permission is decided from **the route that matched**,
+  never from the text of the address. One table carries each route's path, element and permission
+  (`null` said explicitly); the routes and the navigation are generated from it; the guard takes the
+  matched route's permission. Whatever address the router resolves to a page then gets that page's
+  permission, and a route cannot exist without a declared one. Tests: the decision for the same
+  destination written in another letter case, percent-encoded, with a trailing slash, with extra
+  segments and with a query; every route of the table has its entry.
+- F5-2. **The refusal codes the app knows are the codes the backend sends** (the agent's own open
+  risk 1). `src/api/codes.ts` names five codes that do not exist in the backend's catalogue
+  (`driver_already_open`, `collective_requires_business`, `collective_already_open`,
+  `named_and_collective_exclusive`, `from_required`); the real ones are `duplicate_open_named`,
+  `collective_requires_business_customer`, `duplicate_open_collective` and `mixed_open_modes`, and
+  there is no `from_required`. Correct them, then sweep the whole table against the backend's error
+  catalogues (the `*Errors.cs` and `*Conflicts.cs` files under
+  `RWRentApi-wiring/src/RWRentApi.Application`), so every entry names a code the API really returns
+  and lands under the field it names. The report lists what was corrected.
+- F5-3. **The joint check is run this time.** Ask the owner for the seed password before anything
+  else, and wait for it. Then: the address variants of F5-1 as each of the three ordinary roles
+  (lock, no page content, no request); §6's joint check in full; one corrected code of F5-2 seen
+  under its field in the app. Re-seed with `--replace true`; leave both apps running.
+- F5-4. Report: `Context/wiring_report.md` rewritten to cover Follow-ups 4 and 5. Commits
+  `Wiring 16: …` for the change with its tests and `Wiring 17: …` for the report.

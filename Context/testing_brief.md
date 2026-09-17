@@ -628,15 +628,32 @@ points of focus. The report is rewritten completely as run 2 and committed as
 `Testing: report of run 2`; its §2 opens with a table of the run-1 findings and what became of each
 (fixed, not fixed, changed, regressed). The scratch folder still holds run 1's scripts; reuse them.
 
+**What is already known about the fixes (the review of 2026-09-17).** The implementation agent
+built everything and ran almost no live check of its own, because it had no seed password; the
+owner's reviewer ran them, on the API and in a headless browser, and they passed. The reviewer also
+found that the first route guard could be walked past by writing the address in another letter case
+or percent-encoded (`/System-Administrator`, `/%73ystem-administrator`), because the router matches
+such addresses and the guard compared the text; Follow-up 5 (`Context/wiring_followups.md` §7)
+replaced it with a guard that follows the matched route, and corrected refusal codes the app had
+under the wrong names. Treat every one of these as a claim to break, not as proof. The documents of
+the fixes: the backend's `Context/round3_spec_and_plan.md` and `Context/round3_report.md`, the app's
+`Context/wiring_followups.md` §5–§7 and `Context/wiring_report.md`.
+
 **A. The fixes, attacked.** Repeat every run-1 finding by its own steps, then push on it: every
-guarded address typed by every role, including record addresses; double and triple Enter, a double
+guarded address typed by every role, including record addresses, and every way of writing one
+(letter case, percent-encoding, doubled and trailing slashes, extra segments, a query, a fragment,
+a link followed from inside the app versus typed), each time checking three things: the lock is
+shown, no page content is behind it, and no request left the browser; double and triple Enter, a double
 click, and Enter plus click, on every kind of dialog and on the public forms, with the record count
 read back; a second valid link, a spent link and an altered link in a tab that already finished;
 the three new rules like any other rule (AUTH-011: no birth date, 17, exactly 18, the correction
 and the replace paths, the collective authorization untouched; DRIVER-012: clearing and moving the
 date with open and with only closed authorizations; INTERRUPT-014: sequential, parallel, update and
 correction into a duplicate, a legitimate overlap still accepted); VINs and every other normalised
-field with stray spaces and mixed case at the length limits; the contract's `anyOf`.
+field with stray spaces and mixed case at the length limits; the contract's `anyOf`; the race the
+backend's report names as its open risk 1 (a date of birth lowered while an authorization for the
+same driver starts, in parallel); every refusal code of the authorization and interruption dialogs
+landing under the field it names rather than in the banner.
 
 **B. The first start on an empty database — the go-live rehearsal.** The seed will be replaced by
 real data, so the path from nothing has to be walked once in full. For this part only, the rule
