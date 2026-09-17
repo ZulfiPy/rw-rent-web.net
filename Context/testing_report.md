@@ -61,7 +61,7 @@ Finding counts and the owner's three priorities will be finalized after all laye
 | Layer | Status | Evidence / next boundary |
 |---|---|---|
 | Run-1 fixes attacked | In progress | T-001, T-002 and T-003 are fixed. T-006's normal paths are fixed, but its deliberate cross-aggregate race fails as T-007. T-004's original dialog path is fixed, but its public-form extension causes T-008. Link attacks continue. |
-| Empty-database first start | Pending | Authorized drop/recreate rehearsal follows the first seeded regression checkpoint. |
+| Empty-database first start | Complete | All six migrations applied to a recreated database; the public registration/bootstrap/Company/staff/first-rental/recovery path completed, wrong orders were refused, and the documented sample seed restored successfully afterward. |
 | App-only completion scenarios | Pending | Private customer, double booking, staff lifecycle, transfer acceptance, corrections, password/email changes, filters/navigation and uninterrupted phone day. |
 | API endpoint × role regression | Complete | All 82 operations called as four roles and anonymous; authorization reached the expected boundary, every protected anonymous call was `401`, and public operations remained public while signed in. |
 | Rule regression | In progress | The unchanged 96-case domain suite passed. Targeted AUTH-011/DRIVER-012/INTERRUPT-014 testing passed 64/65 checks; the one failure is T-007. |
@@ -159,6 +159,26 @@ Status codes are the exact live responses. For write probes, `400`/`404`/`409` m
 The final report will replace the remaining in-progress ledger rows with the complete rule, route and §9 scenario matrices.
 
 Contract checks also covered success/error response schemas, pagination and filter boundaries, content types, unsupported methods and CORS. The only harness mismatch was its use of a rental-assignment id in the role-assignment path while probing malformed content; the API correctly returned that nonexistent role assignment as `404`. This is not a product finding.
+
+### 3.3 Empty-database first-start rehearsal
+
+The developer database was dropped with forced connection closure, recreated under the documented owner and migrated from nothing through `InitialCreate`, V4, V5, V6, V7 and V8. The API was then restarted from the wiring worktree and the app remained on the wiring dev server.
+
+| First-start checkpoint | Result | Evidence |
+|---|---|---|
+| Visitor before any account | Pass | Protected destinations redirected to Sign in; the first `/overview` sample was observed in its transient `Loading…` state and redirected once session discovery completed. Public registration remained available. |
+| Dedicated administrator registration | Pass | App registration returned `202`; Mailpit confirmation returned `204` and removed the fragment. Sign-in before bootstrap returned `403` and showed **Awaiting activation**. |
+| Bootstrap wrong order | Pass | The command refused the unconfirmed known account and an unknown email with `system_administrator.target_not_eligible`. |
+| Bootstrap exactly once | Pass | The confirmed pending account was activated; the second command returned `system_administrator.already_exists`. The audit contains `SystemAdministrator.Bootstrapped` by the technical actor. |
+| Empty signed-in pages | Pass | Overview and Needs attention showed zero work; fleet lists and registration queue showed reviewed empty states; available create controls appeared; Company showed the explicit **First-run setup** sequence; Administrator and Profile were usable. |
+| Singleton Company | Pass | The System Administrator created **Run 2 Empty Start Rentals** in the app (`201`) and read it back. A second `POST /api/companies` returned `409 companies.already_exists`. |
+| First Principal, Manager and Viewer | Pass | Three people registered and confirmed through the app, then were activated through the Registrations page with exactly Company Principal, Fleet Manager and Viewer respectively (`200` each). All three appeared in the directory and activation audit. |
+| Sole-Principal protection | Pass | Revoke and future-expiry attempts returned `409 roles.final_company_principal`; suspension returned `409 users.final_company_principal`; readback kept the person Active and the non-expiring Principal grant effective. |
+| First operational records | Pass | At 402 px/light, the new Fleet Manager created the first vehicle, business customer and adult driver (`201` each), planned the first assignment (`201`), added named coverage (`201`), activated it (`204`) and returned it (`204`). Readback showed Ended with no open authorization. A same-minute first end attempt correctly stayed in the dialog until **Closed at** was later than **Started at**. |
+| Offline recovery | Pass | The documented direct recovery command restored the existing administrator, revoked existing sessions and wrote `SystemAdministrator.OfflineRecovery` with reason `Run 2 empty-database recovery rehearsal R2-REC-001`; a fresh sign-in and audit read succeeded. |
+| Restore sample baseline | Pass | `seed-development-data --replace true` restored the documented 12 users, 8 roles, 15 sessions, 13 audit entries, 1 transfer, 10 vehicles, 8 customers, 7 drivers, 12 assignments, 6 authorizations and 4 interruptions. Mailpit was cleared and both wiring processes were healthy. |
+
+Evidence is under `/Users/zulf/rw-rent-api/testing-scratch/run2/empty-*.json`; the command refusals and recovery output were also captured during the run. No first-start defect was found.
 
 ## 4. Not tested and why
 
