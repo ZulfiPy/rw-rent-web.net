@@ -104,141 +104,62 @@ database keeps the seeded dataset.
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
    road-tax or inspection dates). The app ships without them until that phase is opened.
 
-## 5. Testing run 1 — reviewed 2026-09-17; decisions taken the same day (§6, and the backend's round 3)
+## 5. Testing — where it stands (2026-09-17)
 
-The independent tester's report is `Context/testing_report.md` (run 1, 2026-09-16: 82 operations ×
-four roles and anonymous, every rule id, 522 route/width/theme combinations, the scenario
-catalogue). No blocker, no unauthorized write, no data loss, no unexpected 500. Six items; all five
-defects were confirmed in the code by the reviewer. Only the report was committed; both apps kept
-running from the wiring folders; the dataset was re-seeded.
+Run 1 (2026-09-16) found T-001…T-006. They were fixed by the backend's round 3 and by the app's
+Follow-ups 4 and 5 (commits `9127ea1` … `d9d4f07`): the permission of a page now comes from the
+route that matched, out of one table the routes and the navigation are both generated from
+(`src/app/routes.tsx`); every dialog submission passes one synchronous gate; the four emailed-link
+pages start over on every arrival; the refusal codes the app knows were checked against the
+backend's catalogues. Run 2 (`Context/testing_report.md`, 2026-09-17, 3 h 21 min) confirmed all of
+them fixed, including 540 spellings of the guarded addresses, walked the first start on an empty
+database from nothing to a returned rental and an offline recovery without a defect, and found three
+new Major defects: T-007 on the backend (its round 4, `RWRentApi-wiring/Context/round4_spec_and_plan.md`)
+and T-008 and T-009 here (§6). The sections that specified Follow-ups 4 and 5 were removed as
+implemented and tested; git history keeps them. The agreed order from here: this one fix round, the
+reviewer's verification with the tester's own steps, then the owner's check on real data (§1), then
+the merge (§3).
 
-| Id | Side | What | Reviewer's note |
-|---|---|---|---|
-| T-001 | Frontend | `/system-administrator` typed into the address bar shows any signed-in person as the "Current System Administrator" with an enabled Initiate transfer; the API refuses the action with 403 | Confirmed: `App.tsx` has no per-route permission guard, and the page falls back to `me` when it cannot resolve the administrator. Fix: a route guard from the permission the navigation already carries, for every route, and no fallback to `me`. Major. |
-| T-004 | Frontend | Enter pressed twice sends the request twice | Confirmed: `useActionMutation.submit` has no in-flight guard and all 42 dialog submissions go through it, so one fix covers them all. **The reviewer rates it Major, not Minor**: the API accepts two identical interruptions (verified live, 201 and 201; INTERRUPT-007 allows overlaps) and interruptions are never deleted, so a double Enter leaves a permanent duplicate. |
-| T-005 | Frontend | A spent confirmation or reset link reopened in the same tab keeps showing the old success screen and sends nothing | Confirmed: the pages read the token once and keep their finished state. The practical case is a second, valid link opened in the same tab being ignored. Fix: reset the page when a new fragment arrives. Minor. |
-| T-002 | Backend | The contract documents validation errors as `oneOf` two shapes that both match | Backend backlog item 11. Documentation only. |
-| T-003 | Backend | A 17-character VIN with a space around it is refused for length before it is trimmed | Backend backlog item 12. The app trims before sending, so an operator never meets it. |
-| T-006 | Both | A driver born today can be created and authorised; the rules only refuse a future birth date | Owner question: backend backlog item 13. |
+## 6. Follow-up 6 — testing run 2's frontend findings
 
-Coverage the run did not reach, for a second run after the fixes: the first-run path on an empty
-database (bootstrap of the first administrator, creating the Company, the first Principal — the
-go-live path once the seed is replaced by real data); several scenarios driven on the API only and
-not through the app (the private-customer day, the double booking, promotion and suspension of new
-staff, accepting the transfer through the app, the correction dialogs' mutations, the signed-in
-password-change and email-change click-throughs); expiries that need real waiting (2 h idle, 12 h
-absolute, 15 min lockout release, 1 h reset, 24 h confirmation); an induced email failure; a whole
-browser restart.
+> **Status: AUTHORISED when the owner sends the prompt (2026-09-17).** Runs in the same agent run as
+> the backend's round 4, after it, in this worktree. The reproduction steps of both findings are in
+> `Context/testing_report.md` §2.2; they are the acceptance tests.
 
-## 6. Follow-up 4 — the testing run's frontend findings
-
-> **Status: IMPLEMENTED 2026-09-17** (commits `9127ea1` Wiring 14 and `6329f0e` Wiring 15; report
-> `Context/wiring_report.md`), **with one hole found in the review: Follow-up 5 (§7).** The agent
-> built F4-1…F4-5 and ran no joint check, because it never had the seed password. The reviewer ran
-> it the same day in a headless browser: `/system-administrator` as Principal, Fleet Manager and
-> Viewer shows the lock, no administrator panel, no transfer button and sends nothing; a Viewer's
-> typed `/registrations`, `/security-audit` and an audit record are locked while the pages they may
-> read open; three Enters on the phone dialog send one request; two Enters plus a click on the
-> interruption dialog send one request and store one row; the same interruption entered again
-> answers 409 with the API's message in the dialog and no new row; the two age refusals appear under
-> the Driver field; after a finished reset a second valid link in the same tab brings the form back
-> and completes, and the spent link is sent again and refused. Typecheck, 119 tests and the build
-> are green. Originally authorised to run in the same agent run
-> as the backend's round 3 (`RWRentApi-wiring/Context/round3_spec_and_plan.md`), after it, in this
-> worktree, against the API rebuilt from that round with its migration applied. Owner decisions of
-> 2026-09-17 behind it: a named driver must be at least 18 on the authorization date; the API also
-> refuses an exact duplicate interruption; a second testing run follows the fixes.
-> The reproduction steps of every finding are in `Context/testing_report.md` §2; use them.
-
-- F4-1. **Routes are guarded by permission, not only the menu (T-001, Major).** Every route is
-  reachable by typing its address, and `/system-administrator` then shows the signed-in person as
-  the "Current System Administrator" with an enabled Initiate transfer. One guard, fed from the same
-  permission the navigation already carries for that destination (`src/app/AppShell.tsx`), wraps
-  every route; a record route takes its list's permission. A person without the permission gets the
-  restricted state the app already uses for a refused list (the lock icon, "Not available to you"),
-  inside the shell, with no page content behind it and no request sent. `/overview`,
-  `/needs-attention`, `/profile`, `/tasks` and `/insurance-cases` need no permission. Separately,
-  the System Administrator page never falls back to the signed-in person when it cannot resolve the
-  administrator: it shows the app's dash.
-- F4-2. **Every submission happens once (T-004, rated Major by the reviewer).** Enter pressed twice
-  sends the request twice, because nothing blocks the second submit before React has re-rendered the
-  busy state. All 42 dialog submissions go through `useActionMutation`: give its `submit` a
-  synchronous in-flight guard, and make `Dialog` ignore a submit while busy. The account pages that
-  use `useMutation` directly (sign in, register, reset, resend, the emailed-link pages, transfer
-  acceptance) and any other form that submits get the same guard through one small shared helper.
-  The consequence that matters: the interruption dialog created two identical permanent records.
-- F4-3. **An emailed-link page starts over when a new link arrives (T-005).** After a link has been
-  used, opening a link again in the same tab keeps the finished screen and sends nothing, so a
-  second, valid link is ignored. All four pages (`/confirm-registration-email`, `/reset-password`,
-  `/confirm-email-change`, `/accept-administrator-transfer`) reset their state and read the new
-  token when the fragment changes, then remove it from the address bar as before.
-- F4-4. **The backend's round-3 refusals are shown where they belong.** Three new conflict codes:
-  `assignment_authorizations.driver_birth_date_required` and
-  `assignment_authorizations.driver_underage` appear under the driver field wherever a named
-  authorization is started or corrected (the new-assignment form, the start and replace dialogs,
-  the authorization correction); `drivers.birth_date_breaks_open_authorization` under the date of
-  birth in the driver dialog; `assignment_interruptions.duplicate` under the start field of the
-  interruption create, update and correction dialogs. Messages are the API's own. Nothing else in
-  the UI changes; `dto.ts` follows the live OpenAPI document.
-- F4-5. Tests: the guard's decision as a pure function over a route and a permission list; the
-  submit-once helper (two synchronous submits, one call); the link page's reset on a new fragment;
-  the three codes' field mapping.
-- F4-6. Report: `Context/wiring_report.md`, created anew for this run (the phase's earlier report was
-  removed when the phase closed): summary; implemented; not implemented or partial; decisions
-  needed; verification; tests and build; deviations; open risks. One file; a later run rewrites it.
-
-**The joint check**, after F4-1…F4-5, against the round-3 API and the seeded database: repeat the
-tester's own steps for T-001 as each of the three ordinary roles (restricted state, no
-administrator panel, no request); type every guarded address as a Viewer; T-004 on the phone dialog
-and on the interruption dialog (exactly one request, exactly one record); T-005 for the confirmation
-and the reset link, including a second valid reset link in the same tab; an authorization for a
-driver without a birth date and for one aged 17 (the messages under the driver field); the same
-interruption entered twice by hand (the message under the start field); then every route once as
-each role to prove nothing else moved. Re-seed with `--replace true`; leave both apps running.
-
-Acceptance: the checks above pass; typecheck, tests and build green; reviewed screens keep their
-markup and CSS.
-
-## 7. Follow-up 5 — the guard and the router must agree (found in the review of Follow-up 4)
-
-> **Status: IMPLEMENTED 2026-09-17** (commits `06b6027` Wiring 16, `3f31cad` Wiring 17, `d9d4f07`
-> Wiring 18; report `Context/wiring_report.md`, which covers Follow-ups 4 and 5). Frontend only. The
-> agent ran the joint check in full this time and found and fixed one defect of its own on the way:
-> the same link arriving a second time in a finished tab left the page on its spinner (Wiring 17).
-> Verified by the reviewer the same day: typecheck, 149 tests and the build green; as a Viewer every
-> spelling of the guarded addresses (`/System-Administrator`, `/SYSTEM-ADMINISTRATOR`,
-> `/%73ystem-administrator`, `/REGISTRATIONS`, `/Registrations/`, `/Security-Audit`, a trailing
-> slash) shows the lock with no request sent, and an extra segment falls to the Overview like any
-> unknown address; the double-submit and duplicate-interruption checks still hold. The permission
-> now comes from one route table (`src/app/routes.tsx`) that the routes and the navigation are both
-> generated from. Next: testing run 2 (`Context/testing_brief.md` §13).
-
-- F5-1. **An address written differently walks past the guard.** Verified by the reviewer as a
-  Viewer: `/System-Administrator`, `/SYSTEM-ADMINISTRATOR` and `/%73ystem-administrator` render the
-  System Administrator page with an enabled Initiate transfer again (the name is a dash now, the
-  page and the action are back); `/REGISTRATIONS` renders the registrations page; `/Security-Audit`
-  renders the audit page, which sends its request and gets the API's 403. The lower-case addresses,
-  a trailing slash and an extra segment are guarded correctly. Cause: React Router matches a path
-  without regard to letter case and after decoding it, while `routePermission` looks the raw first
-  segment up exactly as typed. Change: the permission is decided from **the route that matched**,
-  never from the text of the address. One table carries each route's path, element and permission
-  (`null` said explicitly); the routes and the navigation are generated from it; the guard takes the
-  matched route's permission. Whatever address the router resolves to a page then gets that page's
-  permission, and a route cannot exist without a declared one. Tests: the decision for the same
-  destination written in another letter case, percent-encoded, with a trailing slash, with extra
-  segments and with a query; every route of the table has its entry.
-- F5-2. **The refusal codes the app knows are the codes the backend sends** (the agent's own open
-  risk 1). `src/api/codes.ts` names five codes that do not exist in the backend's catalogue
-  (`driver_already_open`, `collective_requires_business`, `collective_already_open`,
-  `named_and_collective_exclusive`, `from_required`); the real ones are `duplicate_open_named`,
-  `collective_requires_business_customer`, `duplicate_open_collective` and `mixed_open_modes`, and
-  there is no `from_required`. Correct them, then sweep the whole table against the backend's error
-  catalogues (the `*Errors.cs` and `*Conflicts.cs` files under
-  `RWRentApi-wiring/src/RWRentApi.Application`), so every entry names a code the API really returns
-  and lands under the field it names. The report lists what was corrected.
-- F5-3. **The joint check is run this time.** Ask the owner for the seed password before anything
-  else, and wait for it. Then: the address variants of F5-1 as each of the three ordinary roles
-  (lock, no page content, no request); §6's joint check in full; one corrected code of F5-2 seen
-  under its field in the app. Re-seed with `--replace true`; leave both apps running.
-- F5-4. Report: `Context/wiring_report.md` rewritten to cover Follow-ups 4 and 5. Commits
-  `Wiring 16: …` for the change with its tests and `Wiring 17: …` for the report.
+- F6-1. **A form can be submitted again after it was refused (T-008, Major).** After one refused
+  request the sign-in form is dead: a wrong password, then the right one, sends nothing until the
+  page is reloaded. The same on the reset form after a weak password, and on every public form.
+  Cause, confirmed in the code: `SignIn.tsx`, `Register.tsx` and `ResetScreen` in `AuthLayout.tsx`
+  call `gate.attempt` and nothing ever calls `gate.settle`; only the dialogs' hook and sign-out
+  settle theirs. Follow-up 4 added the gate and tested that it closes; nothing tested that it opens.
+  Change: make forgetting impossible. The gate is owned by one small hook that wraps a mutation and
+  settles it in `onSettled`, success or failure, and every public form submits through it;
+  `ResetScreen` takes a gated submit from its caller instead of owning a gate that cannot know when
+  the request ended. Tests: refused then corrected makes two calls; a success keeps the gate shut
+  only until it settles; a rate-limited answer reopens it too.
+- F6-2. **An instant the person did not touch is sent exactly as it is stored (T-009, Major).** The
+  date-time controls show minutes; stored instants can carry seconds. Every dialog that prefills an
+  instant converts it to minutes and back, so saving a correction without touching the dates sends
+  four changed instants, and the timeline correction of a seeded assignment answers
+  `409 corrections.timeline_invalid` with no field marked. It applies wherever a stored instant is
+  prefilled (`src/pages/fleet/AssignmentDialogs.tsx`): the planned-dates update, the authorization
+  correction, the interruption update and correction, the timeline correction. Change: one helper in
+  `src/format/datetime.ts` keeps the stored instant when the control still shows what it was
+  prefilled with and converts only a control the person changed; an emptied control is still null.
+  Tests: an untouched instant with seconds and with microseconds comes back byte-identical; a
+  changed control converts as today, in both offset seasons; an emptied one is null.
+- F6-3. Tests as named above; typecheck, tests and build green; reviewed screens keep their markup
+  and CSS; no new runtime dependency.
+- F6-4. **The joint check**, against the round-4 API and the seeded database; ask the owner for the
+  seed password in your first message if it is not in the environment, and wait. The tester's own
+  steps for T-008 on `/sign-in` and on a real reset link from Mailpit, then the same
+  refused-then-corrected pattern on every other public form (register, the resend screen, the
+  forgotten-password request, the email-change confirmation where it can be refused, the transfer
+  acceptance with a wrong then a right password); the tester's own steps for T-009 on assignment
+  `2d7b5c86-0007-42d7-92d7-000000000007`, then every other prefilled-instant dialog saved without
+  touching its dates on a seeded record, and once with one date changed; T-004 again on the phone
+  and the interruption dialogs, one request each; the backend's T-007 steps once through two browser
+  sessions if the app can produce them. Re-seed with `--replace true`; leave both apps running.
+- F6-5. Report: `Context/wiring_report.md` rewritten for this run, the joint check's outcomes in its
+  verification section. Commits `Wiring 19: …` for the change with its tests and `Wiring 20: …` for
+  the report. This document is not edited by the agent.
