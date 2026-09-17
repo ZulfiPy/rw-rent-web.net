@@ -23,7 +23,7 @@ export function AcceptAdministratorTransfer() {
   const [password, setPassword] = useState('');
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
   const [done, setDone] = useState(false);
-  const [token] = useLinkToken(() => {
+  const { token } = useLinkToken(() => {
     setPassword('');
     setFailure(NO_FAILURE);
     setDone(false);

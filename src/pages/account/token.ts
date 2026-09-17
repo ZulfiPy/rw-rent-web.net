@@ -39,6 +39,32 @@ export function tokenArrival(hash: string, consumed: boolean): TokenArrival {
   return consumed ? { kind: 'again', token } : { kind: 'first', token };
 }
 
+/**
+ * What a link page is looking at: the token it holds, and how many fragments have arrived.
+ *
+ * The counter is the point. A page that only remembers the token cannot tell the same link arriving
+ * again from nothing happening at all, because the value it would store is identical — and React
+ * bails out of a state update that changes nothing, so the effect that sends the token never runs
+ * again. The page then sits on its "consuming the token" state for ever. `arrival` changes on every
+ * fragment whether the token changed or not, which is what makes the second visit a real event.
+ */
+export interface LinkTokenState {
+  token: string | null;
+  arrival: number;
+}
+
+export const NO_LINK_TOKEN: LinkTokenState = { token: null, arrival: 0 };
+
+/**
+ * The state after reading `hash`, or `null` when the fragment holds no token and the page should be
+ * left exactly as it is.
+ */
+export function readLinkToken(state: LinkTokenState, hash: string): LinkTokenState | null {
+  const token = readTokenFromHash(hash);
+  if (!token) return null;
+  return { token, arrival: state.arrival + 1 };
+}
+
 /** Removes the fragment without adding a history entry and without reloading the page. */
 export function stripHash(): void {
   if (typeof window === 'undefined' || !window.location.hash) return;

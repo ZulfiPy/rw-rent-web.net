@@ -31,7 +31,7 @@ export function ResetPassword() {
    * the address is kept, because the API needs it with the completing call and it is the same
    * person's.
    */
-  const [token, discardToken] = useLinkToken(() => {
+  const { token, discard: discardToken } = useLinkToken(() => {
     setRequested(false);
     setChanged(false);
     setPassword('');

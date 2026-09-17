@@ -30,7 +30,7 @@ export function ConfirmRegistrationEmail() {
   const [password, setPassword] = useState('');
 
   // Everything a finished screen is made of, so the next link is answered on its own merits.
-  const [token] = useLinkToken(() => {
+  const { token, arrival } = useLinkToken(() => {
     setFailure(null);
     setDone(false);
     setSent(false);
@@ -55,11 +55,17 @@ export function ConfirmRegistrationEmail() {
   });
 
   const { mutate } = confirm;
+  /*
+   * `arrival` and not just `token`: the same link opened again in this tab carries the same string,
+   * and a state update to an identical value changes nothing, so this effect would never run again
+   * and the screen would sit on "consuming the token" for ever. The counter changes on every
+   * fragment, which is what makes the repeat a real event. Found in the joint check of Follow-up 5.
+   */
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     if (token && !resending) mutate(token);
-  }, [token, resending, mutate]);
+  }, [token, arrival, resending, mutate]);
 
   // The prototype's resend screen answers with the registration-submitted screen.
   if (sent || done) {

@@ -25,7 +25,7 @@ export function ConfirmEmailChange() {
   const [failure, setFailure] = useState<AccountFailure | null>(null);
   const [done, setDone] = useState(false);
   const started = useRef(false);
-  const [token] = useLinkToken(() => {
+  const { token, arrival } = useLinkToken(() => {
     setFailure(null);
     setDone(false);
     started.current = false;
@@ -42,11 +42,13 @@ export function ConfirmEmailChange() {
   });
 
   const { mutate } = confirm;
+  // `arrival` as well as `token`: the same link again is the same string, and without the counter
+  // this effect would not re-run (see useLinkToken).
   useEffect(() => {
     if (status !== 'signed-in' || started.current) return;
     started.current = true;
     if (token) mutate(token);
-  }, [status, token, mutate]);
+  }, [status, token, arrival, mutate]);
 
   useEffect(() => {
     if (status === 'signed-out') {
