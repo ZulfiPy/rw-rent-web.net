@@ -99,6 +99,14 @@ database keeps the seeded dataset.
    hosting-time decision.
 5. The shell's open-work queue runs three list requests on every page; cheap on the seeded data,
    the first thing to look at if a page ever feels slow.
+7. **The transfer-acceptance screen after a wrong password** (Follow-up 6 report §3.1, awaiting the
+   owner's decision). A wrong password on `/accept-administrator-transfer` is answered by the API with
+   the same code as a dead link (`system_administrator.transfer_not_usable`, on purpose, so the answer
+   never says which was wrong), and the app then shows "This transfer link cannot be used" although
+   the link still works; the person is told to ask for a new link they do not need. Options: (a)
+   frontend only, keep the form on that code and show a message naming both causes ("The password did
+   not match, or this link can no longer be used…"); (b) a distinct backend code for a wrong password.
+   Recommendation: (a), in the next frontend follow-up.
 6. Tasks and Insurance cases are sample-data placeholders (`src/pages/overview/sample.ts`,
    `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
@@ -122,9 +130,18 @@ the merge (§3).
 
 ## 6. Follow-up 6 — testing run 2's frontend findings
 
-> **Status: AUTHORISED when the owner sends the prompt (2026-09-17).** Runs in the same agent run as
-> the backend's round 4, after it, in this worktree. The reproduction steps of both findings are in
-> `Context/testing_report.md` §2.2; they are the acceptance tests.
+> **Status: IMPLEMENTED 2026-09-18** (commits `a800dc4` Wiring 19 and `e89beef` Wiring 20; report
+> `Context/wiring_report.md`). The agent, working under rules that forbid it to type a real password
+> into a page, ran the refused-then-corrected pattern on every public form and the T-007 race, and
+> handed the signed-in checks over. The reviewer ran those the same day in a headless browser: on
+> `/sign-in` a wrong password then the right one gives two requests (401, then 200) and lands on the
+> Overview; on a real reset link a weak password then a strong one gives two requests (400, then 204)
+> and "Password changed"; three Enters on the phone dialog send one request; as the administrator,
+> the timeline correction of the tester's assignment saved with the dates untouched answers 200, the
+> note changed and all four stored instants byte-identical (the controls showed minutes, the request
+> carried the stored microseconds). Typecheck, 167 tests and the build are green. One leftover, on
+> the transfer-acceptance screen, is backlog item 7 (§4). The reproduction steps of both findings are
+> in `Context/testing_report.md` §2.2.
 
 - F6-1. **A form can be submitted again after it was refused (T-008, Major).** After one refused
   request the sign-in form is dead: a wrong password, then the right one, sends nothing until the
