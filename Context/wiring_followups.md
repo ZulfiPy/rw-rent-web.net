@@ -217,3 +217,20 @@ the merge (§3).
   personal ID equals an existing driver's, that driver is proposed as the link (still a choice, never
   automatic). Workaround used on 2026-09-18: edit the customer, pick the driver under Driver link,
   save. Side: frontend.
+- F7-3. **A Company Principal sees their sign-ins but not their sign-outs** (backend; backend backlog
+  item 18). The audit page is Company-scoped by rule (AUDIT-008): a Principal sees only entries
+  stamped with the Company, so registration events, the bootstrap, the administrator's own sessions
+  and `Company.Created` are rightly invisible to them. But on 2026-09-18 the database shows
+  `Authentication.SessionCreated` for the Principal's own account stamped with the Company while
+  every `Authentication.Logout` of the same account carries none, so the Principal's list shows two
+  sign-ins and no sign-out. A session's end belongs to the same Company as its start. Side: backend.
+- F7-4. **An actor the reader may not see is labelled "System".** In the Principal's audit list the
+  entry "Registration · Activated" names the actor "System", although the administrator did it. The
+  app resolves actor names from the user directory the reader is allowed to see, the administrator
+  is outside the Company and therefore absent from it, and `SecurityAudit.tsx` falls back to the
+  label "System" for any actor it cannot name (`nameOf(a.actorUserId, 'System')`). "System" must be
+  reserved for entries with no human actor at all (the technical actor: the bootstrap, background
+  cleanup). For a real person the reader may not see, the label reads "Outside your company" or, if
+  the backend can tell, "System Administrator". Option worth weighing on the backend: an
+  `actorDisplayName` on the audit entry, so a Company-scoped reader sees the person's name without
+  reading the directory. Side: frontend, with a backend option.
