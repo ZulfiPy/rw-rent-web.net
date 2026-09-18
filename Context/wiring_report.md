@@ -1,319 +1,415 @@
-# Frontend Wiring — Follow-up 6 (testing run 2: T-008, T-009)
+# Frontend Wiring — Follow-up 7 (the owner's check on real data, first batch)
 
-> Follow-up 6 answers the second testing run's two frontend findings (`Context/testing_report.md`
-> §2.2): T-008, a refused public form that could never be sent again, and T-009, dialogs that
-> rounded stored instants they had only prefilled. It ran in the same agent run as the backend's
-> round 4, after it (`RWRentApi-wiring/Context/round4_report.md`). Worktree
-> `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
-> 2026-09-18. It replaces the report of Follow-ups 4 and 5, which git history keeps (`d9d4f07`).
+> Follow-up 7 answers what the owner found while checking the app on real data
+> (`Context/wiring_followups.md` §7): F7-1 times in UTC, F7-2 the customer's driver link, F7-4 an
+> actor labelled "System", and F7-5 the transfer-acceptance screen after a wrong password. F7-3 is
+> the backend's. It ran in the same agent run as the backend's round 5
+> (`RWRentApi-wiring/Context/round5_report.md`), after it, against the API rebuilt from that round.
+> Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
+> 2026-09-18. It replaces Follow-up 6's report, which git history keeps (`e89beef`).
 >
-> **For the agent that checks this run: §5 lists what is still yours to run.** The joint check
-> covered every step that needs no real password and all of them passed. The steps that need a
-> real password typed into the app were not run (§3.2), because the implementing agent may not
-> type one into a web page. That includes T-009 in the browser and every signed-in dialog.
+> **For the agent that checks this run: §5 lists what is still yours to run.** The database is
+> empty on purpose (the owner's end state). Re-seed only before the owner starts entering real
+> data again, and leave it empty afterwards (§5.0). The joint check covered every step that needs no
+> real password, and all of them passed. The steps that need a real password typed into the app
+> were not run (§3.3), because the implementing agent may not type one into a web page.
 
 ## 1. Summary
 
 | Commit | What |
 |---|---|
-| `a800dc4` | Wiring 19: a refused form can be sent again, and an untouched instant is sent as stored |
-| (this one) | Wiring 20: this report |
+| `0f5ae10` | Wiring 21: local time everywhere, the driver link made findable, audit names from the entry, the transfer form kept after a wrong password |
+| (this one) | Wiring 22: this report |
 
-`npm run typecheck` is clean. `npx vitest run` is green: **167 tests across 15 files**, up from 149;
-the 18 new ones are listed in §2.3. `npm run build` is green, with the chunk-size warning it
-already had (backlog item 4). No `.module.css` file and no JSX structure of a reviewed screen was
-touched. The change is in submit handlers, hooks and request bodies only, and `package.json` is
-unchanged.
+`npm run typecheck` is clean. `npx vitest run` is green: **227 tests across 20 files**, up from 167
+across 15; §2.5 lists the 60 new ones. `npm run build` is green, with the chunk-size warning it
+already had (backlog item 4). `package.json` is unchanged. No `.module.css` file was touched. The
+markup of the reviewed screens changed only where the follow-up asks: the additions of §2.2, the
+wording that named UTC, and the name cells of §2.3, which use the existing name and dim styles.
 
-**T-008** had one cause in the code and one outside it. Sign-in, registration and the shared reset
-screen closed their submit gate and nothing ever reopened it. Now one hook owns every gate in the
-app and reopens it when the request settles, whatever the answer. In the joint check, every public
-form that was refused sent its corrected request. The one exception is the transfer acceptance,
-where a wrong password is answered with the dead-link code and the app shows the dead-link screen.
-That screen was not built into a retry; §3.1 explains why and offers the options.
+**F7-1.** Every surface that rendered UTC now renders Tallinn time. The audit, session and transfer
+columns keep their compact "yyyy-MM-dd HH:mm" shape, so the tables keep their widths. The "(UTC)"
+headings and "All times UTC" notes are gone, and one note, "Times in Tallinn time.", names the zone
+where a page used to say UTC. **F7-2.** The closed "The customer will drive" option now says what is
+missing and links to the customer's record. That record offers "Link driver record", which opens
+the edit dialog on its Driver link section. The customer dialog proposes the driver whose personal
+ID matches, as a choice. **F7-4.** The audit surfaces take the actor's and the target's names from
+the entry. The Principal now reads the administrator's name, and "System" means the technical actor
+only. **F7-5.** A wrong password on the transfer acceptance keeps the form, with one message that
+names both possible causes.
 
-**T-009**: one helper sends a stored instant back byte for byte while its control still shows what
-it was prefilled with. It is used in every dialog that prefills one: the four the follow-up names,
-and the role-expiry dialog besides (§7).
-
-**Joint check**: partial (§4). Passed: every public form refused and then corrected (sign-in with a
-second wrong password in place of the real one), T-004 on sign-in, the tester's T-007 pair released
-25 more times with no violation, and the re-seed. Not run, and handed over in §5: the real-password
-sign-in, the strong-password reset, T-009 and the other prefilled-instant dialogs in the browser,
-T-004 on the phone and interruption dialogs, the email-change confirmation, and the accepted
-transfer.
+The joint check passed everything that needs no typed password: 16 API checks as the seeded people,
+the transfer page in the browser, a sweep of every route's data as each of the five roles, and 22
+tests that render each changed screen from a filled query cache. One thing is recorded rather than
+built: the Overview's activity card names nobody, and adding names would change a reviewed screen
+(§3.1). The database is left empty and migrated, as the owner asked (§4.7).
 
 ## 2. Implemented
 
-### 2.1 F6-1 — a refused form can be sent again (T-008)
+### 2.1 F7-1 — local time wherever a person reads a time
 
-**The cause** was exactly the one the follow-up names. Follow-up 4 gave every form a synchronous
-gate against a double Enter (T-004), `createSubmitGate` / `useSubmitGate`, and left each page to
-reopen its own gate. The dialogs' `useActionMutation` and `useSignOut` did, in `onSettled`.
-`SignIn.tsx`, `Register.tsx` and `ResetScreen` in `AuthLayout.tsx` called `gate.attempt` and never
-`gate.settle`, so the first request, refused or not, shut the form until the page was reloaded.
-Follow-up 4's tests proved that the gate closes. The only test that said it opens called
-`settle()` by hand.
+- `src/format/datetime.ts` gains `formatLocalStamp`, the "2026-09-18 13:39" stamp in
+  Europe/Tallinn, the same shape `formatUtc` gave these columns. It also gains `LOCAL_TIME_NOTE`,
+  "Times in Tallinn time.", the one note that names the zone. The UTC helpers stay, because their
+  existing tests may not be deleted, but no screen uses them (a test says so, §2.5).
+- Every surface that rendered UTC now renders local time, and says so once where it used to say UTC:
+  - the Security audit list: table, phone cards, heading "Occurred";
+  - the audit entry page: the Event panel, and the payload values, whose field labels no longer end
+    in "(UTC)";
+  - the Profile's sessions tab and a user record's sessions tab: "Started", "Last seen", "idle until",
+    the revocation time;
+  - the System Administrator page: "Since", the transfer table and phone blocks, headings
+    "Initiated" and "Expires";
+  - the Overview's activity card, in the app's humanized local style;
+  - the driver's audit trail and the assignment's correction history;
+  - the assignment's Lifecycle panel, whose note pointed to UTC values in the audit trail.
+- Nothing sent to the API changed. The API keeps speaking UTC.
 
-**The change** (`src/app/submitOnce.ts`) removes the possibility of forgetting:
+### 2.2 F7-2 — the customer's driver link, findable
 
-- `useGatedMutation(options)` wraps TanStack's `useMutation` and owns the gate. `submit(variables)`
-  closes the gate and sends. The gate reopens in the mutation's `onSettled`, which TanStack runs
-  after a success and after every failure alike: a refusal, a 429, or a request that never reached
-  the API. The form's own `onSettled` runs first, and the gate reopens even if that throws
-  (`settlingGate`, `try … finally`). A success therefore keeps the gate shut until the success
-  handling has finished, and not a moment longer.
-- `useSubmitGate` is no longer exported. The only way to get a gate is the hook that also reopens
-  it, so no page can hold one it could forget. `createSubmitGate` stays exported for the tests.
-- Every form submits through the hook: sign-in, and the "Resend the confirmation email" link inside
-  its alert; registration; both halves of the password reset; the resend screen
-  (`/confirm-registration-email?resend=1`); the transfer acceptance; every dialog, through
-  `useActionMutation`; and sign-out.
-- `ResetScreen` no longer holds a gate. It calls the `onSubmit` its caller passes, which is that
-  caller's gated `submit`. The screen could never know when the request ended, so it no longer
-  tries. Its `busy` check stays as the readable statement of intent.
-- The two link-driven confirmations (registration email, email change) are not forms. They send
-  from an effect guarded by their `started` ref and restart on every link arrival (T-005), and are
-  unchanged.
+- `src/pages/fleet/driverLink.ts` holds the two decisions, testable without a page:
+  - `customerDriveBlock` returns why "The customer will drive" is closed. For a private customer
+    with no link: "This customer has no linked driver record." with "Link one on the customer's
+    record." linking to `/customers/{id}`.
+  - `proposedDriverLink` returns the active driver whose personal ID equals the one entered,
+    compared trimmed, as the API stores both. It proposes only while the customer has no link.
+- The new-assignment page renders that note. The link sits inside the existing reason line.
+- The customer record's Driver link panel gets a small "Link driver record" action, like the
+  Identity panel's "Edit". It shows only for a private customer without a link, and only to a
+  reader who may change customers. It opens the edit dialog with the Driver link select focused and
+  scrolled into view.
+- The customer dialog shows the proposal inside the Driver link section. It uses the existing
+  section note, reading "Janis Krumins has the same personal identifier.", with a "Link Janis
+  Krumins" button. Nothing is chosen for the person: the select still reads "Not linked" until they
+  press it. Declining is saving without it.
 
-### 2.2 F6-2 — an instant the person did not touch is sent as stored (T-009)
+### 2.3 F7-4 — the entry names its actor and its target
 
-`fromPrefilledInput(value, stored, control = 'datetime')` in `src/format/datetime.ts`:
+- `dto.ts` follows the live OpenAPI document: `actorDisplayName` and `targetDisplayName`, both
+  nullable strings, on `SecurityAuditResponse`.
+- `src/format/auditNames.ts`:
+  - `auditActorName` gives the entry's name, or "System" when the entry carries none, which is the
+    technical actor.
+  - `auditTargetName` gives the target's name, or null when the entry is about no user.
+- The audit list, the audit entry page, the driver's trail and the assignment's correction history
+  all use them.
+- A name links to the user record only when the reader's own directory holds that user, as before.
+  A named person outside it (the administrator, for a Principal) is plain text, not dimmed. "System"
+  stays dimmed.
+- The two record pages no longer read the user directory at all: it was there only to find names.
+- The role history on a user's record carries ids and no names. A grantor outside the reader's
+  directory now reads "Outside your company", the owner's wording in F7-4, instead of "System".
+  "System" is kept for the technical actor's fixed id.
 
-- while the control still shows what it was prefilled with (`toLocalInput(stored)`, or
-  `toDateOnlyLocal(stored)` for a date), it returns **`stored` itself, byte for byte**: seconds,
-  microseconds, and the API's own `+00:00` spelling;
-- a changed control is converted exactly as before: `fromLocalInput`, or `endOfDayLocal` for a date,
-  UTC in both offset seasons;
-- an emptied control is `null`, and so is an empty control with nothing stored.
+### 2.4 F7-5 — the transfer acceptance keeps its form after a wrong password
 
-What decides is what the control shows. A control changed and then changed back counts as
-untouched.
+- The endpoint answers a wrong password with `system_administrator.transfer_not_usable`, the same
+  code as a dead link. It does so on purpose.
+- `transferAcceptView` in `src/pages/account/failure.ts` decides what the page shows. For that code:
+  the form, with "The password did not match, or this link can no longer be used. Check the
+  password and try again; if it keeps failing, ask the administrator for a new link." in the
+  existing alert slot.
+- The dead-link screen stays for a link without a token and for `transfer_not_found`.
+- `isExpiredLink` is unchanged for the pages that use it.
 
-Used for every stored instant a dialog prefills:
+### 2.5 Tests, and whether they can fail
 
-| Dialog (`src/pages/fleet/AssignmentDialogs.tsx` unless noted) | Instants |
-|---|---|
-| Edit assignment (the planned-dates update) | `plannedStartAtUtc`, `plannedEndAtUtc` |
-| Correct authorization | `authorizedFromUtc`, `stoppedAtUtc` |
-| Interruption edit and correction (`InterruptionForm`) | `startedAtUtc`, `endedAtUtc`; a new interruption has nothing stored and converts as before |
-| Correct timeline | `plannedStartAtUtc`, `startedAtUtc`, `plannedEndAtUtc`, `closedAtUtc` |
-| Change expiry, `src/pages/users/UserDialogs.tsx` (beyond the follow-up's list, §7) | `expiresAtUtc`, a date control |
+60 new tests, 227 in all:
 
-The dialogs that seed a control with *now* (activate, end, cancel, authorize, stop, end
-interruption, new assignment) have nothing stored to keep and are unchanged.
+- `src/format/datetime.test.ts` (+9): the stamp in summer (+3) and winter (+2); a local calendar day
+  across midnight; an offset instant; the API's microseconds; the stamp's shape and its time slice;
+  an empty value; the Overview's humanized local time across midnight in both seasons; the note.
+  One existing describe title, "audit and sessions surfaces render UTC", now reads "the UTC stamp
+  (no surface renders it since Follow-up 7)". Its assertions are unchanged.
+- `src/format/auditPayload.test.ts` (4): payload instants in both seasons, a role grant's expiry, the
+  labels without "(UTC)", a plain value untouched.
+- `src/format/auditNames.test.ts` (8): the actor and target names, "System" only without a name,
+  "Outside your company" for an unlisted grantor.
+- `src/pages/fleet/driverLink.test.ts` (8): the note and its link for each kind of customer; the
+  proposal compared trimmed, never for an inactive driver, a linked customer or an empty ID.
+- `src/pages/account/failure.test.ts` (+5): the transfer page's mapping for each answer, including
+  the live problem body of `transfer_not_usable`.
+- `src/pages/surfaces.test.ts` (4): reads every screen's source (55 files) and fails if one formats
+  or says UTC, or names anybody "System" by itself.
+- `src/pages/followup7.render.test.ts` (22): each changed screen rendered to markup with
+  `react-dom/server`, which is already a dependency. The pages render inside the real permission
+  provider and router, from a query cache holding API-shaped answers: the audit list and entry
+  page, the Overview's card, the System Administrator page, both sessions tabs, the role history,
+  the driver's trail, the assignment's correction history and Lifecycle panel, the customer
+  record's action, the dialog's proposal, and the new-assignment note.
 
-### 2.3 F6-3 — tests, and whether they can fail
+Teeth, checked by breaking the code and restoring it byte for byte (`cmp`) before the commit:
 
-`src/app/submitOnce.test.ts` gains eight tests. They drive the gate through TanStack's own
-`MutationObserver`, the machinery `useGatedMutation` is built on, so what reopens the gate is the
-library's `onSettled` and not the test:
-
-1. a wrong password, then the right one: two requests;
-2. a refused weak password (a field-level 400), then a strong one: two requests;
-3. a 429 reopens the gate;
-4. so does a request that never reached the API;
-5. a success keeps the gate shut while in flight (a second submit is turned away, T-004 kept) and
-   opens it once settled;
-6. the gate stays shut through the form's own `onSettled`, as sign-out's move to the front door
-   needs;
-7. it opens even when the form's own `onSettled` throws;
-8. no page can get a gate: the module exports `useGatedMutation` and not `useSubmitGate`.
-
-`src/format/datetime.test.ts` gains ten tests for `fromPrefilledInput`: an untouched instant with
-microseconds comes back byte-identical (the seeded shape, `…10.839886+00:00`); seconds and other
-spellings do too; a changed control converts exactly as `fromLocalInput` does in summer (+03:00) and
-in winter (+02:00); an emptied control is `null`; a value with nothing stored behind it converts; a
-control changed back counts as untouched; and for a date-only expiry, an untouched date keeps the
-stored instant, a changed one resolves to the end of that local day, and a cleared one is `null`.
-
-**Do they have teeth?** Both mutation checks were run locally and restored byte-for-byte:
-
-- With the one line that reopens the gate removed, all seven lifecycle tests (1–7) fail, while the
-  seven gate tests Follow-up 4 wrote all still pass. That is exactly how T-008 went unseen.
-- With `fromPrefilledInput` converting always, as the dialogs did, four of the new date tests fail:
-  the three "untouched" ones and the untouched expiry.
+- the stamp switched back to UTC and every actor named "System": 9 of the 22 render tests failed;
+- the record's action, the proposal and the note's link removed: 3 failed;
+- a UTC column and a "System" fallback put back into two pages: the scan's three checks failed.
 
 ## 3. Not implemented or partial
 
-### 3.1 The transfer acceptance cannot be retried in place after a wrong password
+### 3.1 The Overview's activity card names no actor
 
-**What happens.** A wrong password on `/accept-administrator-transfer` is answered with
-`400 system_administrator.transfer_not_usable`. That is the same code and the same message ("The
-administrator transfer is invalid, expired, cancelled, or already accepted.") as a link that is
-really dead. The backend does this on purpose (`SystemAdministratorService.AcceptTransferAsync`),
-so a request never says which of the two was wrong. The app lists that code among the dead-link
-codes (`src/pages/account/failure.ts`, `EXPIRED_CODES`), so it replaces the form with "This transfer
-link cannot be used … The administrator who sent it can issue a new one."
+F7-4's app half names three surfaces that "name the actor and the target from the entry itself".
+One of them is the Overview's "Recent security activity" card. That card names nobody: in the
+prototype and in the app it shows the event and its time only. So it never showed "System", and
+there is no name on it to take from the entry. Adding the actor's name would change a reviewed
+screen's markup, which this run's rules forbid. The card got F7-1's local time and nothing else.
 
-**But the link is not spent.** A wrong password leaves the transfer untouched. It only counts as a
-failed password attempt on the invited account, and five of those lock it for 15 minutes
-(LOGIN-005). While locked, even the right password gets the same code. Reopening the same link in
-the same tab brings the form back (the T-005 arrival), and a second wrong password is sent: the gate
-reopened. That second attempt lands on the same screen. So a person who mistypes is told to ask for
-a new link they do not need. This is a second, older cause of a dead form, separate from the gate,
-and specific to this screen.
+- *Side:* frontend, the owner's decision.
+- *Option:* one more line per row, "by Arturs Veidenbaums", in the card's existing small-text style
+  (§6.1).
 
-**Why it was not built.** Keeping the form on that code changes which screen a genuinely dead link
-ends on, and needs a message the reviewed screen does not have. Those are decisions about a
-reviewed screen, not part of the gate fix. The run's rule is not to invent behaviour where the
-specification did not foresee a cause.
+### 3.2 The joint check's F7-4 step reads the Principal's own activation
 
-**Side that has to change, and options.** (a) *Frontend only:* on this page, keep the form on
-`transfer_not_usable` and put, in the existing alert slot, a message that names both causes. For
-example: "The password did not match, or this link can no longer be used. Check the password and
-try again; if it keeps failing, ask the administrator for a new link." The dead-link screen stays
-for the codes that can only mean a dead link. (b) *Backend:* a distinct code for a wrong password.
-That is a new refusal code and a disclosure decision. It discloses little, since the token already
-proves the invitation, but it touches the API contract. **Recommendation: (a).** The decision is in
-§6.
+The joint check says: "read the seeded activation entry and see the administrator's name". In the
+sample data, the one seeded `Registration.Activated` (Toms Rudzitis) was performed by Signe
+Priede, the Principal herself. The API rightly names her. The administrator's case was checked on
+the three seeded entries the administrator wrote, and on a fresh activation of Gatis Lapsa by the
+administrator, which is the owner's own situation (§4.2).
 
-### 3.2 The joint-check steps that need a real password typed into the app
+- *Side:* the seed, if the owner wants the sample data to show it. That is backend backlog item 1,
+  out of scope here.
 
-The implementing agent may not enter a real password into a web page, even the seed password the
-owner supplied for this run, and may not change an account's credentials. The seed password was
-used only in scripts that call the API directly, from an environment variable, and never typed into
-a page or written to a file. Every step of F6-4 that needs a real password typed into the app is
-therefore not run and is listed in §5 for the checking agent: the correct-password sign-in, the
-strong-password reset, and everything behind a signed-in browser session. The owner was asked for
-the one sign-in that would have opened the rest, and chose to have this report written instead.
+### 3.3 The steps that need a real password typed into the app
+
+The implementing agent may not type a real password into a web page, even the seed password the
+owner supplied. So these steps were not run in the browser:
+
+- signing in as the seeded people and seeing F7-1, F7-3 and F7-4 on the screens;
+- the customer dialog's proposal, and the new assignment's note with its link, in the page;
+- the transfer acceptance with the right password typed into the form;
+- every route once as each role in the browser.
+
+What was run instead:
+
+- every one of those steps' data through the API, with the password in a script (§4);
+- the screens rendered from API-shaped data by the test suite (§2.5);
+- the transfer page in the browser as far as the wrong password (§4.4).
+
+§5 is the numbered list for the checking agent.
 
 ## 4. Verification — the joint check
 
-Against the API restarted from the round-4 build (port 5001, the process started by round 4's
-phase 3) and the app's Vite server (port 5173, HMR), on the seeded database, in the in-app browser.
-Requests were read from the browser's network log.
+Against the API started from round 5's build (`bcafa5e`) and the sample dataset, re-seeded with
+`--replace true`. Each API step is a script call as the seeded person, through the same endpoints
+the screens use.
 
-### 4.1 Every public form, refused and then corrected (T-008)
+### 4.1 F7-3 and F7-1 — the Principal's sign-in and sign-out
 
-| Form | Refused with | Corrected | Requests | Result |
-|---|---|---|---|---|
-| `/sign-in` as `toms.rudzitis@` (the tester's steps) | `WrongPassword1!` → 401, the invalid-credentials message | a second wrong password, clicked; then the form's own submit again (as Enter does, §4.5) | 3 `POST /api/auth/login`, all 401 | **the form stays alive after each refusal**; the real password is §5.1 |
-| `/sign-in`, three submits in one tick | — | — | 1 | **T-004 kept** |
-| `/reset-password` (request) | `toms.rudzitis@` → 400, message under Email | `toms.rudzitis@rwrent.example` | 2 | 204, "Check your email" |
-| the reset link from Mailpit, opened into the tab showing "Check your email" | `short` → 400, "…at least 12 characters. You entered 5" under New password | `alsoshort`, still refused | 2 `POST …/password-reset/complete`, both 400 | **the second request is sent**; the link replaced the finished screen (T-005 holds) and left the address bar; the strong password is §5.2 |
-| `/confirm-registration-email?resend=1` | `toms.rudzitis@` → 400 under Email | the full address (a made-up password: the API answers the same for any) | 2 | 202, the registration-submitted screen |
-| `/register` | first name left empty → 400, "'First Name' must not be empty." under First name | first name filled; an existing address, so the API's no-op branch runs and nothing is created | 2 | 202, "Confirm your email" |
-| `/accept-administrator-transfer`, a link from Mailpit after an API resend | `WrongPassword1!` → 400 `transfer_not_usable` → the dead-link screen | the same link reopened in the same tab (form back); `WrongPassword2!` | 2 `POST …/transfers/accept`, both 400 | **the second request is sent; the screen then dead-ends again**: §3.1; the right password is §5.7 |
-| `/confirm-email-change` | — | — | — | not run: needs a signed-in session, §5.6 |
+| Step | Result |
+|---|---|
+| Signe Priede signs in, then out (`POST /api/auth/logout`) | 204 |
+| Her next session reads `GET /api/security-audit?TargetUserId=…` | the ended session's `Authentication.SessionCreated` and `Authentication.Logout`, both with the Company |
+| What the app shows for them | 2026-09-18 12:26 (the API says 09:26 UTC): three hours later, the wall clock's time |
 
-### 4.2 T-009 and the other prefilled-instant dialogs
+### 4.2 F7-4 — who the Principal sees
 
-Not run in the browser: they need the System Administrator's session (§5.3, §5.4). What is
-established:
+| Step | Result |
+|---|---|
+| The seeded `Registration.Activated` | actor "Signe Priede", target "Toms Rudzitis" (the sample data's actor, §3.2) |
+| The administrator's seeded entries | "Arturs Veidenbaums" on `Company.Updated`, `DriverAuthorization.Corrected`, `RentalAssignment.TimelineCorrected` |
+| Every entry the Principal reads (16) | all carry an actor name |
+| The Principal opens the administrator's record | 403, as before |
+| The administrator activates Gatis Lapsa as Viewer | 200 |
+| The Principal reads that activation | actor "Arturs Veidenbaums", target "Gatis Lapsa" |
 
-- the unit tests of §2.3;
-- the seeded instants really have the shape the tests use. After the final re-seed, assignment
-  `2d7b5c86-0007-42d7-92d7-000000000007` reads `2026-08-09T05:01:10.839886+00:00` for its planned
-  start and actual start, and `2026-09-08T05:01:10.839886+00:00` for its planned end and closure. The
-  values move with each re-seed, because the seed counts from its own instant; the tester's
-  `…17.422987` were from their seed.
+### 4.3 F7-2 — the driver link, as Karlis Zvaigzne (Fleet Manager)
 
-### 4.3 T-004 on the phone and interruption dialogs
+| Step | Result |
+|---|---|
+| A driver fit for it | Janis Krumins: active, adult, personal ID 050381-10228, linked to no customer |
+| A private customer with that personal ID, the proposal declined (`driverId` null) | 201 |
+| Linking the driver, as the dialog sends it (`PUT /api/customers/{id}`) | 200, `driverId` set |
+| "The customer will drive": an Active assignment naming the customer's own driver | 201, on 119 MPR |
+| Unhappy path: a second customer taking the same driver link | 409 `customers.driver_link_conflict`, which the dialog shows under the field |
 
-Not run: they need a session (§5.5). The dialogs now reach the gate through `useGatedMutation`
-instead of their own `useSubmitGate`, with the same timing, and test 5 of §2.3 covers the turned-away
-second submit. The live proof is still owed.
+### 4.4 F7-5 — the transfer acceptance, in the browser
 
-### 4.4 T-007, the backend's acceptance, once more
+| Step | Result |
+|---|---|
+| The administrator resends the open transfer to Liga Brice (API) | 200; Mailpit holds the one link |
+| `/accept-administrator-transfer` with no token | the dead-link screen, "This transfer link cannot be used" |
+| The real link | the form |
+| A wrong password (made up, 22 characters), Accept transfer | one `POST …/transfers/accept` → 400; **the form stays**, with the two-cause message in the alert slot |
+| The right password with the same link (API; §3.3) | 204: the link still worked after the wrong attempt |
+| The same link again (API) | 400 `transfer_not_usable` |
+| Accept transfer in the page again, on the now used link | one more `POST` → 400; the form and the message stay |
 
-The tester's exact steps, released through a barrier 25 more times against the running API and the
-seeded database: two Fleet Manager sessions, a new driver born 1996-09-27, a business customer, a
-vehicle, and a Planned assignment from 2026-09-27T10:00Z per release; the update to 2009-09-27 and
-the named authorization released together. **0 of 25 left a violating pair.** 23× the update lost
-(`409 drivers.concurrency_conflict` · 201) and 2× the authorization lost
-(`200` · `409 assignment_authorizations.concurrency_conflict`). The run in round 4 itself: 25
-releases, 0 violating (`round4_report.md` §9.2).
+Re-seeded afterwards: the acceptance had made Liga Brice the administrator.
 
-"Once through two browser sessions if the app can produce them": it cannot. One browser profile
-holds one session, and a person cannot release two requests at the same instant through the
-interface. The barrier at the API is the check that can.
+### 4.5 Every route once as each role — the data behind each screen
 
-### 4.5 How it was run
+Each seeded role signed in and called every route's endpoints, 18 routes. The route table's
+permission (`src/app/routes.tsx`) says whether the route opens for the role, and the API answered
+accordingly each time:
 
-- Injected Enter keys do not trigger a form's implicit submission in the in-app browser, as
-  Follow-up 5 found. Enter's effect was driven with `form.requestSubmit()`, the call the browser
-  itself makes for an Enter.
-- The transfer link came from an API-level resend as the System Administrator (the password from
-  the environment, in a script). The reset link came from the forgotten-password request in the
-  table.
-- **End state:** re-seeded with `--replace true`, exit 0, with the documented counts: companies 1,
-  application_users 12 (11 human + the system account), identity_accounts 11, role assignments 8,
-  sessions 15, email-confirmation challenges 5, security audit entries 13, transfers 1, vehicles 10,
-  customers 8, drivers 7, assignments 12, authorizations 6, interruptions 4. This removed the 25
-  joint-check T-007 records and reset the failed sign-ins. Afterwards Toms and the System
-  Administrator sign in (API), the API answers 200 on 5001 and the app 200 on 5173, and both are
-  left running. The browser pane was left on `/sign-in`.
+| Account | Routes open | Result |
+|---|---|---|
+| `sysadmin@` (System Administrator) | 18 of 18 | every answer 200 |
+| `signe.priede@` (Principal) | 17 of 18 | 200, and 403 on the System Administrator's transfers |
+| `karlis.zvaigzne@` (Fleet Manager) | 15 of 18 | 200 where open, 403 where closed |
+| `toms.rudzitis@` (Viewer) | 14 of 18 | as its permissions say; see below |
+| `dita.smite@` (Viewer + Fleet Manager) | 15 of 18 | 200 where open, 403 where closed |
+
+One answer is not a 403 where the route is closed. The Viewer's registrations query answers 200
+with an empty list. By REGISTRATION-007 a directory reader sees only admitted people, and the
+app's own route permission (`Users.ReviewRegistrations`) keeps the page closed to the Viewer. The
+Fleet Manager's same query lists the five registrations.
+
+### 4.6 The screens, rendered
+
+The 22 render tests of §2.5 are the joint check's substitute for the signed-in browser. They show,
+with the sample data's people:
+
+- **F7-1:** the local stamps in both seasons, the headings without "(UTC)", the zone's note where
+  the panel carries it, and no "UTC" anywhere in the markup.
+- **F7-4:** the administrator named for the Principal with no link to a record they cannot open;
+  directory users linked; "System" once, for the technical actor; "Outside your company" in the role
+  history.
+- **F7-2:** "Link driver record" only for an unlinked private customer and a reader who may change
+  it; the proposal naming Janis Krumins, with "Not linked" still selected; the note linking to
+  `/customers/c1`, gone once the customer is linked.
+
+### 4.7 End state
+
+As §7's "End state" asks, with the README's commands:
+
+- **The API** was stopped; `rwrent_v1` dropped with `WITH (FORCE)` and created again, owned by
+  `rwrent`; `dotnet ef database update` applied all six migrations. The API was started again from
+  round 5's build (`RWRentApi-wiring/src/RWRentApi.Api/bin/Debug/net10.0`, built at `bcafa5e`) and
+  answers `/health` 200 on 5001.
+- **The database** holds six migrations and one application user, the technical system account.
+  It has no human account and no identity account; no Company, vehicle, customer, driver or
+  assignment; no audit entry and no session.
+- **Mailpit** is cleared: 0 messages.
+- **The app** answers 200 on 5173. The browser pane is on `/sign-in`.
+- **The owner's first real records** (one Company, the administrator and the Principal, one
+  vehicle, customer, driver and assignment) were replaced by the sample data, as the owner allowed.
+  A `pg_dump` copy was taken first. It is `owner-real-data-2026-09-18-before-round5.sql`, mode 600,
+  in the implementing session's scratchpad
+  (`/private/tmp/claude-501/-Users-zulf-rw-rent-api/322d1439-27e0-467c-850f-91b903d014c9/scratchpad`),
+  outside every repository. It lasts only as long as that temporary folder.
+
+### 4.8 How it was run
+
+- The password came from the owner for this session only. It was held in the environment, used
+  only by the API scripts, and appears in no file, no log and no commit.
+- The transfer link came from an API resend as the administrator, read from Mailpit, which was
+  emptied first. The wrong password typed into the page was made up; it is nobody's credential.
+- The scripts are in the implementing session's scratchpad (`j7_api.py`, `rwapi.py`, `links.py`),
+  not in a repository. §5 repeats every step in the app.
 
 ## 5. For the checking agent: what to run with the seed password
 
-Everything below needs a real password in the app, which the implementing agent may not type. Run
-on a fresh seed. Where a step changes a credential or the administrator, re-seed afterwards
-(`seed-development-data --replace true`, the owner's password, from the environment).
+### 5.0 Before and after
 
-1. **T-008 on `/sign-in`, the tester's own steps.** `toms.rudzitis@rwrent.example`,
-   `WrongPassword1!`, Sign in → 401 and the message. Replace only the password with the real one,
-   Sign in → a **second** `POST /api/auth/login` → 200 → Overview.
-2. **T-008 on the reset link.** Request a reset for Toms, open the Mailpit link, `short` → 400 under
-   New password. Then a strong password → a **second** `POST /api/auth/password-reset/complete` →
-   204 → "Password changed". This changes Toms's password; re-seed afterwards.
-3. **T-009, the tester's own steps.** As System Administrator, assignment
-   `2d7b5c86-0007-42d7-92d7-000000000007`, Corrections → Correct timeline. Touch no date; note `Run 2
-   corrected assignment note`; a valid reason; Save. Expect the `PUT …/corrections/timeline` body to
-   carry the four instants **exactly as `GET` returned them** (microseconds and `+00:00`), a 200, and
-   the note reading back. Then once with one date changed: only that instant is converted (UTC,
-   `:00.000Z`), and the three others still go back as stored.
-4. **Every other prefilled-instant dialog, saved untouched on a seeded record, then once with one
-   date changed:** Edit assignment on a Planned assignment (the planned dates); Correct
-   authorization; Edit interruption; Correct interruption; and Change expiry on Dita Smite's expiring
-   role. Untouched instants must go back byte-identical, and a changed one converted. One thing to
-   know: a *privileged correction* saved with nothing changed at all now reaches the API's
-   `400 corrections.no_changes`, shown above the footer ("A privileged correction must change at
-   least one approved field."). The old rounding always sent a change, so this refusal was
-   unreachable from the app; it is the right answer. Change the note or one date to get a 200.
-5. **T-004 on the dialogs.** Profile → Update phone: two submits in one tick (`requestSubmit()`
-   twice, §4.5) → one `PUT`, and the stored phone reads back. The interruption dialog: two Enters and
-   a click → one `POST`, one record.
-6. **Email-change confirmation, refused then corrected.** Signed in, open
-   `/confirm-email-change#not-a-real-token` → refused with its code. Then request a real change from
-   Profile (current password) and open its Mailpit link in the same tab → confirmed.
-7. **The transfer acceptance, last** (it suspends `sysadmin@`). As System Administrator, Resend the
-   transfer (current password). Open the Mailpit link; a wrong password → today the dead-link screen
-   (§3.1); reopen the link; Liga Brice's password (the seed password) → accepted. Re-seed afterwards.
-8. **The backend** (`round4_report.md` §9): the 22 race cases are in `dotnet test`
-   (`Concurrency/…`). The tester's T-007 pair can be released again at the API: two sessions, one
-   barrier, 25 releases, and the table read back after each.
+- The database is empty on purpose: the owner will walk the go-live sequence on it again. **If the
+  owner has already entered real data, do not re-seed**, because `--replace true` replaces
+  everything. Ask the owner first.
+- Otherwise re-seed from the backend worktree, with the environment of its README exported and the
+  seed password in `RWRENT_DEV_SEED_PASSWORD`:
+  `dotnet run --project src/RWRentApi.Api --no-build -- seed-development-data --password "$RWRENT_DEV_SEED_PASSWORD" --replace true`.
+- When done, return to the empty state, with the README's "From the sample data to real data" step
+  1:
+  1. stop the API;
+  2. `DROP DATABASE rwrent_v1 WITH (FORCE)`;
+  3. `CREATE DATABASE rwrent_v1 OWNER rwrent`;
+  4. `dotnet ef database update`;
+  5. start the API;
+  6. clear Mailpit (`DELETE http://localhost:8025/api/v1/messages`).
+
+### 5.1 The steps
+
+1. **F7-3 and F7-1 as the Principal.**
+   - Sign in as `signe.priede@rwrent.example`, sign out, sign in again.
+   - Open Security audit. The newest rows are your sign-in, sign-out and sign-in. The Occurred
+     column reads the wall clock's time, three hours after UTC in summer. Its heading is "Occurred".
+     The page description ends "Times in Tallinn time.".
+   - Open the sign-out entry. The Event panel says "Times in Tallinn time.", and the Actor is "Signe
+     Priede", linked.
+   - On the phone width (375 px) the cards show the local stamp with no " UTC".
+2. **F7-4 as the Principal, after an activation by the administrator.**
+   - As `sysadmin@rwrent.example`, Registrations: activate Gatis Lapsa as Viewer. Sign out.
+   - As Signe, Security audit, "Registration · Activated" for Gatis: the Actor is "Arturs
+     Veidenbaums" in plain text, not linked and not "System"; the target is "Gatis Lapsa", linked.
+     The entry page shows the same.
+   - The seeded "Company · Updated", "Driver authorization · Corrected" and "Rental assignment ·
+     Timeline corrected" also read "Arturs Veidenbaums". The seeded activation of Toms reads "Signe
+     Priede": that is the sample data (§3.2).
+   - Users → Karlis Zvaigzne → Roles: the Fleet Manager grant reads "Outside your company".
+   - Overview: "Recent security activity" says "Times in Tallinn time." and shows local times.
+3. **F7-2 as `karlis.zvaigzne@rwrent.example`.**
+   - Customers → Add customer, Private individual, with personal identifier `050381-10228` (Janis
+     Krumins's) and a fresh email and phone.
+   - In Driver link, "Janis Krumins has the same personal identifier." appears with "Link Janis
+     Krumins", and the select still says "Not linked". Do not press it: Create customer.
+   - New rental assignment with that customer: "The customer will drive" is greyed, with "This
+     customer has no linked driver record. Link one on the customer's record." Follow the link.
+   - On the record, the Driver link panel offers "Link driver record". Press it: the edit dialog
+     opens with the Driver link select focused and in view. Choose Janis Krumins and Save.
+   - New rental assignment with that customer: "The customer will drive" is open. Create it (Active,
+     now) on an available vehicle.
+4. **F7-5, last** (it makes Liga Brice the administrator).
+   - As the administrator, System Administrator → Resend on the open transfer (your password).
+   - Open the Mailpit link. Type a wrong password of 12 or more characters and press Accept
+     transfer. The form stays, with "The password did not match, or this link can no longer be
+     used…".
+   - Replace it with Liga Brice's password (the seed password) and press Accept transfer: "Transfer
+     accepted". A second request is sent, so the form was still usable.
+   - Re-seed afterwards.
+5. **Every route once as each role.** As each of `sysadmin@`, `signe.priede@`, `karlis.zvaigzne@`,
+   `toms.rudzitis@` and `dita.smite@`:
+   - open every navigation entry and one record of each kind;
+   - check that no screen says UTC, times read local, audit rows name people, and "System" appears
+     only for the technical actor. The seed has no technical-actor entry. `recover-system-administrator`
+     makes one if wanted.
+6. **Return to the empty state** (§5.0).
 
 ## 6. Decisions needed
 
-1. **After a wrong password on the transfer acceptance, should the screen keep its form?** Today a
-   mistyped password ends on "This transfer link cannot be used", although the link still works
-   (§3.1). Keeping the form would show one message that names both causes and lets the person try
-   again. Recommendation: yes, keep the form.
+1. **Should the Overview's activity card name the actor?** (§3.1.) It shows the event and its time,
+   as the prototype does. Recommendation: leave it. The card is a glance, and the audit page names
+   everyone one click away. If you want names there, it is one line per row in the card's existing
+   small text.
+2. **The backend's round 5 asks one for you:** whether a user's own session revocations should
+   appear in the audit history. See `round5_report.md` §4.
 
 ## 7. Deviations
 
-1. **The gate hook reaches beyond the public forms.** Every dialog (through `useActionMutation`) and
-   sign-out now use `useGatedMutation`, and `useSubmitGate` is no longer exported. The follow-up
-   asked for every public form; making the one hook the only owner of a gate is what makes
-   forgetting impossible everywhere. The dialogs' behaviour is unchanged: they already reopened in
-   `onSettled`. The sign-in page's resend link, a button in the alert rather than a form, goes
-   through the hook as well.
-2. **The instant rule reaches one dialog beyond F6-2's list:** Change expiry, whose untouched date
-   used to move a seeded expiry to the end of that local day. It is one line to revert
-   (`UserDialogs.tsx`).
-3. **The joint check is partial** (§3.2, §5). The correct-password step on `/sign-in` was replaced by
-   a second wrong password. That proves the second request, which was the defect; the success path
-   itself was never broken.
-4. `Context/wiring_followups.md` was not edited.
+1. **F7-4 reaches two audit surfaces and one role surface beyond the three it names.** The driver's
+   audit trail and the assignment's correction history show audit entries too, and named them from
+   the directory ("Unknown user", "System"). They now take the names from the entry, and those two
+   pages no longer load the directory. The role history labelled the administrator "System" for the
+   same reason. It carries no names, so it uses the owner's own fallback, "Outside your company".
+2. **F7-1 reaches two surfaces beyond the five it names:** the driver's trail and the assignment's
+   correction history. Also the assignment's Lifecycle note, which pointed to "original UTC values"
+   in a trail that no longer shows UTC. The audit payload's field labels lost "(UTC)".
+3. **The proposal (F7-2c) appears only while the customer has no link, and only for an active
+   driver.** An inactive driver cannot be chosen in the link list. A customer who is already linked
+   is not second-guessed.
+4. **"Link driver record" (F7-2b) shows only on an unlinked private customer, and only to a reader
+   who may change customers.** A linked customer changes the link through Edit, as before.
+5. **Render tests stand in for the signed-in browser.** They use `react-dom/server`, already a
+   dependency, and plain `createElement`, so neither the test include pattern nor any configuration
+   changed. `Coverage` in `NewAssignment.tsx` is exported so its note can be rendered.
+6. **The UTC helpers stay** (`formatUtc`, `formatUtcHuman`, `formatUtcLabelled`). No screen uses them,
+   and their tests may not be deleted. One test group's title was reworded; no assertion changed.
+7. **The joint check adapted two steps.** F7-4 read the administrator's own entries and a fresh
+   activation (§3.2). F7-5's right password went through the API with the same link (§3.3).
+8. `Context/wiring_followups.md` was not edited.
 
 ## 8. Open risks
 
-1. **The lifecycle tests run in node, with no page rendered.** They prove the gate against TanStack's
-   own observer. That the pages call the hook is proven by the type system (there is no other way
-   to get a gate) and by the joint check: done for the public forms, owed for the dialogs (§5.4,
-   §5.5).
-2. **The transfer acceptance** (§3.1) until the owner decides.
-3. **The scripts behind the live checks** (the T-007 barrier, the API sessions, the Mailpit link
-   reader) are in the implementing session's scratchpad, not in a repository. §4 and §5 describe the
-   method well enough to redo it.
+1. **The page header's description is not in the render tests.** The list pages' headers are set
+   from an effect, which a server render does not run. The scan test guarantees they no longer say
+   UTC. That they say "Times in Tallinn time." is for the checking agent's eyes (§5.1, step 1).
+2. **A mistyped transfer password counts as a failed sign-in.** Five in a row lock Liga's account
+   for 15 minutes (LOGIN-005), and the page keeps showing the same message. During a lockout neither
+   the password nor a new link helps until the lock ends. The message cannot say so without saying
+   which cause it was.
+3. **The proposal compares personal IDs exactly, after trimming**, as the API stores them. The same
+   person's ID written differently (another separator, a space inside) is not proposed. The
+   person can still choose the driver in the list.
+4. **A link to a user record still depends on the first 100 directory entries**, as before this
+   follow-up. With more people than that, a person beyond them is named but not linked.
+5. **Names are read-time names** (backend report §11): an older entry shows a person's current
+   name.
