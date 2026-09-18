@@ -20,7 +20,7 @@ import {
 } from '@/api/dto';
 import {
   AUTHORIZATION_TYPE_LABEL, BILLING_IMPACT_LABEL, INTERRUPTION_REASON_LABEL, STOP_REASON_LABEL,
-  formatLocal, fromLocalInput, toLocalInput,
+  formatLocal, fromLocalInput, fromPrefilledInput, toLocalInput,
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
@@ -172,8 +172,9 @@ function Edit({ assignment: a, onClose }: Common) {
     mutationFn: () => updateAssignment(a.id, {
       customerId,
       vehicleId,
-      plannedStartAtUtc: plannedStart ? fromLocalInput(plannedStart) : null,
-      plannedEndAtUtc: plannedEnd ? fromLocalInput(plannedEnd) : null,
+      // A date the person did not touch goes back exactly as stored, seconds and all (T-009).
+      plannedStartAtUtc: fromPrefilledInput(plannedStart, a.plannedStartAtUtc),
+      plannedEndAtUtc: fromPrefilledInput(plannedEnd, a.plannedEndAtUtc),
       note: note.trim() || null,
     }),
     invalidate: INVALIDATE,
@@ -635,8 +636,8 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
     mutationFn: () => correctAuthorization(a.id, z.id, {
       authorizationType: type,
       driverId: collective ? null : driverId || null,
-      authorizedFromUtc: fromLocalInput(from),
-      stoppedAtUtc: stopped ? fromLocalInput(stopped) : null,
+      authorizedFromUtc: fromPrefilledInput(from, z.authorizedFromUtc) ?? '',
+      stoppedAtUtc: fromPrefilledInput(stopped, z.stoppedAtUtc),
       stopReason: stopped ? stopReason : null,
       note: note.trim() || null,
       concurrencyToken: z.concurrencyToken,
@@ -731,8 +732,9 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
     op,
     mutationFn: () => {
       const body = {
-        startedAtUtc: fromLocalInput(startedAt),
-        endedAtUtc: endedAt ? fromLocalInput(endedAt) : null,
+        // A new interruption has nothing stored, so both are converted as the person entered them.
+        startedAtUtc: fromPrefilledInput(startedAt, interruption?.startedAtUtc) ?? '',
+        endedAtUtc: fromPrefilledInput(endedAt, interruption?.endedAtUtc),
         billingImpact: billing,
         note: note.trim(),
       };
@@ -934,10 +936,10 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
   const m = useActionMutation({
     op: 'correct-timeline',
     mutationFn: () => correctAssignmentTimeline(a.id, {
-      plannedStartAtUtc: plannedStart ? fromLocalInput(plannedStart) : null,
-      startedAtUtc: startedAt ? fromLocalInput(startedAt) : null,
-      plannedEndAtUtc: plannedEnd ? fromLocalInput(plannedEnd) : null,
-      closedAtUtc: closedAt ? fromLocalInput(closedAt) : null,
+      plannedStartAtUtc: fromPrefilledInput(plannedStart, a.plannedStartAtUtc),
+      startedAtUtc: fromPrefilledInput(startedAt, a.startedAtUtc),
+      plannedEndAtUtc: fromPrefilledInput(plannedEnd, a.plannedEndAtUtc),
+      closedAtUtc: fromPrefilledInput(closedAt, a.closedAtUtc),
       note: note.trim() || null,
       concurrencyToken: a.concurrencyToken,
       reason,

@@ -6,7 +6,7 @@ import {
 import { activateUser, correctUserName, rejectRegistration, reopenRegistration, restoreUser, suspendUser } from '@/api/users';
 import { changeRoleExpiry, grantRole, revokeRole } from '@/api/roles';
 import { revokeAllUserSessions, revokeUserSession } from '@/api/sessions';
-import { endOfDayLocal, toDateOnlyLocal } from '@/format';
+import { endOfDayLocal, fromPrefilledInput, toDateOnlyLocal } from '@/format';
 import { ROLE_LABEL } from '@/format/labels';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
@@ -340,7 +340,8 @@ function RoleExpiry({ user, onClose, assignment }: Common & { assignment: RoleAs
   const m = useActionMutation({
     op: 'role-expiry',
     mutationFn: () => changeRoleExpiry(user.id, assignment.id, {
-      expiresAtUtc: date ? endOfDayLocal(date) : null,
+      // An untouched date keeps the stored expiry instead of moving it to the end of that day.
+      expiresAtUtc: fromPrefilledInput(date, assignment.expiresAtUtc, 'date'),
     }),
     invalidate: INVALIDATE,
     onDone: onClose,

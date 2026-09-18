@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { fieldMessages, toFailure, type Failure } from '@/api/problem';
 import { useReseed } from './reseed';
-import { useSubmitGate } from './submitOnce';
+import { useGatedMutation } from './submitOnce';
 
 /**
  * One mutation, wired the way every dialog needs it: the rejection becomes a Failure (with the op's
@@ -10,8 +10,9 @@ import { useSubmitGate } from './submitOnce';
  * invalidates the affected caches before the dialog closes.
  *
  * Every dialog submission in the app comes through here, so this is where one submission at a time
- * is enforced (the tester's T-004). `busy` is still what the dialog renders; the gate is what
- * actually decides, because it closes before React re-renders and `isPending` does not.
+ * is enforced (the tester's T-004), through the same `useGatedMutation` every other form uses.
+ * `busy` is still what the dialog renders; the gate is what actually decides, because it closes
+ * before React re-renders and `isPending` does not.
  */
 export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }: {
   op: string;
@@ -21,10 +22,11 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
 }) {
   const queryClient = useQueryClient();
   const reseed = useReseed();
-  const gate = useSubmitGate();
   const [failure, setFailure] = useState<Failure | null>(null);
 
-  const mutation = useMutation({
+  // The gate reopens in the hook's own onSettled, a refusal as much as a success, or the dialog
+  // could never retry.
+  const mutation = useGatedMutation({
     mutationFn,
     onError: (error: unknown) => setFailure(toFailure(error, op)),
     onSuccess: async () => {
@@ -32,15 +34,15 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
       await Promise.all(invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
       onDone();
     },
-    // Settled, not succeeded: a refusal has to reopen the gate or the dialog could never retry.
-    onSettled: () => gate.settle(),
   });
 
   return {
-    submit: (vars: TVars) => gate.attempt(() => {
-      setFailure(null);
-      mutation.mutate(vars);
-    }),
+    submit: (vars: TVars) => {
+      const sent = mutation.submit(vars);
+      // Batched with the send's own render, exactly as when it was cleared before it.
+      if (sent) setFailure(null);
+      return sent;
+    },
     busy: mutation.isPending,
     failure,
     fields: failure ? fieldMessages(failure) : {},

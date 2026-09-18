@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { auth } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
+import { useGatedMutation } from '@/app/submitOnce';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
@@ -38,7 +38,9 @@ export function ResetPassword() {
     setFailure(NO_FAILURE);
   });
 
-  const request = useMutation({
+  // Both halves reopen their gate when the request settles: a refused address or a weak password
+  // must leave the form ready for the corrected one (T-008).
+  const request = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => auth.requestPasswordReset({ email: email.trim() }),
     onSuccess: () => {
@@ -48,7 +50,7 @@ export function ResetPassword() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
-  const complete = useMutation({
+  const complete = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => auth.completePasswordReset({
       email: email.trim(),
@@ -113,7 +115,7 @@ export function ResetPassword() {
           hasToken
           cta="Change password"
           busy={complete.isPending}
-          onSubmit={() => complete.mutate()}
+          onSubmit={() => complete.submit()}
         />
       </AuthLayout>
     );
@@ -128,7 +130,7 @@ export function ResetPassword() {
         email={{ value: email, onChange: setEmail, error: failure.fields['email'], note: RESET_NOTE }}
         cta="Send reset link"
         busy={request.isPending}
-        onSubmit={() => request.mutate()}
+        onSubmit={() => request.submit()}
       />
     </AuthLayout>
   );

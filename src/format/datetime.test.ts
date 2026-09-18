@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, isFuture, startOfDayLocal,
-  toDateOnlyLocal, zoneOffset,
+  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, fromPrefilledInput, isFuture,
+  startOfDayLocal, toDateOnlyLocal, toLocalInput, zoneOffset,
 } from './datetime';
 
 const year = new Date().getUTCFullYear();
@@ -98,5 +98,79 @@ describe('fromLocalInput', () => {
 
   it('passes an empty input through', () => {
     expect(fromLocalInput('')).toBe('');
+  });
+});
+
+/*
+ * The tester's T-009: a control shows minutes, a stored instant carries seconds (the seeded ones
+ * microseconds), and every prefilled dialog sent the rounded value back. The timeline correction of
+ * a seeded assignment was refused with no field marked, because no field had been changed.
+ */
+describe('fromPrefilledInput', () => {
+  // As the API serializes them: the seeded assignment 0007 closes at 12:10:17.422987 in Tallinn.
+  const seeded = '2026-08-08T09:10:17.422987+00:00';
+
+  it('sends an untouched instant back byte for byte, microseconds and all', () => {
+    const shown = toLocalInput(seeded);
+    expect(shown).toBe('2026-08-08T12:10');
+    expect(fromPrefilledInput(shown, seeded)).toBe(seeded);
+  });
+
+  it('does the same for seconds, and for any spelling the API used', () => {
+    for (const stored of [
+      '2026-09-07T09:10:17+00:00',
+      '2026-09-07T09:10:17.4Z',
+      '2026-01-16T06:01:30.5+00:00',
+    ]) {
+      expect(fromPrefilledInput(toLocalInput(stored), stored)).toBe(stored);
+    }
+  });
+
+  it('converts a changed control exactly as fromLocalInput does, in summer', () => {
+    // Europe/Tallinn is UTC+3 in August.
+    expect(fromPrefilledInput('2026-08-08T12:11', seeded)).toBe('2026-08-08T09:11:00.000Z');
+    expect(fromPrefilledInput('2026-08-08T12:11', seeded)).toBe(fromLocalInput('2026-08-08T12:11'));
+  });
+
+  it('and in winter', () => {
+    // UTC+2 in January.
+    const winter = '2026-01-16T06:01:30.5+00:00';
+    expect(toLocalInput(winter)).toBe('2026-01-16T08:01');
+    expect(fromPrefilledInput('2026-01-16T08:02', winter)).toBe('2026-01-16T06:02:00.000Z');
+  });
+
+  it('sends null for a control the person emptied', () => {
+    expect(fromPrefilledInput('', seeded)).toBeNull();
+    expect(fromPrefilledInput('', null)).toBeNull();
+    expect(fromPrefilledInput('', undefined)).toBeNull();
+  });
+
+  it('converts a value that had nothing stored behind it, as a new record does', () => {
+    expect(fromPrefilledInput('2026-09-16T08:01', null)).toBe('2026-09-16T05:01:00.000Z');
+    expect(fromPrefilledInput('2026-09-16T08:01', undefined)).toBe('2026-09-16T05:01:00.000Z');
+  });
+
+  it('treats a control changed and changed back as untouched, because it shows the same', () => {
+    // What decides is what the control shows, not what happened to it on the way.
+    expect(fromPrefilledInput('2026-08-08T12:10', seeded)).toBe(seeded);
+  });
+
+  describe('for a date-only expiry', () => {
+    // A seeded expiry is not at the end of a local day, so the old conversion moved it.
+    const expiry = '2026-10-01T09:00:00+00:00';
+
+    it('keeps an untouched expiry where it was', () => {
+      expect(toDateOnlyLocal(expiry)).toBe('2026-10-01');
+      expect(fromPrefilledInput('2026-10-01', expiry, 'date')).toBe(expiry);
+      expect(endOfDayLocal('2026-10-01')).not.toBe(expiry);
+    });
+
+    it('resolves a changed date to the end of that local day, as before', () => {
+      expect(fromPrefilledInput('2026-10-02', expiry, 'date')).toBe(endOfDayLocal('2026-10-02'));
+    });
+
+    it('sends null when the date is cleared', () => {
+      expect(fromPrefilledInput('', expiry, 'date')).toBeNull();
+    });
   });
 });

@@ -136,6 +136,34 @@ export function fromLocalInput(value: string): string {
   return new Date(`${value}:00.000${offset}`).toISOString();
 }
 
+/** A datetime-local control, or a date-only expiry control whose date is its last valid day. */
+export type InstantControl = 'datetime' | 'date';
+
+/**
+ * What to send for a control that was prefilled from a stored instant: the stored instant itself,
+ * byte for byte, while the control still shows what it was prefilled with; the control's value,
+ * converted as `fromLocalInput` (or `endOfDayLocal` for a date) always did, once the person has
+ * changed it; `null` when they emptied it.
+ *
+ * The tester's T-009. A datetime-local control shows minutes and the stored instants carry seconds —
+ * the seeded ones microseconds. Every dialog that prefilled an instant turned it into minutes and
+ * back, so saving a correction without touching a single date sent four changed instants. The
+ * timeline correction of a seeded assignment then answered `409 corrections.timeline_invalid`,
+ * because the rounded history no longer lined up with its authorizations and interruptions, and no
+ * field was marked because the person had not changed any. An instant the person did not touch is
+ * not theirs to change.
+ */
+export function fromPrefilledInput(
+  value: string,
+  stored: string | null | undefined,
+  control: InstantControl = 'datetime',
+): string | null {
+  if (!value) return null;
+  const shown = control === 'date' ? toDateOnlyLocal : toLocalInput;
+  if (stored && value === shown(stored)) return stored;
+  return control === 'date' ? endOfDayLocal(value) : fromLocalInput(value);
+}
+
 export function relative(iso: string | null | undefined, now: Date = new Date()): string {
   if (!iso) return EMPTY;
   const ms = now.getTime() - parse(iso).getTime();

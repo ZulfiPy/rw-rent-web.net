@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth, registrations } from '@/api';
 import { OWNS_UNAUTHORIZED, samePathOnly } from '@/app/session';
-import { useSubmitGate } from '@/app/submitOnce';
+import { useGatedMutation } from '@/app/submitOnce';
 import { useAccess } from '@/permissions/usePermissions';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
@@ -52,7 +52,11 @@ export function SignIn() {
     state.sessionEnded ? 'session-expired' : null,
   );
 
-  const signIn = useMutation({
+  /*
+   * Through the gated mutation, whose gate reopens when the request settles: a wrong password must
+   * leave the form ready for the right one (the tester's T-008).
+   */
+  const signIn = useGatedMutation({
     // A 401 here is a wrong password, not an ended session: this request owns it.
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => auth.login({ email: email.trim(), password }),
@@ -76,7 +80,7 @@ export function SignIn() {
     },
   });
 
-  const resend = useMutation({
+  const resend = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => registrations.resendEmailConfirmation({ email: email.trim(), password }),
     // What the prototype does when the resend screen succeeds: the registration-submitted screen.
@@ -87,7 +91,6 @@ export function SignIn() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
-  const gate = useSubmitGate();
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (signIn.isPending) return;
@@ -98,7 +101,7 @@ export function SignIn() {
     }
     setEmpty(false);
     // The gate, not `isPending`, is what stops a second Enter inside the same tick (T-004).
-    gate.attempt(() => signIn.mutate());
+    signIn.submit();
   };
 
   if (outcome) {
@@ -135,7 +138,7 @@ export function SignIn() {
                   type="button"
                   className={styles.textLink}
                   disabled={resend.isPending}
-                  onClick={() => resend.mutate()}
+                  onClick={() => resend.submit()}
                 >
                   {resend.isPending ? 'Sending…' : 'Resend the confirmation email'}
                 </button>

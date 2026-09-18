@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
-import { useSubmitGate } from '@/app/submitOnce';
+import { useGatedMutation } from '@/app/submitOnce';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
   PasswordChecklist, authStyles as styles,
@@ -26,7 +25,8 @@ export function Register() {
   const [failure, setFailure] = useState<AccountFailure>(NO_FAILURE);
   const [submitted, setSubmitted] = useState(false);
 
-  const register = useMutation({
+  // The gate reopens when the request settles, so a refused registration can be corrected (T-008).
+  const register = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => registrations.register({
       firstName: firstName.trim(),
@@ -39,7 +39,6 @@ export function Register() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
-  const gate = useSubmitGate();
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (register.isPending) return;
@@ -50,7 +49,7 @@ export function Register() {
     if (errors.email || errors.password) return;
     setFailure(NO_FAILURE);
     // The gate, not `isPending`, is what stops a second Enter inside the same tick (T-004).
-    gate.attempt(() => register.mutate());
+    register.submit();
   };
 
   if (submitted) {

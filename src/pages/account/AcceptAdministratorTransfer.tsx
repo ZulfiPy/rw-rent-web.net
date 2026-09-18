@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { systemAdministrator } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
+import { useGatedMutation } from '@/app/submitOnce';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
@@ -29,7 +29,8 @@ export function AcceptAdministratorTransfer() {
     setDone(false);
   });
 
-  const accept = useMutation({
+  // A wrong password must leave the screen ready for the right one (T-008).
+  const accept = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => systemAdministrator.acceptTransfer({ token: token ?? '', password }),
     onSuccess: () => {
@@ -74,7 +75,7 @@ export function AcceptAdministratorTransfer() {
         hasToken
         cta="Accept transfer"
         busy={accept.isPending}
-        onSubmit={() => accept.mutate()}
+        onSubmit={() => accept.submit()}
       />
     </AuthLayout>
   );

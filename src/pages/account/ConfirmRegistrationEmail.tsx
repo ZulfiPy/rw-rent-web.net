@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
+import { useGatedMutation } from '@/app/submitOnce';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
 import { NO_FAILURE, toAccountFailure, type AccountFailure } from './failure';
@@ -44,7 +45,8 @@ export function ConfirmRegistrationEmail() {
     onError: (error) => setFailure(toAccountFailure(error)),
   });
 
-  const resend = useMutation({
+  // The resend screen is a form: refused, it must accept the corrected email or password (T-008).
+  const resend = useGatedMutation({
     meta: OWNS_UNAUTHORIZED,
     mutationFn: () => registrations.resendEmailConfirmation({ email: email.trim(), password }),
     onSuccess: () => {
@@ -93,7 +95,7 @@ export function ConfirmRegistrationEmail() {
           }}
           cta="Resend link"
           busy={resend.isPending}
-          onSubmit={() => resend.mutate()}
+          onSubmit={() => resend.submit()}
         />
       </AuthLayout>
     );
