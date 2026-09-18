@@ -183,11 +183,14 @@ the merge (§3).
 
 ## 7. Follow-up 7 — what the owner finds while checking on real data
 
-> **Status: COLLECTING (started 2026-09-18).** The owner walked the go-live sequence on this Mac
-> (empty database, the dedicated administrator bootstrapped, the company "RW-Rent OÜ" created, the
-> daily account activated as Company Principal) and is now checking the app on real data. Each
-> thing they notice is written here with the detail the implementation agent needs; the follow-up is
-> specified and authorised when the check is over, as one batch.
+> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED (2026-09-18), first batch.** The owner
+> walked the go-live sequence on this Mac (empty database, the dedicated administrator bootstrapped,
+> the company "RW-Rent OÜ" created, the daily account activated as Company Principal) and checked
+> the app on real data. The four things they found, plus backlog item 7, are this batch. It runs in
+> the same agent run as the backend's round 5 (`RWRentApi-wiring/Context/round5_spec_and_plan.md`),
+> after it, in this worktree, against the API rebuilt from that round. F7-3 is the backend's; F7-4's
+> app half uses the names round 5 adds. The owner has allowed the real data of 2026-09-18 to be
+> replaced by the sample data for the agent's checks; the check continues on real data afterwards.
 
 - F7-1. **Times shown in UTC where the owner reads local time.** Seen on the Security audit page
   (column "OCCURRED (UTC)", the page description says "All times UTC"): entries read three hours
@@ -234,3 +237,40 @@ the merge (§3).
   the backend can tell, "System Administrator". Option worth weighing on the backend: an
   `actorDisplayName` on the audit entry, so a Company-scoped reader sees the person's name without
   reading the directory. Side: frontend, with a backend option.
+- F7-5. **The transfer-acceptance screen after a wrong password** (backlog item 7, option (a),
+  folded in here). On `/accept-administrator-transfer` the code `system_administrator.transfer_not_usable`
+  no longer replaces the form: the form stays, with a message in the existing alert slot that names
+  both possible causes ("The password did not match, or this link can no longer be used. Check the
+  password and try again; if it keeps failing, ask the administrator for a new link."). The
+  dead-link screen stays for the codes that can only mean a dead link. Tests: the outcome mapping
+  for that code on that page.
+
+**F7-4, the app's half.** With `actorDisplayName` and `targetDisplayName` on the audit entries
+(round 5), the audit list, the audit entry page and the Overview's activity card name the actor and
+the target from the entry itself; the link to a user record stays only when the reader may open it;
+"System" appears only when the entry has no human actor (`actorDisplayName` null). `dto.ts` follows
+the live OpenAPI document.
+
+**Tests** for every item; typecheck, tests and build green; reviewed screens keep their markup and
+CSS; no new runtime dependency.
+
+**The joint check**, against the round-5 API and the sample dataset (re-seed with `--replace true`;
+ask the owner for the seed password in your first message if it is not in the environment, and
+wait): as the seeded Principal, sign in and out and see both entries in the audit with local times
+(F7-1, F7-3); read the seeded activation entry and see the administrator's name, not "System"
+(F7-4); create a private customer with the personal ID of an existing driver and see the driver
+proposed, decline, then link from the customer's record page, then see "The customer will drive"
+available on a new assignment (F7-2), and see the new note and its link when the customer has no
+link; on the transfer-acceptance link (an API resend as the administrator), a wrong password keeps
+the form with the new message, then the right password accepts (F7-5; then re-seed). Every route
+once as each role afterwards.
+
+**End state.** When the joint check is done, leave the database **empty and migrated** for the
+owner's next round of checking on real data: stop the API, `DROP DATABASE rwrent_v1 WITH (FORCE)`,
+`CREATE DATABASE rwrent_v1 OWNER rwrent`, `dotnet ef database update`, start the API again from the
+round-5 build, clear Mailpit, and leave both apps running. The commands are in the backend README,
+"From the sample data to real data".
+
+**Report.** `Context/wiring_report.md` rewritten for this run, the joint check's outcomes in its
+verification section. Commits `Wiring 21: …` for the change with its tests and `Wiring 22: …` for
+the report. This document is not edited by the agent.
