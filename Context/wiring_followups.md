@@ -180,3 +180,25 @@ the merge (§3).
 - F6-5. Report: `Context/wiring_report.md` rewritten for this run, the joint check's outcomes in its
   verification section. Commits `Wiring 19: …` for the change with its tests and `Wiring 20: …` for
   the report. This document is not edited by the agent.
+
+## 7. Follow-up 7 — what the owner finds while checking on real data
+
+> **Status: COLLECTING (started 2026-09-18).** The owner walked the go-live sequence on this Mac
+> (empty database, the dedicated administrator bootstrapped, the company "RW-Rent OÜ" created, the
+> daily account activated as Company Principal) and is now checking the app on real data. Each
+> thing they notice is written here with the detail the implementation agent needs; the follow-up is
+> specified and authorised when the check is over, as one batch.
+
+- F7-1. **Times shown in UTC where the owner reads local time.** Seen on the Security audit page
+  (column "OCCURRED (UTC)", the page description says "All times UTC"): entries read three hours
+  earlier than the clock on the wall. The app does this by design, inherited from the prototype:
+  operational screens render Europe/Tallinn through `formatLocal`, while the audit list and entry
+  page, the sessions tab, the System Administrator page's transfer times and the Overview's activity
+  card render UTC through `formatUtc`, `formatUtcHuman` and `formatUtcLabelled`
+  (`src/format/datetime.ts`; used in `src/pages/audit/SecurityAudit.tsx`, `AuditEntry.tsx`,
+  `src/pages/admin/SystemAdministrator.tsx`, the profile's sessions tab, `src/pages/overview/Overview.tsx`).
+  Owner's expectation: the same local time everywhere a person reads a time. Change: those
+  surfaces render Europe/Tallinn like the rest of the app, the "(UTC)" column heading and the "All
+  times UTC" description go, and one small note names the zone where a page used to say UTC; the
+  API keeps speaking UTC and nothing sent to it changes. Tests: the formatting helpers on a fixed
+  instant in both offset seasons. Side: frontend.
