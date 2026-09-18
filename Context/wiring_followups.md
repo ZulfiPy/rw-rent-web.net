@@ -202,3 +202,18 @@ the merge (§3).
   times UTC" description go, and one small note names the zone where a page used to say UTC; the
   API keeps speaking UTC and nothing sent to it changes. Tests: the formatting helpers on a fixed
   instant in both offset seasons. Side: frontend.
+- F7-2. **"The customer will drive" is greyed out although the driver exists.** The owner created a
+  vehicle, a driver and a private customer with identical details (same personal ID, phone, email),
+  then opened New rental assignment: the option "The customer will drive" was disabled with the note
+  "This customer is not registered as a driver". Cause: a customer and a driver are two records, and
+  the option needs the customer's own driver link (CUSTOMER-012, `driverId`), which is set in the
+  customer's edit dialog under "Driver link" and was empty. The rule is right; the app did not help:
+  the note says the person is not registered as a driver when they are, and points nowhere; the
+  customer's record page shows "Not linked" without an action; the customer dialog does not suggest
+  the driver record that carries the same personal ID. Change: (a) the assignment dialog's note
+  reads "This customer has no linked driver record. Link one on the customer's record." and links to
+  it; (b) the customer's record page gets a "Link driver record" action on its Driver link panel that
+  opens the edit dialog on that section; (c) in the customer dialog, when a private customer's
+  personal ID equals an existing driver's, that driver is proposed as the link (still a choice, never
+  automatic). Workaround used on 2026-09-18: edit the customer, pick the driver under Driver link,
+  save. Side: frontend.
