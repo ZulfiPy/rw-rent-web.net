@@ -285,3 +285,23 @@ round-5 build, clear Mailpit, and leave both apps running. The commands are in t
 **Report.** `Context/wiring_report.md` rewritten for this run, the joint check's outcomes in its
 verification section. Commits `Wiring 21: …` for the change with its tests and `Wiring 22: …` for
 the report. This document is not edited by the agent.
+
+### Second batch — collecting (from 2026-09-18, after the first batch was verified on real data)
+
+The owner confirmed on real data that F7-1 to F7-4 work (local times, the driver link proposed and
+findable, the sign-out visible to the Principal, the administrator named). New observations:
+
+- F7-6. **Daily work leaves no visible trace of who did it (owner's question, awaiting a decision).**
+  As the Principal the owner created a rental (899LGR, started 2025-02-12), authorised the driver and
+  recorded a past interruption, then looked for them in the Security audit and found only sessions
+  and the activation. That is by design: the Security audit holds security events, cancellations and
+  privileged corrections (ASSIGN-015 says no other assignment operation is audited). The database
+  does store who created and last changed every record (`created_by_user_id`, `updated_by_user_id`),
+  but the API hands the app only the instants, not the person, and no record page shows it. Options:
+  (a) every record page shows "Created by … on …" and "Last changed by … on …", with the names added
+  to the record responses the way round 5 added them to the audit entries; (b) a separate activity
+  history of business operations. Recommendation: (a). Sides: backend (names on the responses) and
+  frontend (two facts per record page).
+- Open owner questions carried from the first batch's reports: the actor's name on each row of the
+  Overview's "Recent security activity" card (frontend, one more line per row); audit entries for a
+  person's own session revocations from the profile page (backend backlog item 19, recommended).
