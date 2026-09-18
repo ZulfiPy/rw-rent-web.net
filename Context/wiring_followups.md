@@ -183,7 +183,18 @@ the merge (§3).
 
 ## 7. Follow-up 7 — what the owner finds while checking on real data
 
-> **Status: OWNER-CONFIRMED — IMPLEMENTATION AUTHORIZED (2026-09-18), first batch.** The owner
+> **Status: first batch IMPLEMENTED 2026-09-18** (backend round 5 `43bea2e`…`bcafa5e`; app `0f5ae10`
+> Wiring 21 and `e578893` Wiring 22; report `Context/wiring_report.md`). The agent may not type a
+> password into a page, so the reviewer ran the signed-in checks on sample data in a headless
+> browser: as the Principal the audit page says nothing about UTC, carries "Times in Tallinn time.",
+> shows local times, shows the sign-out beside the sign-ins, and names the administrator on his
+> entries with no "System" label; the assignment dialog's note reads "This customer has no linked
+> driver record. Link one on the customer's record." with its link; the customer's record offers
+> "Link driver record" and opens the dialog on that section; a new customer with a driver's
+> personal ID gets that driver proposed. Backend 161 + tests green twice, app 227 tests, typecheck
+> and build green. The database was then wiped to empty for the owner's next round. Two questions
+> from the reports wait for the owner: names on the Overview's activity card (report §3.1), and
+> audit entries for a user's own session revocations (backend backlog item 19). The owner
 > walked the go-live sequence on this Mac (empty database, the dedicated administrator bootstrapped,
 > the company "RW-Rent OÜ" created, the daily account activated as Company Principal) and checked
 > the app on real data. The four things they found, plus backlog item 7, are this batch. It runs in
