@@ -5,15 +5,14 @@ import { qk } from '@/api';
 import { listCustomers } from '@/api/customers';
 import { getDriver, listDriverAuthorizations } from '@/api/drivers';
 import { listSecurityAudit } from '@/api/securityAudit';
-import { listUsers } from '@/api/users';
 import {
   AssignmentStatus,
-  type DriverAuthorizationHistoryItemResponse, type Uuid,
+  type DriverAuthorizationHistoryItemResponse,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
-  ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, STOP_REASON_LABEL, eventLabel, formatLocal,
-  formatUtc,
+  ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, LOCAL_TIME_NOTE, STOP_REASON_LABEL, auditActorName,
+  eventLabel, formatLocal, formatLocalStamp,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -77,12 +76,6 @@ export function DriverRecord() {
     queryFn: () => listSecurityAudit(auditQuery),
     enabled: mayReadAudit,
   });
-  const actors = useQuery({
-    queryKey: qk.users.list(PICK),
-    queryFn: () => listUsers(PICK),
-    enabled: mayReadAudit && can('Users.ReadDirectory'),
-    staleTime: 60_000,
-  });
 
   if (record.error) {
     const failure = toFailure(record.error);
@@ -125,11 +118,6 @@ export function DriverRecord() {
   const blockedReason = blockers.length
     ? `This driver holds an open named-driver authorization on ${blockers.length} active assignment(s). Stop the authorization first.`
     : null;
-
-  const actorName = (id: Uuid | null | undefined) => {
-    const u = actors.data?.items.find((x) => x.id === id);
-    return u ? `${u.firstName} ${u.lastName}` : 'Unknown user';
-  };
 
   /**
    * The prototype's driver trail: audited events against this record, newest first, with a synthetic
@@ -361,7 +349,7 @@ export function DriverRecord() {
       {mayReadAudit ? (
         <Panel
           title="Security audit"
-          description="Append-only trail of this driver record. Times in UTC."
+          description={`Append-only trail of this driver record. ${LOCAL_TIME_NOTE}`}
         >
           <div className={table.scroll}>
             <table className={`${table.table} ${styles.audit}`} data-panel>
@@ -379,12 +367,12 @@ export function DriverRecord() {
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
                         <Link to={`/security-audit/${x.id}`} className={table.name}>{eventLabel(x.eventType)}</Link>
-                        <span className={`${table.sub} ${table.showNarrow}`}>{actorName(x.actorUserId)}</span>
+                        <span className={`${table.sub} ${table.showNarrow}`}>{auditActorName(x)}</span>
                         <span className={`${table.sub} ${table.showTablet}`}>{x.reason ?? 'No reason recorded'}</span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>{actorName(x.actorUserId)}</td>
-                    <td className={`${table.td} ${table.mono}`}>{formatUtc(x.occurredAtUtc)}</td>
+                    <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>{auditActorName(x)}</td>
+                    <td className={`${table.td} ${table.mono}`}>{formatLocalStamp(x.occurredAtUtc)}</td>
                     <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>
                       {x.reason ?? 'No reason recorded'}
                     </td>
@@ -399,7 +387,7 @@ export function DriverRecord() {
                       </span>
                     </td>
                     <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>Not recorded</td>
-                    <td className={`${table.td} ${table.mono}`}>{formatUtc(d.createdAtUtc)}</td>
+                    <td className={`${table.td} ${table.mono}`}>{formatLocalStamp(d.createdAtUtc)}</td>
                     <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>Record created</td>
                   </tr>
                 )}

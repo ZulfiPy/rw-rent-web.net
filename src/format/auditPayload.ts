@@ -1,5 +1,5 @@
 import { ROLE_LABEL } from './labels';
-import { formatUtc } from './datetime';
+import { formatLocalStamp } from './datetime';
 import { ApplicationUserRole } from '@/api/dto';
 
 /**
@@ -37,13 +37,16 @@ const isGrants = (v: unknown): v is Grant[] =>
 const isFlat = (o: Record<string, unknown>) =>
   Object.values(o).every((v) => isScalar(v) || isGrants(v));
 
-/** "RegistrationExpiresAtUtc" → "Registration Expires At (UTC)". */
+/**
+ * "RegistrationExpiresAtUtc" → "Registration Expires At". The payload keeps the API's names; the
+ * value is shown in Tallinn time like every other instant (F7-1), so the label no longer claims UTC.
+ */
 export const auditFieldLabel = (key: string): string =>
   key
     .replace(/([A-Z])/g, ' $1')
     .trim()
     .replace(/^./, (c) => c.toUpperCase())
-    .replace(' Utc', ' (UTC)');
+    .replace(/ Utc$/, '');
 
 const ROLE_NAME: Record<string, string> = {
   SystemAdministrator: ROLE_LABEL[ApplicationUserRole.SystemAdministrator],
@@ -58,12 +61,12 @@ const show = (v: unknown): string => {
     return v
       .map((g) => {
         const role = typeof g.Role === 'string' ? ROLE_NAME[g.Role] ?? g.Role : String(g.Role);
-        const expiry = typeof g.ExpiresAtUtc === 'string' ? `expires ${formatUtc(g.ExpiresAtUtc)}` : 'no expiry';
+        const expiry = typeof g.ExpiresAtUtc === 'string' ? `expires ${formatLocalStamp(g.ExpiresAtUtc)}` : 'no expiry';
         return `${role} — ${expiry}`;
       })
       .join('\n');
   }
-  if (typeof v === 'string' && ISO.test(v)) return formatUtc(v);
+  if (typeof v === 'string' && ISO.test(v)) return formatLocalStamp(v);
   return String(v);
 };
 

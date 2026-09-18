@@ -7,7 +7,7 @@ import { useActionMutation } from '@/app/useActionMutation';
 import { useCompanyName } from '@/app/useCompanyName';
 import { useSheetTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
-import { EMPTY, formatUtc } from '@/format';
+import { EMPTY, LOCAL_TIME_NOTE, formatLocalStamp } from '@/format';
 import { NO_ROLE_LABEL, USER_STATUS_LABEL, rolesLabel } from '@/format/labels';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
@@ -188,7 +188,7 @@ export function Profile() {
       {tab === 'sessions' ? (
         <Panel
           title="Where you are signed in"
-          description="Times in UTC. Sessions end after two hours idle or twelve hours in total."
+          description={`${LOCAL_TIME_NOTE} Sessions end after two hours idle or twelve hours in total.`}
           actions={(
             <Button
               label="Revoke other sessions"
@@ -223,8 +223,8 @@ export function Profile() {
                       <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
                     </div>
                     <div className={cards.facts}>
-                      <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
-                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono end />
+                      <CardFact label="Started" value={formatLocalStamp(s.createdAtUtc)} mono />
+                      <CardFact label="Last seen" value={formatLocalStamp(s.lastSeenAtUtc)} mono end />
                       {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} full /> : null}
                     </div>
                     {s.isActive && !s.isCurrent ? (
@@ -249,8 +249,8 @@ export function Profile() {
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colDevice}`}>Device</th>
-                    <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Started (UTC)</th>
-                    <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen (UTC)</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Started</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen</th>
                     <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                     <th scope="col" className={table.th}>Reason</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
@@ -270,12 +270,12 @@ export function Profile() {
                           </span>
                         </td>
                         <td className={`${table.td} ${table.foldTablet}`}>
-                          <span className={table.mono}>{formatUtc(s.createdAtUtc)}</span>
+                          <span className={table.mono}>{formatLocalStamp(s.createdAtUtc)}</span>
                         </td>
                         <td className={table.td}>
                           <span className={table.stack}>
-                            <span className={table.mono}>{formatUtc(s.lastSeenAtUtc)}</span>
-                            <span className={table.subMono}>idle until {formatUtc(s.idleExpiresAtUtc).slice(11)}</span>
+                            <span className={table.mono}>{formatLocalStamp(s.lastSeenAtUtc)}</span>
+                            <span className={table.subMono}>idle until {formatLocalStamp(s.idleExpiresAtUtc).slice(11)}</span>
                           </span>
                         </td>
                         <td className={table.td}>
@@ -285,7 +285,7 @@ export function Profile() {
                           <span className={table.stack}>
                             <span>{s.revocationReason ?? EMPTY}</span>
                             {s.revokedAtUtc ? (
-                              <span className={table.subMono}>{formatUtc(s.revokedAtUtc)}</span>
+                              <span className={table.subMono}>{formatLocalStamp(s.revokedAtUtc)}</span>
                             ) : null}
                           </span>
                         </td>

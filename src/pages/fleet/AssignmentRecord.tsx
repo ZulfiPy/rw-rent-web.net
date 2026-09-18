@@ -4,15 +4,15 @@ import { useState, type ReactNode } from 'react';
 import { qk } from '@/api';
 import { getAssignment } from '@/api/rentalAssignments';
 import { listSecurityAudit } from '@/api/securityAudit';
-import { listUsers } from '@/api/users';
 import {
   AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType,
-  type AssignmentDriverAuthorizationResponse, type Uuid,
+  type AssignmentDriverAuthorizationResponse,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, AUTHORIZATION_TYPE_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL,
-  INTERRUPTION_REASON_LABEL, STOP_REASON_LABEL, eventLabel, formatLocal, formatUtc,
+  INTERRUPTION_REASON_LABEL, LOCAL_TIME_NOTE, STOP_REASON_LABEL, auditActorName, eventLabel, formatLocal,
+  formatLocalStamp,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -30,8 +30,6 @@ import { AssignmentDialogs, type AssignmentDialogState } from './AssignmentDialo
 import styles from './AssignmentRecord.module.css';
 
 type TabId = 'summary' | 'coverage' | 'interruptions' | 'corrections';
-
-const PICK = { PageSize: 100 } as const;
 
 function CardFact({ label, value, mono, full }: {
   label: string;
@@ -79,12 +77,6 @@ export function AssignmentRecord() {
     queryFn: () => listSecurityAudit(auditQuery),
     enabled: canCorrect,
   });
-  const actors = useQuery({
-    queryKey: qk.users.list(PICK),
-    queryFn: () => listUsers(PICK),
-    enabled: canCorrect && can('Users.ReadDirectory'),
-    staleTime: 60_000,
-  });
 
   if (record.error) {
     const failure = toFailure(record.error);
@@ -115,10 +107,6 @@ export function AssignmentRecord() {
   /** The authorization carries its driver's identity; null on a collective one. */
   const driverName = (z: AssignmentDriverAuthorizationResponse) =>
     z.driverFirstName && z.driverLastName ? `${z.driverFirstName} ${z.driverLastName}` : null;
-  const actorName = (id: Uuid | null | undefined) => {
-    const u = actors.data?.items.find((x) => x.id === id);
-    return u ? `${u.firstName} ${u.lastName}` : 'System';
-  };
 
   const tabs: Array<RecordTab<TabId>> = [
     { id: 'summary', label: 'Summary', icon: 'description' },
@@ -229,7 +217,7 @@ export function AssignmentRecord() {
 
           <Panel
             title="Lifecycle"
-            description="Local time. Original UTC values are shown in the audit trail."
+            description={LOCAL_TIME_NOTE}
             actions={canManage && active && openInts.length
               ? <Button label="Open interruption" icon="pause_circle" tone="warn" small onClick={() => selectTab('interruptions')} />
               : undefined}
@@ -590,7 +578,7 @@ export function AssignmentRecord() {
 
           <Panel
             title="Correction history"
-            description="Audit entries recorded against this assignment and its children. Times in UTC."
+            description={`Audit entries recorded against this assignment and its children. ${LOCAL_TIME_NOTE}`}
           >
             {history.length === 0 ? (
               <EmptyState variant="panel"
@@ -605,7 +593,7 @@ export function AssignmentRecord() {
                     <tr>
                       <th scope="col" className={`${table.th} ${styles.colEvent}`}>Event</th>
                       <th scope="col" className={`${table.th} ${styles.colActor} ${table.foldNarrow}`}>Actor</th>
-                      <th scope="col" className={`${table.th} ${styles.colUtc}`}>Occurred (UTC)</th>
+                      <th scope="col" className={`${table.th} ${styles.colUtc}`}>Occurred</th>
                       <th scope="col" className={`${table.th} ${styles.wide} ${table.foldTablet}`}>Reason</th>
                     </tr>
                   </thead>
@@ -615,12 +603,12 @@ export function AssignmentRecord() {
                         <td className={`${table.td} ${table.wrap}`}>
                           <span className={table.stack}>
                             <Link to={`/security-audit/${x.id}`} className={table.name}>{eventLabel(x.eventType)}</Link>
-                            <span className={`${table.sub} ${table.showNarrow}`}>{actorName(x.actorUserId)}</span>
+                            <span className={`${table.sub} ${table.showNarrow}`}>{auditActorName(x)}</span>
                             <span className={`${table.sub} ${table.showTablet}`}>{x.reason ?? 'No reason recorded'}</span>
                           </span>
                         </td>
-                        <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>{actorName(x.actorUserId)}</td>
-                        <td className={`${table.td} ${table.mono}`}>{formatUtc(x.occurredAtUtc)}</td>
+                        <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>{auditActorName(x)}</td>
+                        <td className={`${table.td} ${table.mono}`}>{formatLocalStamp(x.occurredAtUtc)}</td>
                         <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>
                           {x.reason ?? 'No reason recorded'}
                         </td>

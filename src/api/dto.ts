@@ -313,9 +313,16 @@ export interface SecurityAuditResponse {
   /** Free-form server-owned string, e.g. "RoleAssignment.ExpiryChanged". */
   eventType: string;
   actorUserId: Uuid;
+  /**
+   * The actor's first and last name at read time, for every reader of the entry; null for the
+   * technical system actor (round 5).
+   */
+  actorDisplayName?: string | null;
   occurredAtUtc: Instant;
   companyId?: Uuid | null;
   targetUserId?: Uuid | null;
+  /** The target user's first and last name at read time; null when there is no target user. */
+  targetDisplayName?: string | null;
   entityType?: string | null;
   entityId?: Uuid | null;
   reason?: string | null;

@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { qk } from '@/api';
 import { listCustomers } from '@/api/customers';
 import { listDrivers } from '@/api/drivers';
@@ -15,6 +15,7 @@ import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { Dialog, DialogSection as Section, dialogStyles as section } from '@/ui/Dialog';
 import { Field, fieldStyles as f } from '@/ui/Field';
+import { customerDriveBlock } from './driverLink';
 import styles from './NewAssignment.module.css';
 
 /** A fleet write moves the lists, the records that reference them, and the open-work counts. */
@@ -33,8 +34,9 @@ const LOCK_COMPANY_HINT = 'Collective authorization for this business customerâ€
 /**
  * The prototype's "Who will drive?" block: three coverage modes, each with its reason when the
  * customer or the assignment refuses it, and the named-driver picker under the middle one.
+ * Exported for its render test.
  */
-function Coverage({ label, customer, mode, setMode, named, setNamed, companyNote, setCompanyNote, noteError, coverageError }: {
+export function Coverage({ label, customer, mode, setMode, named, setNamed, companyNote, setCompanyNote, noteError, coverageError }: {
   label: string;
   customer: CustomerListItemResponse | null;
   mode: Mode;
@@ -66,12 +68,15 @@ function Coverage({ label, customer, mode, setMode, named, setNamed, companyNote
     named: true,
     company: !!business,
   };
-  const reason: Record<Exclude<Mode, ''>, string> = {
-    customer: !customer
-      ? 'Select a customer first.'
-      : business
-        ? 'A business customer cannot drive personally. Use company-authorized drivers or name a driver.'
-        : 'This customer is not registered as a driver.',
+  /* A private customer without a driver link is told where to add one (F7-2): the note links to
+     the customer's record, whose Driver link panel opens the edit dialog on that section. */
+  const block = customerDriveBlock(customer);
+  const reason: Record<Exclude<Mode, ''>, ReactNode> = {
+    customer: block?.link ? (
+      <span>
+        {block.message} <Link to={block.link.to}>{block.link.label}</Link>
+      </span>
+    ) : block?.message ?? '',
     named: '',
     company: 'Available only for business customers.',
   };

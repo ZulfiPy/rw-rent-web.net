@@ -5,7 +5,10 @@ import { getAuditEntry } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import type { Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { diffRows, entityLabel, eventLabel, formatUtc } from '@/format';
+import {
+  LOCAL_TIME_NOTE, auditActorName, auditTargetName, diffRows, entityLabel, eventLabel, formatLocalStamp,
+  isSystemActor,
+} from '@/format';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Panel } from '@/ui/Panel';
@@ -30,13 +33,11 @@ export function AuditEntry() {
   const entry = entries.data;
   const failure = entries.error ? toFailure(entries.error) : null;
 
+  /* The entry names its actor and target itself (F7-4); the reader's directory decides only
+     whether the name links to the user record. */
   const person = (id: Uuid | null | undefined) => directory.data?.items.find((u) => u.id === id);
-  const personCell = (id: Uuid | null | undefined, fallback: string) => {
-    const u = person(id);
-    return u
-      ? <Link to={`/users/${u.id}`}>{u.firstName} {u.lastName}</Link>
-      : fallback;
-  };
+  const personCell = (id: Uuid | null | undefined, name: string) =>
+    person(id) ? <Link to={`/users/${id}`}>{name}</Link> : name;
 
   if (failure || (entries.isSuccess && !entry)) {
     return (
@@ -67,17 +68,17 @@ export function AuditEntry() {
         title={entry ? eventLabel(entry.eventType) : 'Audit entry'}
       />
 
-      <Panel title="Event" description="All times UTC.">
+      <Panel title="Event" description={LOCAL_TIME_NOTE}>
         {/* Six facts as two rows of three: auto-fit laid five across and left the id alone beside
             a grey remainder that moved with the panel. */}
         <FactGrid columns={3}>
           <Fact label="Event">{entry ? eventLabel(entry.eventType) : '—'}</Fact>
-          <Fact label="Occurred" mono>{formatUtc(entry?.occurredAtUtc)}</Fact>
-          <Fact label="Actor" dim={!person(entry?.actorUserId)}>
-            {personCell(entry?.actorUserId, 'System')}
+          <Fact label="Occurred" mono>{formatLocalStamp(entry?.occurredAtUtc)}</Fact>
+          <Fact label="Actor" dim={!entry || isSystemActor(entry)}>
+            {entry ? personCell(entry.actorUserId, auditActorName(entry)) : '—'}
           </Fact>
           <Fact label="Target user" dim={!entry?.targetUserId}>
-            {entry?.targetUserId ? personCell(entry.targetUserId, 'Unknown user') : 'Not user-scoped'}
+            {entry?.targetUserId ? personCell(entry.targetUserId, auditTargetName(entry) ?? '') : 'Not user-scoped'}
           </Fact>
           <Fact label="Entity">{entityLabel(entry?.entityType)}</Fact>
           <Fact label="Entity id" mono dim>{entry?.entityId ?? '—'}</Fact>

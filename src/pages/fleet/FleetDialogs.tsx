@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
@@ -18,8 +18,10 @@ import {
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
+import { Button } from '@/ui/Button';
 import { Dialog, DialogNote, DialogSection as Section, dialogStyles as styles } from '@/ui/Dialog';
 import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
+import { proposedDriverLink } from './driverLink';
 
 /**
  * Every write a fleet record offers. The forms are the prototype's dialogs field for field; the
@@ -31,7 +33,8 @@ export type FleetDialogState =
   | { kind: 'vehicle-edit' }
   | { kind: 'vehicle-toggle' }
   | { kind: 'customer-create' }
-  | { kind: 'customer-edit' }
+  /** `focus` opens the dialog on its Driver link section (the record's "Link driver record"). */
+  | { kind: 'customer-edit'; focus?: 'driver-link' }
   | { kind: 'customer-toggle' }
   | { kind: 'driver-create' }
   | { kind: 'driver-edit' }
@@ -179,7 +182,11 @@ function VehicleForm({ vehicle, onClose }: { vehicle: VehicleResponse | null; on
 
 /* customer --------------------------------------------------------------- */
 
-function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null; onClose: () => void }) {
+function CustomerForm({ customer, focus, onClose }: {
+  customer: CustomerResponse | null;
+  focus?: 'driver-link' | undefined;
+  onClose: () => void;
+}) {
   const editing = !!customer;
   const [type, setType] = useState<CustomerType>(customer?.type ?? CustomerType.PrivateIndividual);
   const [firstName, setFirst] = useState(customer?.firstName ?? '');
@@ -200,6 +207,24 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
     enabled: !business,
     staleTime: 60_000,
   });
+  /* F7-2: the driver record carrying the personal identifier typed here, offered as the link while
+     there is none. Offered, never set: the person links it or saves without it. */
+  const proposed = business ? null : proposedDriverLink(personalId, driverId, drivers.data?.items ?? []);
+
+  /* Opened from the record's Driver link panel: that section is the one in view and focused. The
+     dialog focuses its first control on open; this runs after it, being the dialog's parent. */
+  const linkControl = useRef<HTMLSelectElement | null>(null);
+  useEffect(() => {
+    const el = linkControl.current;
+    if (focus !== 'driver-link' || !el) return;
+    const body = el.closest('form');
+    if (body) {
+      const eb = el.getBoundingClientRect();
+      const bb = body.getBoundingClientRect();
+      body.scrollTop += (eb.top - bb.top) - (bb.height - eb.height) / 2;
+    }
+    el.focus({ preventScroll: true });
+  }, [focus]);
 
   const shared = () => ({
     firstName: business ? null : firstName.trim() || null,
@@ -296,6 +321,7 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
             hint="Optional and unique. Required before this person can drive personally, but it does not by itself grant driving permission — the driver must still be named on an assignment authorization."
           >
             <select
+              ref={linkControl}
               className={f.control}
               data-invalid={!!m.fields.driverId}
               value={driverId}
@@ -310,6 +336,18 @@ function CustomerForm({ customer, onClose }: { customer: CustomerResponse | null
             </select>
           </Field>
         )}
+        {proposed ? (
+          <DialogNote icon="person_search" title={`${proposed.firstName} ${proposed.lastName} has the same personal identifier.`}>
+            Link this driver record to the customer? It records who they are as a driver; it does not
+            by itself allow them to drive.{' '}
+            <Button
+              label={`Link ${proposed.firstName} ${proposed.lastName}`}
+              icon="link"
+              small
+              onClick={() => setDriverId(proposed.id)}
+            />
+          </DialogNote>
+        ) : null}
       </Section>
     </Dialog>
   );
@@ -512,7 +550,7 @@ export function FleetDialogs({ state, vehicle, customer, driver, blockers, onClo
       case 'customer-create':
         return <CustomerForm customer={null} onClose={onClose} />;
       case 'customer-edit':
-        return customer ? <CustomerForm customer={customer} onClose={onClose} /> : null;
+        return customer ? <CustomerForm customer={customer} focus={state.focus} onClose={onClose} /> : null;
       case 'driver-create':
         return <DriverForm driver={null} onClose={onClose} />;
       case 'driver-edit':

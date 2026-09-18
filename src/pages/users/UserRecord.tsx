@@ -10,7 +10,7 @@ import {
   type ApplicationUserResponse, type RoleAssignmentResponse, type SessionResponse, type Uuid,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { EMPTY, formatLocal, formatUtc } from '@/format';
+import { EMPTY, LOCAL_TIME_NOTE, formatLocal, formatLocalStamp, unlistedUserName } from '@/format';
 import { rolesLabel, ROLE_LABEL, USER_STATUS_LABEL } from '@/format/labels';
 import { useCompanyName } from '@/app/useCompanyName';
 import { useTier } from '@/app/useViewport';
@@ -110,15 +110,19 @@ export function UserRecord() {
     enabled: userId !== '' && canSessions,
   });
 
-  // Grants and revocations carry actor ids; the directory is where their names live.
+  /* Grants and revocations carry actor ids and no names; the directory is where the names live.
+     Someone the reader's directory does not hold is a real person outside their company (the
+     administrator, for a Principal), not "System", which is the technical actor alone (F7-4). */
   const directory = useQuery({
     queryKey: qk.users.list({ PageSize: 100 }),
     queryFn: () => listUsers({ PageSize: 100 }),
     enabled: canRoles,
     staleTime: 60_000,
   });
-  const actorName = (id: Uuid | null | undefined, fallback = 'System') =>
-    directory.data?.items.find((x) => x.id === id)?.lastName ?? fallback;
+  const actorName = (id: Uuid | null | undefined) =>
+    !directory.data
+      ? EMPTY
+      : directory.data.items.find((x) => x.id === id)?.lastName ?? unlistedUserName(id);
 
   const tabs: Array<{ id: TabId; label: string; icon: string; count?: number }> = [
     { id: 'summary', label: 'Account', icon: 'person' },
@@ -408,7 +412,7 @@ export function UserRecord() {
       {tab === 'sessions' ? (
         <Panel
           title="Server sessions"
-          description="Two-hour idle timeout, twelve-hour absolute lifetime. Times in UTC."
+          description={`Two-hour idle timeout, twelve-hour absolute lifetime. ${LOCAL_TIME_NOTE}`}
           actions={u && !guarded && canSessions ? (
             <Button
               label="Force sign out"
@@ -440,8 +444,8 @@ export function UserRecord() {
                       <Chip tone={state.tone} dot={state.dot}>{state.label}</Chip>
                     </div>
                     <div className={cards.facts}>
-                      <CardFact label="Started (UTC)" value={formatUtc(s.createdAtUtc)} mono />
-                      <CardFact label="Last seen (UTC)" value={formatUtc(s.lastSeenAtUtc)} mono end />
+                      <CardFact label="Started" value={formatLocalStamp(s.createdAtUtc)} mono />
+                      <CardFact label="Last seen" value={formatLocalStamp(s.lastSeenAtUtc)} mono end />
                       {s.revocationReason ? <CardFact label="Reason" value={s.revocationReason} full /> : null}
                     </div>
                     {s.isActive && canSessions ? (
@@ -459,8 +463,8 @@ export function UserRecord() {
                 <thead>
                   <tr>
                     <th scope="col" className={`${table.th} ${styles.colDevice}`}>Device</th>
-                    <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Started (UTC)</th>
-                    <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen (UTC)</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc} ${table.foldTablet}`}>Started</th>
+                    <th scope="col" className={`${table.th} ${styles.colUtc}`}>Last seen</th>
                     <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                     <th scope="col" className={table.th}>Reason</th>
                     <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
@@ -478,12 +482,12 @@ export function UserRecord() {
                           </span>
                         </td>
                         <td className={`${table.td} ${table.foldTablet}`}>
-                          <span className={table.mono}>{formatUtc(s.createdAtUtc)}</span>
+                          <span className={table.mono}>{formatLocalStamp(s.createdAtUtc)}</span>
                         </td>
                         <td className={table.td}>
                           <span className={table.stack}>
-                            <span className={table.mono}>{formatUtc(s.lastSeenAtUtc)}</span>
-                            <span className={table.subMono}>idle until {formatUtc(s.idleExpiresAtUtc).slice(11)}</span>
+                            <span className={table.mono}>{formatLocalStamp(s.lastSeenAtUtc)}</span>
+                            <span className={table.subMono}>idle until {formatLocalStamp(s.idleExpiresAtUtc).slice(11)}</span>
                           </span>
                         </td>
                         <td className={table.td}>
@@ -493,7 +497,7 @@ export function UserRecord() {
                           <span className={table.stack}>
                             <span>{s.revocationReason ?? EMPTY}</span>
                             {s.revokedAtUtc ? (
-                              <span className={table.subMono}>{formatUtc(s.revokedAtUtc)}</span>
+                              <span className={table.subMono}>{formatLocalStamp(s.revokedAtUtc)}</span>
                             ) : null}
                           </span>
                         </td>

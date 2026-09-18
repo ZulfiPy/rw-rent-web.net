@@ -10,7 +10,7 @@ import {
   type SystemAdministratorTransferResponse, type Uuid,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { TRANSFER_STATUS_LABEL, formatUtcLabelled } from '@/format';
+import { LOCAL_TIME_NOTE, TRANSFER_STATUS_LABEL, formatLocalStamp } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useSheetTier } from '@/app/useViewport';
@@ -263,13 +263,13 @@ export function SystemAdministrator() {
         <FactGrid>
           <Fact label="Name">{adminName}</Fact>
           <Fact label="Email">{adminEmail}</Fact>
-          <Fact label="Since" mono dim>{formatUtcLabelled(admin?.createdAtUtc)}</Fact>
+          <Fact label="Since" mono dim>{formatLocalStamp(admin?.createdAtUtc)}</Fact>
         </FactGrid>
       </Panel>
 
       <Panel
         title="Transfers"
-        description="A transfer completes only when the named account accepts with a single-use link. Times in UTC."
+        description={`A transfer completes only when the named account accepts with a single-use link. ${LOCAL_TIME_NOTE}`}
         note="Acceptance happens at /accept-administrator-transfer and needs the target account’s existing password."
         noteIcon="key"
       >
@@ -301,11 +301,11 @@ export function SystemAdministrator() {
                   <div className={styles.blockFacts}>
                     <div className={styles.blockFact}>
                       <span className={styles.blockLabel}>Initiated</span>
-                      <span className={styles.blockValue}>{formatUtcLabelled(t.initiatedAtUtc)}</span>
+                      <span className={styles.blockValue}>{formatLocalStamp(t.initiatedAtUtc)}</span>
                     </div>
                     <div className={styles.blockFact}>
                       <span className={styles.blockLabel}>Expires</span>
-                      <span className={styles.blockValue}>{formatUtcLabelled(t.expiresAtUtc)}</span>
+                      <span className={styles.blockValue}>{formatLocalStamp(t.expiresAtUtc)}</span>
                     </div>
                   </div>
                   <div className={styles.blockState}>
@@ -338,8 +338,8 @@ export function SystemAdministrator() {
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.colTarget}`}>Target</th>
-                  <th scope="col" className={`${table.th} ${styles.colUtc}`}>Initiated (UTC)</th>
-                  <th scope="col" className={`${table.th} ${styles.colUtc}`}>Expires (UTC)</th>
+                  <th scope="col" className={`${table.th} ${styles.colUtc}`}>Initiated</th>
+                  <th scope="col" className={`${table.th} ${styles.colUtc}`}>Expires</th>
                   <th scope="col" className={`${table.th} ${styles.colState}`}>State</th>
                   <th scope="col" className={`${table.th} ${table.right} ${styles.colActions}`}>Actions</th>
                 </tr>
@@ -358,10 +358,10 @@ export function SystemAdministrator() {
                       {/* Both instants read alike: Geist Mono 12.5px/400 in --fg-3, matching the
                           prototype's transfers table. */}
                       <td className={`${table.td} ${table.mono} ${table.instant}`}>
-                        {formatUtcLabelled(t.initiatedAtUtc)}
+                        {formatLocalStamp(t.initiatedAtUtc)}
                       </td>
                       <td className={`${table.td} ${table.mono} ${table.instant}`}>
-                        {formatUtcLabelled(t.expiresAtUtc)}
+                        {formatLocalStamp(t.expiresAtUtc)}
                       </td>
                       <td className={table.td}>
                         <Chip tone={s.tone} dot={s.dot}>{s.label}</Chip>

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '@/api';
 import {
-  isExpiredLink, NEEDS_EMAIL_CONFIRMATION, RATE_LIMITED, toAccountFailure, UNREACHABLE,
+  isExpiredLink, NEEDS_EMAIL_CONFIRMATION, NO_FAILURE, PASSWORD_OR_DEAD_LINK, RATE_LIMITED,
+  toAccountFailure, transferAcceptView, TRANSFER_NOT_USABLE, UNREACHABLE,
 } from './failure';
 
 describe('account failures', () => {
@@ -57,5 +58,55 @@ describe('account failures', () => {
   it('says so when the API did not answer at all', () => {
     expect(toAccountFailure(new TypeError('Failed to fetch')).message).toBe('Failed to fetch');
     expect(toAccountFailure('nonsense').message).toBe(UNREACHABLE);
+  });
+});
+
+describe('the transfer-acceptance page after a refusal (F7-5)', () => {
+  /** The API's answer to a wrong password and to a dead link alike, as it arrives live. */
+  const notUsable = toAccountFailure(new ApiError(400, {
+    status: 400,
+    title: 'Bad Request',
+    detail: 'The administrator transfer is invalid, expired, cancelled, or already accepted.',
+    code: 'system_administrator.transfer_not_usable',
+  }));
+
+  it('keeps the form on the ambiguous code and names both causes in the alert slot', () => {
+    expect(notUsable.code).toBe(TRANSFER_NOT_USABLE);
+    expect(transferAcceptView(true, notUsable)).toEqual({ screen: 'form', message: PASSWORD_OR_DEAD_LINK });
+    expect(PASSWORD_OR_DEAD_LINK).toBe(
+      'The password did not match, or this link can no longer be used. Check the password and try again; '
+      + 'if it keeps failing, ask the administrator for a new link.',
+    );
+  });
+
+  it('still counts the code as a dead link for the pages that read it that way', () => {
+    expect(isExpiredLink(notUsable)).toBe(true);
+  });
+
+  it('shows the dead-link screen for a code that can only mean a dead link', () => {
+    const notFound = toAccountFailure(new ApiError(404, {
+      status: 404,
+      title: 'Not Found',
+      code: 'system_administrator.transfer_not_found',
+    }));
+    expect(transferAcceptView(true, notFound)).toEqual({ screen: 'dead-link' });
+  });
+
+  it('shows the dead-link screen for a link that carries no token', () => {
+    expect(transferAcceptView(false, NO_FAILURE)).toEqual({ screen: 'dead-link' });
+    expect(transferAcceptView(false, notUsable)).toEqual({ screen: 'dead-link' });
+  });
+
+  it('keeps the form with its own message for every other answer', () => {
+    expect(transferAcceptView(true, NO_FAILURE)).toEqual({ screen: 'form', message: undefined });
+    const limited = toAccountFailure(new ApiError(429, { status: 429, title: 'Too Many Requests' }));
+    expect(transferAcceptView(true, limited)).toEqual({ screen: 'form', message: RATE_LIMITED });
+    const tooShort = toAccountFailure(new ApiError(400, {
+      status: 400,
+      title: 'One or more validation errors occurred.',
+      errors: { Password: ['The length of \'Password\' must be at least 12 characters.'] },
+    }));
+    expect(transferAcceptView(true, tooShort)).toEqual({ screen: 'form', message: undefined });
+    expect(tooShort.fields.password).toMatch(/at least 12 characters/);
   });
 });

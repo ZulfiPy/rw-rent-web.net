@@ -1,12 +1,21 @@
 /**
  * The only place instants become text.
  *
- * Operational surfaces render Europe/Tallinn local time in the humanized style. Security audit and
- * Sessions surfaces render UTC "yyyy-MM-dd HH:mm" and declare it once in the panel subtitle, never
- * per cell. Date-only expiry pickers resolve to the END of the chosen day in Europe/Tallinn: the
- * chosen date is the last valid day.
+ * Every surface a person reads renders Europe/Tallinn local time: operational surfaces in the
+ * humanized style, and the audit, session and transfer surfaces in the compact "yyyy-MM-dd HH:mm"
+ * stamp their columns were laid out for (`formatLocalStamp`). Where a page used to say "UTC" it now
+ * names the zone once, in `LOCAL_TIME_NOTE`, never per cell. The API keeps speaking UTC: nothing
+ * this module hands it changes. Date-only expiry pickers resolve to the END of the chosen day in
+ * Europe/Tallinn: the chosen date is the last valid day.
+ *
+ * Until Follow-up 7 the audit and session surfaces rendered UTC, inherited from the prototype, and
+ * the owner's first check on real data read every audit entry three hours earlier than the clock on
+ * the wall (F7-1). The UTC helpers below are no longer used by any surface.
  */
 export const TIME_ZONE = 'Europe/Tallinn';
+
+/** The one note that names the zone, where a page used to say "All times UTC". */
+export const LOCAL_TIME_NOTE = 'Times in Tallinn time.';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const EMPTY = '—';
@@ -43,7 +52,17 @@ export function formatLocal(iso: string | null | undefined, mode: LocalMode = 'd
   return `${day}${year}, ${pad(f.hour)}:${pad(f.minute)}`;
 }
 
-/** "2026-08-23 11:57" — the audit and sessions format. The subtitle declares the zone. */
+/**
+ * "2026-08-23 14:57" — the audit, sessions and transfers stamp, in Europe/Tallinn. The same shape
+ * `formatUtc` gave those columns, so they keep their widths; the page's note names the zone.
+ */
+export function formatLocalStamp(iso: string | null | undefined): string {
+  if (!iso) return EMPTY;
+  const f = zoned(parse(iso));
+  return `${f.year}-${pad(f.month)}-${pad(f.day)} ${pad(f.hour)}:${pad(f.minute)}`;
+}
+
+/** "2026-08-23 11:57" — the stamp in UTC. No surface renders it since F7-1. */
 export function formatUtc(iso: string | null | undefined): string {
   if (!iso) return EMPTY;
   return parse(iso).toISOString().slice(0, 16).replace('T', ' ');

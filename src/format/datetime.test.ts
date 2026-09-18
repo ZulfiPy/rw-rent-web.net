@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  endOfDayLocal, formatLocal, formatUtc, fromLocalInput, fromPrefilledInput, isFuture,
-  startOfDayLocal, toDateOnlyLocal, toLocalInput, zoneOffset,
+  LOCAL_TIME_NOTE, endOfDayLocal, formatLocal, formatLocalStamp, formatUtc, fromLocalInput,
+  fromPrefilledInput, isFuture, startOfDayLocal, toDateOnlyLocal, toLocalInput, zoneOffset,
 } from './datetime';
 
 const year = new Date().getUTCFullYear();
@@ -32,13 +32,61 @@ describe('operational surfaces render Europe/Tallinn', () => {
   });
 });
 
-describe('audit and sessions surfaces render UTC', () => {
+describe('the UTC stamp (no surface renders it since Follow-up 7)', () => {
   test('yyyy-MM-dd HH:mm, with the zone declared by the subtitle instead of the cell', () => {
     expect(formatUtc('2026-08-23T11:57:51.621Z')).toBe('2026-08-23 11:57');
   });
 
   test('an offset instant is normalised to UTC first', () => {
     expect(formatUtc('2026-08-23T14:57:51.621+03:00')).toBe('2026-08-23 11:57');
+  });
+});
+
+describe('the audit, sessions and transfer surfaces render Europe/Tallinn too (F7-1)', () => {
+  test('the stamp is three hours ahead of UTC in summer', () => {
+    // The owner's check: an audit entry read 11:57 while the clock on the wall said 14:57.
+    expect(formatLocalStamp('2026-08-23T11:57:51.621Z')).toBe('2026-08-23 14:57');
+  });
+
+  test('and two hours ahead in winter', () => {
+    expect(formatLocalStamp('2026-01-15T11:57:00Z')).toBe('2026-01-15 13:57');
+  });
+
+  test('the calendar day is the local one', () => {
+    expect(formatLocalStamp('2026-12-31T22:30:00Z')).toBe('2027-01-01 00:30');
+    expect(formatLocalStamp('2026-06-30T21:30:00Z')).toBe('2026-07-01 00:30');
+  });
+
+  test('an instant written with an offset names the same local minute', () => {
+    expect(formatLocalStamp('2026-08-23T14:57:51.621+03:00')).toBe('2026-08-23 14:57');
+    expect(formatLocalStamp('2026-08-23T08:57:00-03:00')).toBe('2026-08-23 14:57');
+  });
+
+  test('the API\'s microseconds do not disturb it', () => {
+    expect(formatLocalStamp('2026-09-18T10:39:10.839886+00:00')).toBe('2026-09-18 13:39');
+  });
+
+  test('it keeps the shape the UTC stamp gave those columns', () => {
+    const at = '2026-08-23T11:57:51.621Z';
+    expect(formatLocalStamp(at)).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    expect(formatLocalStamp(at)).toHaveLength(formatUtc(at).length);
+    // "idle until 14:57": the sessions tables take the time from the stamp's tail.
+    expect(formatLocalStamp(at).slice(11)).toBe('14:57');
+  });
+
+  test('a missing instant renders as an em dash', () => {
+    expect(formatLocalStamp(null)).toBe('—');
+    expect(formatLocalStamp(undefined)).toBe('—');
+  });
+
+  test('the Overview\'s activity times are local in both seasons, across midnight', () => {
+    expect(formatLocal(`${year}-08-23T21:05:00Z`)).toBe('24 Aug, 00:05');
+    expect(formatLocal(`${year}-01-15T22:05:00Z`)).toBe('16 Jan, 00:05');
+  });
+
+  test('the one note names the zone and no longer says UTC', () => {
+    expect(LOCAL_TIME_NOTE).toContain('Tallinn');
+    expect(LOCAL_TIME_NOTE).not.toMatch(/UTC/);
   });
 });
 

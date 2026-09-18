@@ -5,7 +5,7 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { getOverviewSummary } from '@/api/overview';
 import { AssignmentStatus, type SecurityAuditQuery } from '@/api/dto';
-import { ASSIGNMENT_STATUS_LABEL, eventLabel, formatUtcHuman } from '@/format';
+import { ASSIGNMENT_STATUS_LABEL, LOCAL_TIME_NOTE, eventLabel, formatLocal } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
 import { useOpenWork } from './useOpenWork';
@@ -146,7 +146,7 @@ export function Overview() {
   const activity = activityRows(audit.data?.items ?? []).map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),
-    when: formatUtcHuman(a.occurredAtUtc),
+    when: formatLocal(a.occurredAtUtc),
     tint: /Failed|Suspend/.test(a.eventType)
       ? 'var(--bad)'
       : /Correct/.test(a.eventType) ? 'var(--warn)' : 'var(--accent)',
@@ -288,7 +288,7 @@ export function Overview() {
           <section className={`${styles.panel} ${styles.pad}`}>
             <div className={styles.activityHead}>
               <h2 className={styles.title}>Recent security activity</h2>
-              <p className={styles.desc}>Times shown in UTC.</p>
+              <p className={styles.desc}>{LOCAL_TIME_NOTE}</p>
             </div>
             {mayReadAudit ? (
               <div className={styles.activity}>

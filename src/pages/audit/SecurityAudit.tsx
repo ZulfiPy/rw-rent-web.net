@@ -5,7 +5,10 @@ import { listSecurityAudit } from '@/api/securityAudit';
 import { listUsers } from '@/api/users';
 import type { SecurityAuditQuery, Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { AUDIT_EVENT_TYPES, entityLabel, eventLabel, formatUtc, shortId } from '@/format';
+import {
+  AUDIT_EVENT_TYPES, LOCAL_TIME_NOTE, auditActorName, auditTargetName, entityLabel, eventLabel,
+  formatLocalStamp, isSystemActor, shortId,
+} from '@/format';
 import { useTier } from '@/app/useViewport';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
@@ -66,16 +69,13 @@ export function SecurityAudit() {
     placeholderData: keepPreviousData,
   });
 
-  // Entries carry actor and target ids; the directory is where their names live.
+  /* Entries name their actor and target themselves (F7-4). The directory the reader may see
+     decides only whether a name links to the user record, and feeds the target filter. */
   const directory = useQuery({
     queryKey: qk.users.list({ PageSize: 100 }),
     queryFn: () => listUsers({ PageSize: 100 }),
     staleTime: 60_000,
   });
-  const nameOf = (id: Uuid | null | undefined, fallback: string) => {
-    const u = directory.data?.items.find((x) => x.id === id);
-    return u ? `${u.firstName} ${u.lastName}` : fallback;
-  };
   const person = (id: Uuid | null | undefined) => directory.data?.items.find((x) => x.id === id);
 
   const targetOptions: FilterOption[] = [
@@ -90,7 +90,7 @@ export function SecurityAudit() {
     <>
       <PageHeader
         title="Security audit"
-        description="Append-only history of security-relevant changes. All times UTC."
+        description={`Append-only history of security-relevant changes. ${LOCAL_TIME_NOTE}`}
       />
 
       <section className={list.panel}>
@@ -152,19 +152,19 @@ export function SecurityAudit() {
                 <div className={cards.head}>
                   <span className={cards.heading}>
                     <span className={cards.title}>{eventLabel(a.eventType)}</span>
-                    <span className={cards.sub}>{formatUtc(a.occurredAtUtc)} UTC</span>
+                    <span className={cards.sub}>{formatLocalStamp(a.occurredAtUtc)}</span>
                   </span>
                   <Chip tone="mute">{entityLabel(a.entityType)}</Chip>
                 </div>
                 <div className={cards.facts}>
                   <span className={cards.fact}>
                     <span className={cards.factLabel}>Actor</span>
-                    <span className={cards.factValue}>{nameOf(a.actorUserId, 'System')}</span>
+                    <span className={cards.factValue}>{auditActorName(a)}</span>
                   </span>
                   <span className={`${cards.fact} ${cards.cardFactEnd}`}>
                     <span className={cards.factLabel}>Target</span>
                     <span className={`${cards.factValue} ${a.targetUserId ? '' : table.dim}`}>
-                      {a.targetUserId ? nameOf(a.targetUserId, 'Unknown') : 'Not user-scoped'}
+                      {auditTargetName(a) ?? 'Not user-scoped'}
                     </span>
                   </span>
                   <span className={`${cards.fact} ${cards.cardFactFull}`}>
@@ -187,7 +187,7 @@ export function SecurityAudit() {
                   <th scope="col" className={`${table.th} ${styles.colTarget} ${styles.cellTarget}`}>Target</th>
                   <th scope="col" className={`${table.th} ${styles.colEntity} ${styles.cellEntity} ${table.foldNarrow}`}>Entity</th>
                   <th scope="col" className={`${table.th} ${styles.wide} ${table.foldNarrow}`}>Reason</th>
-                  <th scope="col" className={`${table.th} ${styles.colWhen}`}>Occurred (UTC)</th>
+                  <th scope="col" className={`${table.th} ${styles.colWhen}`}>Occurred</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,24 +205,26 @@ export function SecurityAudit() {
                     </td>
                     <td className={`${table.td} ${table.wrap}`}>
                       <span className={table.stack}>
-                        {a.actorUserId && person(a.actorUserId) ? (
+                        {isSystemActor(a) ? (
+                          <span className={table.dim}>{auditActorName(a)}</span>
+                        ) : person(a.actorUserId) ? (
                           <Link to={`/users/${a.actorUserId}`} className={`${table.name} ${table.quietLink}`}>
-                            {nameOf(a.actorUserId, 'System')}
+                            {auditActorName(a)}
                           </Link>
                         ) : (
-                          <span className={table.dim}>System</span>
+                          <span className={table.name}>{auditActorName(a)}</span>
                         )}
                         <span className={`${table.sub} ${styles.targetLine}`}>
-                          {a.targetUserId ? `on ${nameOf(a.targetUserId, 'Unknown')}` : 'Not user-scoped'}
+                          {a.targetUserId ? `on ${auditTargetName(a)}` : 'Not user-scoped'}
                         </span>
                       </span>
                     </td>
                     <td className={`${table.td} ${styles.cellTarget} ${a.targetUserId ? '' : table.dim}`}>
                       {a.targetUserId && person(a.targetUserId) ? (
                         <Link to={`/users/${a.targetUserId}`} className={`${table.name} ${table.quietLink}`}>
-                          {nameOf(a.targetUserId, 'Unknown')}
+                          {auditTargetName(a)}
                         </Link>
-                      ) : a.targetUserId ? 'Unknown' : 'Not user-scoped'}
+                      ) : auditTargetName(a) ?? 'Not user-scoped'}
                     </td>
                     <td className={`${table.td} ${styles.cellEntity} ${table.foldNarrow}`}>
                       <span className={table.stack}>
@@ -235,7 +237,7 @@ export function SecurityAudit() {
                     <td className={`${table.td} ${table.wrap} ${table.foldNarrow} ${a.reason ? '' : table.dim}`}>
                       {a.reason ?? 'No reason recorded'}
                     </td>
-                    <td className={`${table.td} ${table.mono}`}>{formatUtc(a.occurredAtUtc)}</td>
+                    <td className={`${table.td} ${table.mono}`}>{formatLocalStamp(a.occurredAtUtc)}</td>
                   </tr>
                 ))}
               </tbody>

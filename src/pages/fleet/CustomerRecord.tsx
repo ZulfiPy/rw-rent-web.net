@@ -163,6 +163,11 @@ export function CustomerRecord() {
       <Panel
         title="Driver link"
         description="A driver link records licence details. It does not by itself allow the customer to drive an assignment."
+        actions={c && canManage && !business && !c.driverId
+          /* F7-2: the place the assignment's note sends people, one press from the edit dialog's
+             Driver link section. */
+          ? <Button label="Link driver record" icon="link" small onClick={() => setDialog({ kind: 'customer-edit', focus: 'driver-link' })} />
+          : undefined}
         note={business
           ? 'Driving permission for a business customer is granted per assignment — through named drivers or company-authorized drivers.'
           : c && !c.driverId

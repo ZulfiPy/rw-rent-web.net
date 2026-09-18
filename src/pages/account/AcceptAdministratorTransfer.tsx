@@ -4,7 +4,7 @@ import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { useGatedMutation } from '@/app/submitOnce';
 import { AuthAlert, AuthLayout, AuthOutcome, ResetScreen } from './AuthLayout';
 import { OUTCOMES } from './outcomes';
-import { NO_FAILURE, isExpiredLink, toAccountFailure, type AccountFailure } from './failure';
+import { NO_FAILURE, toAccountFailure, transferAcceptView, type AccountFailure } from './failure';
 import { useLinkToken } from './useLinkToken';
 
 /**
@@ -48,7 +48,9 @@ export function AcceptAdministratorTransfer() {
     );
   }
 
-  if (!token || isExpiredLink(failure)) {
+  // A wrong password and a dead link share one code; that code keeps the form (F7-5).
+  const view = transferAcceptView(!!token, failure);
+  if (view.screen === 'dead-link') {
     return (
       <AuthLayout documentTitle="Administrator transfer">
         <AuthOutcome
@@ -64,7 +66,7 @@ export function AcceptAdministratorTransfer() {
       <ResetScreen
         title="Accept System Administrator role"
         body="You have been named as the next System Administrator. Confirm with your existing account password."
-        {...(failure.message ? { alert: <AuthAlert>{failure.message}</AuthAlert> } : {})}
+        {...(view.message ? { alert: <AuthAlert>{view.message}</AuthAlert> } : {})}
         currentPassword={{
           label: 'Your existing account password',
           hint: 'Accepting the transfer requires the password of the account named in the invitation email.',
