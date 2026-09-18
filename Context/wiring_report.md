@@ -1,350 +1,319 @@
-# Frontend Wiring — Follow-ups 4 and 5
+# Frontend Wiring — Follow-up 6 (testing run 2: T-008, T-009)
 
-> One report for both, rewritten by Follow-up 5 as F5-4 asks. Follow-up 4 answered the independent
-> testing run's frontend findings (`Context/testing_report.md`: T-001, T-004, T-005) and showed the
-> backend's round-3 refusals; Follow-up 5 corrected a hole the owner's reviewer found in F4-1, swept
-> the refusal codes, and ran the joint check that Follow-up 4 could not. Worktree
+> Follow-up 6 answers the second testing run's two frontend findings (`Context/testing_report.md`
+> §2.2): T-008, a refused public form that could never be sent again, and T-009, dialogs that
+> rounded stored instants they had only prefilled. It ran in the same agent run as the backend's
+> round 4, after it (`RWRentApi-wiring/Context/round4_report.md`). Worktree
 > `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
-> 2026-09-17. A later run rewrites this file.
+> 2026-09-18. It replaces the report of Follow-ups 4 and 5, which git history keeps (`d9d4f07`).
+>
+> **For the agent that checks this run: §5 lists what is still yours to run.** The joint check
+> covered every step that needs no real password and all of them passed. The steps that need a
+> real password typed into the app were not run (§3.2), because the implementing agent may not
+> type one into a web page. That includes T-009 in the browser and every signed-in dialog.
 
 ## 1. Summary
 
-| Commit | Follow-up | What |
-|---|---|---|
-| `9127ea1` | 4 | Wiring 14: route guards, one submission at a time, link pages that start over |
-| `6329f0e` | 4 | Wiring 15: that follow-up's report |
-| `06b6027` | 5 | Wiring 16: the permission comes from the matched route, and the codes are real |
-| `3f31cad` | 5 | Wiring 17: the same link arriving again is a new arrival |
-| (this one) | 5 | Wiring 18: this report |
+| Commit | What |
+|---|---|
+| `a800dc4` | Wiring 19: a refused form can be sent again, and an untouched instant is sent as stored |
+| (this one) | Wiring 20: this report |
 
-`npm run typecheck` is clean. `npx vitest run` is green: **149 tests across 15 files**, from the 102
-of the baseline before Follow-up 4. `npm run build` is green with the one pre-existing chunk-size
-warning (backlog item 4). Reviewed screens keep their markup and CSS — no `.module.css` file was
-touched in either follow-up — and no runtime dependency was added.
+`npm run typecheck` is clean. `npx vitest run` is green: **167 tests across 15 files**, up from 149;
+the 18 new ones are listed in §2.3. `npm run build` is green, with the chunk-size warning it
+already had (backlog item 4). No `.module.css` file and no JSX structure of a reviewed screen was
+touched. The change is in submit handlers, hooks and request bodies only, and `package.json` is
+unchanged.
 
-**The joint check ran in full this time and everything in it passed**, including the three address
-spellings that defeated Follow-up 4's guard. It also found one defect of its own, in Follow-up 5's
-own first attempt, which is fixed in `3f31cad`; §3 and §7 say what it was.
+**T-008** had one cause in the code and one outside it. Sign-in, registration and the shared reset
+screen closed their submit gate and nothing ever reopened it. Now one hook owns every gate in the
+app and reopens it when the request settles, whatever the answer. In the joint check, every public
+form that was refused sent its corrected request. The one exception is the transfer acceptance,
+where a wrong password is answered with the dead-link code and the app shows the dead-link screen.
+That screen was not built into a retry; §3.1 explains why and offers the options.
 
-Two things are worth the owner's attention before anything else:
+**T-009**: one helper sends a stored instant back byte for byte while its control still shows what
+it was prefilled with. It is used in every dialog that prefills one: the four the follow-up names,
+and the role-expiry dialog besides (§7).
 
-1. **Follow-up 4's route guard was wide open and its tests said otherwise.** It decided from the
-   text of the address while the router matches without regard to letter case and after decoding, so
-   `/System-Administrator` put the administrator page and an enabled Initiate transfer back in front
-   of a Viewer. The tests covered four personas and every destination and never the one thing the
-   guard had to agree with. Follow-up 5 removes the disagreement rather than patching it: there is
-   now one table, and the guard is handed the permission of the route the router matched.
-2. **The same class of mistake happened twice**, and the second time was mine again: Follow-up 5's
-   link-page fix was tested as a decision about one arrival, passed, and left the page stuck on a
-   spinner when the *same* link arrived again. Both are in §7 as the lesson rather than as trivia.
+**Joint check**: partial (§4). Passed: every public form refused and then corrected (sign-in with a
+second wrong password in place of the real one), T-004 on sign-in, the tester's T-007 pair released
+25 more times with no violation, and the re-seed. Not run, and handed over in §5: the real-password
+sign-in, the strong-password reset, T-009 and the other prefilled-instant dialogs in the browser,
+T-004 on the phone and interruption dialogs, the email-change confirmation, and the accepted
+transfer.
 
 ## 2. Implemented
 
-### 2.1 F4-1 and F5-1 — every route is guarded by the permission of the route that matched
+### 2.1 F6-1 — a refused form can be sent again (T-008)
 
-**The finding (T-001, Major).** Every route was reachable by typing its address, and
-`/system-administrator` then told a Company Principal, a Fleet Manager or a Viewer that they were the
-current System Administrator and offered them an enabled **Initiate transfer**. The dialog opened and
-accepted the fields; only the API's `403` refused the operation.
+**The cause** was exactly the one the follow-up names. Follow-up 4 gave every form a synchronous
+gate against a double Enter (T-004), `createSubmitGate` / `useSubmitGate`, and left each page to
+reopen its own gate. The dialogs' `useActionMutation` and `useSignOut` did, in `onSettled`.
+`SignIn.tsx`, `Register.tsx` and `ResetScreen` in `AuthLayout.tsx` called `gate.attempt` and never
+`gate.settle`, so the first request, refused or not, shut the form until the page was reloaded.
+Follow-up 4's tests proved that the gate closes. The only test that said it opens called
+`settle()` by hand.
 
-**Follow-up 4** put the permission for each destination in one list, `ROUTE_PERMISSIONS`, read by
-both the navigation and a new guard, and stopped the System Administrator page naming the signed-in
-person when it could not resolve the administrator — it shows the app's dash, because naming the
-reader was a claim the app had no grounds for.
+**The change** (`src/app/submitOnce.ts`) removes the possibility of forgetting:
 
-**The reviewer found that half-done.** The guard looked its permission up from the raw first path
-segment, exactly as typed. React Router does not match that way, as the test suite now demonstrates
-directly:
+- `useGatedMutation(options)` wraps TanStack's `useMutation` and owns the gate. `submit(variables)`
+  closes the gate and sends. The gate reopens in the mutation's `onSettled`, which TanStack runs
+  after a success and after every failure alike: a refusal, a 429, or a request that never reached
+  the API. The form's own `onSettled` runs first, and the gate reopens even if that throws
+  (`settlingGate`, `try … finally`). A success therefore keeps the gate shut until the success
+  handling has finished, and not a moment longer.
+- `useSubmitGate` is no longer exported. The only way to get a gate is the hook that also reopens
+  it, so no page can hold one it could forget. `createSubmitGate` stays exported for the tests.
+- Every form submits through the hook: sign-in, and the "Resend the confirmation email" link inside
+  its alert; registration; both halves of the password reset; the resend screen
+  (`/confirm-registration-email?resend=1`); the transfer acceptance; every dialog, through
+  `useActionMutation`; and sign-out.
+- `ResetScreen` no longer holds a gate. It calls the `onSubmit` its caller passes, which is that
+  caller's gated `submit`. The screen could never know when the request ended, so it no longer
+  tries. Its `busy` check stays as the readable statement of intent.
+- The two link-driven confirmations (registration email, email change) are not forms. They send
+  from an effect guarded by their `started` ref and restart on every link arrival (T-005), and are
+  unchanged.
 
-| Address a Viewer typed | The route the router matches | Follow-up 4's guard | Now |
-|---|---|---|---|
-| `/system-administrator` | `/system-administrator` | refused | refused |
-| `/System-Administrator` | `/system-administrator` | **let through** | refused |
-| `/SYSTEM-ADMINISTRATOR` | `/system-administrator` | **let through** | refused |
-| `/%73ystem-administrator` | `/system-administrator` | **let through** | refused |
-| `/REGISTRATIONS` | `/registrations` | **let through** | refused |
-| `/Security-Audit` | `/security-audit` | **let through** (and sent its request) | refused |
-| `/system-administrator/` | `/system-administrator` | refused | refused |
-| `/system-administrator/extra` | `*` | redirected | redirected |
+### 2.2 F6-2 — an instant the person did not touch is sent as stored (T-009)
 
-**Follow-up 5's change.** `src/app/routes.tsx` holds one table carrying each route's path, element
-and permission, with `null` written out rather than left off, so a route cannot reach the table
-without someone having decided. `App.tsx` generates the routes from it and wraps each element in a
-guard **that receives that route's permission as a prop**; `AppShell` generates its navigation from
-the same table and no longer spells any permission out anywhere. The guard never reads an address,
-so a spelling nobody has thought of yet gets the right permission by construction — which is the
-only way to be done with this class of bug.
+`fromPrefilledInput(value, stored, control = 'datetime')` in `src/format/datetime.ts`:
 
-A record route sits beside its list and carries the same permission, because a record is the list's
-own row. `/overview`, `/needs-attention`, `/tasks`, `/insurance-cases` and `/profile` need none, as
-in the prototype's `perm: null`. The catch-all needs none because it renders no page: it redirects
-to the Overview, and a lock there would replace that redirect with something nobody can act on.
+- while the control still shows what it was prefilled with (`toLocalInput(stored)`, or
+  `toDateOnlyLocal(stored)` for a date), it returns **`stored` itself, byte for byte**: seconds,
+  microseconds, and the API's own `+00:00` spelling;
+- a changed control is converted exactly as before: `fromLocalInput`, or `endOfDayLocal` for a date,
+  UTC in both offset seasons;
+- an emptied control is `null`, and so is an empty control with nothing stored.
 
-The refused state is the one a refused list already shows, inside the shell: the lock, "Not
-available to you", and the permission it would take.
+What decides is what the control shows. A control changed and then changed back counts as
+untouched.
 
-### 2.2 F4-2 — every submission happens once (T-004, rated Major by the reviewer)
+Used for every stored instant a dialog prefills:
 
-Enter pressed twice in quick succession sent the same phone update twice. Every guard the app had
-was a rendered one — a disabled button, a `busy` prop, an `isPending` check — and all of them read
-state React has not re-rendered yet when the second key press arrives.
+| Dialog (`src/pages/fleet/AssignmentDialogs.tsx` unless noted) | Instants |
+|---|---|
+| Edit assignment (the planned-dates update) | `plannedStartAtUtc`, `plannedEndAtUtc` |
+| Correct authorization | `authorizedFromUtc`, `stoppedAtUtc` |
+| Interruption edit and correction (`InterruptionForm`) | `startedAtUtc`, `endedAtUtc`; a new interruption has nothing stored and converts as before |
+| Correct timeline | `plannedStartAtUtc`, `startedAtUtc`, `plannedEndAtUtc`, `closedAtUtc` |
+| Change expiry, `src/pages/users/UserDialogs.tsx` (beyond the follow-up's list, §7) | `expiresAtUtc`, a date control |
 
-So the gate is a ref, in `src/app/submitOnce.ts`: it closes inside the first call, before anything
-re-renders, and opens again when the submission settles — settles, not succeeds, or a refused dialog
-could never retry. `useActionMutation` carries it, which covers all 35 dialog submissions in one
-place. `Dialog` also ignores a submit while busy, which matters because its footer action lives
-outside the `<form>` and is a plain button, so the form has no submit button of its own and Enter in
-a field submits it directly, straight past the disabled button everyone would expect to have stopped
-it. The account pages (sign in, register, and the four emailed-link screens through `ResetScreen`)
-and sign out use the same gate, replacing their own `isPending` checks, which had the same gap.
+The dialogs that seed a control with *now* (activate, end, cancel, authorize, stop, end
+interruption, new assignment) have nothing stored to keep and are unchanged.
 
-### 2.3 F4-3 and the Follow-up 5 correction — a link page starts over when a link arrives
+### 2.3 F6-3 — tests, and whether they can fail
 
-After a link had been used, opening a link again in the same tab kept the finished screen and sent
-nothing; the same link in a fresh tab was correctly refused. The result must not depend on which tab
-it lands in.
+`src/app/submitOnce.test.ts` gains eight tests. They drive the gate through TanStack's own
+`MutationObserver`, the machinery `useGatedMutation` is built on, so what reopens the gate is the
+library's `onSettled` and not the test:
 
-One hook, `src/pages/account/useLinkToken.ts`, serves all four pages and watches both ways a
-fragment can arrive: the router's `location.hash` for a change the app navigated, and the window's
-`hashchange` for a link opened into the address bar of a tab that is already here — necessary, not
-belt-and-braces, because `stripHash` uses `history.replaceState`, which the router never hears
-about. Both paths read the live fragment rather than the value that triggered them and strip it at
-once, which makes a duplicate trigger a no-op without remembering the last token. Each page clears
-what its finished screen is made of, and no more: `/reset-password` keeps the email address, because
-the API needs it with the completing call, and `/accept-administrator-transfer` clears the password,
-because a second invitation may be for a different account.
+1. a wrong password, then the right one: two requests;
+2. a refused weak password (a field-level 400), then a strong one: two requests;
+3. a 429 reopens the gate;
+4. so does a request that never reached the API;
+5. a success keeps the gate shut while in flight (a second submit is turned away, T-004 kept) and
+   opens it once settled;
+6. the gate stays shut through the form's own `onSettled`, as sign-out's move to the front door
+   needs;
+7. it opens even when the form's own `onSettled` throws;
+8. no page can get a gate: the module exports `useGatedMutation` and not `useSubmitGate`.
 
-**The correction.** Follow-up 5's first version of this stored only the token. The token of the same
-link is the same string, React changes nothing when a state value is identical, and the effect that
-sends the token depends on the token — so on the second visit the page reset itself, consumed the
-fragment, and then sat on "Consuming the single-use token from your link" for ever. The state now
-carries the token **and a count of arrivals**, and the two pages that send on arrival depend on the
-count. The transition is a pure function, `readLinkToken`, tested as a sequence.
+`src/format/datetime.test.ts` gains ten tests for `fromPrefilledInput`: an untouched instant with
+microseconds comes back byte-identical (the seeded shape, `…10.839886+00:00`); seconds and other
+spellings do too; a changed control converts exactly as `fromLocalInput` does in summer (+03:00) and
+in winter (+02:00); an emptied control is `null`; a value with nothing stored behind it converts; a
+control changed back counts as untouched; and for a date-only expiry, an untouched date keeps the
+stored instant, a changed one resolves to the end of that local day, and a cleared one is `null`.
 
-### 2.4 F4-4 and F5-2 — the refusal codes the app knows are the codes the API sends
+**Do they have teeth?** Both mutation checks were run locally and restored byte-for-byte:
 
-Follow-up 4 mapped the backend's three round-3 refusals to their fields: the two age refusals under
-the driver on every path that names one, the protected date of birth under the date of birth, and the
-duplicate interruption under the start. All three are conflicts, and no conflict could reach a field
-at all — `toFailure` consulted the code-to-field table only for a coded `400` — so it now consults it
-for a `409` as well. A conflict whose code names no input is still the banner it was.
-
-Follow-up 4 also reported, as its open risk 1, that five entries in that table named codes the
-backend does not send. **F5-2's sweep found sixteen of thirty-eight**, checked one by one against the
-`*Errors.cs` and `*Conflicts.cs` files of `RWRentApi.Application` and the codes its services raise
-inline. Eleven had a real equivalent and were corrected:
-
-| The app said | The API actually sends | Lands on |
-|---|---|---|
-| `assignment_authorizations.driver_already_open` | `…duplicate_open_named` | `driverId` |
-| `assignment_authorizations.collective_requires_business` | `…collective_requires_business_customer` | `authorizationType` |
-| `assignment_authorizations.collective_already_open` | `…duplicate_open_collective` | `authorizationType` |
-| `assignment_authorizations.named_and_collective_exclusive` | `…mixed_open_modes` | `authorizationType` |
-| `assignment_authorizations.stopped_before_start` | `…stop_time_invalid` | `stoppedAtUtc` |
-| `assignment_authorizations.stop_reason_required` | `…invalid_stop_reason` | `stopReason` |
-| `assignment_interruptions.before_assignment_start` | `…period_outside_rental` | `startedAtUtc` |
-| `assignment_interruptions.ended_before_start` | `…end_time_invalid` | `endedAtUtc` |
-| `assignment_interruptions.ended_at_required` | `…ended_assignment_requires_closed_period` | `endedAtUtc` |
-| `rental_assignments.planned_end_before_start` | `…planned_range_invalid` | `plannedEndAtUtc` |
-| `rental_assignments.closed_before_start` | `…return_time_invalid` | `closedAtUtc` |
-
-Five were dropped because the backend has no such refusal at all, and they were dead twice over: a
-missing `StartedAtUtc`, `StoppedAtUtc`, `ClosedAtUtc` or `AuthorizedFromUtc` is refused by the
-request validator with an `errors` entry keyed by its own property name, which already lands under
-the input. Those were `assignment_authorizations.from_required` and `.stopped_at_required`,
-`assignment_interruptions.started_at_required`, and `rental_assignments.closed_at_required`.
-
-Three more were dropped for a reason worth stating: `assignment_interruptions.after_assignment_close`
-duplicated `period_outside_rental`, which the backend raises for **both** ends of the period — one
-code cannot name two fields, so it is shown on the start, beside the duplicate refusal;
-`assignment_interruptions.reason_required` and `.billing_impact_required` correspond to
-`invalid_enum`, which names reason and billing impact together and so stays form-level; and
-`rental_assignments.collective_not_valid_for_customer` was the wrong resource for a refusal the
-authorization table already carries.
-
-Nothing regressed in any of this, because none of the sixteen ever resolved to a field.
-
-`src/api/codes.test.ts` now pins every key against the backend's catalogue for the five resources the
-table touches, so a guessed code fails a test instead of dying quietly. `dto.ts` needed no change: a
-diff of the live OpenAPI document before and after the backend's round 3 shows the same 82 operations
-and byte-identical schemas.
-
-### 2.5 F4-5 and F5-1 — tests
-
-102 → 149 across the two follow-ups.
-
-- `src/app/routes.test.ts`, **19 tests** (replacing Follow-up 4's `routeAccess.test.ts`) — the guard
-  and the router together: react-router's own `matchRoutes` over the real table, reading the
-  permission off the route it lands on. There is no second implementation of matching here to drift.
-  Every letter case, a percent-encoded address, a trailing slash, a query, extra segments, every
-  route declaring a permission the API really returns, and every navigation entry agreeing with its
-  route. All eleven assertions of the file it replaces were carried over; §6 lists the one whose
-  expected value legitimately changed.
-- `src/app/submitOnce.test.ts`, 7 tests — two synchronous submits producing one call; the gate shut
-  *during* the first action, which is the only moment that matters; reopening on settle; settling
-  after a refusal; not staying shut when an action throws; two gates not blocking each other.
-- `src/pages/account/token.test.ts`, 16 tests — the arrival decision, and then the state **as a
-  sequence**: a link, the same one again, a second valid one, the first once more, giving four
-  arrivals. That sequence is the test Follow-up 5's first attempt was missing.
-- `src/api/codes.test.ts`, 15 tests — every key against the backend's catalogue, one assertion per
-  corrected code on the operation it arrives on, and the nineteen removed keys resolving to nothing.
-- `src/api/problem.test.ts`, +5 tests — the three round-3 codes' field mapping on every operation
-  that can raise them, plus a conflict without an `op` staying a banner and a concurrency conflict
-  staying the stale banner.
+- With the one line that reopens the gate removed, all seven lifecycle tests (1–7) fail, while the
+  seven gate tests Follow-up 4 wrote all still pass. That is exactly how T-008 went unseen.
+- With `fromPrefilledInput` converting always, as the dialogs did, four of the new date tests fail:
+  the three "untouched" ones and the untouched expiry.
 
 ## 3. Not implemented or partial
 
-**Nothing in F4-1…F4-6 or F5-1…F5-4 is unbuilt, and the joint check ran in full.**
+### 3.1 The transfer acceptance cannot be retried in place after a wrong password
 
-One item is recorded here because it was found, fixed and verified inside this run rather than
-carried forward, and the owner should see it named rather than buried:
+**What happens.** A wrong password on `/accept-administrator-transfer` is answered with
+`400 system_administrator.transfer_not_usable`. That is the same code and the same message ("The
+administrator transfer is invalid, expired, cancelled, or already accepted.") as a link that is
+really dead. The backend does this on purpose (`SystemAdministratorService.AcceptTransferAsync`),
+so a request never says which of the two was wrong. The app lists that code among the dead-link
+codes (`src/pages/account/failure.ts`, `EXPIRED_CODES`), so it replaces the form with "This transfer
+link cannot be used … The administrator who sent it can issue a new one."
 
-**The identical-link case was broken between `06b6027` and `3f31cad`.** Follow-up 5's first
-link-page change reset the page on a repeat arrival but never re-sent the token, because the token
-was the same string and the sending effect depended on it. The screen sat on "Consuming the
-single-use token from your link". It was found in the joint check, on the one path neither the
-tester nor the reviewer had driven — the tester reopened a spent link in a *fresh* tab, and the
-reviewer used a *second, different* link — and it is fixed and verified live (§4). No code is
-outstanding.
+**But the link is not spent.** A wrong password leaves the transfer untouched. It only counts as a
+failed password attempt on the invited account, and five of those lock it for 15 minutes
+(LOGIN-005). While locked, even the right password gets the same code. Reopening the same link in
+the same tab brings the form back (the T-005 arrival), and a second wrong password is sent: the gate
+reopened. That second attempt lands on the same screen. So a person who mistypes is told to ask for
+a new link they do not need. This is a second, older cause of a dead form, separate from the gate,
+and specific to this screen.
+
+**Why it was not built.** Keeping the form on that code changes which screen a genuinely dead link
+ends on, and needs a message the reviewed screen does not have. Those are decisions about a
+reviewed screen, not part of the gate fix. The run's rule is not to invent behaviour where the
+specification did not foresee a cause.
+
+**Side that has to change, and options.** (a) *Frontend only:* on this page, keep the form on
+`transfer_not_usable` and put, in the existing alert slot, a message that names both causes. For
+example: "The password did not match, or this link can no longer be used. Check the password and
+try again; if it keeps failing, ask the administrator for a new link." The dead-link screen stays
+for the codes that can only mean a dead link. (b) *Backend:* a distinct code for a wrong password.
+That is a new refusal code and a disclosure decision. It discloses little, since the token already
+proves the invitation, but it touches the API contract. **Recommendation: (a).** The decision is in
+§6.
+
+### 3.2 The joint-check steps that need a real password typed into the app
+
+The implementing agent may not enter a real password into a web page, even the seed password the
+owner supplied for this run, and may not change an account's credentials. The seed password was
+used only in scripts that call the API directly, from an environment variable, and never typed into
+a page or written to a file. Every step of F6-4 that needs a real password typed into the app is
+therefore not run and is listed in §5 for the checking agent: the correct-password sign-in, the
+strong-password reset, and everything behind a signed-in browser session. The owner was asked for
+the one sign-in that would have opened the rest, and chose to have this report written instead.
 
 ## 4. Verification — the joint check
 
-Run against the API on port 5001 from the backend's round-3 build with its migration applied, and
-the seeded developer database. The seed password was the owner's, supplied for this run and held in
-the environment only.
+Against the API restarted from the round-4 build (port 5001, the process started by round 4's
+phase 3) and the app's Vite server (port 5173, HMR), on the seeded database, in the in-app browser.
+Requests were read from the browser's network log.
 
-The dataset was the documented one before the check began (`activeAssignments: 4`,
-`plannedAssignments: 2`, `activeVehicles: 8`, `availableVehicles: 2`, `pendingRegistrations: 3`), so
-no re-seed was needed to start.
+### 4.1 Every public form, refused and then corrected (T-008)
 
-### 4.1 The address variants of F5-1, as each of the three ordinary roles
+| Form | Refused with | Corrected | Requests | Result |
+|---|---|---|---|---|
+| `/sign-in` as `toms.rudzitis@` (the tester's steps) | `WrongPassword1!` → 401, the invalid-credentials message | a second wrong password, clicked; then the form's own submit again (as Enter does, §4.5) | 3 `POST /api/auth/login`, all 401 | **the form stays alive after each refusal**; the real password is §5.1 |
+| `/sign-in`, three submits in one tick | — | — | 1 | **T-004 kept** |
+| `/reset-password` (request) | `toms.rudzitis@` → 400, message under Email | `toms.rudzitis@rwrent.example` | 2 | 204, "Check your email" |
+| the reset link from Mailpit, opened into the tab showing "Check your email" | `short` → 400, "…at least 12 characters. You entered 5" under New password | `alsoshort`, still refused | 2 `POST …/password-reset/complete`, both 400 | **the second request is sent**; the link replaced the finished screen (T-005 holds) and left the address bar; the strong password is §5.2 |
+| `/confirm-registration-email?resend=1` | `toms.rudzitis@` → 400 under Email | the full address (a made-up password: the API answers the same for any) | 2 | 202, the registration-submitted screen |
+| `/register` | first name left empty → 400, "'First Name' must not be empty." under First name | first name filled; an existing address, so the API's no-op branch runs and nothing is created | 2 | 202, "Confirm your email" |
+| `/accept-administrator-transfer`, a link from Mailpit after an API resend | `WrongPassword1!` → 400 `transfer_not_usable` → the dead-link screen | the same link reopened in the same tab (form back); `WrongPassword2!` | 2 `POST …/transfers/accept`, both 400 | **the second request is sent; the screen then dead-ends again**: §3.1; the right password is §5.7 |
+| `/confirm-email-change` | — | — | — | not run: needs a signed-in session, §5.6 |
 
-Each one: the lock with the permission named, no page content behind it, and no request leaving the
-browser — checked against the network log for the endpoint that page would have called.
+### 4.2 T-009 and the other prefilled-instant dialogs
 
-| Address | Viewer | Fleet Manager | Company Principal |
-|---|---|---|---|
-| `/system-administrator` | lock, no request | lock, no request | lock, no request |
-| `/System-Administrator` | lock, no request | lock | lock, no request |
-| `/SYSTEM-ADMINISTRATOR` | lock, no request | lock, no request | lock |
-| `/%73ystem-administrator` | lock, no request | lock | lock |
-| `/system-administrator/` | lock | — | — |
-| `/system-administrator/extra` | redirected to the Overview | — | — |
-| `/REGISTRATIONS` | lock (`Users.ReviewRegistrations`) | **opens** — they hold it | — |
-| `/Security-Audit` | lock, no request | lock | **opens** — they hold it |
-| `/SECURITY-AUDIT?EventType=Role.Granted` | lock | — | — |
-| `/Security-Audit/<id>` | lock | — | — |
+Not run in the browser: they need the System Administrator's session (§5.3, §5.4). What is
+established:
 
-The two rows that **open** are the ones that matter most after the finding: the guard resolves the
-right permission in both directions, so an upper-case address reaches the page for someone who may
-read it. A guard that merely refused everything unusual would have passed the other eight rows.
+- the unit tests of §2.3;
+- the seeded instants really have the shape the tests use. After the final re-seed, assignment
+  `2d7b5c86-0007-42d7-92d7-000000000007` reads `2026-08-09T05:01:10.839886+00:00` for its planned
+  start and actual start, and `2026-09-08T05:01:10.839886+00:00` for its planned end and closure. The
+  values move with each re-seed, because the seed counts from its own instant; the tester's
+  `…17.422987` were from their seed.
 
-### 4.2 §6's joint check in full
+### 4.3 T-004 on the phone and interruption dialogs
 
-| Check | Outcome |
-|---|---|
-| T-001 as Principal, Fleet Manager and Viewer: restricted state, no administrator panel, no request | **Pass** — the lock naming `SystemAdministration.Transfer`; no `GET /api/system-administrator/transfers` in the network log for any of the three |
-| The System Administrator page never names the signed-in person | **Pass** — no administrator panel renders at all for these three, so there is nothing to name |
-| Every guarded address typed as a Viewer | **Pass** — `/rental-assignments`, `/vehicles`, `/customers`, `/drivers`, `/users`, `/company` open; `/registrations`, `/security-audit` and `/system-administrator` are locked |
-| Every route once as each role, to prove nothing else moved | **Pass** — Viewer: 16 addresses, only the three locked; Fleet Manager: 12, only `/security-audit` locked; Company Principal: 11, only `/system-administrator` locked |
-| T-004 on the phone dialog | **Pass** — three submissions in a single tick produced **one** `PUT /api/me/phone` → 200, the dialog closed and the new number is on the page |
-| T-004 on the interruption dialog | **Pass** — two Enters plus a click produced **one** `POST …/interruptions` → 201, and the assignment holds **one** record |
-| The same interruption entered twice by hand | **Pass** — "This interruption already exists on the assignment." under **Started at**, not in the banner, and the count stayed at one |
-| An authorization for a driver with no date of birth | **Pass** — "A named authorization requires the driver's date of birth." under the **Driver** field |
-| An authorization for a driver aged 17 | **Pass** — "A named authorization requires a driver who is at least 18 years old on the authorization date." under the **Driver** field |
-| T-005, the confirmation link | **Pass** — a fresh registration confirmed (204); the **same** link set on the finished tab starts the page over, sends again, and the API's 400 gives "This confirmation link cannot be used" with code `registrations.email_confirmation_not_usable` |
-| T-005, the reset link, including a second valid link in the same tab | **Pass** — reset completed ("Password changed"); a second, different link set on that finished tab brought the form back and completed; the spent first link then sent again and was refused with `authentication.password_reset_invalid` |
-| One corrected code of F5-2 under its field | **Pass** — authorizing a driver who already holds an open authorization gives "This driver already has an open authorization on the assignment." under the **Driver** field. That is `duplicate_open_named`, one of the five the reviewer named; under Follow-up 4 it resolved to nothing and could only have appeared in the banner |
-| Re-seed with `--replace true` | **Pass** — the documented counts exactly: 10 vehicles, 8 customers, 7 drivers, 12 assignments, 6 authorizations, 4 interruptions, 11 human users, 15 sessions, 13 audit entries, 1 transfer, 5 confirmation challenges |
-| Both apps left running | **Pass** — API 5001 → 200, app 5173 → 200 |
+Not run: they need a session (§5.5). The dialogs now reach the gate through `useGatedMutation`
+instead of their own `useSubmitGate`, with the same timing, and test 5 of §2.3 covers the turned-away
+second submit. The live proof is still owed.
 
-The drivers the age checks needed were created for the check (the seeded drivers are all adults with
-birth dates) and the re-seed removed them, along with the interruption, the two registrations and the
-changed phone number. The seed password is restored: signing in as the Viewer afterwards works, and
-`/%73ystem-administrator` is still locked on the fresh data.
+### 4.4 T-007, the backend's acceptance, once more
 
-### 4.3 Two notes on how the check was run
+The tester's exact steps, released through a barrier 25 more times against the running API and the
+seeded database: two Fleet Manager sessions, a new driver born 1996-09-27, a business customer, a
+vehicle, and a Planned assignment from 2026-09-27T10:00Z per release; the update to 2009-09-27 and
+the named authorization released together. **0 of 25 left a violating pair.** 23× the update lost
+(`409 drivers.concurrency_conflict` · 201) and 2× the authorization lost
+(`200` · `409 assignment_authorizations.concurrency_conflict`). The run in round 4 itself: 25
+releases, 0 violating (`round4_report.md` §9.2).
 
-- **The phone dialog's three Enters.** The Enter keys this harness can inject do not trigger the
-  browser's implicit form submission — with focus in the input, the value set and the form enabled,
-  nothing was sent. So the dialog's own `<form>` was made to submit three times in one tick instead.
-  That is the same code path two Enter presses take and a harder test than the real thing, because
-  three genuine key presses arrive in separate ticks while these arrived in one. Recorded because the
-  method differs from the tester's and the reviewer's, who both used real key presses.
-- **A console error seen during the check was a hot-reload artifact.** While the link-page fix was
-  being applied under Vite's hot reload, the page briefly held a version of the hook that returned an
-  object against a caller still destructuring an array, and the console recorded
-  `useLinkToken is not a function or its return value is not iterable`. A fresh tab loads the app
-  with an entirely clean console; typecheck is clean; the error does not occur in the built app.
-  Named here so that nobody finds it in a scrollback and takes it for a live fault.
+"Once through two browser sessions if the app can produce them": it cannot. One browser profile
+holds one session, and a person cannot release two requests at the same instant through the
+interface. The barrier at the API is the check that can.
 
-## 5. Decisions needed
+### 4.5 How it was run
 
-None. Every decision these two follow-ups rested on was taken by the owner on 2026-09-17 and is
-recorded in §6 and §7 of `wiring_followups.md`.
+- Injected Enter keys do not trigger a form's implicit submission in the in-app browser, as
+  Follow-up 5 found. Enter's effect was driven with `form.requestSubmit()`, the call the browser
+  itself makes for an Enter.
+- The transfer link came from an API-level resend as the System Administrator (the password from
+  the environment, in a script). The reset link came from the forgotten-password request in the
+  table.
+- **End state:** re-seeded with `--replace true`, exit 0, with the documented counts: companies 1,
+  application_users 12 (11 human + the system account), identity_accounts 11, role assignments 8,
+  sessions 15, email-confirmation challenges 5, security audit entries 13, transfers 1, vehicles 10,
+  customers 8, drivers 7, assignments 12, authorizations 6, interruptions 4. This removed the 25
+  joint-check T-007 records and reset the failed sign-ins. Afterwards Toms and the System
+  Administrator sign in (API), the API answers 200 on 5001 and the app 200 on 5173, and both are
+  left running. The browser pane was left on `/sign-in`.
 
-## 6. Deviations
+## 5. For the checking agent: what to run with the seed password
 
-1. **`routeAccess.ts` and its test were removed, not amended.** The module existed only to look a
-   permission up from the text of an address, which is the defect; keeping it would have left two
-   sources of truth, which F5-1 forbids. Every one of its eleven assertions was carried into
-   `src/app/routes.test.ts`, so no coverage was lost. One expected value legitimately changed:
-   `/security-audit/an-entry/anything` used to be asserted as needing `SecurityAudit.ReadCompany`,
-   because the old lookup read the first segment; three segments match no pattern in the table, so
-   the router sends it to the catch-all and it renders no page. The test now asserts what the router
-   does.
-2. **`AppShell`'s `NAV` no longer carries a permission field.** F5-1 says the routes and the
-   navigation are generated from one table, which they are; the direction is that the navigation
-   reads the table rather than the table being assembled from the navigation, because two places
-   holding the same fact is what produced T-001 in the first place. `AppShell` changed only where it
-   reads the table, as F5-1 requires.
-3. **The guard is a prop on each route's element, not a layout route.** Follow-up 4 used one layout
-   route around the whole workspace, which cannot know which route matched — `useMatches` needs a
-   data router and this app uses the component `<Routes>` API. Wrapping each element pairs the
-   permission with its route at the point the table is read, which is what "the matched route's
-   permission" requires.
-4. **F5-2's sweep added five entries as well as correcting eleven.** F5-2 asked for the wrong codes
-   to be corrected and the table swept so every entry names a real code. Five real codes that name a
-   field the table already addressed had no entry at all, and were added while the file was open:
-   `assignment_authorizations.driver_forbidden` and `.stop_note_required`,
-   `assignment_interruptions.note_required`, `rental_assignments.interruption_outside_closure` and
-   `.correction_note_required`. This is more than the instruction asked for. It is named here rather
-   than done quietly, and it can be reverted on its own if the owner would rather keep the change to
-   corrections.
-5. **A third commit where the brief named two.** The joint check found the identical-link defect, and
-   the run's rules say to build what can be built rather than record it and move on, so it is fixed
-   in `3f31cad` and this report is `Wiring 18`.
-6. **35 dialog submissions, not 42.** F4-2 names 42; the count in the code is 35 across seven files.
-   One hook is still the chokepoint for every one of them.
+Everything below needs a real password in the app, which the implementing agent may not type. Run
+on a fresh seed. Where a step changes a credential or the administrator, re-seed afterwards
+(`seed-development-data --replace true`, the owner's password, from the environment).
 
-## 7. Open risks
+1. **T-008 on `/sign-in`, the tester's own steps.** `toms.rudzitis@rwrent.example`,
+   `WrongPassword1!`, Sign in → 401 and the message. Replace only the password with the real one,
+   Sign in → a **second** `POST /api/auth/login` → 200 → Overview.
+2. **T-008 on the reset link.** Request a reset for Toms, open the Mailpit link, `short` → 400 under
+   New password. Then a strong password → a **second** `POST /api/auth/password-reset/complete` →
+   204 → "Password changed". This changes Toms's password; re-seed afterwards.
+3. **T-009, the tester's own steps.** As System Administrator, assignment
+   `2d7b5c86-0007-42d7-92d7-000000000007`, Corrections → Correct timeline. Touch no date; note `Run 2
+   corrected assignment note`; a valid reason; Save. Expect the `PUT …/corrections/timeline` body to
+   carry the four instants **exactly as `GET` returned them** (microseconds and `+00:00`), a 200, and
+   the note reading back. Then once with one date changed: only that instant is converted (UTC,
+   `:00.000Z`), and the three others still go back as stored.
+4. **Every other prefilled-instant dialog, saved untouched on a seeded record, then once with one
+   date changed:** Edit assignment on a Planned assignment (the planned dates); Correct
+   authorization; Edit interruption; Correct interruption; and Change expiry on Dita Smite's expiring
+   role. Untouched instants must go back byte-identical, and a changed one converted. One thing to
+   know: a *privileged correction* saved with nothing changed at all now reaches the API's
+   `400 corrections.no_changes`, shown above the footer ("A privileged correction must change at
+   least one approved field."). The old rounding always sent a change, so this refusal was
+   unreachable from the app; it is the right answer. Change the note or one date to get a 200.
+5. **T-004 on the dialogs.** Profile → Update phone: two submits in one tick (`requestSubmit()`
+   twice, §4.5) → one `PUT`, and the stored phone reads back. The interruption dialog: two Enters and
+   a click → one `POST`, one record.
+6. **Email-change confirmation, refused then corrected.** Signed in, open
+   `/confirm-email-change#not-a-real-token` → refused with its code. Then request a real change from
+   Profile (current password) and open its Mailpit link in the same tab → confirmed.
+7. **The transfer acceptance, last** (it suspends `sysadmin@`). As System Administrator, Resend the
+   transfer (current password). Open the Mailpit link; a wrong password → today the dead-link screen
+   (§3.1); reopen the link; Liga Brice's password (the seed password) → accepted. Re-seed afterwards.
+8. **The backend** (`round4_report.md` §9): the 22 race cases are in `dotnet test`
+   (`Concurrency/…`). The tester's T-007 pair can be released again at the API: two sessions, one
+   barrier, 25 releases, and the table read back after each.
 
-1. **A unit test that passes while the thing it describes is broken — twice now.** This is the
-   report's most important line. Follow-up 4's guard was tested as a pure function over an address
-   and passed on four personas and every destination while three spellings walked straight past it.
-   Follow-up 5's link-page fix was tested as a decision about one arrival and passed while the page
-   hung on a repeat. In both cases the unit was right and the *seam* was wrong — the guard against
-   the router, the decision against React's state identity. The two tests that catch them now share
-   a shape: they exercise the seam (`matchRoutes` over the real table) or the sequence
-   (`readLinkToken` applied four times), not the decision in isolation. Worth applying to the next
-   thing that has to agree with something it does not own.
-2. **`src/api/codes.test.ts` pins a snapshot of the backend's codes.** It catches a guessed code
-   added on this side, which is how the sixteen survived; it cannot catch the backend renaming one,
-   and it will fail as soon as the backend does, which is the intended moment for someone to look.
-   The frontend cannot read the backend's source at test time without coupling the two repositories.
-3. **The guard trusts `GET /api/me`, which is cached for a minute.** Backlog item 3 already records
-   this for the navigation. For up to a minute after a revocation a persona can still open a page
-   whose permission they have just lost, and the API then refuses the page's requests — the state the
-   app already renders. Unchanged by these follow-ups, and worth knowing now that a route decision
-   rests on the same cache.
-4. **The `hashchange` listener is the only signal for a fragment typed into the address bar.** It is
-   the right signal and it is verified live, but it is a window-level listener rather than something
-   the router owns. A future change to `stripHash` — using the router's `navigate` instead of
-   `replaceState`, say — would make the two paths overlap in a way the current strip-first-then-read
-   design absorbs silently. The design note is in the hook; anyone changing `stripHash` should read
-   it.
-5. **`/confirm-email-change` was exercised only with an invalid token.** The other three link pages
-   were driven end to end with real emailed links. This one needs a pending email change on a
-   signed-in account, which the seed does not carry; it reads its token, strips the fragment, sends
-   it and renders the refusal correctly, and it shares the one hook with the page that was verified
-   in full. A second testing run should complete it with a real email-change link.
+## 6. Decisions needed
+
+1. **After a wrong password on the transfer acceptance, should the screen keep its form?** Today a
+   mistyped password ends on "This transfer link cannot be used", although the link still works
+   (§3.1). Keeping the form would show one message that names both causes and lets the person try
+   again. Recommendation: yes, keep the form.
+
+## 7. Deviations
+
+1. **The gate hook reaches beyond the public forms.** Every dialog (through `useActionMutation`) and
+   sign-out now use `useGatedMutation`, and `useSubmitGate` is no longer exported. The follow-up
+   asked for every public form; making the one hook the only owner of a gate is what makes
+   forgetting impossible everywhere. The dialogs' behaviour is unchanged: they already reopened in
+   `onSettled`. The sign-in page's resend link, a button in the alert rather than a form, goes
+   through the hook as well.
+2. **The instant rule reaches one dialog beyond F6-2's list:** Change expiry, whose untouched date
+   used to move a seeded expiry to the end of that local day. It is one line to revert
+   (`UserDialogs.tsx`).
+3. **The joint check is partial** (§3.2, §5). The correct-password step on `/sign-in` was replaced by
+   a second wrong password. That proves the second request, which was the defect; the success path
+   itself was never broken.
+4. `Context/wiring_followups.md` was not edited.
+
+## 8. Open risks
+
+1. **The lifecycle tests run in node, with no page rendered.** They prove the gate against TanStack's
+   own observer. That the pages call the hook is proven by the type system (there is no other way
+   to get a gate) and by the joint check: done for the public forms, owed for the dialogs (§5.4,
+   §5.5).
+2. **The transfer acceptance** (§3.1) until the owner decides.
+3. **The scripts behind the live checks** (the T-007 barrier, the API sessions, the Mailpit link
+   reader) are in the implementing session's scratchpad, not in a repository. §4 and §5 describe the
+   method well enough to redo it.
