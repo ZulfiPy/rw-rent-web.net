@@ -1,415 +1,362 @@
-# Frontend Wiring — Follow-up 7 (the owner's check on real data, first batch)
+# Frontend Wiring — Follow-up 7, second batch (the owner's check on real data)
 
-> Follow-up 7 answers what the owner found while checking the app on real data
-> (`Context/wiring_followups.md` §7): F7-1 times in UTC, F7-2 the customer's driver link, F7-4 an
-> actor labelled "System", and F7-5 the transfer-acceptance screen after a wrong password. F7-3 is
-> the backend's. It ran in the same agent run as the backend's round 5
-> (`RWRentApi-wiring/Context/round5_report.md`), after it, against the API rebuilt from that round.
-> Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
-> 2026-09-18. It replaces Follow-up 6's report, which git history keeps (`e89beef`).
+> The second batch of Follow-up 7 (`Context/wiring_followups.md` §7, "Second batch"):
+> - F7-6: who created and who last changed each record.
+> - F7-7: the person on each row of the Overview's activity card.
+> - F7-8: a person's own session revocations in the security history.
 >
-> **For the agent that checks this run: §5 lists what is still yours to run.** The database is
-> empty on purpose (the owner's end state). Re-seed only before the owner starts entering real
-> data again, and leave it empty afterwards (§5.0). The joint check covered every step that needs no
-> real password, and all of them passed. The steps that need a real password typed into the app
-> were not run (§3.3), because the implementing agent may not type one into a web page.
+> It ran in the same agent run as the backend's round 6
+> (`RWRentApi-wiring/Context/round6_report.md`), after it, against the API rebuilt from that round.
+> Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
+> 2026-09-19. It replaces the first batch's report, which git history keeps (`e578893`).
+>
+> **The owner's data was never touched.** It is in `rwrent_v1`, behind the API on 5001 and the app
+> on 5173. Every check of this run used the scratch stack: the API on 5002 over the seeded
+> `rwrent_check`. **For the owner's reviewer: §5 lists the steps that need the seed password typed
+> into the app, on 5174 and 5002.** The implementing agent may not type a password into a page. Every
+> other step of the joint check ran and passed.
 
 ## 1. Summary
 
 | Commit | What |
 |---|---|
-| `0f5ae10` | Wiring 21: local time everywhere, the driver link made findable, audit names from the entry, the transfer form kept after a wrong password |
-| (this one) | Wiring 22: this report |
+| `8a7e5ac` | Wiring 23: who created and who last changed each record, the person on each activity row, the own-revocation entries |
+| (this one) | Wiring 24: this report |
 
-`npm run typecheck` is clean. `npx vitest run` is green: **227 tests across 20 files**, up from 167
-across 15; §2.5 lists the 60 new ones. `npm run build` is green, with the chunk-size warning it
-already had (backlog item 4). `package.json` is unchanged. No `.module.css` file was touched. The
-markup of the reviewed screens changed only where the follow-up asks: the additions of §2.2, the
-wording that named UTC, and the name cells of §2.3, which use the existing name and dim styles.
+- `npm run typecheck` is clean.
+- `npx vitest run` is green: **253 tests across 23 files**, up from 227 across 20. §2.5 lists the 26
+  new ones.
+- `npm run build` is green, with the chunk-size warning it already had (565.25 kB before, 565.71 kB
+  now).
+- `package.json` is unchanged, and no `.module.css` file was touched. Markup was added only where
+  the items ask for it: one "Recorded by" line per authorization and interruption row, and the name
+  on the activity card's small line. The two record facts reuse the existing `Fact` and its second
+  line.
 
-**F7-1.** Every surface that rendered UTC now renders Tallinn time. The audit, session and transfer
-columns keep their compact "yyyy-MM-dd HH:mm" shape, so the tables keep their widths. The "(UTC)"
-headings and "All times UTC" notes are gone, and one note, "Times in Tallinn time.", names the zone
-where a page used to say UTC. **F7-2.** The closed "The customer will drive" option now says what is
-missing and links to the customer's record. That record offers "Link driver record", which opens
-the edit dialog on its Driver link section. The customer dialog proposes the driver whose personal
-ID matches, as a choice. **F7-4.** The audit surfaces take the actor's and the target's names from
-the entry. The Principal now reads the administrator's name, and "System" means the technical actor
-only. **F7-5.** A wrong password on the transfer acceptance keeps the form, with one message that
-names both possible causes.
+**F7-6.** The five record pages show "Created" and "Last changed" in the record facts they already
+had, each with the person's name and then the local time. The pages are the vehicle, the customer,
+the driver, the assignment and the company. A record nobody changed says "Not changed since it was
+created". Every authorization and interruption row of an assignment says "Recorded by" and the
+name, as a table row and as a phone card. "System" appears only where the record names nobody,
+which is the technical actor.
 
-The joint check passed everything that needs no typed password: 16 API checks as the seeded people,
-the transfer page in the browser, a sweep of every route's data as each of the five roles, and 22
-tests that render each changed screen from a filled query cache. One thing is recorded rather than
-built: the Overview's activity card names nobody, and adding names would change a reviewed screen
-(§3.1). The database is left empty and migrated, as the owner asked (§4.7).
+**F7-7.** Each row of the Overview's "Recent security activity" card names the person on its small
+line, before the time: "Dita Smite · 19 Sep, 09:41". The technical actor reads "System".
+
+**F7-8.** `Session.Revoked` and `Session.OthersRevoked` have their labels ("Session · Revoked",
+"Session · Others revoked") and are offered in the audit's event filter. The entry page reads the
+revoke-others count as "Sessions ended".
+
+The joint check ran on the scratch stack. All 44 API checks passed on fresh records, created by
+Karlis Zvaigzne and changed by Signe Priede, with Dita Smite's own revocations. The app's screens
+were then rendered from those live answers (§4.3), and they show what §4.3's table lists.
 
 ## 2. Implemented
 
-### 2.1 F7-1 — local time wherever a person reads a time
+### 2.1 F7-6 — who created and who last changed each record
 
-- `src/format/datetime.ts` gains `formatLocalStamp`, the "2026-09-18 13:39" stamp in
-  Europe/Tallinn, the same shape `formatUtc` gave these columns. It also gains `LOCAL_TIME_NOTE`,
-  "Times in Tallinn time.", the one note that names the zone. The UTC helpers stay, because their
-  existing tests may not be deleted, but no screen uses them (a test says so, §2.5).
-- Every surface that rendered UTC now renders local time, and says so once where it used to say UTC:
-  - the Security audit list: table, phone cards, heading "Occurred";
-  - the audit entry page: the Event panel, and the payload values, whose field labels no longer end
-    in "(UTC)";
-  - the Profile's sessions tab and a user record's sessions tab: "Started", "Last seen", "idle until",
-    the revocation time;
-  - the System Administrator page: "Since", the transfer table and phone blocks, headings
-    "Initiated" and "Expires";
-  - the Overview's activity card, in the app's humanized local style;
-  - the driver's audit trail and the assignment's correction history;
-  - the assignment's Lifecycle panel, whose note pointed to UTC values in the audit trail.
-- Nothing sent to the API changed. The API keeps speaking UTC.
+- **The record facts.** The Record panel of the vehicle, customer, driver and company pages, and
+  the assignment's Lifecycle panel, had "Created" (a time) and "Last updated" (a time or "Never").
+  They now read:
+  - **Created**: the creator's name, with the local time on the fact's second line;
+  - **Last changed**: the last changer's name with the local time, or "Not changed since it was
+    created".
 
-### 2.2 F7-2 — the customer's driver link, findable
+  The wording is the ledger's. The `Fact` component already had the second line (`sub`), so no
+  markup was added. The assignment's Corrections tab repeats the last-changed fact beside the
+  concurrency token, and it changed the same way (§7.1).
+- **The rows.** On an assignment's "Authorized drivers" tab, each row says "Recorded by <name>" in
+  its secondary text, under the driver's name and licence. On the "Interruptions" tab, it sits under
+  the reason chip, the cell that stays visible at every width (§7.2). Below 768 pixels the rows are
+  cards, and the line joins each card's secondary text.
+- **The driver's history.** Its synthetic "Created" row said "Not recorded" for the acting user. It
+  now names the creator the record carries, as the Record panel below it does (§7.3).
+- **The names.** Everything comes from the record's own `createdByDisplayName` and
+  `updatedByDisplayName` (backend AUDIT-010), through `src/format/recordNames.ts`:
+  - `createdByName`: the name, or "System" when the record names nobody. Every record has a
+    creator, so that is the technical actor.
+  - `lastChangedByName`: "Not changed since it was created" while `updatedAtUtc` is empty;
+    otherwise the name, or "System".
+  - `recordedBy`: the row line.
 
-- `src/pages/fleet/driverLink.ts` holds the two decisions, testable without a page:
-  - `customerDriveBlock` returns why "The customer will drive" is closed. For a private customer
-    with no link: "This customer has no linked driver record." with "Link one on the customer's
-    record." linking to `/customers/{id}`.
-  - `proposedDriverLink` returns the active driver whose personal ID equals the one entered,
-    compared trimmed, as the API stores both. It proposes only while the customer has no link.
-- The new-assignment page renders that note. The link sits inside the existing reason line.
-- The customer record's Driver link panel gets a small "Link driver record" action, like the
-  Identity panel's "Edit". It shows only for a private customer without a link, and only to a
-  reader who may change customers. It opens the edit dialog with the Driver link select focused and
-  scrolled into view.
-- The customer dialog shows the proposal inside the Driver link section. It uses the existing
-  section note, reading "Janis Krumins has the same personal identifier.", with a "Link Janis
-  Krumins" button. Nothing is chosen for the person: the select still reads "Not linked" until they
-  press it. Declining is saving without it.
+  No user id is on the record, so the names are not links.
 
-### 2.3 F7-4 — the entry names its actor and its target
+### 2.2 F7-7 — the person on each activity row
 
-- `dto.ts` follows the live OpenAPI document: `actorDisplayName` and `targetDisplayName`, both
-  nullable strings, on `SecurityAuditResponse`.
-- `src/format/auditNames.ts`:
-  - `auditActorName` gives the entry's name, or "System" when the entry carries none, which is the
-    technical actor.
-  - `auditTargetName` gives the target's name, or null when the entry is about no user.
-- The audit list, the audit entry page, the driver's trail and the assignment's correction history
-  all use them.
-- A name links to the user record only when the reader's own directory holds that user, as before.
-  A named person outside it (the administrator, for a Principal) is plain text, not dimmed. "System"
-  stays dimmed.
-- The two record pages no longer read the user directory at all: it was there only to find names.
-- The role history on a user's record carries ids and no names. A grantor outside the reader's
-  directory now reads "Outside your company", the owner's wording in F7-4, instead of "System".
-  "System" is kept for the technical actor's fixed id.
+`Overview.tsx` adds `auditActorName(entry)` to each row: the entry's own actor name, or "System"
+for the technical actor. It goes on the row's existing small line, the card's small-text style,
+before the time: `{who} · {when}`. The card's filter of routine sign-ins and sign-outs is
+unchanged.
 
-### 2.4 F7-5 — the transfer acceptance keeps its form after a wrong password
+### 2.3 F7-8 — the two own-revocation entries
 
-- The endpoint answers a wrong password with `system_administrator.transfer_not_usable`, the same
-  code as a dead link. It does so on purpose.
-- `transferAcceptView` in `src/pages/account/failure.ts` decides what the page shows. For that code:
-  the form, with "The password did not match, or this link can no longer be used. Check the
-  password and try again; if it keeps failing, ask the administrator for a new link." in the
-  existing alert slot.
-- The dead-link screen stays for a link without a token and for `transfer_not_found`.
-- `isExpiredLink` is unchanged for the pages that use it.
+- `src/format/labels.ts`: the Session group of the event catalogue gains `Revoked` and
+  `OthersRevoked`. The catalogue drives both the labels and the event filter.
+- `src/format/auditPayload.ts`: `RevokedCount`, the after-payload of `Session.OthersRevoked`, is
+  labelled "Sessions ended". The entry page's "Recorded values" panel shows it as a fact, for
+  example "Sessions ended 3". The page's markup is unchanged.
+
+### 2.4 `dto.ts` follows the round-6 document
+
+- The seven record responses gain `createdByDisplayName?: string | null` and
+  `updatedByDisplayName?: string | null`, as the live `/openapi/v1.json` of the round-6 build
+  declares them: nullable, not required.
+- `DriverAuthorizationHistoryItemResponse` and `InterruptionListItemResponse` used to extend the
+  record types. They now extend them without the two names, as the live schemas list them.
+- **One older mismatch surfaced and was corrected.** `RentalAssignmentResponse` extended the list
+  item, and so claimed its four coverage counts: `openAuthorizationCount`, `openNamedDrivers`,
+  `hasOpenCollectiveAuthorization` and `openInterruptionCount`. The API's record has never carried
+  them. The record type now omits them. No code read them from a record; the assignments list and
+  the Overview's planned-work check read them from list items. The render fixtures (§2.5) are the
+  API's own responses, typed as the DTOs, and that is how the mismatch surfaced.
 
 ### 2.5 Tests, and whether they can fail
 
-60 new tests, 227 in all:
+New:
 
-- `src/format/datetime.test.ts` (+9): the stamp in summer (+3) and winter (+2); a local calendar day
-  across midnight; an offset instant; the API's microseconds; the stamp's shape and its time slice;
-  an empty value; the Overview's humanized local time across midnight in both seasons; the note.
-  One existing describe title, "audit and sessions surfaces render UTC", now reads "the UTC stamp
-  (no surface renders it since Follow-up 7)". Its assertions are unchanged.
-- `src/format/auditPayload.test.ts` (4): payload instants in both seasons, a role grant's expiry, the
-  labels without "(UTC)", a plain value untouched.
-- `src/format/auditNames.test.ts` (8): the actor and target names, "System" only without a name,
-  "Outside your company" for an unlisted grantor.
-- `src/pages/fleet/driverLink.test.ts` (8): the note and its link for each kind of customer; the
-  proposal compared trimmed, never for an inactive driver, a linked customer or an empty ID.
-- `src/pages/account/failure.test.ts` (+5): the transfer page's mapping for each answer, including
-  the live problem body of `transfer_not_usable`.
-- `src/pages/surfaces.test.ts` (4): reads every screen's source (55 files) and fails if one formats
-  or says UTC, or names anybody "System" by itself.
-- `src/pages/followup7.render.test.ts` (22): each changed screen rendered to markup with
-  `react-dom/server`, which is already a dependency. The pages render inside the real permission
-  provider and router, from a query cache holding API-shaped answers: the audit list and entry
-  page, the Overview's card, the System Administrator page, both sessions tabs, the role history,
-  the driver's trail, the assignment's correction history and Lifecycle panel, the customer
-  record's action, the dialog's proposal, and the new-assignment note.
+- `src/format/recordNames.test.ts` (7): the creator's name or "System"; the last changer's name,
+  "System", or "Not changed since it was created", which wins whatever a name says; the row line.
+- `src/format/labels.test.ts` (+1, and two entries in its list of the backend's event types): both
+  new types labelled and offered in the filter. The list was re-read from the backend's source, and
+  it matches exactly.
+- `src/format/auditPayload.test.ts` (+1): `{"RevokedCount": 3}`, spaced exactly as the API stores
+  it, reads "Sessions ended 3".
+- `src/pages/followup7b.render.test.ts` (15): the five record pages, the assignment's tabs, the
+  driver's history, the activity card, the entry page and the audit list, each rendered to markup
+  with the real permission provider and router:
+  - creator, changer and times;
+  - "Not changed since it was created";
+  - "System" only for the technical actor, and never on a record people made;
+  - "Recorded by" on every row;
+  - the activity rows, with "System";
+  - "Sessions ended";
+  - both labels in the list and the filter.
+- `src/pages/followup7b.phone.render.test.ts` (2): the authorization and interruption cards below
+  768 pixels, with the tier set by a `vi.mock` of `useTier`.
+- `src/pages/followup7b.support.ts`: the shared render harness, and the fixtures. The fixtures are
+  the round-6 API's own responses from the scratch stack: a vehicle, customer, driver and assignment
+  Karlis created and Signe changed, a seeded vehicle nobody changed, the company, and Dita's two
+  entries.
 
-Teeth, checked by breaking the code and restoring it byte for byte (`cmp`) before the commit:
+Nine deliberate breakages were each caught. Every file was restored byte for byte, and a hash of
+the tree matched the one taken before.
 
-- the stamp switched back to UTC and every actor named "System": 9 of the 22 render tests failed;
-- the record's action, the proposal and the note's link removed: 3 failed;
-- a UTC column and a "System" fallback put back into two pages: the scan's three checks failed.
+| # | Breakage | Failing test files |
+|---|---|---|
+| FM1 | a creator without a name is not "System" | recordNames, the render tests |
+| FM2 | a record never changed names a changer anyway | recordNames, the render tests |
+| FM3 | the interruption row loses its line | the render tests |
+| FM4 | the activity card drops the person | the render tests |
+| FM5 | the catalogue forgets `Session.OthersRevoked` | labels, the render tests |
+| FM6 | the count keeps its raw name | auditPayload, the render tests |
+| FM7 | the driver history says "Not recorded" again | the render tests |
+| FM8 | the vehicle keeps "Last updated" | the render tests |
+| FM9 | the phone authorization card loses its line | the phone render test |
+
+No existing test was changed, skipped or weakened. Round 5's render tests pass unchanged.
 
 ## 3. Not implemented or partial
 
-### 3.1 The Overview's activity card names no actor
+### 3.1 The steps that need a password typed into the app
 
-F7-4's app half names three surfaces that "name the actor and the target from the entry itself".
-One of them is the Overview's "Recent security activity" card. That card names nobody: in the
-prototype and in the app it shows the event and its time only. So it never showed "System", and
-there is no name on it to take from the entry. Adding the actor's name would change a reviewed
-screen's markup, which this run's rules forbid. The card got F7-1's local time and nothing else.
+The implementing agent may not type a password into a web page, not even the seed password. The
+signed-in screens were therefore checked two ways:
 
-- *Side:* frontend, the owner's decision.
-- *Option:* one more line per row, "by Arturs Veidenbaums", in the card's existing small-text style
-  (§6.1).
+- rendered by the test suite (§2.5);
+- rendered from the live answers of the joint check (§4.3).
 
-### 3.2 The joint check's F7-4 step reads the Principal's own activation
+The same screens in a browser, signed in on the scratch app, are the owner's reviewer's steps in
+§5.
 
-The joint check says: "read the seeded activation entry and see the administrator's name". In the
-sample data, the one seeded `Registration.Activated` (Toms Rudzitis) was performed by Signe
-Priede, the Principal herself. The API rightly names her. The administrator's case was checked on
-the three seeded entries the administrator wrote, and on a fresh activation of Gatis Lapsa by the
-administrator, which is the owner's own situation (§4.2).
+*Side:* the checking run. *Option:* the reviewer runs §5 with a headless browser, in a browser
+profile separate from the owner's (§8.1).
 
-- *Side:* the seed, if the owner wants the sample data to show it. That is backend backlog item 1,
-  out of scope here.
-
-### 3.3 The steps that need a real password typed into the app
-
-The implementing agent may not type a real password into a web page, even the seed password the
-owner supplied. So these steps were not run in the browser:
-
-- signing in as the seeded people and seeing F7-1, F7-3 and F7-4 on the screens;
-- the customer dialog's proposal, and the new assignment's note with its link, in the page;
-- the transfer acceptance with the right password typed into the form;
-- every route once as each role in the browser.
-
-What was run instead:
-
-- every one of those steps' data through the API, with the password in a script (§4);
-- the screens rendered from API-shaped data by the test suite (§2.5);
-- the transfer page in the browser as far as the wrong password (§4.4).
-
-§5 is the numbered list for the checking agent.
+Everything else in the batch was built.
 
 ## 4. Verification — the joint check
 
-Against the API started from round 5's build (`bcafa5e`) and the sample dataset, re-seeded with
-`--replace true`. Each API step is a script call as the seeded person, through the same endpoints
-the screens use.
+All of it ran on the scratch stack: the API on 5002, `rwrent_check`, seeded sample data. The
+people are the seeded ones:
 
-### 4.1 F7-3 and F7-1 — the Principal's sign-in and sign-out
+- Karlis Zvaigzne (Fleet Manager) creates.
+- Signe Priede (Principal) changes, and reads the audit.
+- Toms Rudzitis (Viewer) reads.
+- Dita Smite revokes her own sessions.
 
-| Step | Result |
-|---|---|
-| Signe Priede signs in, then out (`POST /api/auth/logout`) | 204 |
-| Her next session reads `GET /api/security-audit?TargetUserId=…` | the ended session's `Authentication.SessionCreated` and `Authentication.Logout`, both with the Company |
-| What the app shows for them | 2026-09-18 12:26 (the API says 09:26 UTC): three hours later, the wall clock's time |
+The seed password came from the owner for this session only, through the environment of each
+command.
 
-### 4.2 F7-4 — who the Principal sees
+### 4.1 The record reads through the API
 
-| Step | Result |
-|---|---|
-| The seeded `Registration.Activated` | actor "Signe Priede", target "Toms Rudzitis" (the sample data's actor, §3.2) |
-| The administrator's seeded entries | "Arturs Veidenbaums" on `Company.Updated`, `DriverAuthorization.Corrected`, `RentalAssignment.TimelineCorrected` |
-| Every entry the Principal reads (16) | all carry an actor name |
-| The Principal opens the administrator's record | 403, as before |
-| The administrator activates Gatis Lapsa as Viewer | 200 |
-| The Principal reads that activation | actor "Arturs Veidenbaums", target "Gatis Lapsa" |
+The acceptance script ran once more, after the app was finished, on fresh records. All 44 checks
+passed:
 
-### 4.3 F7-2 — the driver link, as Karlis Zvaigzne (Fleet Manager)
-
-| Step | Result |
-|---|---|
-| A driver fit for it | Janis Krumins: active, adult, personal ID 050381-10228, linked to no customer |
-| A private customer with that personal ID, the proposal declined (`driverId` null) | 201 |
-| Linking the driver, as the dialog sends it (`PUT /api/customers/{id}`) | 200, `driverId` set |
-| "The customer will drive": an Active assignment naming the customer's own driver | 201, on 119 MPR |
-| Unhappy path: a second customer taking the same driver link | 409 `customers.driver_link_conflict`, which the dialog shows under the field |
-
-### 4.4 F7-5 — the transfer acceptance, in the browser
-
-| Step | Result |
-|---|---|
-| The administrator resends the open transfer to Liga Brice (API) | 200; Mailpit holds the one link |
-| `/accept-administrator-transfer` with no token | the dead-link screen, "This transfer link cannot be used" |
-| The real link | the form |
-| A wrong password (made up, 22 characters), Accept transfer | one `POST …/transfers/accept` → 400; **the form stays**, with the two-cause message in the alert slot |
-| The right password with the same link (API; §3.3) | 204: the link still worked after the wrong attempt |
-| The same link again (API) | 400 `transfer_not_usable` |
-| Accept transfer in the page again, on the now used link | one more `POST` → 400; the form and the message stay |
-
-Re-seeded afterwards: the acceptance had made Liga Brice the administrator.
-
-### 4.5 Every route once as each role — the data behind each screen
-
-Each seeded role signed in and called every route's endpoints, 18 routes. The route table's
-permission (`src/app/routes.tsx`) says whether the route opens for the role, and the API answered
-accordingly each time:
-
-| Account | Routes open | Result |
+| Checks | What | Result |
 |---|---|---|
-| `sysadmin@` (System Administrator) | 18 of 18 | every answer 200 |
-| `signe.priede@` (Principal) | 17 of 18 | 200, and 403 on the System Administrator's transfers |
-| `karlis.zvaigzne@` (Fleet Manager) | 15 of 18 | 200 where open, 403 where closed |
-| `toms.rudzitis@` (Viewer) | 14 of 18 | as its permissions say; see below |
-| `dita.smite@` (Viewer + Fleet Manager) | 15 of 18 | 200 where open, 403 where closed |
+| 1–3 | a seeded vehicle and the seeded company, read by the Viewer | created by "Karlis Zvaigzne" and by "Arturs Veidenbaums"; the Viewer's `GET /api/users/<administrator>` answers 403, yet the name reaches him |
+| 4–11 | Karlis creates a vehicle, a customer, a driver, an active assignment with one authorization, a second authorization and an interruption | every create response and every read names "Karlis Zvaigzne"; nothing changed yet |
+| 12–18 | Signe changes the five records, stops the first authorization and updates the interruption | every response names "Signe Priede" with an instant inside the request's window |
+| 19–28 | the Viewer reads everything back, including the assignment's own two lists | "Signe Priede" with the instant; the untouched authorization names only Karlis |
+| 29–34 | the six lists | no item carries a name |
 
-One answer is not a 403 where the route is closed. The Viewer's registrations query answers 200
-with an empty list. By REGISTRATION-007 a directory reader sees only admitted people, and the
-app's own route permission (`Users.ReviewRegistrations`) keeps the page closed to the Viewer. The
-Fleet Manager's same query lists the five registrations.
+### 4.2 The two own-revocation entries
 
-### 4.6 The screens, rendered
+| Checks | What | Result |
+|---|---|---|
+| 35–37 | Dita ends one other session from her profile, then the same one again | 1 session ended, then 0; the ended session answers 401 |
+| 38–39 | Dita ends every other session, then again | 3 ended (the two made here, one left by an earlier run), then 0 |
+| 40–41 | Signe reads `Session.Revoked` | exactly one new entry: actor and target "Dita Smite", the session, the Company |
+| 42–44 | Signe reads `Session.OthersRevoked` | exactly one new entry, against Dita's current session, with the Company and `{"RevokedCount": 3}`, the same count the response gave; opens by id |
 
-The 22 render tests of §2.5 are the joint check's substitute for the signed-in browser. They show,
-with the sample data's people:
+The unhappy paths are the repeats in checks 37 and 39. A revocation that ends nothing writes
+nothing.
 
-- **F7-1:** the local stamps in both seasons, the headings without "(UTC)", the zone's note where
-  the panel carries it, and no "UTC" anywhere in the markup.
-- **F7-4:** the administrator named for the Principal with no link to a record they cannot open;
-  directory users linked; "System" once, for the technical actor; "Outside your company" in the role
-  history.
-- **F7-2:** "Link driver record" only for an unlinked private customer and a reader who may change
-  it; the proposal naming Janis Krumins, with "Not linked" still selected; the note linking to
-  `/customers/c1`, gone once the customer is linked.
+### 4.3 The app's screens, rendered from those live answers
 
-### 4.7 End state
+The joint check saved what the Viewer and the Principal read at the end of §4.1. The app's own
+pages were then rendered from it. The test file and its config were kept outside the worktree,
+because part 3 changes nothing there. The pages show:
 
-As §7's "End state" asks, with the README's commands:
+| Screen | What it shows |
+|---|---|
+| Vehicle, customer, driver, assignment | Created: Karlis Zvaigzne, 19 Sep, 09:41 · Last changed: Signe Priede, 19 Sep, 09:41 |
+| Company | Created: Arturs Veidenbaums, 23 Nov 2025, 08:21 · Last changed: Signe Priede, 19 Sep, 09:41 |
+| Assignment, Authorized drivers | "Recorded by Karlis Zvaigzne" on both rows |
+| Assignment, Interruptions | "Recorded by Karlis Zvaigzne" |
+| Overview, activity card | "Session · Others revoked — Dita Smite · 19 Sep, 09:41", "Session · Revoked — Dita Smite · 19 Sep, 09:41", "Company · Updated — Signe Priede · 19 Sep, 09:41", … |
+| Entry page of `Session.OthersRevoked` | Event: Session · Others revoked · Actor: Dita Smite · Sessions ended: 3 |
+| Entry page of `Session.Revoked` | Event: Session · Revoked · Actor: Dita Smite |
 
-- **The API** was stopped; `rwrent_v1` dropped with `WITH (FORCE)` and created again, owned by
-  `rwrent`; `dotnet ef database update` applied all six migrations. The API was started again from
-  round 5's build (`RWRentApi-wiring/src/RWRentApi.Api/bin/Debug/net10.0`, built at `bcafa5e`) and
-  answers `/health` 200 on 5001.
-- **The database** holds six migrations and one application user, the technical system account.
-  It has no human account and no identity account; no Company, vehicle, customer, driver or
-  assignment; no audit entry and no session.
-- **Mailpit** is cleared: 0 messages.
-- **The app** answers 200 on 5173. The browser pane is on `/sign-in`.
-- **The owner's first real records** (one Company, the administrator and the Principal, one
-  vehicle, customer, driver and assignment) were replaced by the sample data, as the owner allowed.
-  A `pg_dump` copy was taken first. It is `owner-real-data-2026-09-18-before-round5.sql`, mode 600,
-  in the implementing session's scratchpad
-  (`/private/tmp/claude-501/-Users-zulf-rw-rent-api/322d1439-27e0-467c-850f-91b903d014c9/scratchpad`),
-  outside every repository. It lasts only as long as that temporary folder.
+### 4.4 The screens rendered by the test suite
 
-### 4.8 How it was run
+These are the 17 render tests of §2.5, from the captured round-6 responses, and all passed. They
+add the cases the live data did not hold:
 
-- The password came from the owner for this session only. It was held in the environment, used
-  only by the API scripts, and appears in no file, no log and no commit.
-- The transfer link came from an API resend as the administrator, read from Mailpit, which was
-  emptied first. The wrong password typed into the page was made up; it is nobody's credential.
-- The scripts are in the implementing session's scratchpad (`j7_api.py`, `rwapi.py`, `links.py`),
-  not in a repository. §5 repeats every step in the app.
+- a record nobody changed;
+- a record created or changed last by the technical actor;
+- a row the technical actor recorded;
+- the phone cards;
+- the driver's history row;
+- the event filter.
 
-## 5. For the checking agent: what to run with the seed password
+### 4.5 The owner's side, untouched
+
+- `rwrent_v1`: the row counts and latest-change instants of eleven tables are identical before the
+  backend round (09:20) and after the joint check.
+- The owner's API on 5001 runs the round-6 build over `rwrent_v1`, healthy. It was restarted once,
+  by round 6 (six seconds).
+- The owner's app on 5173 was not restarted; it has run since 16 Sep. It runs from this worktree
+  with hot reload, so it took the new screens as they were written. It serves the changed modules
+  (200), and `recordNames.ts` carries the new wording.
+
+### 4.6 End state
+
+| Port | What | State |
+|---|---|---|
+| 5001 | the owner's API, round-6 build, `rwrent_v1` | running (restarted by round 6) |
+| 5173 | the owner's app | running, untouched |
+| 5002 | the scratch API, round-6 build, `rwrent_check` | **left running for the reviewer** |
+| 5174 | the scratch app | not running; the reviewer starts it (§5.0) |
+
+`rwrent_check` holds the seed plus the records of the acceptance runs (§7.5). Mailpit was not used
+and not cleared: none of this batch's checks sends mail, and its messages may be the owner's.
+
+### 4.7 How it was run
+
+- API checks: `r6_acceptance.py` through a client that can only reach port 5002. Passwords came from
+  the environment.
+- Renders: vitest with `react-dom/server`, the real `AccessProvider` and `MemoryRouter`, and a query
+  cache pre-filled with the API's answers.
+- Owner-side checks: read-only `psql` counts, `/health` and HTTP status reads.
+
+## 5. For the owner's reviewer: the steps with the seed password
 
 ### 5.0 Before and after
 
-- The database is empty on purpose: the owner will walk the go-live sequence on it again. **If the
-  owner has already entered real data, do not re-seed**, because `--replace true` replaces
-  everything. Ask the owner first.
-- Otherwise re-seed from the backend worktree, with the environment of its README exported and the
-  seed password in `RWRENT_DEV_SEED_PASSWORD`:
-  `dotnet run --project src/RWRentApi.Api --no-build -- seed-development-data --password "$RWRENT_DEV_SEED_PASSWORD" --replace true`.
-- When done, return to the empty state, with the README's "From the sample data to real data" step
-  1:
-  1. stop the API;
-  2. `DROP DATABASE rwrent_v1 WITH (FORCE)`;
-  3. `CREATE DATABASE rwrent_v1 OWNER rwrent`;
-  4. `dotnet ef database update`;
-  5. start the API;
-  6. clear Mailpit (`DELETE http://localhost:8025/api/v1/messages`).
+1. **Use a separate browser profile, or a headless browser.** Both stacks run from the same backend
+   worktree, with the same cookie names (`RWRent.Auth`, `RWRent.Antiforgery`) and the same key
+   ring, and a browser does not separate `localhost` cookies by port. Signing in on 5174 in the
+   owner's profile would sign the owner out of 5173 (§8.1).
+2. Start the scratch app from this worktree:
+
+   ```bash
+   VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort
+   ```
+
+3. When you are done, stop it (`kill $(lsof -ti tcp:5174)`). Tear down the scratch stack when the
+   review is over: stop the API with `kill $(lsof -ti tcp:5002)`, then run
+   `DROP DATABASE rwrent_check WITH (FORCE)` from the `rwrent_v5_postgres` container.
 
 ### 5.1 The steps
 
-1. **F7-3 and F7-1 as the Principal.**
-   - Sign in as `signe.priede@rwrent.example`, sign out, sign in again.
-   - Open Security audit. The newest rows are your sign-in, sign-out and sign-in. The Occurred
-     column reads the wall clock's time, three hours after UTC in summer. Its heading is "Occurred".
-     The page description ends "Times in Tallinn time.".
-   - Open the sign-out entry. The Event panel says "Times in Tallinn time.", and the Actor is "Signe
-     Priede", linked.
-   - On the phone width (375 px) the cards show the local stamp with no " UTC".
-2. **F7-4 as the Principal, after an activation by the administrator.**
-   - As `sysadmin@rwrent.example`, Registrations: activate Gatis Lapsa as Viewer. Sign out.
-   - As Signe, Security audit, "Registration · Activated" for Gatis: the Actor is "Arturs
-     Veidenbaums" in plain text, not linked and not "System"; the target is "Gatis Lapsa", linked.
-     The entry page shows the same.
-   - The seeded "Company · Updated", "Driver authorization · Corrected" and "Rental assignment ·
-     Timeline corrected" also read "Arturs Veidenbaums". The seeded activation of Toms reads "Signe
-     Priede": that is the sample data (§3.2).
-   - Users → Karlis Zvaigzne → Roles: the Fleet Manager grant reads "Outside your company".
-   - Overview: "Recent security activity" says "Times in Tallinn time." and shows local times.
-3. **F7-2 as `karlis.zvaigzne@rwrent.example`.**
-   - Customers → Add customer, Private individual, with personal identifier `050381-10228` (Janis
-     Krumins's) and a fresh email and phone.
-   - In Driver link, "Janis Krumins has the same personal identifier." appears with "Link Janis
-     Krumins", and the select still says "Not linked". Do not press it: Create customer.
-   - New rental assignment with that customer: "The customer will drive" is greyed, with "This
-     customer has no linked driver record. Link one on the customer's record." Follow the link.
-   - On the record, the Driver link panel offers "Link driver record". Press it: the edit dialog
-     opens with the Driver link select focused and in view. Choose Janis Krumins and Save.
-   - New rental assignment with that customer: "The customer will drive" is open. Create it (Active,
-     now) on an available vehicle.
-4. **F7-5, last** (it makes Liga Brice the administrator).
-   - As the administrator, System Administrator → Resend on the open transfer (your password).
-   - Open the Mailpit link. Type a wrong password of 12 or more characters and press Accept
-     transfer. The form stays, with "The password did not match, or this link can no longer be
-     used…".
-   - Replace it with Liga Brice's password (the seed password) and press Accept transfer: "Transfer
-     accepted". A second request is sent, so the form was still usable.
-   - Re-seed afterwards.
-5. **Every route once as each role.** As each of `sysadmin@`, `signe.priede@`, `karlis.zvaigzne@`,
-   `toms.rudzitis@` and `dita.smite@`:
-   - open every navigation entry and one record of each kind;
-   - check that no screen says UTC, times read local, audit rows name people, and "System" appears
-     only for the technical actor. The seed has no technical-actor entry. `recover-system-administrator`
-     makes one if wanted.
-6. **Return to the empty state** (§5.0).
+The records made by the acceptance have plates starting with "R6"; pick the newest.
+
+1. **Karlis's record, changed by Signe.** Sign in as `signe.priede@rwrent.example`. Open the newest
+   "R6…" vehicle. The Record panel reads "Created: Karlis Zvaigzne" with a time on the second line,
+   and "Last changed: Signe Priede" with a time. Do the same on its customer, its driver (the
+   driver's history, visible to the Principal, names Karlis on its Created row) and its rental
+   assignment (Lifecycle panel).
+2. **Nobody changed it.** Open a seeded vehicle other than the R6 ones, for example "119 MPR". It
+   reads "Created: Karlis Zvaigzne" and "Last changed: Not changed since it was created".
+3. **The rows.** On that R6 assignment:
+   - "Authorized drivers": each row has "Recorded by Karlis Zvaigzne" under the driver.
+   - "Interruptions": the line is under the reason.
+   - Narrow the window below 768 pixels: the cards carry the same line.
+   - "Corrections" (the administrator, `sysadmin@rwrent.example`): "Last changed" beside the
+     concurrency token.
+4. **The company.** On the Company page: "Created: Arturs Veidenbaums", "Last changed: Signe Priede".
+5. **A change in the app, by a second person.** As Karlis (`karlis.zvaigzne@rwrent.example`), edit
+   that vehicle (the colour, say) and save. The Record panel's "Last changed" now reads "Karlis
+   Zvaigzne" with the new time. Sign in as Signe, edit it again: "Signe Priede".
+6. **The activity card.** As Signe, on the Overview: each row of "Recent security activity" reads
+   "<name> · <time>", Dita's rows among them.
+7. **Own revocations, in the app.** Sign in as `dita.smite@rwrent.example` in two separate contexts.
+   From the first, on Profile → Sessions:
+   - press "Revoke" on the other session: the entry is `Session.Revoked`;
+   - sign in once more elsewhere, then press "Revoke other sessions" and confirm: the entry is
+     `Session.OthersRevoked`.
+
+   As Signe, in Security audit, filter "Session · Revoked" and then "Session · Others revoked". Each
+   shows Dita's entry, named. Open the second: "Sessions ended" with the number the profile page
+   reported.
+8. **Nothing to revoke.** As Dita, press "Revoke other sessions" again with no other session:
+   Signe's list gains no entry.
 
 ## 6. Decisions needed
 
-1. **Should the Overview's activity card name the actor?** (§3.1.) It shows the event and its time,
-   as the prototype does. Recommendation: leave it. The card is a glance, and the audit page names
-   everyone one click away. If you want names there, it is one line per row in the card's existing
-   small text.
-2. **The backend's round 5 asks one for you:** whether a user's own session revocations should
-   appear in the audit history. See `round5_report.md` §4.
+None.
 
 ## 7. Deviations
 
-1. **F7-4 reaches two audit surfaces and one role surface beyond the three it names.** The driver's
-   audit trail and the assignment's correction history show audit entries too, and named them from
-   the directory ("Unknown user", "System"). They now take the names from the entry, and those two
-   pages no longer load the directory. The role history labelled the administrator "System" for the
-   same reason. It carries no names, so it uses the owner's own fallback, "Outside your company".
-2. **F7-1 reaches two surfaces beyond the five it names:** the driver's trail and the assignment's
-   correction history. Also the assignment's Lifecycle note, which pointed to "original UTC values"
-   in a trail that no longer shows UTC. The audit payload's field labels lost "(UTC)".
-3. **The proposal (F7-2c) appears only while the customer has no link, and only for an active
-   driver.** An inactive driver cannot be chosen in the link list. A customer who is already linked
-   is not second-guessed.
-4. **"Link driver record" (F7-2b) shows only on an unlinked private customer, and only to a reader
-   who may change customers.** A linked customer changes the link through Edit, as before.
-5. **Render tests stand in for the signed-in browser.** They use `react-dom/server`, already a
-   dependency, and plain `createElement`, so neither the test include pattern nor any configuration
-   changed. `Coverage` in `NewAssignment.tsx` is exported so its note can be rendered.
-6. **The UTC helpers stay** (`formatUtc`, `formatUtcHuman`, `formatUtcLabelled`). No screen uses them,
-   and their tests may not be deleted. One test group's title was reworded; no assertion changed.
-7. **The joint check adapted two steps.** F7-4 read the administrator's own entries and a fresh
-   activation (§3.2). F7-5's right password went through the API with the same link (§3.3).
-8. `Context/wiring_followups.md` was not edited.
+1. **The Corrections tab's fact changed too.** The ledger names the record facts. The assignment's
+   Corrections tab shows the same "Last updated" fact beside the concurrency token, so it became
+   "Last changed" with the name, so one page never says both.
+2. **Where "Recorded by" sits.** The From and Period columns are 136 pixels wide, and a name there
+   would wrap. The line sits under the driver in the authorization row, in the wide Driver column.
+   In the interruption row it sits under the reason chip, the one cell that stays visible at every
+   width; the Note column folds away.
+3. **The driver's history row.** Its synthetic Created row now names the creator instead of "Not
+   recorded". This was not asked, but left as it was, the row would contradict the Record panel on
+   the same page.
+4. **The assignment record's type** omits the list item's four counts (§2.4). This is type-only,
+   and it was found by the API-typed fixtures.
+5. **The acceptance ran five times on the scratch stack:** four during the backend round (three
+   stopped by faults in the script) and once for this joint check. Each run made its own records, so
+   `rwrent_check` holds several R6 sets, and Dita's revoke-others counts include sessions an earlier
+   run left open.
+6. **The live render ran from outside the worktree**, with a scratch config reusing the app's own
+   sources, because part 3 changes nothing in the worktree.
 
 ## 8. Open risks
 
-1. **The page header's description is not in the render tests.** The list pages' headers are set
-   from an effect, which a server render does not run. The scan test guarantees they no longer say
-   UTC. That they say "Times in Tallinn time." is for the checking agent's eyes (§5.1, step 1).
-2. **A mistyped transfer password counts as a failed sign-in.** Five in a row lock Liga's account
-   for 15 minutes (LOGIN-005), and the page keeps showing the same message. During a lockout neither
-   the password nor a new link helps until the lock ends. The message cannot say so without saying
-   which cause it was.
-3. **The proposal compares personal IDs exactly, after trimming**, as the API stores them. The same
-   person's ID written differently (another separator, a space inside) is not proposed. The
-   person can still choose the driver in the list.
-4. **A link to a user record still depends on the first 100 directory entries**, as before this
-   follow-up. With more people than that, a person beyond them is named but not linked.
-5. **Names are read-time names** (backend report §11): an older entry shows a person's current
-   name.
+1. **Cookies are shared between 5173 and 5174** in one browser profile (§5.0). Only a reviewer who
+   ignores §5.0 can trip on it, but the price is the owner being signed out.
+2. **The ended-sessions count counts sessions, not devices in use.** Revoke-others ends every
+   session not yet revoked, including ones that had already lapsed by idle time. The seeded ones
+   show this, and the backend report has the details.
+3. **Names are read-time names.** After a name correction, an older record shows the new name.
+4. **An API older than round 6** would send no names, and the pages would then read "System"
+   everywhere. The app and the API are deployed together, and 5001 runs round 6.
+5. **Hot reload reached the owner's app as the code was written.** The owner's app on 5173 runs
+   from this worktree, so it saw each edit as it landed. No broken state was saved at a checkpoint:
+   the typecheck, tests and build passed before the commit.
