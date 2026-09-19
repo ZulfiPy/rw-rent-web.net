@@ -302,6 +302,13 @@ findable, the sign-out visible to the Principal, the administrator named). New o
   to the record responses the way round 5 added them to the audit entries; (b) a separate activity
   history of business operations. Recommendation: (a). Sides: backend (names on the responses) and
   frontend (two facts per record page).
-- Open owner questions carried from the first batch's reports: the actor's name on each row of the
-  Overview's "Recent security activity" card (frontend, one more line per row); audit entries for a
-  person's own session revocations from the profile page (backend backlog item 19, recommended).
+- **Owner decisions of 2026-09-19 on the three questions.** (1) F7-6: yes, and in the owner's words
+  "of course, we need to track every change and who made the change". At the least every record
+  page shows who created it and who last changed it, with the names on the record responses. The
+  owner's wording reaches further than that, to a full history of every change on each record; that
+  scope is being confirmed with them and, if wanted, is a phase of its own with a brainstorm, not an
+  item of this batch. (2) F7-7: yes, the Overview's "Recent security activity" card names the person
+  on each row, in the card's existing small-text style, from `actorDisplayName`. (3) F7-8: yes, a
+  person's own session revocations from the profile page are written to the security history
+  (backend backlog item 19: `Session.Revoked` and `Session.OthersRevoked`, stamped with the owner's
+  Company, in the same save as the revocation; the app lists them and gets labels for them).
