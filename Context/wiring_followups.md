@@ -90,23 +90,16 @@ database keeps the seeded dataset.
    screen shows an email and a new-password field the API does not take, and its resend screen lacks
    the password field the API requires. The app is right; the prototype is the reference for looks
    only. Correct the file if it is ever edited again.
-2. The Button `block` variant with the primary tone has poor contrast in the light theme; phone-sized
-   dialog sheets use it. Check on the phone in the light theme during §4; fix as a shared-component
-   change if confirmed.
+2. ~~The Button `block` variant's light-theme contrast~~ — closed: testing run 1 found the
+   combination is not used anywhere in the app, and the real phone sheet button measured 16.6:1.
 3. `GET /api/me` is cached for a minute after a full page load: a role granted or revoked while
    someone is signed in reaches them at the next reload or after that minute.
 4. The build is a single chunk over the bundler's size warning (about 560 kB); code splitting is a
    hosting-time decision.
 5. The shell's open-work queue runs three list requests on every page; cheap on the seeded data,
    the first thing to look at if a page ever feels slow.
-7. **The transfer-acceptance screen after a wrong password** (Follow-up 6 report §3.1, awaiting the
-   owner's decision). A wrong password on `/accept-administrator-transfer` is answered by the API with
-   the same code as a dead link (`system_administrator.transfer_not_usable`, on purpose, so the answer
-   never says which was wrong), and the app then shows "This transfer link cannot be used" although
-   the link still works; the person is told to ask for a new link they do not need. Options: (a)
-   frontend only, keep the form on that code and show a message naming both causes ("The password did
-   not match, or this link can no longer be used…"); (b) a distinct backend code for a wrong password.
-   Recommendation: (a), in the next frontend follow-up.
+7. ~~The transfer-acceptance screen after a wrong password~~ — done 2026-09-18 as F7-5: the form
+   stays, with one message that names both possible causes.
 6. Tasks and Insurance cases are sample-data placeholders (`src/pages/overview/sample.ts`,
    `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
@@ -312,3 +305,36 @@ findable, the sign-out visible to the Principal, the administrator named). New o
   person's own session revocations from the profile page are written to the security history
   (backend backlog item 19: `Session.Revoked` and `Session.OthersRevoked`, stamped with the owner's
   Company, in the same save as the revocation; the app lists them and gets labels for them).
+
+**Second batch authorised 2026-09-19.** It runs in the same agent run as the backend's round 6
+(`RWRentApi-wiring/Context/round6_spec_and_plan.md`), after it, in this worktree.
+
+> **The owner's real data is behind the API on port 5001 and the app on port 5173. Never seed it,
+> never create test records in it.** Your checks use the scratch stack round 6 leaves running: the
+> API on port 5002 over the seeded database `rwrent_check`. To drive the app against it, start a
+> second Vite on port 5174 pointed at it and stop it when you are done:
+> `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`.
+
+- F7-6, the app's half. Every record page shows who created the record and who last changed it, as
+  two facts in the record vocabulary the page already uses ("Created", "Last changed": the name,
+  then the local time; "Not changed since it was created" when there is no change): the vehicle,
+  customer, driver, assignment and company records. On the assignment record each authorization and
+  each interruption shows "Recorded by" with the name in the row's existing secondary text. The
+  names come from the members round 6 adds; "System" only when a name is null and the record was
+  created by the technical actor. `dto.ts` follows the live OpenAPI document of the round-6 build.
+- F7-7. The Overview's "Recent security activity" card names the person on each row, from
+  `actorDisplayName`, in the card's existing small-text style; "System" when it is null.
+- F7-8, the app's half. `Session.Revoked` and `Session.OthersRevoked` get their labels in
+  `src/format/labels.ts` (the labels test asserts both lists), and the audit entry page renders the
+  ended-sessions count of `Session.OthersRevoked`.
+- Tests for each item, rendered from API-shaped data where a signed-in screen is involved;
+  typecheck, tests and build green; no new runtime dependency. Markup is added only where these
+  items ask for it.
+- **The joint check**, on the scratch stack only: the record reads through the API as the seeded
+  people (creator, then last changer after a change by a second person); the two own-revocation
+  entries; the screens rendered by the test suite. The steps that need a password typed into the
+  app are listed in the report for the owner's reviewer, who runs them on ports 5174 and 5002. At
+  the end the owner's API on 5001 runs the round-6 build (round 6 restarts it), the app on 5173 is
+  untouched, and the scratch API on 5002 is left running for the reviewer.
+- Report: `Context/wiring_report.md` rewritten for this run. Commits `Wiring 23: …` for the change
+  with its tests and `Wiring 24: …` for the report. This document is not edited by the agent.
