@@ -1,5 +1,7 @@
 // Mirrors the backend's OpenAPI document (RWRentApi.Api v1, OpenAPI 3.1.1), the contract this app
 // is written against: GET http://localhost:5001/openapi/v1.json on the running API in Development.
+// Since the backend's round 6 the seven record responses name who created and who last changed the
+// record; a list item names nobody, so the two list items that share a record's shape omit both.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -358,7 +360,11 @@ export interface CompanyResponse {
   email: string;
   phoneNumber?: string | null;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export interface CreateCompanyRequest {
@@ -412,7 +418,11 @@ export interface VehicleResponse {
   upcomingCustomerDisplayName?: string | null;
   upcomingPlannedStartAtUtc?: Instant | null;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export interface CreateVehicleRequest {
@@ -463,7 +473,11 @@ export interface CustomerResponse {
   driverId?: Uuid | null;
   isActive: boolean;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export interface CreateCustomerRequest {
@@ -510,7 +524,11 @@ export interface DriverResponse {
   driverLicenseNumber: string;
   isActive: boolean;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export interface CreateDriverRequest {
@@ -558,7 +576,15 @@ export interface RentalAssignmentListItemResponse {
   openInterruptionCount: number;
 }
 
-export interface RentalAssignmentResponse extends RentalAssignmentListItemResponse {
+/**
+ * The record shares the list item's identity and party members but not its four coverage counts
+ * (`openAuthorizationCount`, `openNamedDrivers`, `hasOpenCollectiveAuthorization`,
+ * `openInterruptionCount`): the record carries the authorizations and interruptions themselves.
+ */
+export interface RentalAssignmentResponse extends Omit<
+  RentalAssignmentListItemResponse,
+  'openAuthorizationCount' | 'openNamedDrivers' | 'hasOpenCollectiveAuthorization' | 'openInterruptionCount'
+> {
   note?: string | null;
   /** The explanation recorded when the assignment was cancelled; null when it was not. */
   cancellationNote?: string | null;
@@ -567,7 +593,11 @@ export interface RentalAssignmentResponse extends RentalAssignmentListItemRespon
   customerDriverId?: Uuid | null;
   concurrencyToken: Uuid;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
   driverAuthorizations: AssignmentDriverAuthorizationResponse[];
   interruptions: AssignmentInterruptionResponse[];
 }
@@ -652,7 +682,11 @@ export interface AssignmentDriverAuthorizationResponse {
   note?: string | null;
   concurrencyToken: Uuid;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export type AuthorizationsQuery = PagedQuery & {
@@ -665,7 +699,8 @@ export type AuthorizationsQuery = PagedQuery & {
  * A driver's named authorizations across every assignment, newest first. Search is rejected and
  * SortBy is ignored: the order is fixed.
  */
-export interface DriverAuthorizationHistoryItemResponse extends AssignmentDriverAuthorizationResponse {
+export interface DriverAuthorizationHistoryItemResponse
+  extends Omit<AssignmentDriverAuthorizationResponse, 'createdByDisplayName' | 'updatedByDisplayName'> {
   assignmentStatus: AssignmentStatus;
   vehicleId: Uuid;
   vehiclePlateNumber: string;
@@ -723,7 +758,11 @@ export interface AssignmentInterruptionResponse {
   note: string;
   concurrencyToken: Uuid;
   createdAtUtc: Instant;
+  /** Who created the record, by first and last name at read time; null for the technical actor. */
+  createdByDisplayName?: string | null;
   updatedAtUtc?: Instant | null;
+  /** Who last changed it; null while it was never changed, or when the technical actor did. */
+  updatedByDisplayName?: string | null;
 }
 
 export type InterruptionsQuery = PagedQuery & {
@@ -736,7 +775,8 @@ export type InterruptionsQuery = PagedQuery & {
  * Interruptions across every assignment, oldest first. Search is rejected and SortBy is ignored:
  * the order is fixed.
  */
-export interface InterruptionListItemResponse extends AssignmentInterruptionResponse {
+export interface InterruptionListItemResponse
+  extends Omit<AssignmentInterruptionResponse, 'createdByDisplayName' | 'updatedByDisplayName'> {
   assignmentStatus: AssignmentStatus;
   vehicleId: Uuid;
   vehiclePlateNumber: string;

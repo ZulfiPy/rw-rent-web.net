@@ -38,11 +38,19 @@ const isFlat = (o: Record<string, unknown>) =>
   Object.values(o).every((v) => isScalar(v) || isGrants(v));
 
 /**
+ * The payload keys whose API name is not what a reader should see. `RevokedCount` is the number of
+ * sessions a person ended at once from their profile (`Session.OthersRevoked`, F7-8).
+ */
+const FIELD_LABEL: Record<string, string> = {
+  RevokedCount: 'Sessions ended',
+};
+
+/**
  * "RegistrationExpiresAtUtc" → "Registration Expires At". The payload keeps the API's names; the
  * value is shown in Tallinn time like every other instant (F7-1), so the label no longer claims UTC.
  */
 export const auditFieldLabel = (key: string): string =>
-  key
+  FIELD_LABEL[key] ?? key
     .replace(/([A-Z])/g, ' $1')
     .trim()
     .replace(/^./, (c) => c.toUpperCase())

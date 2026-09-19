@@ -4,7 +4,7 @@ import { qk } from '@/api';
 import { createCompany, deleteCompany, getCompany, updateCompany } from '@/api/companies';
 import type { CompanyResponse } from '@/api/dto';
 import { isApiError, toFailure } from '@/api/problem';
-import { formatLocal } from '@/format';
+import { createdByName, formatLocal, lastChangedByName } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
@@ -224,9 +224,11 @@ export function CompanyProfile() {
             note="There is exactly one operating Company. It is never presented as a multi-row list."
           >
             <FactGrid>
-              <Fact label="Created" mono dim>{formatLocal(co?.createdAtUtc)}</Fact>
-              <Fact label="Last updated" mono={!!co?.updatedAtUtc} dim>
-                {co?.updatedAtUtc ? formatLocal(co.updatedAtUtc) : 'Never'}
+              <Fact label="Created" dim sub={co ? formatLocal(co.createdAtUtc) : null}>
+                {co ? createdByName(co) : '—'}
+              </Fact>
+              <Fact label="Last changed" dim sub={co?.updatedAtUtc ? formatLocal(co.updatedAtUtc) : null}>
+                {co ? lastChangedByName(co) : '—'}
               </Fact>
             </FactGrid>
           </Panel>

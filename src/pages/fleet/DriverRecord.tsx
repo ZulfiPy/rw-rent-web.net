@@ -12,7 +12,7 @@ import {
 import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, LOCAL_TIME_NOTE, STOP_REASON_LABEL, auditActorName,
-  eventLabel, formatLocal, formatLocalStamp,
+  createdByName, eventLabel, formatLocal, formatLocalStamp, lastChangedByName,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -122,7 +122,8 @@ export function DriverRecord() {
   /**
    * The prototype's driver trail: audited events against this record, newest first, with a synthetic
    * Created row when none is stored. Editing a driver is not an audited operation, so in practice
-   * this panel holds the creation and any activation change.
+   * this panel holds the creation and any activation change. The synthetic row names the creator the
+   * record itself carries (F7-6), as the Record panel below does.
    */
   const trail = [...(audit.data?.items ?? [])]
     .sort((x, y) => cmp(y.occurredAtUtc, x.occurredAtUtc));
@@ -386,7 +387,7 @@ export function DriverRecord() {
                         <span className={`${table.sub} ${table.showTablet}`}>Record created</span>
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>Not recorded</td>
+                    <td className={`${table.td} ${table.dim} ${table.foldNarrow}`}>{createdByName(d)}</td>
                     <td className={`${table.td} ${table.mono}`}>{formatLocalStamp(d.createdAtUtc)}</td>
                     <td className={`${table.td} ${table.wrap} ${table.dim} ${table.foldTablet}`}>Record created</td>
                   </tr>
@@ -409,9 +410,11 @@ export function DriverRecord() {
 
       <Panel title="Record">
         <FactGrid>
-          <Fact label="Created" mono dim>{formatLocal(d?.createdAtUtc)}</Fact>
-          <Fact label="Last updated" mono={!!d?.updatedAtUtc} dim>
-            {d?.updatedAtUtc ? formatLocal(d.updatedAtUtc) : 'Never'}
+          <Fact label="Created" dim sub={d ? formatLocal(d.createdAtUtc) : null}>
+            {d ? createdByName(d) : '—'}
+          </Fact>
+          <Fact label="Last changed" dim sub={d?.updatedAtUtc ? formatLocal(d.updatedAtUtc) : null}>
+            {d ? lastChangedByName(d) : '—'}
           </Fact>
           <Fact label="Driver identifier" mono dim span={2}>{d?.id ?? '—'}</Fact>
         </FactGrid>

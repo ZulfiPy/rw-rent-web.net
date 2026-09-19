@@ -22,7 +22,8 @@ const BACKEND_EVENT_TYPES = [
   'RentalAssignment.Cancelled', 'RentalAssignment.PartiesCorrected',
   'RentalAssignment.TimelineCorrected',
   'RoleAssignment.ExpiryChanged', 'RoleAssignment.Granted', 'RoleAssignment.Revoked',
-  'Session.AllRevokedByAdministrator', 'Session.RevokedByAdministrator',
+  'Session.AllRevokedByAdministrator', 'Session.OthersRevoked', 'Session.Revoked',
+  'Session.RevokedByAdministrator',
   'SystemAdministrator.Bootstrapped', 'SystemAdministrator.OfflineRecovery',
   'SystemAdministrator.TransferAccepted', 'SystemAdministrator.TransferCancelled',
   'SystemAdministrator.TransferConfirmationRotated', 'SystemAdministrator.TransferInitiated',
@@ -48,6 +49,12 @@ describe('audit vocabulary', () => {
 
   it('labels the cancellation entry the backend now writes', () => {
     expect(eventLabel('RentalAssignment.Cancelled')).toBe('Rental assignment · Cancelled');
+  });
+
+  it('labels a person\'s own session revocations, which the backend writes since its round 6 (F7-8)', () => {
+    expect(eventLabel('Session.Revoked')).toBe('Session · Revoked');
+    expect(eventLabel('Session.OthersRevoked')).toBe('Session · Others revoked');
+    expect(AUDIT_EVENT_TYPES).toEqual(expect.arrayContaining(['Session.Revoked', 'Session.OthersRevoked']));
   });
 
   it('names every entity type the audit history stores', () => {

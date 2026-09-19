@@ -5,7 +5,7 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { getOverviewSummary } from '@/api/overview';
 import { AssignmentStatus, type SecurityAuditQuery } from '@/api/dto';
-import { ASSIGNMENT_STATUS_LABEL, LOCAL_TIME_NOTE, eventLabel, formatLocal } from '@/format';
+import { ASSIGNMENT_STATUS_LABEL, LOCAL_TIME_NOTE, auditActorName, eventLabel, formatLocal } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
 import { useOpenWork } from './useOpenWork';
@@ -142,10 +142,12 @@ export function Overview() {
     };
   });
 
-  // The five newest entries that are not a routine sign-in or sign-out.
+  // The five newest entries that are not a routine sign-in or sign-out, each naming who acted
+  // (F7-7): the entry's own name for its actor, "System" for the technical actor alone.
   const activity = activityRows(audit.data?.items ?? []).map((a) => ({
     id: a.id,
     event: eventLabel(a.eventType),
+    who: auditActorName(a),
     when: formatLocal(a.occurredAtUtc),
     tint: /Failed|Suspend/.test(a.eventType)
       ? 'var(--bad)'
@@ -297,7 +299,7 @@ export function Overview() {
                     <span aria-hidden="true" className={styles.activityDot} style={{ background: a.tint }} />
                     <span className={styles.activityText}>
                       <span className={styles.activityEvent}>{a.event}</span>
-                      <span className={styles.activityWhen}>{a.when}</span>
+                      <span className={styles.activityWhen}>{a.who} · {a.when}</span>
                     </span>
                   </Link>
                 ))}

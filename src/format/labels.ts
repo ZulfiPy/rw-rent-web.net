@@ -166,7 +166,7 @@ export const AUDIT_EVENTS: Array<[string, string[], string?]> = [
   ['ApplicationUser', ['Suspended', 'Restored', 'NameCorrected'], 'User'],
   ['Registration', ['Submitted', 'EmailConfirmed', 'EmailConfirmationRotated', 'Activated', 'Rejected', 'Reopened', 'Restarted', 'Expired']],
   ['RoleAssignment', ['Granted', 'Revoked', 'ExpiryChanged'], 'Role'],
-  ['Session', ['RevokedByAdministrator', 'AllRevokedByAdministrator']],
+  ['Session', ['RevokedByAdministrator', 'AllRevokedByAdministrator', 'Revoked', 'OthersRevoked']],
   ['Company', ['Created', 'Updated', 'Deleted']],
   ['RentalAssignment', ['Cancelled', 'TimelineCorrected', 'PartiesCorrected'], 'Rental assignment'],
   ['DriverAuthorization', ['Corrected'], 'Driver authorisation'],

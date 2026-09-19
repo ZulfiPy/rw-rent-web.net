@@ -8,7 +8,9 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listVehicles } from '@/api/vehicles';
 import { CustomerType } from '@/api/dto';
 import { toFailure } from '@/api/problem';
-import { ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, formatLocal } from '@/format';
+import {
+  ASSIGNMENT_STATUS_LABEL, CUSTOMER_TYPE_LABEL, createdByName, formatLocal, lastChangedByName,
+} from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
@@ -290,9 +292,11 @@ export function CustomerRecord() {
 
       <Panel title="Record">
         <FactGrid>
-          <Fact label="Created" mono dim>{formatLocal(c?.createdAtUtc)}</Fact>
-          <Fact label="Last updated" mono={!!c?.updatedAtUtc} dim>
-            {c?.updatedAtUtc ? formatLocal(c.updatedAtUtc) : 'Never'}
+          <Fact label="Created" dim sub={c ? formatLocal(c.createdAtUtc) : null}>
+            {c ? createdByName(c) : '—'}
+          </Fact>
+          <Fact label="Last changed" dim sub={c?.updatedAtUtc ? formatLocal(c.updatedAtUtc) : null}>
+            {c ? lastChangedByName(c) : '—'}
           </Fact>
           <Fact label="Customer identifier" mono dim span={2}>{c?.id ?? '—'}</Fact>
         </FactGrid>

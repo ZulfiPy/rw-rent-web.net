@@ -8,7 +8,7 @@ import { CustomerType, VehicleAvailability } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, BODY_TYPE_LABEL, CUSTOMER_TYPE_LABEL, FUEL_LABEL, GEARBOX_LABEL,
-  VEHICLE_AVAILABILITY_LABEL, formatLocal,
+  VEHICLE_AVAILABILITY_LABEL, createdByName, formatLocal, lastChangedByName,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -238,9 +238,11 @@ export function VehicleRecord() {
 
       <Panel title="Record">
         <FactGrid>
-          <Fact label="Created" mono dim>{formatLocal(v?.createdAtUtc)}</Fact>
-          <Fact label="Last updated" mono={!!v?.updatedAtUtc} dim>
-            {v?.updatedAtUtc ? formatLocal(v.updatedAtUtc) : 'Never'}
+          <Fact label="Created" dim sub={v ? formatLocal(v.createdAtUtc) : null}>
+            {v ? createdByName(v) : '—'}
+          </Fact>
+          <Fact label="Last changed" dim sub={v?.updatedAtUtc ? formatLocal(v.updatedAtUtc) : null}>
+            {v ? lastChangedByName(v) : '—'}
           </Fact>
           <Fact label="Vehicle identifier" mono dim span={2}>{v?.id ?? '—'}</Fact>
         </FactGrid>

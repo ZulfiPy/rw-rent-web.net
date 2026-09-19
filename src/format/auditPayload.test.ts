@@ -37,3 +37,13 @@ describe('audit payloads read in Tallinn time (F7-1)', () => {
     ]);
   });
 });
+
+describe('the ended-sessions count of a revoke-others entry (F7-8)', () => {
+  test('reads "Sessions ended" with the count, as the API stores it', () => {
+    // The payload exactly as the round-6 API returns it: jsonb spaces the colon.
+    expect(diffRows(null, '{"RevokedCount": 3}')).toEqual([
+      { label: 'Sessions ended', value: '3', unchanged: false },
+    ]);
+    expect(auditFieldLabel('RevokedCount')).toBe('Sessions ended');
+  });
+});

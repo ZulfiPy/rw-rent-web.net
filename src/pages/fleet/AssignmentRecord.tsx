@@ -11,8 +11,8 @@ import {
 import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, AUTHORIZATION_TYPE_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL,
-  INTERRUPTION_REASON_LABEL, LOCAL_TIME_NOTE, STOP_REASON_LABEL, auditActorName, eventLabel, formatLocal,
-  formatLocalStamp,
+  INTERRUPTION_REASON_LABEL, LOCAL_TIME_NOTE, STOP_REASON_LABEL, auditActorName, createdByName, eventLabel,
+  formatLocal, formatLocalStamp, lastChangedByName, recordedBy,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -240,9 +240,11 @@ export function AssignmentRecord() {
               >
                 {formatLocal(a?.closedAtUtc)}
               </Fact>
-              <Fact label="Created" mono dim>{formatLocal(a?.createdAtUtc)}</Fact>
-              <Fact label="Last updated" mono={!!a?.updatedAtUtc} dim>
-                {a?.updatedAtUtc ? formatLocal(a.updatedAtUtc) : 'Never'}
+              <Fact label="Created" dim sub={a ? formatLocal(a.createdAtUtc) : null}>
+                {a ? createdByName(a) : '—'}
+              </Fact>
+              <Fact label="Last changed" dim sub={a?.updatedAtUtc ? formatLocal(a.updatedAtUtc) : null}>
+                {a ? lastChangedByName(a) : '—'}
               </Fact>
             </FactGrid>
           </Panel>
@@ -306,6 +308,7 @@ export function AssignmentRecord() {
                           <span className={`${cards.sub} ${styles.cardSubMono}`}>{licence}</span>
                         ) : null}
                         {!named && z.note ? <span className={cards.sub}>{z.note}</span> : null}
+                        <span className={cards.sub}>{recordedBy(z)}</span>
                       </span>
                       <Chip tone={named ? 'info' : 'mute'} dot={named ? '50%' : '2px'}>
                         {AUTHORIZATION_TYPE_LABEL[z.authorizationType]}
@@ -377,6 +380,7 @@ export function AssignmentRecord() {
                             )}
                             {licence ? <span className={table.subMono}>{licence}</span> : null}
                             {!named && z.note ? <span className={table.sub}>{z.note}</span> : null}
+                            <span className={table.sub}>{recordedBy(z)}</span>
                           </span>
                         </td>
                         <td className={table.td}>
@@ -460,6 +464,7 @@ export function AssignmentRecord() {
                       <span className={cards.sub}>
                         {i.endedAtUtc ? `to ${formatLocal(i.endedAtUtc)}` : 'ongoing'}
                       </span>
+                      <span className={cards.sub}>{recordedBy(i)}</span>
                     </span>
                     <Chip
                       tone={i.endedAtUtc ? 'mute' : 'bad'}
@@ -520,6 +525,7 @@ export function AssignmentRecord() {
                             {INTERRUPTION_REASON_LABEL[i.reason]}
                           </Chip>
                           <span className={`${table.sub} ${styles.showPanel}`}>{i.note}</span>
+                          <span className={table.sub}>{recordedBy(i)}</span>
                         </span>
                       </td>
                       <td className={`${table.td} ${table.dim}`}>
@@ -570,8 +576,8 @@ export function AssignmentRecord() {
               >
                 {a?.concurrencyToken ?? '—'}
               </Fact>
-              <Fact label="Last updated" mono={!!a?.updatedAtUtc} dim>
-                {a?.updatedAtUtc ? formatLocal(a.updatedAtUtc) : 'Never'}
+              <Fact label="Last changed" dim sub={a?.updatedAtUtc ? formatLocal(a.updatedAtUtc) : null}>
+                {a ? lastChangedByName(a) : '—'}
               </Fact>
             </FactGrid>
           </Panel>
