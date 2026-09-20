@@ -112,7 +112,12 @@ database keeps the seeded dataset.
    was asked on 2026-09-20). The facts, the three dead ends of today's rules and the points to
    settle are in the backend's backlog, item 21. The two are designed together because they must
    agree on what is left of a deleted record. On this side it will mean a history view on each
-   record page and the one deletions page.
+   record page and the one deletions page. Decided 2026-09-20: the right to delete is given only by
+   the System Administrator and only to a user in the company's email domain (`@rwrent.ee`). The
+   owner's order: Claude Design first prototypes the deletions page as the administrator sees it
+   (the prompt was handed over on 2026-09-20; prototype only, no React, no zip); when the owner
+   confirms it, the prototype of how the right is given follows. The confirmed prototype file
+   replaces `Context/prototype/RW-Rent.dc.html`, and the implementation agent ports from it.
 
 ## 5. Testing — where it stands (2026-09-17)
 
