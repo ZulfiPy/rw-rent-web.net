@@ -104,6 +104,15 @@ database keeps the seeded dataset.
    `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
    road-tax or inspection dates). The app ships without them until that phase is opened.
+8. **Next phase, not yet brainstormed: the full change history and a deletions page.** The owner
+   decided on 2026-09-19 that every change on every record is tracked (who, what, when, the old and
+   the new value), and on 2026-09-20 that a record that is not needed can really be deleted, on one
+   separate page and not by a delete button on every screen, allowed only by the System
+   Administrator (whether the administrator alone presses it or gives the right to a chosen person
+   was asked on 2026-09-20). The facts, the three dead ends of today's rules and the points to
+   settle are in the backend's backlog, item 21. The two are designed together because they must
+   agree on what is left of a deleted record. On this side it will mean a history view on each
+   record page and the one deletions page.
 
 ## 5. Testing — where it stands (2026-09-17)
 
@@ -195,6 +204,27 @@ the merge (§3).
 > after it, in this worktree, against the API rebuilt from that round. F7-3 is the backend's; F7-4's
 > app half uses the names round 5 adds. The owner has allowed the real data of 2026-09-18 to be
 > replaced by the sample data for the agent's checks; the check continues on real data afterwards.
+>
+> **Status: second batch IMPLEMENTED 2026-09-19, verified 2026-09-20** (backend round 6
+> `fed99c2`…`501e75d`; app `8a7e5ac` Wiring 23 and `6200b58` Wiring 24; report
+> `Context/wiring_report.md`). Everything ran on the scratch stack (the API on 5002 over the seeded
+> `rwrent_check`, the app on 5174); the owner's data in `rwrent_v1` was read only, and its records
+> and people were the same before and after. Backend 161 + 425 tests green twice, app 253 tests,
+> typecheck and build green; the owner's API on 5001 serves the round-6 contract. The reviewer ran
+> the report's password steps in a headless browser with its own contexts: the vehicle, customer,
+> driver, assignment and company pages read "Created" and "Last changed" with the person and the
+> local time, nothing says "Last updated" any more, and a seeded vehicle reads "Not changed since it
+> was created"; Karlis and then Signe changed one vehicle's colour in the app and "Last changed"
+> named each of them in turn while "Created" stayed; every authorization and interruption row reads
+> "Recorded by Karlis Zvaigzne", as table rows and as phone cards at 700 pixels; the administrator's
+> Corrections tab names the last changer; the Overview's activity card reads "Dita Smite · 19 Sep,
+> 09:41" on each row; Dita ended one other session and then every other session from her profile,
+> each leaving exactly one entry the Principal reads under the filters "Session · Revoked" and
+> "Session · Others revoked", the ended sessions answered 401, the entry page reads "Sessions ended
+> 2", and with no other session the button is disabled ("This is your only active session.") and
+> nothing is written. One remark went to the backend backlog (item 22): the ended-sessions count
+> includes sessions that had already lapsed, so it can exceed what the profile page showed. The
+> scratch stack was removed after the check (5174 and 5002 stopped, `rwrent_check` dropped).
 
 - F7-1. **Times shown in UTC where the owner reads local time.** Seen on the Security audit page
   (column "OCCURRED (UTC)", the page description says "All times UTC"): entries read three hours
@@ -279,7 +309,7 @@ round-5 build, clear Mailpit, and leave both apps running. The commands are in t
 verification section. Commits `Wiring 21: …` for the change with its tests and `Wiring 22: …` for
 the report. This document is not edited by the agent.
 
-### Second batch — collecting (from 2026-09-18, after the first batch was verified on real data)
+### Second batch (collected from 2026-09-18, built 2026-09-19, verified 2026-09-20)
 
 The owner confirmed on real data that F7-1 to F7-4 work (local times, the driver link proposed and
 findable, the sign-out visible to the Principal, the administrator named). New observations:
@@ -306,35 +336,14 @@ findable, the sign-out visible to the Principal, the administrator named). New o
   (backend backlog item 19: `Session.Revoked` and `Session.OthersRevoked`, stamped with the owner's
   Company, in the same save as the revocation; the app lists them and gets labels for them).
 
-**Second batch authorised 2026-09-19.** It runs in the same agent run as the backend's round 6
-(`RWRentApi-wiring/Context/round6_spec_and_plan.md`), after it, in this worktree.
-
-> **The owner's real data is behind the API on port 5001 and the app on port 5173. Never seed it,
-> never create test records in it.** Your checks use the scratch stack round 6 leaves running: the
-> API on port 5002 over the seeded database `rwrent_check`. To drive the app against it, start a
-> second Vite on port 5174 pointed at it and stop it when you are done:
-> `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`.
-
-- F7-6, the app's half. Every record page shows who created the record and who last changed it, as
-  two facts in the record vocabulary the page already uses ("Created", "Last changed": the name,
-  then the local time; "Not changed since it was created" when there is no change): the vehicle,
-  customer, driver, assignment and company records. On the assignment record each authorization and
-  each interruption shows "Recorded by" with the name in the row's existing secondary text. The
-  names come from the members round 6 adds; "System" only when a name is null and the record was
-  created by the technical actor. `dto.ts` follows the live OpenAPI document of the round-6 build.
-- F7-7. The Overview's "Recent security activity" card names the person on each row, from
-  `actorDisplayName`, in the card's existing small-text style; "System" when it is null.
-- F7-8, the app's half. `Session.Revoked` and `Session.OthersRevoked` get their labels in
-  `src/format/labels.ts` (the labels test asserts both lists), and the audit entry page renders the
-  ended-sessions count of `Session.OthersRevoked`.
-- Tests for each item, rendered from API-shaped data where a signed-in screen is involved;
-  typecheck, tests and build green; no new runtime dependency. Markup is added only where these
-  items ask for it.
-- **The joint check**, on the scratch stack only: the record reads through the API as the seeded
-  people (creator, then last changer after a change by a second person); the two own-revocation
-  entries; the screens rendered by the test suite. The steps that need a password typed into the
-  app are listed in the report for the owner's reviewer, who runs them on ports 5174 and 5002. At
-  the end the owner's API on 5001 runs the round-6 build (round 6 restarts it), the app on 5173 is
-  untouched, and the scratch API on 5002 is left running for the reviewer.
-- Report: `Context/wiring_report.md` rewritten for this run. Commits `Wiring 23: …` for the change
-  with its tests and `Wiring 24: …` for the report. This document is not edited by the agent.
+**Second batch built 2026-09-19** (its specification was removed from here as implemented; the
+report and the code carry it). F7-6: the five record pages show "Created" and "Last changed" with
+the person and the local time, and each authorization and interruption row of an assignment shows
+"Recorded by"; the names come from `createdByDisplayName` and `updatedByDisplayName` (backend
+AUDIT-010), and "System" appears only for the technical actor. F7-7: the Overview's activity card
+names the person on each row. F7-8: `Session.Revoked` and `Session.OthersRevoked` have labels and
+filters, and the entry page reads the count as "Sessions ended". Rule kept from this batch: checks
+never run on the owner's data; they run on a scratch stack (API 5002 over a seeded `rwrent_check`,
+app 5174 started with `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174
+--strictPort`) in a browser profile of their own, because `localhost` cookies are shared across
+ports and a sign-in on 5174 in the owner's profile would sign them out of 5173.
