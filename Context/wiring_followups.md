@@ -118,6 +118,16 @@ database keeps the seeded dataset.
    (the prompt was handed over on 2026-09-20; prototype only, no React, no zip); when the owner
    confirms it, the prototype of how the right is given follows. The confirmed prototype file
    replaces `Context/prototype/RW-Rent.dc.html`, and the implementation agent ports from it.
+   **2026-09-21: the owner looked at the prototype of the page: "it looks fine", "the base is good",
+   and no further rounds on the prototype.** Any remaining changes to the look are made in the React
+   app by the implementation agent, on the owner's directions. The owner's condition for the
+   handover: only what belongs to Delete records is taken, because Claude Design's copy of the React
+   app predates the wiring and would bring older versions of other components. The handover asked of
+   Claude Design therefore contains no React at all: one zip with the approved prototype file, a
+   handover note for this one feature (how to reach every state, reused pieces, new pieces, layout
+   values at 1512 / 834 / 402, the copy deck, anything invented), the new CSS rules alone, and the
+   added mock data. It is unpacked beside the repositories, never into them; the implementation
+   agent builds the page from it inside the current app, as the account screens were ported.
 
 ## 5. Testing — where it stands (2026-09-17)
 
