@@ -1,7 +1,8 @@
 import {
   ApplicationUserRole, ApplicationUserStatus, AssignmentDriverAuthorizationType, AssignmentStatus,
   AuthorizationStopReason, BillingImpact, BodyType, CustomerType, FuelType, GearboxType,
-  InterruptionReason, SystemAdministratorTransferStatus, VehicleAvailability,
+  InterruptionReason, RecordDeletionReason, RecordKind, SystemAdministratorTransferStatus,
+  VehicleAvailability,
 } from '@/api/dto';
 
 /** Display strings, keyed by raw wire value. No component builds a label itself. */
@@ -127,6 +128,24 @@ export const TRANSFER_STATUS_LABEL: Record<SystemAdministratorTransferStatus, st
   [SystemAdministratorTransferStatus.Accepted]: 'Accepted',
   [SystemAdministratorTransferStatus.Cancelled]: 'Cancelled',
   [SystemAdministratorTransferStatus.Expired]: 'Expired',
+};
+
+/** Why a record was deleted, as the Delete records page offers it and reads it back. */
+export const DELETION_REASON_LABEL: Record<RecordDeletionReason, string> = {
+  [RecordDeletionReason.EnteredByMistake]: 'Entered by mistake',
+  [RecordDeletionReason.PracticeOrTestRecord]: 'Practice or test record',
+  [RecordDeletionReason.NoLongerNeeded]: 'No longer needed',
+  [RecordDeletionReason.Other]: 'Other',
+};
+
+/** A deletable record's kind, as the page's tabs, dialog and history name it. */
+export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
+  [RecordKind.RentalAssignment]: 'Rental assignment',
+  [RecordKind.DriverAuthorization]: 'Driver authorization',
+  [RecordKind.Interruption]: 'Interruption',
+  [RecordKind.Vehicle]: 'Vehicle',
+  [RecordKind.Customer]: 'Customer',
+  [RecordKind.Driver]: 'Driver',
 };
 
 /**
