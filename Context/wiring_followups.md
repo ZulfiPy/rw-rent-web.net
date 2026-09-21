@@ -370,15 +370,16 @@ ports and a sign-in on 5174 in the owner's profile would sign them out of 5173.
 
 ## 8. Follow-up 8 — the Delete records page
 
-> **Status: AUTHORISED 2026-09-21.** It runs in the same agent run as the backend's round 7
-> (`RWRentApi-wiring/Context/round7_spec_and_plan.md`), after it, in this worktree, against the API
-> rebuilt from that round. The design source is `Context/prototype/delete-records/HANDOVER.md`
+> **Status: SPECIFIED 2026-09-21, NOT YET HANDED OVER.** The owner decided one side at a time: the
+> backend's round 7 (`RWRentApi-wiring/Context/round7_spec_and_plan.md`) is built first, reviewed,
+> and its code read by the owner. This follow-up then runs in an agent run of its own, in this
+> worktree, against the API built from that round; its prompt is written at that point. The design source is `Context/prototype/delete-records/HANDOVER.md`
 > with `Context/prototype/RW-Rent.dc.html` (its line numbers refer to that file); nothing else is
 > taken from the prototype, and no existing screen changes except where this section says so.
 >
 > **The owner's real data is behind the API on port 5001 and the app on port 5173. Never seed it,
-> never create or delete a record in it.** Your checks use the scratch stack round 7 leaves
-> running: the API on 5002 over the seeded `rwrent_check`, and a second Vite on 5174
+> never create or delete a record in it.** Your checks use a scratch stack like round 7's (the run's prompt says whether one is still
+> running or has to be built): the API on 5002 over the seeded `rwrent_check`, and a second Vite on 5174
 > (`VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`), in a browser
 > profile of its own, because `localhost` cookies are shared across ports.
 
@@ -456,9 +457,8 @@ dependency; no existing test changed except the three literals.
 **The joint check**, on the scratch stack only, as the seeded administrator: through the API by
 script, every state of the handover's §a that the API can show; the screens rendered by the test
 suite and from the live answers; the steps that need a password typed into the app listed in the
-report for the owner's reviewer, who runs them on 5174. At the end the owner's API on 5001 runs the
-round-7 build (round 7 restarts it), the app on 5173 is untouched, and the scratch API on 5002 is
-left running.
+report for the owner's reviewer, who runs them on 5174. The owner's API on 5001 and the app on 5173 are not touched; the scratch API
+on 5002 is left running.
 
 Report: `Context/wiring_report.md` rewritten for this run. Commits `Wiring 25: …` for the change
 with its tests and `Wiring 26: …` for the report, **local only: nothing is pushed in this run.** The
