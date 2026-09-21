@@ -94,7 +94,18 @@ const BACKEND_CODES: readonly string[] = [
   'drivers.email_conflict',
   'drivers.not_found',
   'drivers.personal_id_conflict',
-  'drivers.phone_number_conflict',];
+  'drivers.phone_number_conflict',
+  // record_deletions (10) — the backend's round 7, RecordDeletionErrors.cs (Follow-up 8)
+  'record_deletions.blocked',
+  'record_deletions.concurrency_conflict',
+  'record_deletions.confirmation_required',
+  'record_deletions.forbidden',
+  'record_deletions.kind_invalid',
+  'record_deletions.not_found',
+  'record_deletions.note_required',
+  'record_deletions.note_too_long',
+  'record_deletions.reason_required',
+  'record_deletions.record_id_required',];
 
 describe('every code the app knows is one the API sends', () => {
   test('no entry names a code the backend does not have', () => {

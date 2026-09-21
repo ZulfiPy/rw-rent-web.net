@@ -83,6 +83,17 @@ const DRIVER: Record<string, string> = {
   'drivers.birth_date_breaks_open_authorization': 'dateOfBirth',
 };
 
+/**
+ * The Delete records dialog (the backend's round 7). The four refusals name the dialog's own inputs;
+ * `kind_invalid` and `record_id_required` name nothing a person types, so they stay form-level.
+ */
+const RECORD_DELETE: Record<string, string> = {
+  'record_deletions.reason_required': 'reason',
+  'record_deletions.note_required': 'note',
+  'record_deletions.note_too_long': 'note',
+  'record_deletions.confirmation_required': 'confirmed',
+};
+
 const BY_OP: Record<string, Record<string, string>> = {
   'assignment-create': {
     ...PARTIES,
@@ -124,6 +135,7 @@ const BY_OP: Record<string, Record<string, string>> = {
   'driver-create': DRIVER,
   'driver-edit': DRIVER,
   'correct-parties': PARTIES,
+  'record-delete': RECORD_DELETE,
   'correct-timeline': {
     ...PLANNED_DATES,
     'rental_assignments.return_time_invalid': 'closedAtUtc',
