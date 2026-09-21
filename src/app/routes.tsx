@@ -19,6 +19,7 @@ import { Drivers } from '@/pages/fleet/Drivers';
 import { DriverRecord } from '@/pages/fleet/DriverRecord';
 import { CompanyProfile } from '@/pages/admin/CompanyProfile';
 import { SystemAdministrator } from '@/pages/admin/SystemAdministrator';
+import { DeleteRecords } from '@/pages/admin/DeleteRecords';
 import { Profile } from '@/pages/account/Profile';
 
 /** What the navigation shows for a destination it offers. Absent for a route it does not. */
@@ -178,6 +179,12 @@ export const ROUTES: readonly AppRoute[] = [
       label: 'System Administrator',
       icon: 'admin_panel_settings',
     },
+  },
+  {
+    path: '/delete-records',
+    element: <DeleteRecords />,
+    permission: 'Records.Delete',
+    nav: { group: 'Administration', label: 'Delete records', icon: 'delete_sweep' },
   },
   {
     path: '/profile',
