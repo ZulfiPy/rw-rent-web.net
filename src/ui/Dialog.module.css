@@ -134,6 +134,9 @@
 .noteTitle { display: block; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
 .note[data-tone='warn'] { background: var(--warn-soft); border-color: var(--warn-line); color: var(--fg-2); }
 .note[data-tone='warn'] .noteIcon { color: var(--warn); }
+/* The destructive banner: the same recipe as the bad-tone failure banner above. */
+.note[data-tone='bad'] { background: var(--bad-soft); border-color: var(--bad-line); color: var(--fg-2); }
+.note[data-tone='bad'] .noteIcon { color: var(--bad); }
 
 .footer {
   flex: none;

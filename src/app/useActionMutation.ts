@@ -14,11 +14,17 @@ import { useGatedMutation } from './submitOnce';
  * `busy` is still what the dialog renders; the gate is what actually decides, because it closes
  * before React re-renders and `isPending` does not.
  */
-export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }: {
+export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone, refusal }: {
   op: string;
   mutationFn: (vars: TVars) => Promise<unknown>;
   invalidate: readonly (readonly unknown[])[];
   onDone: () => void;
+  /**
+   * A dialog's own reading of a refusal, tried before the shared one. The Delete records dialog
+   * shows a record that became blocked or left the list the way a concurrency conflict is shown,
+   * with Refresh (Follow-up 8); null leaves the refusal to `toFailure`.
+   */
+  refusal?: (error: unknown) => Failure | null;
 }) {
   const queryClient = useQueryClient();
   const reseed = useReseed();
@@ -28,7 +34,7 @@ export function useActionMutation<TVars>({ op, mutationFn, invalidate, onDone }:
   // could never retry.
   const mutation = useGatedMutation({
     mutationFn,
-    onError: (error: unknown) => setFailure(toFailure(error, op)),
+    onError: (error: unknown) => setFailure(refusal?.(error) ?? toFailure(error, op)),
     onSuccess: async () => {
       setFailure(null);
       await Promise.all(invalidate.map((queryKey) => queryClient.invalidateQueries({ queryKey })));

@@ -25,6 +25,7 @@ import {
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { Dialog, DialogNote, DialogSection as Section, dialogStyles } from '@/ui/Dialog';
+import { CheckCard } from '@/ui/CheckCard';
 import { Field, fieldStyles as f } from '@/ui/Field';
 
 export type AssignmentDialogState =
@@ -130,25 +131,6 @@ function EnumSelect<T extends number>({ label, value, options, labels, error, re
         {options.map((o) => <option key={o} value={o}>{labels[o]}</option>)}
       </select>
     </Field>
-  );
-}
-
-/** The prototype's checkbox card: a decision that opens a section, locked when a rule fixes it. */
-function CheckCard({ label, hint, checked, locked, onChange }: {
-  label: string;
-  hint: string;
-  checked: boolean;
-  locked?: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <label className={f.card} data-checked={checked} data-locked={locked ? 'true' : undefined}>
-      <input type="checkbox" checked={checked} disabled={locked} onChange={(e) => onChange(e.target.checked)} />
-      <span className={f.cardBody}>
-        <span className={f.cardTitle}>{label}</span>
-        <span className={f.cardHint}>{hint}</span>
-      </span>
-    </label>
   );
 }
 

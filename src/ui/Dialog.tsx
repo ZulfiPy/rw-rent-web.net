@@ -19,12 +19,12 @@ function FailureBanner({ failure, onRefresh }: { failure: Failure; onRefresh?: (
   const tone = failure.kind === 'stale' ? 'warn' : 'bad';
   const icon = failure.kind === 'stale' ? 'history' : failure.kind === 'form' ? 'warning' : 'error';
   const title =
-    failure.kind === 'stale' ? 'This record changed while you had it open.'
+    failure.kind === 'stale' ? failure.message
       : failure.kind === 'forbidden' ? 'Not permitted'
         : failure.kind === 'unauthorized' ? 'Your session has ended'
           : failure.kind === 'conflict' ? 'The change was refused' : null;
   const body =
-    failure.kind === 'stale' ? 'Refresh to load the current values, then try again.'
+    failure.kind === 'stale' ? failure.detail ?? 'Refresh to load the current values, then try again.'
       : failure.kind === 'unauthorized' ? 'Sign in again to continue.'
         : 'message' in failure ? failure.message : '';
 
@@ -65,11 +65,12 @@ export function DialogSection({ title, cols = 2, note, children }: {
 
 /**
  * The caveat under a section, and — with a tone and a title — the callout a dialog opens with.
- * The titled form is the prototype's box: a bold line naming the case, then what it means.
+ * The titled form is the prototype's box: a bold line naming the case, then what it means. `bad` is
+ * the destructive dialog's banner, "This cannot be undone" (Follow-up 8).
  */
 export function DialogNote({ icon = 'info', tone, title, children }: {
   icon?: string;
-  tone?: 'warn';
+  tone?: 'warn' | 'bad';
   title?: string;
   children: ReactNode;
 }) {

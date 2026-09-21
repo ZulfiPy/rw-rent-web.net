@@ -36,7 +36,13 @@ export type Failure =
    * matched rather than a resource list. Sending a token back is limited to DTOs that expose one;
    * the banner and its Refresh apply either way.
    */
-  | { kind: 'stale'; message: string }
+  | {
+    kind: 'stale';
+    /** The banner's bold line: STALE_MESSAGE for a concurrency conflict. */
+    message: string;
+    /** What to do about it, under the bold line; the concurrency conflict's own words when absent. */
+    detail?: string;
+  }
   /** a 409 whose code names no input → red conflict banner above the footer. */
   | { kind: 'conflict'; message: string; code?: string }
   /** 403 → the action should never have been offered. */
