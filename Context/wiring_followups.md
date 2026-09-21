@@ -370,104 +370,37 @@ ports and a sign-in on 5174 in the owner's profile would sign them out of 5173.
 
 ## 8. Follow-up 8 — the Delete records page
 
-> **Status: AUTHORISED 2026-09-21.** The owner decided one side at a time: the backend's round 7
-> (`RWRentApi-wiring/Context/round7_spec_and_plan.md`, report `Context/round7_report.md`) was built
-> first, verified by the reviewer and its code read and approved by the owner. This follow-up runs
-> in an agent run of its own, in this worktree only. **Since 2026-09-21 the owner's API on 5001
-> serves the round-7 build: the deletion is live on the owner's real data, and the owner's app on
-> 5173 runs from this worktree with hot reload, so the page appears there as it is written. The
-> agent never opens 5173, never signs in there and never calls 5001.** The design source is `Context/prototype/delete-records/HANDOVER.md`
-> with `Context/prototype/RW-Rent.dc.html` (its line numbers refer to that file); nothing else is
-> taken from the prototype, and no existing screen changes except where this section says so.
->
-> **The owner's real data is behind the API on port 5001 and the app on port 5173. Never seed it,
-> never create or delete a record in it.** Your checks use a scratch stack like round 7's, which you build yourself (its report §7; none is
-> running): the API on 5002 over the seeded `rwrent_check`, and a second Vite on 5174
-> (`VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`), in a browser
-> profile of its own, because `localhost` cookies are shared across ports.
+> **Status: IMPLEMENTED 2026-09-21, verified the same day** (backend round 7, 35 commits up to
+> `eca6ed1`; app `2f73fe8`…`9ddf236` Wiring 25 in seven grouped commits and `d88d38e` Wiring 26;
+> report `Context/wiring_report.md`). Its specification was removed from here as implemented; the
+> report, the rules (`DELETE-001…` in the backend's `business_rules.md`) and the code carry it. The
+> agent's report said "pushed" while GitHub did not have the eight commits; the reviewer pushed them
+> after the check. Typecheck, 305 tests and the build are green. The reviewer ran the report's
+> password steps in a headless browser on the scratch stack (API 5002 over a seeded `rwrent_check`,
+> app 5174): a Principal has no entry and the address answers "Not available to you"; the
+> administrator has it after System Administrator; the banner, the six tabs with counts, Show
+> changing the counts and bringing Clear filters, the search cleared and Show kept on a change of
+> kind; a blocked vehicle, a driver with both reasons in one sentence and the only open
+> authorization of an Active rental, each with its reason, its linked records and a disabled
+> Delete… carrying the reason; "Nothing to clean up"; a deletion through the dialog (the submit
+> locked until a reason and the tick, and a note for Other), after which the row leaves, the count
+> drops, the confirmation line and Recently deleted show it and the link opens an entry with the
+> Record fact, its hint and "Deleted record"; "This rental is active" with its parts counted; a
+> conflict raised by a Fleet Manager planning a rental on the vehicle while the dialog was open,
+> shown as "This vehicle now has a rental assignment. Refresh the list." with Refresh, after which
+> the row is Blocked; at 402 pixels cards with full-width 44-pixel buttons, no sideways scroll, the
+> dialog as a sheet and Recently deleted as cards; the audit's filter offering the six events, a
+> Principal reading them, and a rental's entry showing "Deleted authorizations" and "Deleted
+> interruptions". The owner's API, app and data were never used; `rwrent_v1` holds no deletion.
+> Open from the run, both for the backend's next round: the record label of an interruption reads
+> the reason's API name ("ScheduledMaintenance"; the owner was asked whether it should read in
+> words), and a blocking authorization cannot link to its rental because the API's blocking record
+> does not carry the rental's id. `Context/prototype/delete-records/` stays until the owner's own
+> check of the page is done, then it is removed.
 
-**What is built.** One page, `/delete-records`, in the Administration group after System
-Administrator, label "Delete records", icon `delete_sweep`, permission `Records.Delete` (added to
-`PERMISSIONS`; only the administrator holds it today). It is a port of the handover: the page
-header, the bad-tone banner "Deleted means gone", the six-kind tab strip with counts
-(`RecordTabs`), the filter row (search, "Show": Out of use / Everything, Clear filters), the list
-table of the chosen kind with the "Deletion" chip (Ready / Blocked, the reason and the linked
-blocking records as the cell's secondary text) and the row's small danger "Delete…", the phone
-cards that carry their own action, the empty state, the delete dialog modelled on the app's
-`DeleteCompany`, and the "Recently deleted" panel. Columns, widths, folding, card layout, and every
-string are the handover's (§d, §e), built from the app's existing pieces: `list.module.css`,
-`Filters`, `table.module.css` (the quiet link exists as `quietLink`), `cards.module.css`,
-`Pagination`, `EmptyState`, `Chip`, `Button`, `Panel` with a `data-panel` table, `Dialog`,
-`useActionMutation`. The selected kind, the filter, the search and the page live in the URL; the
-search and the page number reset when the kind changes, "Show" does not.
-
-**The server decides.** Whether a row is Ready or Blocked, why, and which records block it come
-from the API (`deletion.state`, `deletion.blocks` with `reason`, `count` and the first five
-`records`); the app only words them, with the handover's sentences. The app never re-implements the
-rules. The lists, the counts, the deletion and the deletions list are round 7's §6 and §7;
-`dto.ts` follows the live OpenAPI document of that build, and a new `src/api/recordDeletions.ts`
-with its `qk` keys carries them.
-
-**Where the app wins over the prototype.**
-
-1. The app has no toast. After a deletion the dialog closes, the row leaves, the counts and
-   "Recently deleted" reload, and one confirmation line appears above the table in the app's
-   existing note vocabulary: "<Kind> deleted: <record label>. Written to the security audit.", with
-   a link to the entry for a reader who may read the audit. It goes away at the next deletion,
-   change of kind or reload. A successful deletion also invalidates that kind's ordinary queries,
-   the overview and the audit.
-2. A blocked "Delete…" is the app's `blockedReason` button: disabled, the reason as its hint.
-   Pressing it does nothing; the reason is already written in the row.
-3. Times are local everywhere, as in the rest of the app. The prototype's "All times UTC." on
-   ordinary audit entries is the prototype's age, not a requirement; no page source may contain
-   that word (`surfaces.test.ts`).
-4. The dialog's banner is bad-tone: `DialogNote` gains a `bad` tone from the banner CSS that
-   already exists. "This rental is active" replaces "This cannot be undone" for an Active rental.
-5. `CheckCard` moves from `AssignmentDialogs.tsx` into `src/ui` and is used for "I understand
-   this cannot be undone". The submit stays blocked (`submitBlocked`) until there is a reason, a
-   note when the reason is Other, and the tick.
-6. A refusal because the record is now blocked or gone (`record_deletions.blocked`,
-   `record_deletions.not_found`) is shown with Refresh, like the concurrency conflict
-   (`record_deletions.concurrency_conflict`, which already is): Refresh reloads the list and closes
-   the dialog. Field refusals go to their fields through `codes.ts` (op `record-delete`).
-7. The interruptions search placeholder is "Note, plate or customer": the API does not search
-   reason names.
-8. The link to an audit entry, in "Recently deleted" and in the confirmation line, is a link only
-   for a reader with `SecurityAudit.ReadCompany`; otherwise plain text.
-
-**The two additions outside the page.** The six events `RentalAssignment.Deleted`,
-`DriverAuthorization.Deleted`, `Interruption.Deleted`, `Vehicle.Deleted`, `Customer.Deleted`,
-`Driver.Deleted` join `AUDIT_EVENTS` (the Driver authorisation label keeps the app's spelling), so
-the list and its filter show them. The audit entry page of such an entry shows a "Record" fact
-with the payload's `RecordLabel` and the hint "The record was deleted, so there is nothing to
-open.", the reason as usual, and instead of "Recorded values" a panel "Deleted record" with the
-payload's scalar members as facts (`RecordLabel`, `DeletionReason`, `DeletionNote` are not repeated
-there), and for a rental two more panels, "Deleted authorizations" and "Deleted interruptions",
-one group per array element. `auditPayload.ts` learns this one shape; every other payload renders
-as before.
-
-**Tests.** The catalogue literals follow (`routes.test.ts`: the administrator's persona and a
-refused `/delete-records` for the others; `labels.test.ts`; `codes.test.ts`). New: the wording of
-each block reason with singular and plural counts and the combined driver sentence; the payload
-reader (a vehicle, a rental with parts, a malformed payload falling back as today); render tests
-from API-shaped fixtures captured on the scratch stack and typed as the DTOs, for each kind's
-table, a Ready and a Blocked row, the empty state, the refused page, the dialog in its normal and
-Active-rental form with the submit blocked and unblocked, the confirmation line, "Recently deleted"
-with and without the audit permission, the phone cards, and the two audit additions. Each new test
-is shown to fail against a deliberate breakage. Typecheck, tests and build green; no new runtime
-dependency; no existing test changed except the three literals.
-
-**The joint check**, on the scratch stack only, as the seeded administrator: through the API by
-script, every state of the handover's §a that the API can show; the screens rendered by the test
-suite and from the live answers; the steps that need a password typed into the app listed in the
-report for the owner's reviewer, who runs them on 5174. The owner's API on 5001 and the app on 5173 are not touched; the scratch API
-on 5002 is left running.
-
-Report: `Context/wiring_report.md` rewritten for this run. **Commits (the owner's rule of
-2026-09-21): never the whole run in one commit.** The work is committed in several commits, each
-grouping the files that belong together, each `Wiring 25: …` with one plain sentence saying what
-that group is for, in the order the code depends on, and the report last as `Wiring 26: …`. The
-agent pushes when the run is complete and typecheck, tests and build are green. The
-contract beyond the specification: round 7's report §5 (`rentalAssignmentLabel` on the two part
-candidates, the customer candidate's `identifier`, the validation codes `kind_invalid` and
-`record_id_required`). This document is not edited by the agent.
+**What the page is** (kept for the next reader): `/delete-records`, permission `Records.Delete`,
+administrator only until the right can be given (the next piece: a dialog of its own, only by the
+administrator, only to the company's email domain). The server decides what is Ready or Blocked;
+the app words it. The app has no toast: a confirmation line replaces it. A blocked Delete… is the
+disabled-with-reason button. A refusal because the record became blocked or left the list is shown
+with Refresh. Audit links are links only for a reader of the audit.
