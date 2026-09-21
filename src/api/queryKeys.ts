@@ -1,7 +1,8 @@
 import type {
   AuthorizationsQuery, CompanyInterruptionsQuery, CustomersQuery, DriverAuthorizationsQuery,
-  DriversQuery, InterruptionsQuery, RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery,
-  SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery, PagedQuery, Uuid,
+  DriversQuery, InterruptionsQuery, RecordDeletionCandidatesQuery, RecordDeletionShow, RecordKind,
+  RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery, SystemAdministratorTransferQuery,
+  UsersQuery, VehiclesQuery, PagedQuery, Uuid,
 } from './dto';
 
 /** One key factory per resource. Mutations invalidate by prefix: qk.users.all, qk.roles.of(id), … */
@@ -63,4 +64,12 @@ export const qk = {
       ['system-administrator', 'transfers', q] as const,
   },
   overview: ['overview'] as const,
+  /** The Delete records page: one prefix, so a deletion refreshes its lists, counts and history at once. */
+  recordDeletions: {
+    all: ['record-deletions'] as const,
+    candidates: (kind: RecordKind, q: RecordDeletionCandidatesQuery) =>
+      ['record-deletions', 'candidates', kind, q] as const,
+    counts: (show: RecordDeletionShow) => ['record-deletions', 'counts', show] as const,
+    made: (q: PagedQuery) => ['record-deletions', 'made', q] as const,
+  },
 };

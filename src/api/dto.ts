@@ -2,6 +2,7 @@
 // is written against: GET http://localhost:5001/openapi/v1.json on the running API in Development.
 // Since the backend's round 6 the seven record responses name who created and who last changed the
 // record; a list item names nobody, so the two list items that share a record's shape omit both.
+// Since its round 7 the Delete records page reads its candidates, counts and deletions here too.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -856,4 +857,215 @@ export interface OverviewSummaryResponse {
   /** Of the active vehicles, the ones with no Active assignment and no Planned one (round 2). */
   availableVehicles?: number | null;
   pendingRegistrations?: number | null;
+}
+
+/* record deletions (the backend's round 7) ------------------------------ */
+
+/** The six kinds of record the Delete records page can remove. */
+export const RecordKind = {
+  RentalAssignment: 1,
+  DriverAuthorization: 2,
+  Interruption: 3,
+  Vehicle: 4,
+  Customer: 5,
+  Driver: 6,
+} as const;
+export type RecordKind = (typeof RecordKind)[keyof typeof RecordKind];
+
+export const RecordDeletionReason = {
+  EnteredByMistake: 1,
+  PracticeOrTestRecord: 2,
+  NoLongerNeeded: 3,
+  Other: 4,
+} as const;
+export type RecordDeletionReason = (typeof RecordDeletionReason)[keyof typeof RecordDeletionReason];
+
+/** The server's verdict on one candidate. The app words it and never decides it. */
+export const RecordDeletionState = { Ready: 1, Blocked: 2 } as const;
+export type RecordDeletionState = (typeof RecordDeletionState)[keyof typeof RecordDeletionState];
+
+export const RecordDeletionBlockReason = {
+  /** A vehicle or a customer a rental assignment of any status refers to. */
+  ReferencedByRentalAssignments: 1,
+  /** A driver a driver authorization refers to. */
+  ReferencedByDriverAuthorizations: 2,
+  /** A driver a customer record is linked to. */
+  LinkedFromCustomer: 3,
+  /** The only open authorization of an Active rental assignment. */
+  OnlyOpenAuthorizationOfActiveRental: 4,
+} as const;
+export type RecordDeletionBlockReason =
+  (typeof RecordDeletionBlockReason)[keyof typeof RecordDeletionBlockReason];
+
+/** OutOfUse (the default): Cancelled or Ended, stopped, ended, inactive. */
+export const RecordDeletionShow = { OutOfUse: 1, Everything: 2 } as const;
+export type RecordDeletionShow = (typeof RecordDeletionShow)[keyof typeof RecordDeletionShow];
+
+/** One record in the way of a deletion; its label is a rental's record label or a customer's name. */
+export interface RecordDeletionBlockingRecordResponse {
+  kind: RecordKind;
+  id: Uuid;
+  label: string;
+}
+
+export interface RecordDeletionBlockResponse {
+  reason: RecordDeletionBlockReason;
+  /** How many records block the deletion for this reason. */
+  count: number;
+  /** The first five of them, newest first. */
+  records: RecordDeletionBlockingRecordResponse[];
+}
+
+export interface RecordDeletionInfo {
+  state: RecordDeletionState;
+  /** Empty when the state is Ready. */
+  blocks: RecordDeletionBlockResponse[];
+}
+
+export interface RentalAssignmentDeletionCandidateResponse {
+  id: Uuid;
+  /** "<plate> · <customer>", the text the audit entry keeps. */
+  recordLabel: string;
+  vehicleId: Uuid;
+  vehiclePlateNumber: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  customerId: Uuid;
+  customerDisplayName: string;
+  status: AssignmentStatus;
+  plannedStartAtUtc?: Instant | null;
+  plannedEndAtUtc?: Instant | null;
+  startedAtUtc?: Instant | null;
+  closedAtUtc?: Instant | null;
+  /** The driver authorizations that would go with it. */
+  authorizationCount: number;
+  /** The interruptions that would go with it. */
+  interruptionCount: number;
+  deletion: RecordDeletionInfo;
+}
+
+export interface DriverAuthorizationDeletionCandidateResponse {
+  id: Uuid;
+  /** "<driver or Business customer drivers> · <plate> · <customer>". */
+  recordLabel: string;
+  rentalAssignmentId: Uuid;
+  /** The rental's own record label (round 7's report §5). */
+  rentalAssignmentLabel: string;
+  vehiclePlateNumber: string;
+  customerDisplayName: string;
+  rentalAssignmentStatus: AssignmentStatus;
+  authorizationType: AssignmentDriverAuthorizationType;
+  driverId?: Uuid | null;
+  /** Null for the collective Business-customer authorization. */
+  driverDisplayName?: string | null;
+  driverLicenseNumber?: string | null;
+  authorizedFromUtc: Instant;
+  stoppedAtUtc?: Instant | null;
+  stopReason?: AuthorizationStopReason | null;
+  deletion: RecordDeletionInfo;
+}
+
+export interface InterruptionDeletionCandidateResponse {
+  id: Uuid;
+  /** "<reason name> · <plate> · <customer>"; the reason is its API name, e.g. "CarRepair". */
+  recordLabel: string;
+  rentalAssignmentId: Uuid;
+  rentalAssignmentLabel: string;
+  vehiclePlateNumber: string;
+  customerDisplayName: string;
+  reason: InterruptionReason;
+  billingImpact: BillingImpact;
+  startedAtUtc: Instant;
+  endedAtUtc?: Instant | null;
+  deletion: RecordDeletionInfo;
+}
+
+export interface VehicleDeletionCandidateResponse {
+  id: Uuid;
+  /** "<plate> · <make> <model> <year>". */
+  recordLabel: string;
+  plateNumber: string;
+  vinCode: string;
+  make: string;
+  model: string;
+  year: number;
+  isActive: boolean;
+  deletion: RecordDeletionInfo;
+}
+
+export interface CustomerDeletionCandidateResponse {
+  id: Uuid;
+  /** The customer's display name. */
+  recordLabel: string;
+  displayName: string;
+  type: CustomerType;
+  /**
+   * The registration code of a business customer, the personal identity code of a private one;
+   * null when the record has neither (round 7's report §5).
+   */
+  identifier?: string | null;
+  email: string;
+  isActive: boolean;
+  deletion: RecordDeletionInfo;
+}
+
+export interface DriverDeletionCandidateResponse {
+  id: Uuid;
+  /** "<first> <last> · <licence>". */
+  recordLabel: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  driverLicenseNumber: string;
+  isActive: boolean;
+  deletion: RecordDeletionInfo;
+}
+
+/** Newest created first, then id; SortBy and SortDirection are ignored. */
+export type RecordDeletionCandidatesQuery = PagedQuery & { Show?: RecordDeletionShow }
+
+/** The counts endpoint binds its one parameter in lower case. */
+export type RecordDeletionCountsQuery = { show?: RecordDeletionShow }
+
+export interface RecordDeletionCandidateCountsResponse {
+  rentalAssignments: number;
+  driverAuthorizations: number;
+  interruptions: number;
+  vehicles: number;
+  customers: number;
+  drivers: number;
+}
+
+/** One deletion that was made, newest first; Search, SortBy and SortDirection are ignored. */
+export interface RecordDeletionListItemResponse {
+  auditEntryId: Uuid;
+  occurredAtUtc: Instant;
+  actorUserId: Uuid;
+  /** Named at read time; null only for the technical actor. */
+  actorDisplayName?: string | null;
+  kind: RecordKind;
+  /** The record's label as it was when it was deleted. */
+  recordLabel: string;
+  reason: RecordDeletionReason;
+  note?: string | null;
+}
+
+export interface DeleteRecordRequest {
+  kind: RecordKind;
+  recordId: Uuid;
+  reason: RecordDeletionReason;
+  /** Required when the reason is Other; at most 1000 characters once trimmed. */
+  note?: string | null;
+  /** The explicit confirmation; a request without it is refused. */
+  confirmed: boolean;
+}
+
+export interface RecordDeletionResponse {
+  /** The one audit entry of this deletion, holding the copy of the record. */
+  auditEntryId: Uuid;
+  kind: RecordKind;
+  recordLabel: string;
+  /** The rental's own authorizations that went with it; 0 for every other kind. */
+  deletedAuthorizationCount: number;
+  deletedInterruptionCount: number;
 }

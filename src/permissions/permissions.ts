@@ -17,6 +17,8 @@ export const PERMISSIONS = [
   'RentalAssignments.Read', 'RentalAssignments.Manage',
   'DriverAuthorizations.Read', 'DriverAuthorizations.Manage',
   'Interruptions.Read', 'Interruptions.Manage',
+  // The Delete records page (the backend's round 7): the System Administrator's alone.
+  'Records.Delete',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

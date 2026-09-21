@@ -20,3 +20,4 @@ export * as authorizations from './authorizations';
 export * as interruptions from './interruptions';
 export * as systemAdministrator from './systemAdministrator';
 export * as overview from './overview';
+export * as recordDeletions from './recordDeletions';
