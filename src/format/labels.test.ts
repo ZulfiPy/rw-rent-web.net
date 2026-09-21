@@ -15,11 +15,13 @@ const BACKEND_EVENT_TYPES = [
   'Authentication.PasswordChanged', 'Authentication.PasswordResetCompleted',
   'Authentication.SessionCreated',
   'Company.Created', 'Company.Deleted', 'Company.Updated',
-  'DriverAuthorization.Corrected', 'Interruption.Corrected',
+  'Customer.Deleted', 'Driver.Deleted',
+  'DriverAuthorization.Corrected', 'DriverAuthorization.Deleted',
+  'Interruption.Corrected', 'Interruption.Deleted',
   'Registration.Activated', 'Registration.EmailConfirmationRotated', 'Registration.EmailConfirmed',
   'Registration.Expired', 'Registration.Rejected', 'Registration.Reopened',
   'Registration.Restarted', 'Registration.Submitted',
-  'RentalAssignment.Cancelled', 'RentalAssignment.PartiesCorrected',
+  'RentalAssignment.Cancelled', 'RentalAssignment.Deleted', 'RentalAssignment.PartiesCorrected',
   'RentalAssignment.TimelineCorrected',
   'RoleAssignment.ExpiryChanged', 'RoleAssignment.Granted', 'RoleAssignment.Revoked',
   'Session.AllRevokedByAdministrator', 'Session.OthersRevoked', 'Session.Revoked',
@@ -27,13 +29,15 @@ const BACKEND_EVENT_TYPES = [
   'SystemAdministrator.Bootstrapped', 'SystemAdministrator.OfflineRecovery',
   'SystemAdministrator.TransferAccepted', 'SystemAdministrator.TransferCancelled',
   'SystemAdministrator.TransferConfirmationRotated', 'SystemAdministrator.TransferInitiated',
+  'Vehicle.Deleted',
 ];
 
 /** The entity type strings the audit history stores, which are the backend's own entity names. */
 const BACKEND_ENTITY_TYPES = [
   'ApplicationUser', 'ApplicationUserRoleAssignment', 'ApplicationUserSession',
-  'AssignmentDriverAuthorization', 'AssignmentInterruption', 'Company',
+  'AssignmentDriverAuthorization', 'AssignmentInterruption', 'Company', 'Customer', 'Driver',
   'RegistrationEmailConfirmationChallenge', 'RentalAssignment', 'SystemAdministratorTransfer',
+  'Vehicle',
 ];
 
 describe('audit vocabulary', () => {

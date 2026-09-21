@@ -71,6 +71,7 @@ const SYSTEM_ADMINISTRATOR = [
   'Company.Create', 'Company.Delete', 'Users.ActivateCompanyPrincipal',
   'Users.SuspendRestoreCompanyPrincipal', 'Roles.ManageCompanyPrincipal', 'Sessions.ManageAnyUser',
   'SecurityAudit.ReadAll', 'SystemAdministration.Transfer', 'PrivilegedCorrections.Execute',
+  'Records.Delete',
 ];
 
 describe('the table is the only source', () => {
@@ -211,6 +212,7 @@ describe('what each destination needs', () => {
     expect(permissionFor('/security-audit')).toBe('SecurityAudit.ReadCompany');
     expect(permissionFor('/company')).toBe('Company.Read');
     expect(permissionFor('/system-administrator')).toBe('SystemAdministration.Transfer');
+    expect(permissionFor('/delete-records')).toBe('Records.Delete');
   });
 
   test('a record route takes its list’s permission, in any letter case', () => {
@@ -265,6 +267,16 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     expect(mayOpen('/security-audit', COMPANY_PRINCIPAL)).toBe(true);
     expect(mayOpen('/security-audit/an-entry', COMPANY_PRINCIPAL)).toBe(true);
     expect(mayOpen('/system-administrator', COMPANY_PRINCIPAL)).toBe(false);
+  });
+
+  test('only the administrator may open Delete records, by any spelling (Follow-up 8)', () => {
+    for (const persona of [VIEWER, FLEET_MANAGER, COMPANY_PRINCIPAL]) {
+      expect(mayOpen('/delete-records', persona)).toBe(false);
+      expect(mayOpen('/Delete-Records', persona)).toBe(false);
+      expect(mayOpen('/%64elete-records', persona)).toBe(false);
+    }
+    expect(mayOpen('/delete-records', SYSTEM_ADMINISTRATOR)).toBe(true);
+    expect(mayOpen('/DELETE-RECORDS', SYSTEM_ADMINISTRATOR)).toBe(true);
   });
 
   test('an account with no permission at all reaches only the ungated pages', () => {
