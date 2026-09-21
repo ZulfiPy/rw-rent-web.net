@@ -463,10 +463,11 @@ suite and from the live answers; the steps that need a password typed into the a
 report for the owner's reviewer, who runs them on 5174. The owner's API on 5001 and the app on 5173 are not touched; the scratch API
 on 5002 is left running.
 
-Report: `Context/wiring_report.md` rewritten for this run. **Nothing is pushed in this run**: the
-owner reads the code first and says when to push. **The run's local history ends as one commit per
-file** (the owner's wish of 2026-09-21), each `Wiring 25: …` with one plain sentence saying what
-that file is for, a file after the files it depends on, and the report last as `Wiring 26: …`. The
+Report: `Context/wiring_report.md` rewritten for this run. **Commits (the owner's rule of
+2026-09-21): never the whole run in one commit.** The work is committed in several commits, each
+grouping the files that belong together, each `Wiring 25: …` with one plain sentence saying what
+that group is for, in the order the code depends on, and the report last as `Wiring 26: …`. The
+agent pushes when the run is complete and typecheck, tests and build are green. The
 contract beyond the specification: round 7's report §5 (`rentalAssignmentLabel` on the two part
 candidates, the customer candidate's `identifier`, the validation codes `kind_invalid` and
 `record_id_required`). This document is not edited by the agent.
