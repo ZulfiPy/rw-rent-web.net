@@ -461,4 +461,6 @@ round-7 build (round 7 restarts it), the app on 5173 is untouched, and the scrat
 left running.
 
 Report: `Context/wiring_report.md` rewritten for this run. Commits `Wiring 25: …` for the change
-with its tests and `Wiring 26: …` for the report. This document is not edited by the agent.
+with its tests and `Wiring 26: …` for the report, **local only: nothing is pushed in this run.** The
+owner reads the code first and says when to push (decided 2026-09-21). This document is not
+edited by the agent.
