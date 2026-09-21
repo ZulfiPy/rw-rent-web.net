@@ -370,16 +370,19 @@ ports and a sign-in on 5174 in the owner's profile would sign them out of 5173.
 
 ## 8. Follow-up 8 — the Delete records page
 
-> **Status: SPECIFIED 2026-09-21, NOT YET HANDED OVER.** The owner decided one side at a time: the
-> backend's round 7 (`RWRentApi-wiring/Context/round7_spec_and_plan.md`) is built first, reviewed,
-> and its code read by the owner. This follow-up then runs in an agent run of its own, in this
-> worktree, against the API built from that round; its prompt is written at that point. The design source is `Context/prototype/delete-records/HANDOVER.md`
+> **Status: AUTHORISED 2026-09-21.** The owner decided one side at a time: the backend's round 7
+> (`RWRentApi-wiring/Context/round7_spec_and_plan.md`, report `Context/round7_report.md`) was built
+> first, verified by the reviewer and its code read and approved by the owner. This follow-up runs
+> in an agent run of its own, in this worktree only. **Since 2026-09-21 the owner's API on 5001
+> serves the round-7 build: the deletion is live on the owner's real data, and the owner's app on
+> 5173 runs from this worktree with hot reload, so the page appears there as it is written. The
+> agent never opens 5173, never signs in there and never calls 5001.** The design source is `Context/prototype/delete-records/HANDOVER.md`
 > with `Context/prototype/RW-Rent.dc.html` (its line numbers refer to that file); nothing else is
 > taken from the prototype, and no existing screen changes except where this section says so.
 >
 > **The owner's real data is behind the API on port 5001 and the app on port 5173. Never seed it,
-> never create or delete a record in it.** Your checks use a scratch stack like round 7's (the run's prompt says whether one is still
-> running or has to be built): the API on 5002 over the seeded `rwrent_check`, and a second Vite on 5174
+> never create or delete a record in it.** Your checks use a scratch stack like round 7's, which you build yourself (its report §7; none is
+> running): the API on 5002 over the seeded `rwrent_check`, and a second Vite on 5174
 > (`VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`), in a browser
 > profile of its own, because `localhost` cookies are shared across ports.
 
@@ -460,7 +463,10 @@ suite and from the live answers; the steps that need a password typed into the a
 report for the owner's reviewer, who runs them on 5174. The owner's API on 5001 and the app on 5173 are not touched; the scratch API
 on 5002 is left running.
 
-Report: `Context/wiring_report.md` rewritten for this run. Commits `Wiring 25: …` for the change
-with its tests and `Wiring 26: …` for the report, **local only: nothing is pushed in this run.** The
-owner reads the code first and says when to push (decided 2026-09-21). This document is not
-edited by the agent.
+Report: `Context/wiring_report.md` rewritten for this run. **Nothing is pushed in this run**: the
+owner reads the code first and says when to push. **The run's local history ends as one commit per
+file** (the owner's wish of 2026-09-21), each `Wiring 25: …` with one plain sentence saying what
+that file is for, a file after the files it depends on, and the report last as `Wiring 26: …`. The
+contract beyond the specification: round 7's report §5 (`rentalAssignmentLabel` on the two part
+candidates, the customer candidate's `identifier`, the validation codes `kind_invalid` and
+`record_id_required`). This document is not edited by the agent.
