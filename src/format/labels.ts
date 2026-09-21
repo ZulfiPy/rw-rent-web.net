@@ -187,9 +187,14 @@ export const AUDIT_EVENTS: Array<[string, string[], string?]> = [
   ['RoleAssignment', ['Granted', 'Revoked', 'ExpiryChanged'], 'Role'],
   ['Session', ['RevokedByAdministrator', 'AllRevokedByAdministrator', 'Revoked', 'OthersRevoked']],
   ['Company', ['Created', 'Updated', 'Deleted']],
-  ['RentalAssignment', ['Cancelled', 'TimelineCorrected', 'PartiesCorrected'], 'Rental assignment'],
-  ['DriverAuthorization', ['Corrected'], 'Driver authorisation'],
-  ['Interruption', ['Corrected']],
+  ['RentalAssignment', ['Cancelled', 'TimelineCorrected', 'PartiesCorrected', 'Deleted'], 'Rental assignment'],
+  ['DriverAuthorization', ['Corrected', 'Deleted'], 'Driver authorisation'],
+  ['Interruption', ['Corrected', 'Deleted']],
+  // The deletions of the backend's round 7 (Follow-up 8). A deleted authorization or interruption
+  // is written against its rental, so the entity is the rental while the event names the part.
+  ['Vehicle', ['Deleted']],
+  ['Customer', ['Deleted']],
+  ['Driver', ['Deleted']],
   ['SystemAdministrator', ['Bootstrapped', 'OfflineRecovery', 'TransferInitiated', 'TransferAccepted', 'TransferCancelled', 'TransferConfirmationRotated'], 'System Administrator'],
 ];
 

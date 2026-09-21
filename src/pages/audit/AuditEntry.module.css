@@ -1,1 +1,12 @@
 .page { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* One deleted part of a rental in its panel: a titled group of facts, divided from the next by the
+   panel's own hairline. */
+.group + .group { border-top: 1px solid var(--line); }
+.groupTitle {
+  margin: 0;
+  padding: 12px 17px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-2);
+}

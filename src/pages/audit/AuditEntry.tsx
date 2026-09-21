@@ -6,14 +6,19 @@ import { listUsers } from '@/api/users';
 import type { Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
-  LOCAL_TIME_NOTE, auditActorName, auditTargetName, diffRows, entityLabel, eventLabel, formatLocalStamp,
-  isSystemActor,
+  LOCAL_TIME_NOTE, auditActorName, auditTargetName, deletedRecord, diffRows, entityLabel, eventLabel,
+  formatLocalStamp, isSystemActor, type DeletedFact,
 } from '@/format';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Panel } from '@/ui/Panel';
 import { RecordHeader } from '@/ui/RecordHeader';
 import styles from './AuditEntry.module.css';
+
+/** One member of a deleted record's copy. */
+const factOf = (f: DeletedFact) => (
+  <Fact key={f.key} label={f.label} mono={f.mono} dim={f.value === '—'}>{f.value}</Fact>
+);
 
 export function AuditEntry() {
   const { entryId = '' } = useParams();
@@ -59,6 +64,8 @@ export function AuditEntry() {
 
   const diff = entry ? diffRows(entry.beforeJson, entry.afterJson) : null;
   const hasBefore = !!entry?.beforeJson;
+  /** A deletion's copy of the record it removed (Follow-up 8); null for every other entry. */
+  const deleted = entry ? deletedRecord(entry.eventType, entry.beforeJson) : null;
 
   return (
     <div className={styles.page}>
@@ -82,10 +89,43 @@ export function AuditEntry() {
           </Fact>
           <Fact label="Entity">{entityLabel(entry?.entityType)}</Fact>
           <Fact label="Entity id" mono dim>{entry?.entityId ?? '—'}</Fact>
+          {deleted ? (
+            <Fact label="Record" span="full" hint="The record was deleted, so there is nothing to open.">
+              {deleted.recordLabel ?? entry?.entityId ?? '—'}
+            </Fact>
+          ) : null}
         </FactGrid>
       </Panel>
 
-      {diff && diff.length > 0 ? (
+      {deleted ? (
+        <>
+          <Panel title="Deleted record" description="The values the record held when it was deleted.">
+            <FactGrid>{deleted.facts.map(factOf)}</FactGrid>
+          </Panel>
+          {deleted.authorizations.length > 0 ? (
+            <Panel title="Deleted authorizations">
+              {deleted.authorizations.map((group, index) => (
+                <div key={index} className={styles.group}>
+                  <p className={styles.groupTitle}>Authorization {index + 1}</p>
+                  <FactGrid>{group.map(factOf)}</FactGrid>
+                </div>
+              ))}
+            </Panel>
+          ) : null}
+          {deleted.interruptions.length > 0 ? (
+            <Panel title="Deleted interruptions">
+              {deleted.interruptions.map((group, index) => (
+                <div key={index} className={styles.group}>
+                  <p className={styles.groupTitle}>Interruption {index + 1}</p>
+                  <FactGrid>{group.map(factOf)}</FactGrid>
+                </div>
+              ))}
+            </Panel>
+          ) : null}
+        </>
+      ) : null}
+
+      {!deleted && diff && diff.length > 0 ? (
         <Panel title={hasBefore ? 'Before → after' : 'Recorded values'}>
           <FactGrid>
             {diff.map((row) => (
@@ -97,7 +137,7 @@ export function AuditEntry() {
         </Panel>
       ) : null}
 
-      {diff === null && entry ? (
+      {!deleted && diff === null && entry ? (
         <Panel title="Payload">
           <FactGrid>
             <Fact label="Parsing" dim span="full">
