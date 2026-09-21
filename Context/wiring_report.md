@@ -1,362 +1,469 @@
-# Frontend Wiring — Follow-up 7, second batch (the owner's check on real data)
+# Frontend Wiring — Follow-up 8, the Delete records page
 
-> The second batch of Follow-up 7 (`Context/wiring_followups.md` §7, "Second batch"):
-> - F7-6: who created and who last changed each record.
-> - F7-7: the person on each row of the Overview's activity card.
-> - F7-8: a person's own session revocations in the security history.
+> Follow-up 8 (`Context/wiring_followups.md` §8): the app's half of the deletion of records, built
+> against the backend's round 7 (`RWRentApi-wiring/Context/round7_spec_and_plan.md` §5–§7, its report
+> §5), which the owner approved before this run. Design source: `Context/prototype/delete-records/`
+> (the handover, its reference CSS and mock data) with `Context/prototype/RW-Rent.dc.html`; where the
+> handover and §8 disagree, §8 wins, and it does. Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`,
+> branch `feature/backend-wiring`. Written 2026-09-21. It replaces Follow-up 7's second-batch report,
+> which git history keeps.
 >
-> It ran in the same agent run as the backend's round 6
-> (`RWRentApi-wiring/Context/round6_report.md`), after it, against the API rebuilt from that round.
-> Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written
-> 2026-09-19. It replaces the first batch's report, which git history keeps (`e578893`).
->
-> **The owner's data was never touched.** It is in `rwrent_v1`, behind the API on 5001 and the app
-> on 5173. Every check of this run used the scratch stack: the API on 5002 over the seeded
-> `rwrent_check`. **For the owner's reviewer: §5 lists the steps that need the seed password typed
-> into the app, on 5174 and 5002.** The implementing agent may not type a password into a page. Every
-> other step of the joint check ran and passed.
+> **The owner's side was never touched.** The API on 5001 serves the round-7 build over the real data
+> in `rwrent_v1`, and the owner's app on 5173 runs from this worktree with hot reload. This run never
+> opened 5173, never signed in anywhere, never called 5001, and never wrote to `rwrent_v1`, whose
+> read-only fingerprint is the same at the end as at the start. Every live check used the scratch
+> stack: the API on 5002 over the seeded `rwrent_check`. **For the owner's reviewer: §5 lists the
+> steps that need the seed password typed into the app, on 5174 and 5002.** The implementing agent
+> may not type a password into a page; every other step of the joint check ran and passed.
 
 ## 1. Summary
 
-| Commit | What |
+The System Administrator has a new page, **Delete records**, under Administration after System
+Administrator. It removes, for good, records the company no longer needs: rental assignments,
+driver authorizations, interruptions, vehicles, customers and drivers.
+
+- The page is the handover's: the bad-tone banner "Deleted means gone", six tabs with their counts,
+  the filter row (search, Show: Out of use / Everything, Clear filters), one table per kind, phone
+  cards that carry their own action, the delete dialog, and Recently deleted.
+- **The server decides.** Whether a row is Ready or Blocked, why, and which records stand in the way
+  all come from the API. The app only words the answer with the handover's sentences and never
+  re-implements a rule.
+- After a deletion the dialog closes, the row leaves, the counts and Recently deleted reload, and
+  one confirmation line names what went ("Vehicle deleted: … Written to the security audit.").
+- The security audit learns the six deletion events: its filter offers them, and a deletion's entry
+  shows the record it named and the whole copy it keeps, a rental's parts included.
+
+| | |
 |---|---|
-| `8a7e5ac` | Wiring 23: who created and who last changed each record, the person on each activity row, the own-revocation entries |
-| (this one) | Wiring 24: this report |
-
-- `npm run typecheck` is clean.
-- `npx vitest run` is green: **253 tests across 23 files**, up from 227 across 20. §2.5 lists the 26
-  new ones.
-- `npm run build` is green, with the chunk-size warning it already had (565.25 kB before, 565.71 kB
-  now).
-- `package.json` is unchanged, and no `.module.css` file was touched. Markup was added only where
-  the items ask for it: one "Recorded by" line per authorization and interruption row, and the name
-  on the activity card's small line. The two record facts reuse the existing `Fact` and its second
-  line.
-
-**F7-6.** The five record pages show "Created" and "Last changed" in the record facts they already
-had, each with the person's name and then the local time. The pages are the vehicle, the customer,
-the driver, the assignment and the company. A record nobody changed says "Not changed since it was
-created". Every authorization and interruption row of an assignment says "Recorded by" and the
-name, as a table row and as a phone card. "System" appears only where the record names nobody,
-which is the technical actor.
-
-**F7-7.** Each row of the Overview's "Recent security activity" card names the person on its small
-line, before the time: "Dita Smite · 19 Sep, 09:41". The technical actor reads "System".
-
-**F7-8.** `Session.Revoked` and `Session.OthersRevoked` have their labels ("Session · Revoked",
-"Session · Others revoked") and are offered in the audit's event filter. The entry page reads the
-revoke-others count as "Sessions ended".
-
-The joint check ran on the scratch stack. All 44 API checks passed on fresh records, created by
-Karlis Zvaigzne and changed by Signe Priede, with Dita Smite's own revocations. The app's screens
-were then rendered from those live answers (§4.3), and they show what §4.3's table lists.
+| Commits | seven `Wiring 25` commits and this report's `Wiring 26`, pushed (§9) |
+| Tests | 253 → **305**, all green; 52 new; the only existing tests changed are the three catalogue literals |
+| Breakages | 26 deliberate breakages of the new code, **26 caught** by the new tests |
+| Typecheck, build | green; every commit also typechecks on its own; the build's chunk-size warning predates this run |
+| Joint check on 5002 | **53/53** API checks of the handover's §a; **20/20** screens rendered from those live answers |
+| New runtime dependency | none |
+| The owner's side | 5001 and 5173 never used; `rwrent_v1` unchanged |
 
 ## 2. Implemented
 
-### 2.1 F7-6 — who created and who last changed each record
+### 2.1 The page (`src/pages/admin/DeleteRecords.tsx`, `DeleteRecords.module.css`)
 
-- **The record facts.** The Record panel of the vehicle, customer, driver and company pages, and
-  the assignment's Lifecycle panel, had "Created" (a time) and "Last updated" (a time or "Never").
-  They now read:
-  - **Created**: the creator's name, with the local time on the fact's second line;
-  - **Last changed**: the last changer's name with the local time, or "Not changed since it was
-    created".
+- **Route and navigation.** `/delete-records`, permission `Records.Delete` (added to `PERMISSIONS`),
+  navigation entry "Delete records", icon `delete_sweep`, after System Administrator.
+- **The frame.** `RecordBanner` (bad tone) for "Deleted means gone"; `RecordTabs` for the six kinds,
+  each with the count the API gives under the current Show; the list panel from `list.module.css`
+  with `SearchInput`, `SelectFilter` "Show" and `ClearFilters` (which appears once Show is
+  Everything or a search is typed, and resets both).
+- **The URL.** `kind`, `show`, `search`, `page` and `size` live in the address. Changing the kind
+  resets the search and the page, and keeps Show.
+- **The tables**, one column set per kind, with the handover's headers, widths and min-widths
+  (1220 / 1180 / 1180 / 1020 / 1020 / 1040). Rows open their record (a rental, a vehicle, a customer,
+  a driver; an authorization or an interruption opens its rental on the matching tab). Cells use
+  `table.module.css`, the quiet link (`quietLink`) and `Chip`.
+- **The Deletion cell.** A Ready (ok, round dot) or Blocked (warn, square dot) chip. A blocked row
+  adds the reason under the chip and the first five records in the way, each a link where it has a
+  page.
+- **Delete… on the row.** `Button tone="danger" small`, its hint "Delete this <kind>". On a blocked
+  row it is the app's disable-with-reason button: disabled, with the reason and a full stop as its
+  hint.
+- **The portrait band (768–1023).** Parts (rentals) and Billing impact (interruptions) fold, the
+  fixed widths shrink to 71%, and the auto column takes the rest. The Deletion cell wraps its reason;
+  Actions keeps its width (§7.4).
+- **The phone tier (below 768).** Cards from `cards.module.css`. Each card has:
+  - the identifying text as a quiet dark link, with its line under it;
+  - the verdict chip;
+  - the fact grid (a rental's Parts across the card);
+  - for a blocked card, the reason in the warn ink with its links;
+  - its own full-width Delete…, which is not one big button.
+- **The empty state.** "Nothing to clean up", icon `inventory_2`. A search that finds nothing uses
+  the prototype's no-result state instead.
+- **Recently deleted.** A `Panel` with a `data-panel` table that never folds (880px), headed When,
+  Who, What and Reason, newest first. On the phone it becomes cards with a Deleted chip and Open
+  audit entry. What reads "<Kind> · <record label>"; Reason reads the chosen reason, with the note
+  after a dash.
 
-  The wording is the ledger's. The `Fact` component already had the second line (`sub`), so no
-  markup was added. The assignment's Corrections tab repeats the last-changed fact beside the
-  concurrency token, and it changed the same way (§7.1).
-- **The rows.** On an assignment's "Authorized drivers" tab, each row says "Recorded by <name>" in
-  its secondary text, under the driver's name and licence. On the "Interruptions" tab, it sits under
-  the reason chip, the cell that stays visible at every width (§7.2). Below 768 pixels the rows are
-  cards, and the line joins each card's secondary text.
-- **The driver's history.** Its synthetic "Created" row said "Not recorded" for the acting user. It
-  now names the creator the record carries, as the Record panel below it does (§7.3).
-- **The names.** Everything comes from the record's own `createdByDisplayName` and
-  `updatedByDisplayName` (backend AUDIT-010), through `src/format/recordNames.ts`:
-  - `createdByName`: the name, or "System" when the record names nobody. Every record has a
-    creator, so that is the technical actor.
-  - `lastChangedByName`: "Not changed since it was created" while `updatedAtUtc` is empty;
-    otherwise the name, or "System".
-  - `recordedBy`: the row line.
+### 2.2 The dialog (`src/pages/admin/DeleteRecordDialog.tsx`)
 
-  No user id is on the record, so the names are not links.
+Modelled on the app's `DeleteCompany`:
 
-### 2.2 F7-7 — the person on each activity row
+- title "Delete <kind>", its description the record's identifying line, icon `delete_forever`, bad
+  tone, width 560;
+- a bad-tone banner: "This cannot be undone", or "This rental is active" for an Active rental;
+- the handover's consequences, with a rental's own parts counted from the row;
+- the Reason select, the Note (required for Other, optional otherwise, "Stored with the audit
+  entry.");
+- the lifted `CheckCard` for "I understand this cannot be undone";
+- Delete permanently (`danger-solid`, `delete_forever`), `submitBlocked` until there is a reason, a
+  note when the reason is Other, and the tick.
 
-`Overview.tsx` adds `auditActorName(entry)` to each row: the entry's own actor name, or "System"
-for the technical actor. It goes on the row's existing small line, the card's small-text style,
-before the time: `{who} · {when}`. The card's filter of routine sign-ins and sign-outs is
-unchanged.
+A success invalidates the page's lists, counts and history, the audit, the overview, and that
+kind's ordinary queries. A rental's deletion also refreshes the vehicles (their availability), the
+interruptions and the drivers' authorization histories.
 
-### 2.3 F7-8 — the two own-revocation entries
+### 2.3 Where the app wins over the prototype (§8, "Where the app wins")
 
-- `src/format/labels.ts`: the Session group of the event catalogue gains `Revoked` and
-  `OthersRevoked`. The catalogue drives both the labels and the event filter.
-- `src/format/auditPayload.ts`: `RevokedCount`, the after-payload of `Session.OthersRevoked`, is
-  labelled "Sessions ended". The entry page's "Recorded values" panel shows it as a fact, for
-  example "Sessions ended 3". The page's markup is unchanged.
+1. **No toast.** A confirmation line above the table, in the panel note's vocabulary: "<Kind> deleted:
+   <record label>. Written to the security audit." The last sentence is the link to the entry for a
+   reader with `SecurityAudit.ReadCompany`. It goes at the next deletion, a change of kind or a
+   reload.
+2. **Blocked Delete…** is the `blockedReason` button: pressing it does nothing.
+3. **Local times everywhere.** No page source says UTC (`surfaces.test.ts` stays green).
+4. **`DialogNote` gains a `bad` tone** from the existing banner recipe. "This rental is active"
+   replaces "This cannot be undone" for an Active rental.
+5. **`CheckCard` moved** from `AssignmentDialogs.tsx` into `src/ui/CheckCard.tsx`, unchanged. Both
+   dialogs import it.
+6. **Refusals.**
+   - A record that became blocked (`record_deletions.blocked`) or left the list
+     (`record_deletions.not_found`) comes back like the concurrency conflict: the stale banner with
+     the handover's sentence ("This vehicle now has a rental assignment." / "Refresh the list.") and
+     Refresh, which reloads the lists and closes the dialog.
+   - The concurrency conflict keeps its shared banner.
+   - Field refusals reach their fields through `codes.ts`, op `record-delete`.
+7. **The interruptions search** reads "Note, plate or customer".
+8. **Audit links** — in Recently deleted and in the confirmation line — are links only for a reader
+   with `SecurityAudit.ReadCompany`, plain text otherwise.
 
-### 2.4 `dto.ts` follows the round-6 document
+### 2.4 The two additions outside the page
 
-- The seven record responses gain `createdByDisplayName?: string | null` and
-  `updatedByDisplayName?: string | null`, as the live `/openapi/v1.json` of the round-6 build
-  declares them: nullable, not required.
-- `DriverAuthorizationHistoryItemResponse` and `InterruptionListItemResponse` used to extend the
-  record types. They now extend them without the two names, as the live schemas list them.
-- **One older mismatch surfaced and was corrected.** `RentalAssignmentResponse` extended the list
-  item, and so claimed its four coverage counts: `openAuthorizationCount`, `openNamedDrivers`,
-  `hasOpenCollectiveAuthorization` and `openInterruptionCount`. The API's record has never carried
-  them. The record type now omits them. No code read them from a record; the assignments list and
-  the Overview's planned-work check read them from list items. The render fixtures (§2.5) are the
-  API's own responses, typed as the DTOs, and that is how the mismatch surfaced.
+- **`AUDIT_EVENTS`** gains `RentalAssignment.Deleted`, `DriverAuthorization.Deleted` (label "Driver
+  authorisation · Deleted", the app's spelling), `Interruption.Deleted`, `Vehicle.Deleted`,
+  `Customer.Deleted` and `Driver.Deleted`. The list shows them, and the event filter offers them.
+- **The audit entry of a deletion** (`AuditEntry.tsx`, the reader `deletedRecord` in
+  `auditPayload.ts`):
+  - a "Record" fact with the copy's `RecordLabel` and the hint "The record was deleted, so there is
+    nothing to open.";
+  - the reason as usual;
+  - instead of "Recorded values", a panel "Deleted record" with the copy's scalar members as facts,
+    without `RecordLabel`, `DeletionReason` and `DeletionNote`;
+  - for a rental, "Deleted authorizations" and "Deleted interruptions", one titled group of facts
+    per part.
 
-### 2.5 Tests, and whether they can fail
+  The reader learns this one shape. Every other payload, a malformed copy included, renders exactly
+  as before.
 
-New:
+### 2.5 The contract (`src/api/dto.ts`, `src/api/recordDeletions.ts`, `queryKeys.ts`)
 
-- `src/format/recordNames.test.ts` (7): the creator's name or "System"; the last changer's name,
-  "System", or "Not changed since it was created", which wins whatever a name says; the row line.
-- `src/format/labels.test.ts` (+1, and two entries in its list of the backend's event types): both
-  new types labelled and offered in the filter. The list was re-read from the backend's source, and
-  it matches exactly.
-- `src/format/auditPayload.test.ts` (+1): `{"RevokedCount": 3}`, spaced exactly as the API stores
-  it, reads "Sessions ended 3".
-- `src/pages/followup7b.render.test.ts` (15): the five record pages, the assignment's tabs, the
-  driver's history, the activity card, the entry page and the audit list, each rendered to markup
-  with the real permission provider and router:
-  - creator, changer and times;
-  - "Not changed since it was created";
-  - "System" only for the technical actor, and never on a record people made;
-  - "Recorded by" on every row;
-  - the activity rows, with "System";
-  - "Sessions ended";
-  - both labels in the list and the filter.
-- `src/pages/followup7b.phone.render.test.ts` (2): the authorization and interruption cards below
-  768 pixels, with the tier set by a `vi.mock` of `useTier`.
-- `src/pages/followup7b.support.ts`: the shared render harness, and the fixtures. The fixtures are
-  the round-6 API's own responses from the scratch stack: a vehicle, customer, driver and assignment
-  Karlis created and Signe changed, a seeded vehicle nobody changed, the company, and Dita's two
-  entries.
+- `dto.ts` follows the live OpenAPI document of the scratch API: the five enums, the six candidate
+  rows, the verdict with its blocks, the counts, the deletions list, and the request and answer of a
+  deletion. It includes round 7's §5 extras: `rentalAssignmentLabel` on the two part candidates, the
+  customer's `identifier`, and the validation codes `kind_invalid` and `record_id_required`.
+- The fixtures are the API's answers typed as these DTOs, so a member the API sends and `dto.ts`
+  does not declare fails the typecheck. None does.
+- `recordDeletions.ts` carries the four calls, and `qk.recordDeletions` carries their keys under one
+  prefix.
 
-Nine deliberate breakages were each caught. Every file was restored byte for byte, and a hash of
-the tree matched the one taken before.
+### 2.6 Shared pieces lifted or extended
 
-| # | Breakage | Failing test files |
+| Piece | Change | Why |
 |---|---|---|
-| FM1 | a creator without a name is not "System" | recordNames, the render tests |
-| FM2 | a record never changed names a changer anyway | recordNames, the render tests |
-| FM3 | the interruption row loses its line | the render tests |
-| FM4 | the activity card drops the person | the render tests |
-| FM5 | the catalogue forgets `Session.OthersRevoked` | labels, the render tests |
-| FM6 | the count keeps its raw name | auditPayload, the render tests |
-| FM7 | the driver history says "Not recorded" again | the render tests |
-| FM8 | the vehicle keeps "Last updated" | the render tests |
-| FM9 | the phone authorization card loses its line | the phone render test |
+| `src/ui/CheckCard.tsx` | moved out of `AssignmentDialogs.tsx`, unchanged | §8, 5 |
+| `DialogNote` | `tone="bad"`, with CSS from the existing bad banner | §8, 4 |
+| `Failure` (`problem.ts`), `FailureBanner` | a stale failure may carry its own `detail`; without one, the words are exactly as before | §8, 6: the deletion's sentence in the stale banner |
+| `useActionMutation` | an optional `refusal` reader tried before `toFailure`; every existing caller is unchanged | a 404 reaches the app without its code in `toFailure`, so `not_found` needs the dialog's own reading |
 
-No existing test was changed, skipped or weakened. Round 5's render tests pass unchanged.
+### 2.7 Tests, and whether they can fail
+
+52 new tests, 305 in all, green.
+
+| File | Tests | What they hold |
+|---|---|---|
+| `src/format/recordDeletion.test.ts` | 12 | each block reason in singular and plural, the combined driver sentence, periods, parts, the dialog's descriptions and consequences, the refusal sentences, the reason read back |
+| `src/format/deletedRecord.test.ts` | 6 | the copy of a vehicle and of a rental with parts, the reading order, local times, and nine malformed copies falling back as today |
+| `src/api/recordDeletions.test.ts` | 6 | the field refusals' mapping, the captured 400 under the note, `blocked` and `not_found` with Refresh, the concurrency conflict untouched, the six list paths |
+| `src/pages/followup8.render.test.ts` | 22 | the frame, each kind's table with Ready and Blocked rows, the empty and no-result states, the refused page, the dialog normal and for an Active rental with the submit blocked and unblocked, the bad banner, the refusal with Refresh, the confirmation line and Recently deleted with and without the audit permission, the two audit additions, a malformed copy's fallback |
+| `src/pages/followup8.phone.render.test.ts` | 5 | the phone cards with their own action, a blocked card, the rental and driver cards, Recently deleted as cards, with and without the audit permission |
+| `src/app/routes.test.ts` | +1 | only the administrator opens `/delete-records`, by any spelling |
+
+The fixtures (`src/pages/followup8.support.ts`) were captured on the scratch stack and are typed as
+the DTOs.
+
+**The three literals** (§8, "Tests"):
+
+- `routes.test.ts`: the administrator's persona gains `Records.Delete`, and a gated-destination
+  assertion names the new page.
+- `labels.test.ts`: the backend's event and entity catalogues gain the six events and the three
+  entity types they are written against.
+- `codes.test.ts`: the backend's code catalogue gains the ten `record_deletions` codes.
+
+No other existing test changed.
+
+**Every new test can fail.** Twenty-six deliberate breakages were planted one at a time, each run
+against the new test files alone, and each restored byte for byte. **All 26 were caught**, and the
+tree was identical after the run. The first run missed one: a blocker link to the driver's page.
+The assertion it tested was weak, because the row's own name also links there. It was tightened to
+require the authorization's label as that link, and caught on the rerun. The breakages:
+
+- wrong joins, verbs and wording in the block sentences;
+- a refusal left unworded;
+- the audit copy's label repeated, its order lost, an unknown array accepted;
+- a blocked Delete… enabled;
+- every row Ready;
+- links shown without the audit permission;
+- the tick not required;
+- the wrong banner for an Active rental;
+- the old interruptions placeholder;
+- a deletion event forgotten;
+- the Record fact dropped;
+- the route open to the audit permission;
+- the page ignoring its permission;
+- a phone card without its action;
+- the field codes unmapped;
+- Refresh withheld;
+- the stale banner ignoring its sentence;
+- a warn banner;
+- a blocker without its link;
+- the empty state renamed.
 
 ## 3. Not implemented or partial
 
 ### 3.1 The steps that need a password typed into the app
 
-The implementing agent may not type a password into a web page, not even the seed password. The
-signed-in screens were therefore checked two ways:
+The joint check's browser steps need the seed password typed into the sign-in page. The
+implementing agent may not do that, so they go to the owner's reviewer, on 5174 and 5002 (§5).
+Everything the page shows was checked another way: rendered by the test suite from answers captured
+on the scratch stack, rendered again from the joint check's live answers (§4.2), and looked at in a
+browser through a preview outside the worktree (§4.3).
 
-- rendered by the test suite (§2.5);
-- rendered from the live answers of the joint check (§4.3).
+- **Side that has to change:** none. This is a working rule.
+- **Option:** the reviewer runs §5.
 
-The same screens in a browser, signed in on the scratch app, are the owner's reviewer's steps in
-§5.
+### 3.2 A blocking authorization links to the driver, not to its rental
 
-*Side:* the checking run. *Option:* the reviewer runs §5 with a headless browser, in a browser
-profile separate from the owner's (§8.1).
+A driver blocked by driver authorizations lists them. The handover links each one to its rental's
+Authorized drivers tab.
 
-Everything else in the batch was built.
+- **Why not:** the API's blocking record (`RecordDeletionBlockingRecordResponse`) carries the
+  authorization's id and label, not its rental's id, and an authorization has no page of its own. The
+  link opens the blocked driver's own page instead, which lists every authorization of that driver.
+- **Side that has to change:** the backend.
+- **Option:** add the rental's id to the blocking record of a driver authorization, and the app then
+  links to `/rental-assignments/{id}?tab=coverage`.
 
 ## 4. Verification — the joint check
 
-All of it ran on the scratch stack: the API on 5002, `rwrent_check`, seeded sample data. The
-people are the seeded ones:
+On the scratch stack only, as the seeded administrator. The scratch database was rebuilt from the
+seed before the check, exactly as round 7's report §7 gives it:
 
-- Karlis Zvaigzne (Fleet Manager) creates.
-- Signe Priede (Principal) changes, and reads the audit.
-- Toms Rudzitis (Viewer) reads.
-- Dita Smite revokes her own sessions.
+- Release build and migrations;
+- the seed with the seed password from the session;
+- the API on 5002 trusting `http://localhost:5174`.
 
-The seed password came from the owner for this session only, through the environment of each
-command.
+Every command refused to run unless its connection string named `rwrent_check`, and the API client
+refused any address but `localhost:5002`.
 
-### 4.1 The record reads through the API
+### 4.1 Through the API: the handover's §a — 53/53
 
-The acceptance script ran once more, after the app was finished, on fresh records. All 44 checks
-passed:
+`joint_check.py`, in the run's scratchpad. The seeded Fleet Manager first created and put out of use
+a Citroen Berlingo and a customer, Edijs Balodis, because the seed has no inactive vehicle and no
+inactive customer without rentals. Then:
 
-| Checks | What | Result |
-|---|---|---|
-| 1–3 | a seeded vehicle and the seeded company, read by the Viewer | created by "Karlis Zvaigzne" and by "Arturs Veidenbaums"; the Viewer's `GET /api/users/<administrator>` answers 403, yet the name reaches him |
-| 4–11 | Karlis creates a vehicle, a customer, a driver, an active assignment with one authorization, a second authorization and an interruption | every create response and every read names "Karlis Zvaigzne"; nothing changed yet |
-| 12–18 | Signe changes the five records, stops the first authorization and updates the interruption | every response names "Signe Priede" with an instant inside the request's window |
-| 19–28 | the Viewer reads everything back, including the assignment's own two lists | "Signe Priede" with the instant; the untouched authorization names only Karlis |
-| 29–34 | the six lists | no item carries a name |
+- **the six tabs** under both filters: every tab's count equals its list's total (12 checks);
+- **Show and search:** Out of use leaves an active vehicle out, and the interruptions search reads
+  the note;
+- **every row of §a the API can show**, each with the verdict the page words:
+  - rentals: the Cancelled 770 HDV with no parts (Ready), and the Ended 400 NDP with one
+    authorization and one interruption;
+  - authorizations: Laura Ozola's stopped one (Ready), and Anete Kalnina's on 204 JLM, Blocked as
+    the only open one of an Active rental;
+  - interruptions: the two ended ones (Ready);
+  - vehicles: the inactive Citroen (Ready), and 881 GRT and 660 BYH, Blocked by one rental each;
+  - customers: Edijs Balodis (Ready), and Ventspils Marine Services (Blocked);
+  - drivers: Normunds Zarins (Ready), Laura Ozola (blocked by an authorization), and Anete Kalnina
+    (blocked by an authorization and a customer's driver link);
+  - the Active 204 JLM, for the dialog's other banner;
+- **a conflict from the data itself:** a new vehicle, Ready when the list was read, then given a
+  planned rental, is refused as `record_deletions.blocked`;
+- **one deletion of each kind**, the Ended rental taking its own authorization and interruption,
+  then a second deletion of the same record refused as `record_deletions.not_found`;
+- **the empty state:** Interruptions under Out of use is empty once both ended interruptions are
+  gone;
+- **Recently deleted** lists the six deletions, newest first;
+- **the audit:** its filter finds each of the six event types, and the Company Principal reads each
+  entry with its copy — the rental's with its two parts.
 
-### 4.2 The two own-revocation entries
+**Not shown through the API, because they are not API states:**
 
-| Checks | What | Result |
-|---|---|---|
-| 35–37 | Dita ends one other session from her profile, then the same one again | 1 session ended, then 0; the ended session answers 401 |
-| 38–39 | Dita ends every other session, then again | 3 ended (the two made here, one left by an earlier run), then 0 |
-| 40–41 | Signe reads `Session.Revoked` | exactly one new entry: actor and target "Dita Smite", the session, the Company |
-| 42–44 | Signe reads `Session.OthersRevoked` | exactly one new entry, against Dita's current session, with the Company and `{"RevokedCount": 3}`, the same count the response gave; opens by id |
+- the prototype's toast — the app has none, and shows the confirmation line instead;
+- the failure injected from the prototype's panel — the conflict the data raises is checked
+  instead;
+- a driver blocked by a customer's link alone — the seed has no such driver; the combined case is
+  shown, and the sentence for the link alone is covered by the wording tests.
 
-The unhappy paths are the repeats in checks 37 and 39. A revocation that ends nothing writes
-nothing.
+### 4.2 The app's screens, rendered from those live answers — 20/20
 
-### 4.3 The app's screens, rendered from those live answers
+`joint/joint.live.test.ts`, run from outside the worktree with a scratch Vitest config that reuses
+the app's sources. It fed the live answers of §4.1 to the real components and checked:
 
-The joint check saved what the Viewer and the Principal read at the end of §4.1. The app's own
-pages were then rendered from it. The test file and its config were kept outside the worktree,
-because part 3 changes nothing there. The pages show:
+- every §a row in its kind's table, with the chip, the reason and the enabled or disabled Delete…;
+- the empty Interruptions tab;
+- Recently deleted with the six live deletions and their links;
+- the audit entry of the live rental deletion, with its parts;
+- the two live refusals with their sentence and Refresh;
+- the dialog of the live Active rental.
 
-| Screen | What it shows |
-|---|---|
-| Vehicle, customer, driver, assignment | Created: Karlis Zvaigzne, 19 Sep, 09:41 · Last changed: Signe Priede, 19 Sep, 09:41 |
-| Company | Created: Arturs Veidenbaums, 23 Nov 2025, 08:21 · Last changed: Signe Priede, 19 Sep, 09:41 |
-| Assignment, Authorized drivers | "Recorded by Karlis Zvaigzne" on both rows |
-| Assignment, Interruptions | "Recorded by Karlis Zvaigzne" |
-| Overview, activity card | "Session · Others revoked — Dita Smite · 19 Sep, 09:41", "Session · Revoked — Dita Smite · 19 Sep, 09:41", "Company · Updated — Signe Priede · 19 Sep, 09:41", … |
-| Entry page of `Session.OthersRevoked` | Event: Session · Others revoked · Actor: Dita Smite · Sessions ended: 3 |
-| Entry page of `Session.Revoked` | Event: Session · Revoked · Actor: Dita Smite |
+### 4.3 The page in a browser
 
-### 4.4 The screens rendered by the test suite
+I cannot sign in, so a preview outside the worktree rendered the real page with the captured answers
+in its cache. It ran on port 5175, used no API, and was stopped afterwards. I looked at it in the
+app's own browser pane:
 
-These are the 17 render tests of §2.5, from the captured round-6 responses, and all passed. They
-add the cases the live data did not hold:
+- **at 1512:** every column fits, and nothing pans;
+- **at 834:** Billing impact and Parts fold, the Deletion reasons wrap, and Delete… keeps its label;
+- **on a phone:** cards with their own action, and Recently deleted as cards.
 
-- a record nobody changed;
-- a record created or changed last by the technical actor;
-- a row the technical actor recorded;
-- the phone cards;
-- the driver's history row;
-- the event filter.
+Two faults were found and fixed. A card title's underline ran past its text. The Open audit entry
+icon sat off its line.
+
+The real app was also started on 5174 against 5002. `/delete-records` sent the signed-out visitor
+to Sign in, as it should. The run stopped there and stopped the server.
+
+### 4.4 The test suite
+
+Typecheck green; `npm test` 305/305; `npm run build` green.
 
 ### 4.5 The owner's side, untouched
 
-- `rwrent_v1`: the row counts and latest-change instants of eleven tables are identical before the
-  backend round (09:20) and after the joint check.
-- The owner's API on 5001 runs the round-6 build over `rwrent_v1`, healthy. It was restarted once,
-  by round 6 (six seconds).
-- The owner's app on 5173 was not restarted; it has run since 16 Sep. It runs from this worktree
-  with hot reload, so it took the new screens as they were written. It serves the changed modules
-  (200), and `recordNames.ts` carries the new wording.
+- 5001 and 5173 were never opened, called or signed into, and their processes are the ones that ran
+  before the run.
+- `rwrent_v1`'s read-only fingerprint — the row counts of eleven tables and the latest write in ten
+  of them — is identical at the start and at the end.
+- The backend worktree was only read and built from, in Release.
+- The seed password is in no file.
 
 ### 4.6 End state
 
-| Port | What | State |
-|---|---|---|
-| 5001 | the owner's API, round-6 build, `rwrent_v1` | running (restarted by round 6) |
-| 5173 | the owner's app | running, untouched |
-| 5002 | the scratch API, round-6 build, `rwrent_check` | **left running for the reviewer** |
-| 5174 | the scratch app | not running; the reviewer starts it (§5.0) |
-
-`rwrent_check` holds the seed plus the records of the acceptance runs (§7.5). Mailpit was not used
-and not cleared: none of this batch's checks sends mail, and its messages may be the owner's.
-
-### 4.7 How it was run
-
-- API checks: `r6_acceptance.py` through a client that can only reach port 5002. Passwords came from
-  the environment.
-- Renders: vitest with `react-dom/server`, the real `AccessProvider` and `MemoryRouter`, and a query
-  cache pre-filled with the API's answers.
-- Owner-side checks: read-only `psql` counts, `/health` and HTTP status reads.
+- The scratch API runs on 5002 over `rwrent_check`, holding the joint check's state, **for the
+  reviewer**.
+- My Vite on 5174 and the preview on 5175 are stopped.
+- Both main checkouts are untouched.
+- The worktree is clean and pushed.
 
 ## 5. For the owner's reviewer: the steps with the seed password
 
 ### 5.0 Before and after
 
-1. **Use a separate browser profile, or a headless browser.** Both stacks run from the same backend
-   worktree, with the same cookie names (`RWRent.Auth`, `RWRent.Antiforgery`) and the same key
-   ring, and a browser does not separate `localhost` cookies by port. Signing in on 5174 in the
-   owner's profile would sign the owner out of 5173 (§8.1).
+1. **Use a separate browser profile, or a headless browser.** Both stacks share the cookie names and
+   the key ring, and a browser does not separate `localhost` cookies by port. Signing in on 5174 in
+   the owner's profile would sign the owner out of 5173 (§8.1).
 2. Start the scratch app from this worktree:
 
    ```bash
    VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort
    ```
 
-3. When you are done, stop it (`kill $(lsof -ti tcp:5174)`). Tear down the scratch stack when the
-   review is over: stop the API with `kill $(lsof -ti tcp:5002)`, then run
-   `DROP DATABASE rwrent_check WITH (FORCE)` from the `rwrent_v5_postgres` container.
+3. Afterwards, stop it with `kill $(lsof -ti tcp:5174)`. When the review is over, stop the scratch
+   API with `kill $(lsof -ti tcp:5002)`, then run `DROP DATABASE rwrent_check WITH (FORCE)` from the
+   `rwrent_v5_postgres` container.
 
 ### 5.1 The steps
 
-The records made by the acceptance have plates starting with "R6"; pick the newest.
+The joint check has already deleted six records on the scratch stack (§4.1), so Interruptions is
+empty under Out of use, and Recently deleted has six rows.
 
-1. **Karlis's record, changed by Signe.** Sign in as `signe.priede@rwrent.example`. Open the newest
-   "R6…" vehicle. The Record panel reads "Created: Karlis Zvaigzne" with a time on the second line,
-   and "Last changed: Signe Priede" with a time. Do the same on its customer, its driver (the
-   driver's history, visible to the Principal, names Karlis on its Created row) and its rental
-   assignment (Lifecycle panel).
-2. **Nobody changed it.** Open a seeded vehicle other than the R6 ones, for example "119 MPR". It
-   reads "Created: Karlis Zvaigzne" and "Last changed: Not changed since it was created".
-3. **The rows.** On that R6 assignment:
-   - "Authorized drivers": each row has "Recorded by Karlis Zvaigzne" under the driver.
-   - "Interruptions": the line is under the reason.
-   - Narrow the window below 768 pixels: the cards carry the same line.
-   - "Corrections" (the administrator, `sysadmin@rwrent.example`): "Last changed" beside the
-     concurrency token.
-4. **The company.** On the Company page: "Created: Arturs Veidenbaums", "Last changed: Signe Priede".
-5. **A change in the app, by a second person.** As Karlis (`karlis.zvaigzne@rwrent.example`), edit
-   that vehicle (the colour, say) and save. The Record panel's "Last changed" now reads "Karlis
-   Zvaigzne" with the new time. Sign in as Signe, edit it again: "Signe Priede".
-6. **The activity card.** As Signe, on the Overview: each row of "Recent security activity" reads
-   "<name> · <time>", Dita's rows among them.
-7. **Own revocations, in the app.** Sign in as `dita.smite@rwrent.example` in two separate contexts.
-   From the first, on Profile → Sessions:
-   - press "Revoke" on the other session: the entry is `Session.Revoked`;
-   - sign in once more elsewhere, then press "Revoke other sessions" and confirm: the entry is
-     `Session.OthersRevoked`.
-
-   As Signe, in Security audit, filter "Session · Revoked" and then "Session · Others revoked". Each
-   shows Dita's entry, named. Open the second: "Sessions ended" with the number the profile page
-   reported.
-8. **Nothing to revoke.** As Dita, press "Revoke other sessions" again with no other session:
-   Signe's list gains no entry.
+1. **Who sees the page.**
+   - Sign in as `signe.priede@rwrent.example` (Company Principal): Administration has no Delete
+     records, and opening `/delete-records` shows "Not available to you — Opening this page needs
+     Records.Delete."
+   - Sign in as `sysadmin@rwrent.example`: the entry sits after System Administrator.
+2. **The frame.** The banner "Deleted means gone"; six tabs with counts; Rental assignments first,
+   under Out of use.
+   - Switch Show to Everything: the counts change, and Clear filters appears.
+   - Type a search, then change the tab: the search clears, Show stays.
+3. **Blocked rows.**
+   - Vehicles, Everything: 881 GRT reads "Blocked", "1 rental assignment refers to this vehicle", and
+     links to its rental. Its Delete… is disabled, with the reason as its hint.
+   - Drivers, Everything: Anete Kalnina carries both reasons in one sentence, with a link to the
+     customer.
+   - Driver authorizations, Everything: Anete Kalnina · 204 JLM reads "An active rental must keep at
+     least one authorization".
+4. **The empty state.** Interruptions, Out of use: "Nothing to clean up".
+5. **A deletion in the app.**
+   1. Rental assignments: open Delete… on 770 HDV · Daugava Construction (Cancelled, no parts).
+   2. Check the dialog: title "Delete rental assignment", the record line, the banner "This cannot be
+      undone", the consequences, Reason, Note, and the tick. Delete permanently stays disabled until
+      a reason and the tick are given; choosing Other also requires a note.
+   3. Choose "Practice or test record", tick, and press Delete permanently.
+   4. Expect: the dialog closes; the row leaves; the tab count drops by one; the line "Rental
+      assignment deleted: 770 HDV · Daugava Construction. Written to the security audit." appears;
+      Recently deleted gains the row at the top.
+   5. Follow the link: the entry shows the Record fact with its hint, and the Deleted record panel.
+6. **An Active rental.** Rental assignments, Everything: Delete… on 204 JLM · Anete Kalnina. The
+   banner reads "This rental is active". Cancel.
+7. **A conflict with Refresh.**
+   1. As the administrator, open Delete… on a Ready vehicle. Create one as
+      `karlis.zvaigzne@rwrent.example` in a second profile first if none is left.
+   2. As Karlis, create a planned rental on that vehicle.
+   3. Back in the dialog, fill it in and press Delete permanently.
+   4. Expect: the banner "This vehicle now has a rental assignment. Refresh the list." with Refresh.
+      Refresh closes the dialog and reloads the list, where the vehicle is now Blocked.
+8. **The phone.** Narrow below 768 pixels: each row is a card with its own full-width Delete…, and
+   Recently deleted is cards. Below 640, the dialog is a sheet.
+9. **The audit.** In Security audit, the Event type filter offers the six "· Deleted" events.
+   "Rental assignment · Deleted" finds the joint check's rental deletion; open it to see Deleted
+   authorizations and Deleted interruptions, one group each.
 
 ## 6. Decisions needed
 
-None.
+1. **The interruption's record label carries the reason's API name.** Round 7's §7 defines the
+   interruption label as "<reason name> · <plate> · <customer>", and the backend writes the enum's
+   name. So Recently deleted, the confirmation line and the audit's Record fact read, as the joint
+   check's deletion does, "Interruption · ScheduledMaintenance · 482 TKL · Baltic Freight Partners".
+   The page's own rows and dialog word the reason ("Scheduled maintenance"). Options:
+   - the backend writes the reason's words into the label, for new deletions only (older entries
+     keep theirs); or
+   - it stays as it is.
+
+   The app should not rewrite a label the server wrote.
 
 ## 7. Deviations
 
-1. **The Corrections tab's fact changed too.** The ledger names the record facts. The assignment's
-   Corrections tab shows the same "Last updated" fact beside the concurrency token, so it became
-   "Last changed" with the name, so one page never says both.
-2. **Where "Recorded by" sits.** The From and Period columns are 136 pixels wide, and a name there
-   would wrap. The line sits under the driver in the authorization row, in the wide Driver column.
-   In the interruption row it sits under the reason chip, the one cell that stays visible at every
-   width; the Note column folds away.
-3. **The driver's history row.** Its synthetic Created row now names the creator instead of "Not
-   recorded". This was not asked, but left as it was, the row would contradict the Record panel on
-   the same page.
-4. **The assignment record's type** omits the list item's four counts (§2.4). This is type-only,
-   and it was found by the API-typed fixtures.
-5. **The acceptance ran five times on the scratch stack:** four during the backend round (three
-   stopped by faults in the script) and once for this joint check. Each run made its own records, so
-   `rwrent_check` holds several R6 sets, and Dita's revoke-others counts include sessions an earlier
-   run left open.
-6. **The live render ran from outside the worktree**, with a scratch config reusing the app's own
-   sources, because part 3 changes nothing in the worktree.
+1. **The tab counts follow Show, not the search.** The counts endpoint takes the filter alone (round
+   7's §7). The prototype's counts also narrowed with the search.
+2. **Recently deleted shows the newest 20, with no pager.** The handover shows none.
+3. **The phone card's Delete…** is the app's block button (`Button block tone="danger"`): the neutral
+   frame with the tone in the label. The handover's card used the filled danger recipe. The app's
+   existing piece was kept.
+4. **Actions keeps 118px in the portrait band.** The handover's 71% would leave 84px, which clips
+   Delete….
+5. **The app's words where they differ from the prototype's:**
+   - a customer's type reads "Private", not "Private person";
+   - the refused page is the app's lock state ("Not available to you"), not "HTTP 403 · policy";
+   - the hint of a Delete permanently still waiting for the tick is "Confirm that you understand this
+     cannot be undone." — the handover has no sentence for that case.
+6. **A deleted record's facts are in a fixed reading order:** the record's own members by name, then
+   who created and last changed it, then the identifiers. Postgres returns the copy's keys in its own
+   storage order, which reads as noise.
+7. **The Record fact on a deletion's entry spans the grid's full width**, so the Event panel's other
+   six facts keep their two rows of three.
+8. **The page checks `Records.Delete` itself** as well as the route guard. It then shows the same
+   lock state and sends no request. This is also what the refused-page test renders.
+9. **The joint check's render half and the visual preview ran from outside the worktree**, with
+   scratch configs that reuse the app's sources, so the worktree holds only the page's own code.
 
 ## 8. Open risks
 
 1. **Cookies are shared between 5173 and 5174** in one browser profile (§5.0). Only a reviewer who
    ignores §5.0 can trip on it, but the price is the owner being signed out.
-2. **The ended-sessions count counts sessions, not devices in use.** Revoke-others ends every
-   session not yet revoked, including ones that had already lapsed by idle time. The seeded ones
-   show this, and the backend report has the details.
-3. **Names are read-time names.** After a name correction, an older record shows the new name.
-4. **An API older than round 6** would send no names, and the pages would then read "System"
-   everywhere. The app and the API are deployed together, and 5001 runs round 6.
-5. **Hot reload reached the owner's app as the code was written.** The owner's app on 5173 runs
-   from this worktree, so it saw each edit as it landed. No broken state was saved at a checkpoint:
-   the typecheck, tests and build passed before the commit.
+2. **The page is live on real data.** The owner's app hot-reloads from this worktree, and the API on
+   5001 serves round 7. The administrator can delete real records from the moment this is pushed —
+   and could while it was being written.
+   - A deletion cannot be undone; the audit entry keeps its copy.
+   - A copy of `rwrent_v1` before a first real deletion is cheap insurance (the backend README, the
+     go-live section).
+3. **One line has no test.** `useActionMutation`'s call to the dialog's refusal reader is covered
+   only through the reader itself (`deletionFailure`, tested). The node test environment runs no
+   mutation. The joint check's live refusals went through the same reader.
+4. **The phone preset used was 375 pixels wide**, not the handover's 402. Both are on the card tier,
+   where nothing depends on the exact width.
+
+## 9. Commits
+
+| Commit | Group |
+|---|---|
+| `2f73fe8` | the round-7 contract: `dto.ts`, `recordDeletions.ts`, `queryKeys.ts`, `client.ts`, `index.ts`, and `Records.Delete` in `permissions.ts` |
+| `8076643` | shared pieces: `CheckCard.tsx` (lifted), `AssignmentDialogs.tsx`, `Dialog.tsx`, `Dialog.module.css`, `problem.ts`, `useActionMutation.ts` |
+| `4a8f08d` | the words: the reason and kind labels in `labels.ts`, `recordDeletion.ts`, `format/index.ts` |
+| `7c2d69d` | the security audit: the six events in `labels.ts`, `auditPayload.ts`, `AuditEntry.tsx`, `AuditEntry.module.css` |
+| `e6764d8` | the dialog: `DeleteRecordDialog.tsx`, `codes.ts`, and the `codes.test.ts` catalogue |
+| `6a7de67` | the page: `DeleteRecords.tsx`, `DeleteRecords.module.css`, and the route in `routes.tsx` |
+| `9ddf236` | the tests: `recordDeletion.test.ts`, `deletedRecord.test.ts`, `recordDeletions.test.ts`, `followup8.support.ts`, `followup8.render.test.ts`, `followup8.phone.render.test.ts`, and the catalogues in `routes.test.ts` and `labels.test.ts` |
+| this one | `Context/wiring_report.md` |
