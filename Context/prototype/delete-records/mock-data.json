@@ -1,0 +1,221 @@
+{
+  "_readme": [
+    "Mock data added to the DB constant of RW-Rent.dc.html for the Delete records feature.",
+    "Nothing else in DB was changed. Rows that already existed and are only referenced here are",
+    "listed under existingRowsRelieadOn, so the fixtures can be built on the same shape.",
+    "",
+    "Timestamps are written as hoursFromNow: at(-24*40) in the prototype means 40 days ago. The",
+    "prototype's at(h) returns an ISO instant h hours from load; atRaw()/payload() render the same",
+    "instant with an explicit offset (2026-08-23T11:57:51.621+00:00) for raw audit payloads.",
+    "",
+    "Enum ids follow the existing E maps: assignment status 1 Active, 2 Ended, 3 Cancelled,",
+    "4 Planned; customer type 1 private person, 2 business; authorizationType 1 named driver,",
+    "2 company-authorized; stopReason 4 Assignment ended; interruption reason 1 Customer request;",
+    "billingImpact 1 Fully billable."
+  ],
+
+  "vehicles": [
+    {
+      "_why": "Ready vehicle: inactive and nothing refers to it. The only unreferenced inactive vehicle.",
+      "id": "v11",
+      "plateNumber": "913 RTN",
+      "vinCode": "VF7SCBHY6JT913204",
+      "make": "Citroen",
+      "model": "Berlingo",
+      "year": 2019,
+      "bodyType": 2,
+      "gearboxType": 1,
+      "fuelType": 2,
+      "color": "Polar white",
+      "isActive": false,
+      "createdAtUtc": { "hoursFromNow": -16800 },
+      "updatedAtUtc": { "hoursFromNow": -2880 },
+      "guid": "8c47b1e0-35d9-4a26-9f83-02be571cd4a9"
+    }
+  ],
+
+  "customers": [
+    {
+      "_why": "Ready customer: inactive, no rental assignment refers to it. Also supplies the driver link that blocks driver d9.",
+      "id": "cu9",
+      "type": 1,
+      "firstName": "Edijs",
+      "lastName": "Balodis",
+      "personalId": "140281-10993",
+      "dateOfBirth": "1981-02-14",
+      "companyName": null,
+      "registrationCode": null,
+      "address": "Lielirbes 29, Riga, LV-1046",
+      "email": "e.balodis@example.com",
+      "phoneNumber": "+371 26 990 118",
+      "driverId": "d9",
+      "isActive": false,
+      "createdAtUtc": { "hoursFromNow": -9360 },
+      "updatedAtUtc": { "hoursFromNow": -2280 }
+    }
+  ],
+
+  "drivers": [
+    {
+      "_why": "Driver blocked by a driver authorization (z7, on rental a7).",
+      "id": "d8",
+      "firstName": "Maris",
+      "lastName": "Ozolins",
+      "personalId": "261083-11447",
+      "dateOfBirth": "1983-10-26",
+      "address": "Jelgavas 14, Riga, LV-1004",
+      "email": "m.ozolins@example.com",
+      "phoneNumber": "+371 29 774 220",
+      "driverLicenseNumber": "LV-AH-118903",
+      "isActive": false,
+      "createdAtUtc": { "hoursFromNow": -7200 },
+      "updatedAtUtc": { "hoursFromNow": -1080 },
+      "guid": "5f3ba927-64d1-4e08-b2c7-9a05e4318fd6",
+      "createdByUserId": "u2"
+    },
+    {
+      "_why": "Driver blocked by a customer's driver link (customer cu9), with no authorization at all.",
+      "id": "d9",
+      "firstName": "Edijs",
+      "lastName": "Balodis",
+      "personalId": "140281-10993",
+      "dateOfBirth": "1981-02-14",
+      "address": "Lielirbes 29, Riga, LV-1046",
+      "email": "e.balodis@example.com",
+      "phoneNumber": "+371 26 990 118",
+      "driverLicenseNumber": "LV-AI-330774",
+      "isActive": false,
+      "createdAtUtc": { "hoursFromNow": -9360 },
+      "updatedAtUtc": { "hoursFromNow": -2280 },
+      "guid": "a92d0c74-18e5-4b63-8f02-37c4b6e95d18",
+      "createdByUserId": "u3"
+    }
+  ],
+
+  "authorizations": {
+    "_why": "Second authorization on the ended rental a7, so one rental carries two authorizations and one interruption. Keyed by rentalAssignmentId, as in DB.authorizations.",
+    "a7": [
+      {
+        "id": "z7",
+        "rentalAssignmentId": "a7",
+        "authorizationType": 1,
+        "driverId": "d8",
+        "authorizedFromUtc": { "hoursFromNow": -600 },
+        "stoppedAtUtc": { "hoursFromNow": -240 },
+        "stopReason": 4,
+        "note": "Second driver added for the northern route.",
+        "concurrencyToken": "t-z7",
+        "createdAtUtc": { "hoursFromNow": -600 },
+        "updatedAtUtc": { "hoursFromNow": -240 }
+      }
+    ]
+  },
+
+  "audit": [
+    {
+      "_why": "Recently deleted, row 1: a vehicle, by the System Administrator. Its entity no longer exists, which is the point of recordLabel.",
+      "id": "gd1",
+      "eventType": "Vehicle.Deleted",
+      "actorUserId": "u1",
+      "occurredAtUtc": { "hoursFromNow": -5.5 },
+      "companyId": "c1",
+      "targetUserId": null,
+      "entityType": "Vehicle",
+      "entityId": "v12",
+      "recordLabel": "027 VDP · Opel Astra",
+      "reason": "Entered by mistake",
+      "afterJson": null,
+      "beforeJson": {
+        "PlateNumber": "027 VDP",
+        "VinCode": "W0L0XCF6851027344",
+        "Make": "Opel",
+        "Model": "Astra",
+        "Year": 2015,
+        "BodyType": "Wagon",
+        "GearboxType": "Manual",
+        "FuelType": "Petrol",
+        "Color": "Silver",
+        "IsActive": false,
+        "CreatedAtUtc": { "hoursFromNow": -21600 }
+      }
+    },
+    {
+      "_why": "Recently deleted, row 2: a rental with parts, by a Fleet Manager, reason with a note. Drives the Deleted authorizations and Deleted interruptions panels.",
+      "id": "gd2",
+      "eventType": "RentalAssignment.Deleted",
+      "actorUserId": "u2",
+      "occurredAtUtc": { "hoursFromNow": -51 },
+      "companyId": "c1",
+      "targetUserId": null,
+      "entityType": "RentalAssignment",
+      "entityId": "a13",
+      "recordLabel": "660 BYH · Nordwind Logistics",
+      "reason": "Practice or test record — made while teaching a new colleague.",
+      "afterJson": null,
+      "beforeJson": {
+        "VehiclePlateNumber": "660 BYH",
+        "CustomerName": "Nordwind Logistics",
+        "Status": "Cancelled",
+        "PlannedStartAtUtc": { "hoursFromNow": -1080 },
+        "PlannedEndAtUtc": { "hoursFromNow": -720 },
+        "StartedAtUtc": null,
+        "ClosedAtUtc": { "hoursFromNow": -1056 },
+        "Note": "Training example, never handed over.",
+        "Authorizations": [
+          {
+            "AuthorizationType": "NamedDriver",
+            "DriverName": "Laura Ozola",
+            "AuthorizedFromUtc": { "hoursFromNow": -1080 },
+            "StoppedAtUtc": { "hoursFromNow": -1056 },
+            "StopReason": "AssignmentCancelled"
+          }
+        ],
+        "Interruptions": [
+          {
+            "Reason": "AdministrativeHold",
+            "BillingImpact": "NotBillable",
+            "StartedAtUtc": { "hoursFromNow": -1068 },
+            "EndedAtUtc": { "hoursFromNow": -1056 }
+          }
+        ]
+      }
+    },
+    {
+      "_why": "Recently deleted, row 3: a driver, by a third person, third reason.",
+      "id": "gd3",
+      "eventType": "Driver.Deleted",
+      "actorUserId": "u4",
+      "occurredAtUtc": { "hoursFromNow": -96 },
+      "companyId": "c1",
+      "targetUserId": null,
+      "entityType": "Driver",
+      "entityId": "d10",
+      "recordLabel": "Vita Auzina",
+      "reason": "No longer needed",
+      "afterJson": null,
+      "beforeJson": {
+        "FirstName": "Vita",
+        "LastName": "Auzina",
+        "PersonalId": "030794-12008",
+        "DriverLicenseNumber": "LV-AJ-220118",
+        "Email": "v.auzina@example.com",
+        "PhoneNumber": "+371 25 118 447",
+        "IsActive": false,
+        "CreatedAtUtc": { "hoursFromNow": -15360 }
+      }
+    }
+  ],
+
+  "existingRowsReliedOn": {
+    "_why": "Already in DB before this feature. Listed so the fixture set covers every state without adding more rows.",
+    "a11": "Cancelled rental with no parts — the Ready rental assignment (770 HDV · Daugava Construction)",
+    "a7": "Ended rental, now with two authorizations (z6, z7) and one interruption (i4) — 400 NDP · Roberts Liepins",
+    "a6": "Active rental with an open interruption (i3) — 204 JLM · Anete Kalnina. Its z5 is the only open authorization, so z5 is the Blocked authorization",
+    "z6": "Stopped authorization on a7 — a Ready authorization",
+    "i1, i4": "Ended interruptions — the two Ready interruptions",
+    "v5, v8": "Inactive vehicles with one rental assignment each — Blocked vehicles",
+    "cu5": "Inactive customer with one rental assignment — Blocked customer",
+    "d6": "Inactive driver with no references — Ready driver",
+    "u1, u2, u4": "The three actors of the seeded deletions (System Administrator, Fleet Manager, third user)"
+  }
+}

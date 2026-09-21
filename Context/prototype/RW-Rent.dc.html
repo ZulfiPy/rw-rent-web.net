@@ -639,6 +639,27 @@ table{border-collapse:collapse}
         </div>
         </sc-if>
 
+        <sc-if value="{{ pgPurge }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div role="note" style="display:flex;gap:11px;padding:13px 15px;background:var(--bad-soft);border:1px solid var(--bad-line);border-radius:12px">
+            <span data-icon style="font-size:19px;color:var(--bad);flex:none">error</span>
+            <div style="min-width:0">
+              <div style="font-size:13.5px;font-weight:600;color:var(--fg)">Deleted means gone</div>
+              <p style="margin:3px 0 0;font-size:13px;color:var(--fg-2)">The record leaves the database. What stays is one entry in the security audit: who deleted what, when and why, with a copy of what the record said.</p>
+            </div>
+          </div>
+          <div role="tablist" aria-label="Record kind" style="display:flex;flex-wrap:nowrap;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:11px;width:max-content;max-width:100%;overflow-x:auto">
+            <sc-for list="{{ purgeTabs }}" as="t" hint-placeholder-count="6">
+              <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="display:flex;align-items:center;gap:8px;flex:none;padding:8px 13px;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }};border-radius:8px;font-size:13.5px;font-weight:{{ t.weight }}" style-hover="color:var(--fg)">
+                <span data-icon style="font-size:17px">{{ t.icon }}</span>
+                <span style="white-space:nowrap">{{ t.label }}</span>
+                <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3)">{{ t.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
         <sc-if value="{{ pgList }}" hint-placeholder-val="{{ false }}">
         <section style="display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-1)">
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)">
@@ -767,11 +788,18 @@ table{border-collapse:collapse}
                               <span aria-hidden="true" style="width:6px;height:6px;flex:none;border-radius:{{ c.chipShape }};background:currentColor"></span>{{ c.text }}
                             </span>
                             <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-family:{{ c.subFont }};font-size:{{ c.subSize }};color:var(--fg-3)">{{ c.sub }}</span></sc-if>
+                            <sc-if value="{{ c.hasSubLinks }}" hint-placeholder-val="{{ false }}">
+                              <span style="display:flex;flex-wrap:wrap;gap:2px 10px">
+                                <sc-for list="{{ c.subLinks }}" as="l" hint-placeholder-count="1">
+                                  <a href="#" onClick="{{ l.go }}" style="font-size:11.5px;color:var(--fg-2);text-decoration:underline;text-underline-offset:2px;cursor:pointer" style-hover="color:var(--fg)">{{ l.text }}</a>
+                                </sc-for>
+                              </span>
+                            </sc-if>
                           </span>
                         </sc-if>
                         <sc-if value="{{ c.isLink }}" hint-placeholder-val="{{ false }}">
                           <span style="display:flex;flex-direction:column;gap:2px;align-items:{{ c.alignItems }}">
-                            <a href="#" onClick="{{ c.onLink }}" style="width:fit-content;max-width:100%;font-family:{{ c.font }};font-size:{{ c.size }};font-weight:600;color:var(--accent);white-space:{{ c.wrap }};text-decoration:none;border-bottom:1px solid transparent;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.text }}</a>
+                            <a href="#" onClick="{{ c.onLink }}" style="width:fit-content;max-width:100%;font-family:{{ c.font }};font-size:{{ c.size }};font-weight:600;color:{{ c.linkFg }};white-space:{{ c.wrap }};text-decoration:none;border-bottom:1px solid {{ c.linkEdge }};cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.text }}</a>
                             <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-family:{{ c.subFont }};font-size:{{ c.subSize }};color:var(--fg-3)">{{ c.sub }}</span></sc-if>
                           </span>
                         </sc-if>
@@ -779,6 +807,11 @@ table{border-collapse:collapse}
                           <span style="display:flex;flex-direction:column;gap:2px;align-items:{{ c.alignItems }}">
                             <span style="font-family:{{ c.font }};font-size:{{ c.size }};font-weight:{{ c.weight }};color:{{ c.fg }};white-space:{{ c.wrap }}">{{ c.text }}</span>
                             <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-family:{{ c.subFont }};font-size:{{ c.subSize }};color:var(--fg-3)">{{ c.sub }}</span></sc-if>
+                          </span>
+                        </sc-if>
+                        <sc-if value="{{ c.isDelete }}" hint-placeholder-val="{{ false }}">
+                          <span style="display:flex;align-items:center;justify-content:flex-end">
+                            <button type="button" onClick="{{ c.delGo }}" aria-disabled="{{ c.delDisabled }}" title="{{ c.delTip }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;background:var(--bad-soft);border:1px solid var(--bad-line);border-radius:8px;color:var(--bad);font-size:12.5px;font-weight:500;white-space:nowrap;opacity:{{ c.delOpacity }};cursor:{{ c.delCursor }}" style-hover="filter:brightness(1.08)"><span data-icon style="font-size:16px">delete</span><span>{{ c.delLabel }}</span></button>
                           </span>
                         </sc-if>
                         <sc-if value="{{ c.isActions }}" hint-placeholder-val="{{ false }}">
@@ -842,6 +875,43 @@ table{border-collapse:collapse}
                   </span>
                   </sc-if>
                 </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ list.showActionCards }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ list.actionCards }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <span style="display:flex;min-width:0"><a href="#" onClick="{{ c.onTitle }}" style="display:inline-block;max-width:100%;font-family:{{ c.titleFont }};font-size:14px;font-weight:600;color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.title }}</a></span>
+                      <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ true }}"><span style="font-size:11.5px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.sub }}</span></sc-if>
+                    </div>
+                    <span style="display:inline-flex;align-items:center;gap:6px;flex:none;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:{{ c.chipBg }};color:{{ c.chipFg }};border:1px solid {{ c.chipBd }}"><span aria-hidden="true" style="width:6px;height:6px;border-radius:{{ c.chipShape }};background:currentColor"></span>{{ c.chip }}</span>
+                  </div>
+                  <sc-if value="{{ c.hasFacts }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px 14px">
+                      <sc-for list="{{ c.facts }}" as="f" hint-placeholder-count="2">
+                        <span style="display:flex;flex-direction:column;gap:1px;min-width:0;grid-column:{{ f.span }}">
+                          <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-4)">{{ f.label }}</span>
+                          <span style="font-size:12.5px;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.value }}</span>
+                        </span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ c.hasReason }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <span style="font-size:12px;line-height:1.45;color:var(--warn);text-wrap:pretty">{{ c.reason }}</span>
+                      <sc-if value="{{ c.hasLinks }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:flex;flex-wrap:wrap;gap:2px 12px">
+                          <sc-for list="{{ c.links }}" as="l" hint-placeholder-count="1"><a href="#" onClick="{{ l.go }}" style="font-size:12px;color:var(--fg-2);text-decoration:underline;text-underline-offset:2px;cursor:pointer" style-hover="color:var(--fg)">{{ l.text }}</a></sc-for>
+                        </span>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                  <button type="button" onClick="{{ c.actGo }}" aria-disabled="{{ c.actDisabled }}" title="{{ c.actTip }}" style="display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 14px;background:var(--bad-soft);border:1px solid var(--bad-line);border-radius:9px;color:var(--bad);font-size:13px;font-weight:500;opacity:{{ c.actOpacity }};cursor:{{ c.actCursor }}" style-hover="filter:brightness(1.08)"><span data-icon style="font-size:17px">delete</span><span>{{ c.actLabel }}</span></button>
+                </div>
               </sc-for>
             </div>
           </sc-if>
@@ -1006,7 +1076,7 @@ table{border-collapse:collapse}
                                 <sc-if value="{{ c.isLink }}" hint-placeholder-val="{{ false }}">
                                   <span style="display:flex;flex-direction:column;gap:3px;align-items:{{ c.alignItems }}">
                                     <span style="display:flex;align-items:center;gap:8px;max-width:100%;min-width:0">
-                                      <a href="#" onClick="{{ c.onLink }}" style="max-width:100%;font-family:{{ c.font }};font-size:13px;font-weight:600;color:var(--accent);white-space:{{ c.wrap }};text-decoration:none;border-bottom:1px solid transparent;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.text }}</a>
+                                      <a href="#" onClick="{{ c.onLink }}" style="max-width:100%;font-family:{{ c.font }};font-size:13px;font-weight:600;color:{{ c.linkFg }};white-space:{{ c.wrap }};text-decoration:none;border-bottom:1px solid {{ c.linkEdge }};cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.text }}</a>
                                       <sc-if value="{{ c.hasBadge }}" hint-placeholder-val="{{ false }}">
                                         <span style="display:inline-flex;align-items:center;gap:5px;flex:none;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:500;background:{{ c.badgeBg }};color:{{ c.badgeFg }};border:1px solid {{ c.badgeBd }};white-space:nowrap"><span aria-hidden="true" style="width:5px;height:5px;flex:none;border-radius:{{ c.badgeShape }};background:currentColor"></span>{{ c.badge }}</span>
                                       </sc-if>
@@ -1404,7 +1474,7 @@ const ROLE_PERMS = {
   Viewer: ['Company.Read','Users.ReadDirectory','Drivers.Read','Customers.Read','Vehicles.Read','RentalAssignments.Read','DriverAuthorizations.Read','Interruptions.Read'],
   FleetManager: ['Company.Update','Users.ReviewRegistrations','Users.ManageRegistrations','Users.ActivateViewer','Drivers.Manage','Customers.Manage','Vehicles.Manage','RentalAssignments.Manage','DriverAuthorizations.Manage','Interruptions.Manage'],
   CompanyPrincipal: ['Users.ActivateFleetManager','Users.CorrectName','Users.SuspendRestoreOrdinary','Roles.ReadHistory','Roles.ManageViewerFleetManager','Sessions.ManageOrdinaryCompanyUsers','SecurityAudit.ReadCompany'],
-  SystemAdministrator: ['Company.Create','Company.Delete','Users.ActivateCompanyPrincipal','Users.SuspendRestoreCompanyPrincipal','Roles.ManageCompanyPrincipal','Sessions.ManageAnyUser','SecurityAudit.ReadAll','SystemAdministration.Transfer','PrivilegedCorrections.Execute']
+  SystemAdministrator: ['Company.Create','Company.Delete','Users.ActivateCompanyPrincipal','Users.SuspendRestoreCompanyPrincipal','Roles.ManageCompanyPrincipal','Sessions.ManageAnyUser','SecurityAudit.ReadAll','SystemAdministration.Transfer','PrivilegedCorrections.Execute','Records.Delete']
 };
 const ROLE_CHAIN = { Viewer:['Viewer'], FleetManager:['Viewer','FleetManager'], CompanyPrincipal:['Viewer','FleetManager','CompanyPrincipal'], SystemAdministrator:['Viewer','FleetManager','CompanyPrincipal','SystemAdministrator'] };
 const ROLE_LABEL = { SystemAdministrator:'System Administrator', CompanyPrincipal:'Company Principal', FleetManager:'Fleet Manager', Viewer:'Viewer', None:'No effective role' };
@@ -1426,6 +1496,7 @@ const FAIL_SIM = {
   'session-revoke-all': { conflict:'Another administrator is already revoking this user\u2019s sessions.' },
   'auth-correct': { fields:{ reason:'Reason must be at least 3 characters.' }, conflict:'The authorization was stopped while you had this open.' },
   'company-delete': { conflict:'The Company is still referenced and cannot be deleted.' },
+  'record-delete': { fields:{ note:'The note must be at most 1000 characters.' }, conflict:'This record gained a reference while the list was open. Refresh the list.' },
   'transfer-resend': { fields:{ currentPassword:'That is not your current password.' }, conflict:'The transfer was accepted moments ago and can no longer be resent.' },
   'transfer-cancel': { fields:{ reason:'Reason must be at least 3 characters.' }, conflict:'The transfer was accepted moments ago and can no longer be cancelled.' },
   'customer-toggle': { conflict:'The customer has a planned or active assignment and cannot be deactivated.' },
@@ -1471,9 +1542,12 @@ const AUDIT_EVENTS = [
   ['RoleAssignment', ['Granted','Revoked','ExpiryChanged'], 'Role'],
   ['Session', ['RevokedByAdministrator','AllRevokedByAdministrator']],
   ['Company', ['Created','Updated','Deleted']],
-  ['RentalAssignment', ['TimelineCorrected','PartiesCorrected'], 'Rental assignment'],
-  ['DriverAuthorization', ['Corrected'], 'Driver authorisation'],
-  ['Interruption', ['Corrected']],
+  ['RentalAssignment', ['TimelineCorrected','PartiesCorrected','Deleted'], 'Rental assignment'],
+  ['DriverAuthorization', ['Corrected','Deleted'], 'Driver authorisation'],
+  ['Interruption', ['Corrected','Deleted']],
+  ['Vehicle', ['Deleted']],
+  ['Customer', ['Deleted']],
+  ['Driver', ['Deleted']],
   ['SystemAdministrator', ['Bootstrapped','OfflineRecovery','TransferInitiated','TransferAccepted','TransferCancelled','TransferConfirmationRotated'], 'System Administrator']
 ];
 const AUDIT_EVENT_TYPES = [];
@@ -1487,7 +1561,7 @@ AUDIT_EVENTS.forEach(g => {
 });
 const FAIL_GENERIC = 'The API refused this change because the record no longer accepts it.';
 const FAIL_MODES = [['none','None — succeed'],['fields','Field errors'],['conflict','Conflict'],['stale','Stale record']];
-const ROUTE_PERM = { audit:'SecurityAudit.ReadCompany', auditentry:'SecurityAudit.ReadCompany', sysadmin:'SystemAdministration.Transfer', registrations:'Users.ReviewRegistrations', users:'Users.ReadDirectory', user:'Users.ReadDirectory', assignments:'RentalAssignments.Read', assignment:'RentalAssignments.Read', vehicles:'Vehicles.Read', vehicle:'Vehicles.Read', customers:'Customers.Read', customer:'Customers.Read', drivers:'Drivers.Read', driver:'Drivers.Read' };
+const ROUTE_PERM = { audit:'SecurityAudit.ReadCompany', auditentry:'SecurityAudit.ReadCompany', sysadmin:'SystemAdministration.Transfer', deleterecords:'Records.Delete', registrations:'Users.ReviewRegistrations', users:'Users.ReadDirectory', user:'Users.ReadDirectory', assignments:'RentalAssignments.Read', assignment:'RentalAssignments.Read', vehicles:'Vehicles.Read', vehicle:'Vehicles.Read', customers:'Customers.Read', customer:'Customers.Read', drivers:'Drivers.Read', driver:'Drivers.Read' };
 
 const E = {
   status: { 1:'Active', 2:'Ended', 3:'Cancelled', 4:'Planned' },
@@ -1504,9 +1578,21 @@ const E = {
 const DRV_GUID = {
   d1:'7c25e0b9-38a4-4f16-b073-92ad5c1e6408', d2:'e148b37c-6205-4a99-8d31-70fc2b95a1e7', d3:'2b90f45d-1c78-4e30-a6b2-58d017c93fb4',
   d4:'96a3c218-4d5f-4b07-9e84-31b7f06ad52c', d5:'4d71e893-b0c6-42a5-8f19-6c34a70d21be', d6:'c0f68a41-9e37-4d52-b718-25af86390c7d',
-  d7:'81b4d7f0-52c9-4e68-a930-4f16c8b207d5'
+  d7:'81b4d7f0-52c9-4e68-a930-4f16c8b207d5', d8:'5f3ba927-64d1-4e08-b2c7-9a05e4318fd6', d9:'a92d0c74-18e5-4b63-8f02-37c4b6e95d18'
 };
-const DRV_CREATED_BY = { d1:'u2', d2:'u3', d3:'u2', d4:'u3', d5:'u4', d6:'u2', d7:'u3' };
+const DRV_CREATED_BY = { d1:'u2', d2:'u3', d3:'u2', d4:'u3', d5:'u4', d6:'u2', d7:'u3', d8:'u2', d9:'u3' };
+// The record kinds the Delete records page can remove, in the order the switch shows them.
+const PURGE_KINDS = [
+  { id:'assignments', label:'Rental assignments', one:'rental assignment', Title:'Rental assignment', icon:'assignment', event:'RentalAssignment.Deleted', entity:'RentalAssignment' },
+  { id:'authorizations', label:'Driver authorizations', one:'driver authorization', Title:'Driver authorization', icon:'key', event:'DriverAuthorization.Deleted', entity:'AssignmentDriverAuthorization' },
+  { id:'interruptions', label:'Interruptions', one:'interruption', Title:'Interruption', icon:'pause_circle', event:'Interruption.Deleted', entity:'Interruption' },
+  { id:'vehicles', label:'Vehicles', one:'vehicle', Title:'Vehicle', icon:'directions_car', event:'Vehicle.Deleted', entity:'Vehicle' },
+  { id:'customers', label:'Customers', one:'customer', Title:'Customer', icon:'contacts', event:'Customer.Deleted', entity:'Customer' },
+  { id:'drivers', label:'Drivers', one:'driver', Title:'Driver', icon:'badge', event:'Driver.Deleted', entity:'Driver' }
+];
+const PURGE_KIND = {}; PURGE_KINDS.forEach(k => { PURGE_KIND[k.id] = k; });
+const PURGE_EVENTS = {}; PURGE_KINDS.forEach(k => { PURGE_EVENTS[k.event] = k; });
+const PURGE_REASONS = ['Entered by mistake', 'Practice or test record', 'No longer needed', 'Other'];
 const CUS_GUID = {
   cu1:'8f2a1c07-5b34-4d19-9e62-0a71c8d34f52', cu2:'c41e97b8-2d60-4a35-8f17-6b9052ae7c31', cu3:'1d76b0f4-9c28-4e53-b840-27fa61d9e805',
   cu4:'a05c38e1-7f42-49b6-9d13-84e2c06b71fa', cu5:'6e93df20-4a15-4c78-83b9-1fc750d28e46', cu6:'b7482a5d-0e61-4f92-a537-9c04e18b6d73',
@@ -1517,7 +1603,7 @@ const VEH_GUID = {
   v1:'3a7f21c9-6d84-4b12-9e05-71c8a0f3d264', v2:'b8e40d17-92a5-4c63-8f71-05d29ab6e740', v3:'5c19f83b-0e47-4a91-b268-3fd70c84a915',
   v4:'d206ba54-7c31-49e8-905f-6b18e7c3a082', v5:'9f83c701-4b26-4d75-8a13-27e0596bf341', v6:'71b5e29d-8c04-4f36-a950-13d86e7c02b5',
   v7:'e40c9375-1a68-4b29-9d47-82f5b03ce916', v8:'2d16a8f0-53b9-4e74-b681-4a09c7d25f83', v9:'c9538e26-70b1-4d85-a3f2-08db64e17c59',
-  v10:'6b02d418-af35-4970-8c26-91e547b0d3a7'
+  v10:'6b02d418-af35-4970-8c26-91e547b0d3a7', v11:'8c47b1e0-35d9-4a26-9f83-02be571cd4a9'
 };
 const ASG_GUID = {
   a1:'4f31d91e-42d9-4bcc-9870-1b3c7a52e081', a2:'9c74b0a5-1d38-4e62-9a41-6f2b80cd1173', a3:'2ae6f118-7c40-4d91-b23f-58e0a6741cc9',
@@ -1566,7 +1652,8 @@ const DB = {
     { id:'v7', plateNumber:'552 KLM', vinCode:'WBA5R11009F552804', make:'BMW', model:'320d Touring', year:2022, bodyType:2, gearboxType:2, fuelType:2, color:'Alpine white', isActive:true, createdAtUtc:at(-24*270), updatedAtUtc:null },
     { id:'v8', plateNumber:'660 BYH', vinCode:'ZFA33400006660301', make:'Fiat', model:'Tipo', year:2020, bodyType:1, gearboxType:1, fuelType:1, color:'Passione red', isActive:false, createdAtUtc:at(-24*610), updatedAtUtc:at(-24*88) },
     { id:'v9', plateNumber:'444 WKS', vinCode:'SJNFAAF15U9174220', make:'Nissan', model:'Qashqai', year:2023, bodyType:3, gearboxType:2, fuelType:4, color:'Ceramic grey', isActive:true, createdAtUtc:at(-24*120), updatedAtUtc:null },
-    { id:'v10', plateNumber:'400 NDP', vinCode:'TMBJJ7NE4M4440801', make:'Skoda', model:'Octavia', year:2024, bodyType:2, gearboxType:1, fuelType:5, color:'Race blue', isActive:true, createdAtUtc:at(-24*70), updatedAtUtc:at(-24*6) }
+    { id:'v10', plateNumber:'400 NDP', vinCode:'TMBJJ7NE4M4440801', make:'Skoda', model:'Octavia', year:2024, bodyType:2, gearboxType:1, fuelType:5, color:'Race blue', isActive:true, createdAtUtc:at(-24*70), updatedAtUtc:at(-24*6) },
+    { id:'v11', plateNumber:'913 RTN', vinCode:'VF7SCBHY6JT913204', make:'Citroen', model:'Berlingo', year:2019, bodyType:2, gearboxType:1, fuelType:2, color:'Polar white', isActive:false, createdAtUtc:at(-24*700), updatedAtUtc:at(-24*120) }
   ],
   customers: [
     { id:'cu1', type:2, companyName:'Baltic Freight Partners', registrationNumber:null, registrationCode:'40103772110', firstName:null, lastName:null, personalId:null, dateOfBirth:null, address:'Katlakalna 11, Riga, LV-1073', email:'fleet@balticfreight.example', phoneNumber:'+371 67 220 118', driverId:null, isActive:true, createdAtUtc:at(-24*240), updatedAtUtc:at(-24*9) },
@@ -1576,7 +1663,8 @@ const DB = {
     { id:'cu5', type:2, companyName:'Ventspils Marine Services', registrationCode:'41203009114', firstName:null, lastName:null, personalId:null, dateOfBirth:null, address:'Ostas iela 3, Ventspils, LV-3601', email:'admin@vms.example', phoneNumber:'+371 63 620 991', driverId:null, isActive:false, createdAtUtc:at(-24*420), updatedAtUtc:at(-24*61) },
     { id:'cu6', type:1, firstName:'Anete', lastName:'Kalnina', personalId:'020992-10774', dateOfBirth:'1992-09-02', companyName:null, registrationCode:null, address:'Talejas 6, Jurmala, LV-2015', email:'anete.kalnina@example.com', phoneNumber:'+371 28 330 447', driverId:'d5', isActive:true, createdAtUtc:at(-24*55), updatedAtUtc:at(-24*2) },
     { id:'cu7', type:2, companyName:'Daugava Construction', registrationCode:'40003882201', firstName:null, lastName:null, personalId:null, dateOfBirth:null, address:'Maskavas 322, Riga, LV-1063', email:'transport@daugavacon.example', phoneNumber:'+371 67 449 210', driverId:null, isActive:true, createdAtUtc:at(-24*150), updatedAtUtc:null },
-    { id:'cu8', type:1, firstName:'Roberts', lastName:'Liepins', personalId:'170688-13991', dateOfBirth:'1988-06-17', companyName:null, registrationCode:null, address:'Zemitana 4, Riga, LV-1012', email:'r.liepins@example.com', phoneNumber:'+371 22 007 118', driverId:null, isActive:true, createdAtUtc:at(-24*33), updatedAtUtc:null }
+    { id:'cu8', type:1, firstName:'Roberts', lastName:'Liepins', personalId:'170688-13991', dateOfBirth:'1988-06-17', companyName:null, registrationCode:null, address:'Zemitana 4, Riga, LV-1012', email:'r.liepins@example.com', phoneNumber:'+371 22 007 118', driverId:null, isActive:true, createdAtUtc:at(-24*33), updatedAtUtc:null },
+    { id:'cu9', type:1, firstName:'Edijs', lastName:'Balodis', personalId:'140281-10993', dateOfBirth:'1981-02-14', companyName:null, registrationCode:null, address:'Lielirbes 29, Riga, LV-1046', email:'e.balodis@example.com', phoneNumber:'+371 26 990 118', driverId:'d9', isActive:false, createdAtUtc:at(-24*390), updatedAtUtc:at(-24*95) }
   ],
   drivers: [
     { id:'d1', firstName:'Janis', lastName:'Krumins', personalId:'050381-10228', dateOfBirth:'1981-03-05', address:'Ropazu 14, Riga, LV-1039', email:'j.krumins@balticfreight.example', phoneNumber:'+371 29 118 004', driverLicenseNumber:'LV-AF-448120', isActive:true, createdAtUtc:at(-24*230), updatedAtUtc:at(-24*11) },
@@ -1585,7 +1673,9 @@ const DB = {
     { id:'d4', firstName:'Kristine', lastName:'Vitola', personalId:'081294-12210', dateOfBirth:'1994-12-08', address:'Slokas 42, Riga, LV-1048', email:'k.vitola@daugavacon.example', phoneNumber:'+371 25 330 118', driverLicenseNumber:'LV-AD-559120', isActive:true, createdAtUtc:at(-24*140), updatedAtUtc:at(-24*4) },
     { id:'d5', firstName:'Anete', lastName:'Kalnina', personalId:'020992-10774', dateOfBirth:'1992-09-02', address:'Talejas 6, Jurmala, LV-2015', email:'anete.kalnina@example.com', phoneNumber:'+371 28 330 447', driverLicenseNumber:'LV-AE-118440', isActive:true, createdAtUtc:at(-24*55), updatedAtUtc:null },
     { id:'d6', firstName:'Normunds', lastName:'Zarins', personalId:'190869-10038', dateOfBirth:'1969-08-19', address:'Rupniecibas 5, Liepaja, LV-3401', email:'n.zarins@example.com', phoneNumber:'+371 63 440 118', driverLicenseNumber:'LV-AA-004471', isActive:false, createdAtUtc:at(-24*520), updatedAtUtc:at(-24*74) },
-    { id:'d7', firstName:'Laura', lastName:'Ozola', personalId:'300796-11220', dateOfBirth:'1996-07-30', address:'Cesu 12, Riga, LV-1012', email:'l.ozola@nordwind.example', phoneNumber:'+371 20 118 774', driverLicenseNumber:'LV-AG-772013', isActive:true, createdAtUtc:at(-24*40), updatedAtUtc:null }
+    { id:'d7', firstName:'Laura', lastName:'Ozola', personalId:'300796-11220', dateOfBirth:'1996-07-30', address:'Cesu 12, Riga, LV-1012', email:'l.ozola@nordwind.example', phoneNumber:'+371 20 118 774', driverLicenseNumber:'LV-AG-772013', isActive:true, createdAtUtc:at(-24*40), updatedAtUtc:null },
+    { id:'d8', firstName:'Maris', lastName:'Ozolins', personalId:'261083-11447', dateOfBirth:'1983-10-26', address:'Jelgavas 14, Riga, LV-1004', email:'m.ozolins@example.com', phoneNumber:'+371 29 774 220', driverLicenseNumber:'LV-AH-118903', isActive:false, createdAtUtc:at(-24*300), updatedAtUtc:at(-24*45) },
+    { id:'d9', firstName:'Edijs', lastName:'Balodis', personalId:'140281-10993', dateOfBirth:'1981-02-14', address:'Lielirbes 29, Riga, LV-1046', email:'e.balodis@example.com', phoneNumber:'+371 26 990 118', driverLicenseNumber:'LV-AI-330774', isActive:false, createdAtUtc:at(-24*390), updatedAtUtc:at(-24*95) }
   ],
   users: [
     { id:'u1', email:'sysadmin@rwrent.example', firstName:'Arturs', lastName:'Veidenbaums', phoneNumber:'+371 29 000 001', companyId:'c1', status:2, emailConfirmed:true, registrationExpiresAtUtc:null, effectiveRoles:[1], securityVersion:7, createdAtUtc:at(-24*400), updatedAtUtc:at(-24*20), protected:true },
@@ -1620,7 +1710,8 @@ const DB = {
     a2: [ { id:'z3', rentalAssignmentId:'a2', authorizationType:1, driverId:'d2', authorizedFromUtc:at(-24*4), stoppedAtUtc:null, stopReason:null, note:'Private customer driving personally.', concurrencyToken:'t-z3', createdAtUtc:at(-24*4), updatedAtUtc:null } ],
     a3: [ { id:'z4', rentalAssignmentId:'a3', authorizationType:2, driverId:null, authorizedFromUtc:at(-24*30), stoppedAtUtc:null, stopReason:null, note:'All Nordwind employees holding a category B licence, per framework agreement clause 4.2.', concurrencyToken:'t-z4', createdAtUtc:at(-24*30), updatedAtUtc:null } ],
     a6: [ { id:'z5', rentalAssignmentId:'a6', authorizationType:1, driverId:'d5', authorizedFromUtc:at(-24*2), stoppedAtUtc:null, stopReason:null, note:null, concurrencyToken:'t-z5', createdAtUtc:at(-24*2), updatedAtUtc:null } ],
-    a7: [ { id:'z6', rentalAssignmentId:'a7', authorizationType:1, driverId:'d7', authorizedFromUtc:at(-24*40), stoppedAtUtc:at(-24*10), stopReason:4, note:null, concurrencyToken:'t-z6', createdAtUtc:at(-24*40), updatedAtUtc:at(-24*10) } ]
+    a7: [ { id:'z6', rentalAssignmentId:'a7', authorizationType:1, driverId:'d7', authorizedFromUtc:at(-24*40), stoppedAtUtc:at(-24*10), stopReason:4, note:null, concurrencyToken:'t-z6', createdAtUtc:at(-24*40), updatedAtUtc:at(-24*10) },
+           { id:'z7', rentalAssignmentId:'a7', authorizationType:1, driverId:'d8', authorizedFromUtc:at(-24*25), stoppedAtUtc:at(-24*10), stopReason:4, note:'Second driver added for the northern route.', concurrencyToken:'t-z7', createdAtUtc:at(-24*25), updatedAtUtc:at(-24*10) } ]
   },
   interruptions: {
     a1: [ { id:'i1', rentalAssignmentId:'a1', startedAtUtc:at(-24*5), endedAtUtc:at(-24*4), reason:12, billingImpact:3, note:'Scheduled 60 000 km service at authorised workshop.', concurrencyToken:'t-i1', createdAtUtc:at(-24*5), updatedAtUtc:at(-24*4) } ],
@@ -1655,6 +1746,14 @@ const DB = {
     u2: [ { id:'r6', applicationUserId:'u2', role:2, assignedAtUtc:at(-24*380), assignedByUserId:'u1', expiresAtUtc:null, revokedAtUtc:null, revokedByUserId:null, revocationReason:null, isEffective:true } ]
   },
   audit: [
+    { id:'gd1', eventType:'Vehicle.Deleted', actorUserId:'u1', occurredAtUtc:at(-5.5), companyId:'c1', targetUserId:null, entityType:'Vehicle', entityId:'v12', recordLabel:'027 VDP \u00b7 Opel Astra', reason:'Entered by mistake', afterJson:null,
+      beforeJson: payload({ PlateNumber:'027 VDP', VinCode:'W0L0XCF6851027344', Make:'Opel', Model:'Astra', Year:2015, BodyType:'Wagon', GearboxType:'Manual', FuelType:'Petrol', Color:'Silver', IsActive:false, CreatedAtUtc:at(-24*900) }) },
+    { id:'gd2', eventType:'RentalAssignment.Deleted', actorUserId:'u2', occurredAtUtc:at(-24*2-3), companyId:'c1', targetUserId:null, entityType:'RentalAssignment', entityId:'a13', recordLabel:'660 BYH \u00b7 Nordwind Logistics', reason:'Practice or test record \u2014 made while teaching a new colleague.', afterJson:null,
+      beforeJson: payload({ VehiclePlateNumber:'660 BYH', CustomerName:'Nordwind Logistics', Status:'Cancelled', PlannedStartAtUtc:at(-24*45), PlannedEndAtUtc:at(-24*30), StartedAtUtc:null, ClosedAtUtc:at(-24*44), Note:'Training example, never handed over.',
+        Authorizations:[{ AuthorizationType:'NamedDriver', DriverName:'Laura Ozola', AuthorizedFromUtc:at(-24*45), StoppedAtUtc:at(-24*44), StopReason:'AssignmentCancelled' }],
+        Interruptions:[{ Reason:'AdministrativeHold', BillingImpact:'NotBillable', StartedAtUtc:at(-24*44.5), EndedAtUtc:at(-24*44) }] }) },
+    { id:'gd3', eventType:'Driver.Deleted', actorUserId:'u4', occurredAtUtc:at(-24*4), companyId:'c1', targetUserId:null, entityType:'Driver', entityId:'d10', recordLabel:'Vita Auzina', reason:'No longer needed', afterJson:null,
+      beforeJson: payload({ FirstName:'Vita', LastName:'Auzina', PersonalId:'030794-12008', DriverLicenseNumber:'LV-AJ-220118', Email:'v.auzina@example.com', PhoneNumber:'+371 25 118 447', IsActive:false, CreatedAtUtc:at(-24*640) }) },
     { id:'g1', eventType:'RentalAssignment.TimelineCorrected', actorUserId:'u1', occurredAtUtc:at(-2.4), companyId:'c1', targetUserId:null, entityType:'RentalAssignment', entityId:'a1', reason:'Handover sheet showed 08:30, system recorded 10:15.', beforeJson:'{"StartedAtUtc":"2026-07-23T10:15:00+00:00"}', afterJson:'{"StartedAtUtc":"2026-07-23T08:30:00+00:00"}' },
     { id:'g2', eventType:'Registration.Rejected', actorUserId:'u2', occurredAtUtc:at(-24*11), companyId:'c1', targetUserId:'u9', entityType:'ApplicationUser', entityId:'u9', reason:'No employment relationship with the Company.', beforeJson:'{"Status":"PendingActivation"}', afterJson:'{"Status":"RegistrationRejected"}' },
     { id:'g3', eventType:'RoleAssignment.Granted', actorUserId:'u2', occurredAtUtc:at(-24*40), companyId:'c1', targetUserId:'u4', entityType:'RoleAssignment', entityId:'r2', reason:null, beforeJson:null, afterJson:'{"Role":"FleetManager","ExpiresAtUtc":"2026-10-23T00:00:00+00:00"}' },
@@ -1701,7 +1800,7 @@ class Component extends DCLogic {
     theme: 'dark', nav: 'auto', mobileNav: false, w: 1440, touch: false,
     signedIn: false, authScreen: 'signin', authError: null, busy: false,
     role: 'CompanyPrincipal', dataState: 'ready',
-    route: { name:'overview', id:null, tab:null },
+    route: { name:'overview', id:null, tab:null }, purgeKind: 'assignments',
     drawer: null, dialog: null, toasts: [], reviewOpen: false,
     failMode: 'none', dialogFail: null,
     q: {}, form: {}, errors: {},
@@ -1715,7 +1814,7 @@ class Component extends DCLogic {
       const n = localStorage.getItem('rwrent.nav2'); if (n === 'expanded' || n === 'collapsed') this.setState({ nav: n });
       const r = localStorage.getItem('rwrent.role'); if (r && ROLE_CHAIN[r]) this.setState({ role: r });
       const saved = localStorage.getItem('rwrent.db');
-      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-19') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
+      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-21') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
     } catch (e) {}
     try {
       const raw = (window.location.hash || '').replace(/^#/, '');
@@ -1846,7 +1945,8 @@ class Component extends DCLogic {
         { id:'audit', label:'Security audit', icon:'policy', perm:'SecurityAudit.ReadCompany' } ] },
       { label:'Administration', items:[
         { id:'company', label:'Company profile', icon:'apartment', perm:'Company.Read' },
-        { id:'sysadmin', label:'System Administrator', icon:'admin_panel_settings', perm:'SystemAdministration.Transfer', protected:true } ] }
+        { id:'sysadmin', label:'System Administrator', icon:'admin_panel_settings', perm:'SystemAdministration.Transfer', protected:true },
+        { id:'deleterecords', label:'Delete records', icon:'delete_sweep', perm:'Records.Delete' } ] }
     ];
     const exp = this.navIsExpanded();
     if (this.perms().length === 0) return [];
@@ -2012,6 +2112,7 @@ class Component extends DCLogic {
       audit: { crumbs:[['Security audit']], title:'Security audit', desc:'Append-only history of security-relevant changes. All times UTC.', actions:[] },
       company: { crumbs:[['Company profile']], title:'Company profile', desc:'One operating Company. Its details appear on every record created by this platform.', actions:[] },
       sysadmin: { crumbs:[['System Administrator']], title:'System Administrator', desc:'Protected transfer of the single System Administrator account. Separate from ordinary Company administration.', actions:[] },
+      deleterecords: { crumbs:[['Delete records']], title:'Delete records', desc:'Permanently removes records the company no longer needs. A deletion cannot be undone. Every deletion is written to the security audit with its reason.', actions:[] },
       profile: { crumbs:[['Your account']], title:'Your account', desc:'', actions:[] },
       noaccess: { crumbs:[['Access pending']], title:'Access pending', desc:'', actions:[] }
     };
@@ -2155,7 +2256,7 @@ class Component extends DCLogic {
   fromLocal(v) { return v ? new Date(v).toISOString() : null; }
   setForm(k, v) { this.setState(s => ({ form: { ...s.form, [k]: v }, errors: { ...s.errors, [k]: undefined } })); }
   mutate(fn) { const db = JSON.parse(JSON.stringify(this.state.db)); fn(db); this.setState({ db }); this.saveDb(db); }
-  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-19'); } catch (e) {} }
+  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-21'); } catch (e) {} }
   openInts(db, aid) { return (db.interruptions[aid] || []).filter(i => !i.endedAtUtc); }
   availability(db, v) {
     if (!v.isActive) return { label:null, customer:null };
@@ -2585,6 +2686,22 @@ class Component extends DCLogic {
       consequences:[{ text:'The operating Company record is removed permanently.' }, { text:'A System Administrator must create the Company again before the platform can be used.' }],
       sections:[], actions:[cancel, A('Delete Company', 'danger', () => this.submitCompanyDelete(), 'delete')] };
 
+    if (t === 'record-delete') {
+      const kind = dg.kind, K = PURGE_KIND[kind], x = this.purgeFind(kind, dg.id);
+      const live = kind === 'assignments' && x && x.status === 1;
+      const ready = !!f.reason && !!f.confirmDelete && (f.reason !== 'Other' || !!String(f.note || '').trim());
+      m = { title:'Delete ' + K.one, desc: x ? this.purgeDesc(kind, x) : 'This record is no longer in the list.', icon:'delete_forever', tone:'bad', maxW:'560px', destructive:true,
+        banner: live
+          ? { tone:'bad', title:'This rental is active', body:'The vehicle is recorded as being with the customer right now. Delete it only if this rental never happened.' }
+          : { tone:'bad', title:'This cannot be undone', body:'The record is removed from the database for good.' },
+        consequences: x ? this.purgeConsequences(kind, x) : [],
+        sections:[ SEC(null, '1fr', [
+            F('reason', 'Reason', { required:true, kind:'select', span:'1 / -1', options:[{ value:'', label:'Select a reason' }].concat(PURGE_REASONS.map(v => ({ value:v, label:v }))) }),
+            F('note', 'Note', { required: f.reason === 'Other', optional: f.reason !== 'Other', kind:'textarea', maxLength:1000, span:'1 / -1', hint:'Stored with the audit entry.' })
+          ], [ CK('confirmDelete', 'I understand this cannot be undone', 'The record and its parts cannot be restored from the app.') ]) ],
+        actions:[cancel, A('Delete permanently', 'danger', () => this.submitPurge(), 'delete_forever', !ready)] };
+    }
+
     if (t === 'transfer-initiate') m = { title:'Transfer System Administrator', desc:'Names another confirmed account as the next System Administrator.', icon:'admin_panel_settings', tone:'warn', maxW:'580px',
       banner:{ tone:'warn', title:'Protected operation', body:'The named account must accept using a single-use link before anything changes. Your access remains until then.' },
       sections:[ SEC(null, '1fr', [F('targetEmail','Target account email',{ required:true, kind:'email', maxLength:254, span:'1 / -1' }), F('currentPassword','Your current password',{ required:true, kind:'password', span:'1 / -1' }), F('reason','Reason',{ required:true, kind:'textarea', maxLength:1000, hint:'At least 3 characters. Recorded in the audit trail.', span:'1 / -1' })]) ],
@@ -2666,7 +2783,7 @@ class Component extends DCLogic {
       failBody: fail ? (stale ? 'Refresh to load the current values, then save again.' : fail.text) : '',
       failBg: stale ? 'var(--warn-soft)' : 'var(--bad-soft)', failBd: stale ? 'var(--warn-line)' : 'var(--bad-line)',
       failFg: stale ? 'var(--warn)' : 'var(--bad)', failIcon: stale ? 'history' : 'block',
-      failHasRefresh: !!stale, failRefresh: () => this.refreshDialog(),
+      failHasRefresh: !!stale || !!(fail && fail.refresh), failRefresh: () => this.refreshDialog(),
       hasBanner: !!m.banner, bannerTitle: m.banner ? m.banner.title : '', bannerBody: m.banner ? m.banner.body : '',
       bannerBg: bn ? bn.bg : '', bannerBd: bn ? bn.bd : '', bannerFg: bn ? bn.fg : '',
       bannerIcon: m.banner ? (m.banner.tone === 'bad' ? 'error' : m.banner.tone === 'warn' ? 'warning' : 'info') : '',
@@ -2708,7 +2825,7 @@ class Component extends DCLogic {
     if (this.state.dialogFail) this.setState({ dialogFail:null });
     return true;
   }
-  refuse(text) { this.setState({ dialogFail:{ kind:'conflict', text }, errors:{} }); }
+  refuse(text, refresh) { this.setState({ dialogFail:{ kind:'conflict', text, refresh: !!refresh }, errors:{} }); }
   refreshDialog() {
     const d = this.state.dialog; if (!d) return;
     const p = { ...d }; delete p.type;
@@ -3127,7 +3244,18 @@ class Component extends DCLogic {
   }
   cell(text, o) {
     const p = o || {};
-    return { isText: !p.chip && !p.actions && !p.link, isChip: !!p.chip, isActions: !!p.actions,
+    const stopGo = fn => (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } fn(); });
+    return { isText: !p.chip && !p.actions && !p.link && !p.del, isChip: !!p.chip, isActions: !!p.actions,
+      isDelete: !!p.del,
+      delLabel: p.del ? p.del.label : '', delTip: p.del ? (p.del.tip || p.del.label) : '',
+      delDisabled: p.del && p.del.disabled ? 'true' : 'false', delOpacity: p.del && p.del.disabled ? .45 : 1,
+      delCursor: p.del && p.del.disabled ? 'not-allowed' : 'pointer',
+      delGo: p.del ? (p.del.disabled ? (e => { if (e && e.stopPropagation) e.stopPropagation(); this.toast('Not available', p.del.tip || 'This record cannot be deleted yet.', 'warn'); }) : p.del.go) : (() => {}),
+      // A blocked row names its blockers underneath the chip and links to each of them.
+      hasSubLinks: !!(p.subLinks && p.subLinks.length),
+      subLinks: (p.subLinks || []).map(l => ({ text: l.text, go: stopGo(l.go) })),
+      // Links in table cells are the quiet dark link; `quiet` opts a cell into it.
+      linkFg: p.quiet ? 'var(--fg)' : 'var(--accent)', linkEdge: p.quiet ? 'var(--line-3)' : 'transparent',
       isLink: !!p.link && !p.chip && !p.actions, onLink: p.link ? (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } p.link(); }) : (() => {}),
       text: text === null || text === undefined || text === '' ? '—' : String(text),
       sub: p.sub || '', hasSub: !!p.sub,
@@ -3153,6 +3281,195 @@ class Component extends DCLogic {
   selRef(v) { const val = v === null || v === undefined ? '' : String(v); return el => { if (el && el.value !== val) el.value = val; }; }
   q(key) { return this.state.q[key] || { search:'', page:1, size:20, sortBy:'', more:false }; }
   patchQ(key, patch) { this.setState(s => ({ q: { ...s.q, [key]: { ...this.q(key), ...patch } } })); }
+
+  // ---- Delete records ------------------------------------------------------------------------
+  // One page, six record kinds. Everything below is derived from the data: what counts as out of
+  // use, what still refers to a record, what goes with it, and what the audit entry will say.
+  purgeKind() { return PURGE_KIND[this.state.purgeKind] ? this.state.purgeKind : 'assignments'; }
+  purgeParts(db, aid) { return { auths: db.authorizations[aid] || [], ints: db.interruptions[aid] || [] }; }
+  purgePartsText(p) {
+    const bits = [];
+    if (p.auths.length) bits.push(p.auths.length + ' authorization' + (p.auths.length === 1 ? '' : 's'));
+    if (p.ints.length) bits.push(p.ints.length + ' interruption' + (p.ints.length === 1 ? '' : 's'));
+    return bits.join(' \u00b7 ');
+  }
+  purgeSource(kind) {
+    const db = this.state.db;
+    const flat = map => Object.keys(map).reduce((out, aid) => out.concat(map[aid] || []), []);
+    if (kind === 'assignments') return db.assignments;
+    if (kind === 'authorizations') return flat(db.authorizations);
+    if (kind === 'interruptions') return flat(db.interruptions);
+    if (kind === 'vehicles') return db.vehicles;
+    if (kind === 'customers') return db.customers;
+    return db.drivers;
+  }
+  purgeFind(kind, id) { return this.purgeSource(kind).find(x => x.id === id) || null; }
+  // Out of use: the states the company has finished with. Everything else is behind Show.
+  purgeOut(kind, x) {
+    if (kind === 'assignments') return x.status === 2 || x.status === 3;
+    if (kind === 'authorizations') return !!x.stoppedAtUtc;
+    if (kind === 'interruptions') return !!x.endedAtUtc;
+    return !x.isActive;
+  }
+  purgeVisible(kind, x, q) {
+    if (((q && q.show) || 'out') === 'out' && !this.purgeOut(kind, x)) return false;
+    const term = ((q && q.search) || '').trim().toLowerCase();
+    return !term || this.purgeHay(kind, x).toLowerCase().indexOf(term) > -1;
+  }
+  purgeRent(a) {
+    const db = this.state.db;
+    if (!a) return '\u2014';
+    const v = db.vehicles.find(z => z.id === a.vehicleId), c = db.customers.find(z => z.id === a.customerId);
+    return (v ? v.plateNumber : '\u2014') + ' \u00b7 ' + this.displayName(c);
+  }
+  purgeHay(kind, x) {
+    const db = this.state.db, asg = id => db.assignments.find(a => a.id === id);
+    if (kind === 'assignments') { const v = db.vehicles.find(z => z.id === x.vehicleId); return this.purgeRent(x) + ' ' + (v ? v.vinCode + ' ' + v.make + ' ' + v.model : ''); }
+    if (kind === 'authorizations') { const d = x.driverId ? db.drivers.find(z => z.id === x.driverId) : null; return (d ? d.firstName + ' ' + d.lastName : 'Business customer drivers') + ' ' + this.purgeRent(asg(x.rentalAssignmentId)); }
+    if (kind === 'interruptions') return E.interruption[x.reason] + ' ' + (x.note || '') + ' ' + this.purgeRent(asg(x.rentalAssignmentId));
+    if (kind === 'vehicles') return x.plateNumber + ' ' + x.vinCode + ' ' + x.make + ' ' + x.model;
+    if (kind === 'customers') return this.displayName(x) + ' ' + (x.email || '') + ' ' + (x.personalId || '') + ' ' + (x.registrationCode || '');
+    return x.firstName + ' ' + x.lastName + ' ' + (x.email || '') + ' ' + x.driverLicenseNumber;
+  }
+  purgeIdent(kind, x) {
+    const db = this.state.db, asg = id => db.assignments.find(a => a.id === id);
+    if (!x) return '\u2014';
+    if (kind === 'assignments') return this.purgeRent(x);
+    if (kind === 'authorizations') { const d = x.driverId ? db.drivers.find(z => z.id === x.driverId) : null; return (d ? d.firstName + ' ' + d.lastName : 'Business customer drivers') + ' \u00b7 ' + this.purgeRent(asg(x.rentalAssignmentId)); }
+    if (kind === 'interruptions') return E.interruption[x.reason] + ' \u00b7 ' + this.purgeRent(asg(x.rentalAssignmentId));
+    if (kind === 'vehicles') return x.plateNumber + ' \u00b7 ' + x.make + ' ' + x.model;
+    if (kind === 'customers') return this.displayName(x);
+    return x.firstName + ' ' + x.lastName;
+  }
+  purgeDesc(kind, x) {
+    const d = i => this.fmt(i, 'dateShort');
+    if (kind === 'assignments') return this.purgeIdent(kind, x) + ' \u00b7 ' + (x.status === 2 ? 'Ended ' + d(x.closedAtUtc) : x.status === 3 ? 'Cancelled ' + d(x.closedAtUtc || x.updatedAtUtc)
+      : x.status === 1 ? 'Active since ' + d(x.startedAtUtc) : 'Planned from ' + d(x.plannedStartAtUtc));
+    if (kind === 'authorizations') return this.purgeIdent(kind, x) + ' \u00b7 ' + (x.stoppedAtUtc ? 'Stopped ' + d(x.stoppedAtUtc) : 'Open since ' + d(x.authorizedFromUtc));
+    if (kind === 'interruptions') return this.purgeIdent(kind, x) + ' \u00b7 ' + d(x.startedAtUtc) + ' \u2192 ' + (x.endedAtUtc ? d(x.endedAtUtc) : 'open');
+    if (kind === 'vehicles') return x.plateNumber + ' \u00b7 ' + x.make + ' ' + x.model + ' ' + x.year + ' \u00b7 ' + (x.isActive ? 'Active' : 'Inactive');
+    if (kind === 'customers') return this.displayName(x) + ' \u00b7 ' + E.customerType[x.type] + ' \u00b7 ' + (x.isActive ? 'Active' : 'Inactive');
+    return x.firstName + ' ' + x.lastName + ' \u00b7 ' + x.driverLicenseNumber + ' \u00b7 ' + (x.isActive ? 'Active' : 'Inactive');
+  }
+  // The business rules of the page. A record is blocked while something else still points at it.
+  purgeBlock(kind, x) {
+    const db = this.state.db, L = (text, go) => ({ text, go });
+    if (kind === 'vehicles' || kind === 'customers') {
+      const isVeh = kind === 'vehicles', noun = isVeh ? 'vehicle' : 'customer';
+      const refs = db.assignments.filter(a => (isVeh ? a.vehicleId : a.customerId) === x.id);
+      if (!refs.length) return null;
+      return { reason: refs.length + ' rental assignment' + (refs.length === 1 ? ' refers' : 's refer') + ' to this ' + noun,
+        links: refs.map(a => L(this.purgeIdent('assignments', a), () => this.go('assignment', a.id))),
+        conflict: 'This ' + noun + ' now has a rental assignment. Refresh the list.' };
+    }
+    if (kind === 'drivers') {
+      const auths = this.purgeSource('authorizations').filter(z => z.driverId === x.id);
+      const custs = db.customers.filter(c => c.driverId === x.id);
+      if (!auths.length && !custs.length) return null;
+      const bits = [];
+      if (auths.length) bits.push(auths.length + ' driver authorization' + (auths.length === 1 ? ' refers' : 's refer') + ' to this driver');
+      if (custs.length) bits.push((custs.length === 1 ? 'a customer record is' : custs.length + ' customer records are') + ' linked to this driver record');
+      const text = bits.join(' and ');
+      return { reason: text.charAt(0).toUpperCase() + text.slice(1),
+        links: auths.map(z => L(this.purgeIdent('authorizations', z), () => this.go('assignment', z.rentalAssignmentId, 'coverage')))
+          .concat(custs.map(c => L(this.displayName(c), () => this.go('customer', c.id)))),
+        conflict:'This driver is now referenced by another record. Refresh the list.' };
+    }
+    if (kind === 'authorizations') {
+      const a = db.assignments.find(z => z.id === x.rentalAssignmentId);
+      const open = (db.authorizations[x.rentalAssignmentId] || []).filter(z => !z.stoppedAtUtc);
+      if (a && a.status === 1 && !x.stoppedAtUtc && open.length === 1) {
+        return { reason:'An active rental must keep at least one authorization',
+          links:[L(this.purgeIdent('assignments', a), () => this.go('assignment', a.id))],
+          conflict:'This is now the only open authorization of an active rental. Refresh the list.' };
+      }
+    }
+    return null;
+  }
+  purgeConsequences(kind, x) {
+    const db = this.state.db, K = PURGE_KIND[kind], out = [];
+    if (kind === 'assignments') {
+      const p = this.purgeParts(db, x.id), n = p.auths.length + p.ints.length;
+      out.push({ text:'The rental assignment is removed permanently.' });
+      if (n) out.push({ text:'Its ' + this.purgePartsText({ auths: p.auths, ints: p.ints }).replace(' \u00b7 ', ' and ').replace('authorization', 'driver authorization') + ' ' + (n === 1 ? 'is' : 'are') + ' removed with it.' });
+      out.push({ text:'The customer, the vehicle and the drivers stay as they are.' });
+    } else if (kind === 'authorizations') {
+      out.push({ text:'The driver authorization is removed permanently.' });
+      out.push({ text:'The rental assignment, the driver and every other authorization on it stay as they are.' });
+    } else if (kind === 'interruptions') {
+      out.push({ text:'The interruption is removed permanently.' });
+      out.push({ text:'The rental assignment, its authorizations and its other interruptions stay as they are.' });
+    } else {
+      out.push({ text:'The ' + K.one + ' is removed permanently.' });
+      out.push({ text: kind === 'drivers' ? 'No driver authorization and no customer record refer to this driver, so nothing else changes.'
+        : 'No rental assignment refers to this ' + K.one + ', so nothing else changes.' });
+    }
+    out.push({ text:'One entry stays in the security audit: you, the time, your reason and a copy of the deleted record.' });
+    return out;
+  }
+  // The copy of the record kept in the audit entry. Keys are PascalCase and enums are their names,
+  // as the backend writes them; a rental carries its own parts as nested groups.
+  purgePayload(kind, x) {
+    const db = this.state.db;
+    const STATUS = { 1:'Active', 2:'Ended', 3:'Cancelled', 4:'Planned' };
+    const BILL = { 1:'FullyBillable', 2:'NotBillable', 3:'BillableFiftyPercent', 4:'BillableTwentyFivePercent', 5:'ManualAgreement' };
+    const pascal = s => String(s || '').replace(/[^A-Za-z0-9 ]/g, '').split(' ').filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+    const drvName = id => { const d = db.drivers.find(z => z.id === id); return d ? d.firstName + ' ' + d.lastName : null; };
+    const authOf = z => ({ AuthorizationType: ENUM_RAW.authType[z.authorizationType], DriverName: drvName(z.driverId),
+      AuthorizedFromUtc: z.authorizedFromUtc, StoppedAtUtc: z.stoppedAtUtc || null, StopReason: z.stopReason ? ENUM_RAW.stopReason[z.stopReason] : null });
+    const intOf = i => ({ Reason: pascal(E.interruption[i.reason]), BillingImpact: BILL[i.billingImpact], StartedAtUtc: i.startedAtUtc, EndedAtUtc: i.endedAtUtc || null });
+    if (kind === 'assignments') {
+      const v = db.vehicles.find(z => z.id === x.vehicleId), c = db.customers.find(z => z.id === x.customerId), p = this.purgeParts(db, x.id);
+      return { VehiclePlateNumber: v ? v.plateNumber : null, CustomerName: this.displayName(c), Status: STATUS[x.status],
+        PlannedStartAtUtc: x.plannedStartAtUtc, PlannedEndAtUtc: x.plannedEndAtUtc, StartedAtUtc: x.startedAtUtc || null,
+        ClosedAtUtc: x.closedAtUtc || null, Note: x.note || null, Authorizations: p.auths.map(authOf), Interruptions: p.ints.map(intOf) };
+    }
+    if (kind === 'authorizations') return { RentalAssignment: this.purgeRent(db.assignments.find(z => z.id === x.rentalAssignmentId)), ...authOf(x), Note: x.note || null };
+    if (kind === 'interruptions') return { RentalAssignment: this.purgeRent(db.assignments.find(z => z.id === x.rentalAssignmentId)), ...intOf(x), Note: x.note || null };
+    if (kind === 'vehicles') return { PlateNumber: x.plateNumber, VinCode: x.vinCode, Make: x.make, Model: x.model, Year: x.year,
+      BodyType: pascal(E.body[x.bodyType]), GearboxType: pascal(E.gearbox[x.gearboxType]), FuelType: pascal(E.fuel[x.fuelType]), Color: x.color, IsActive: x.isActive, CreatedAtUtc: x.createdAtUtc };
+    if (kind === 'customers') return { CustomerType: pascal(E.customerType[x.type]), DisplayName: this.displayName(x),
+      RegistrationCode: x.registrationCode || null, PersonalId: x.personalId || null, Address: x.address, Email: x.email, PhoneNumber: x.phoneNumber, IsActive: x.isActive, CreatedAtUtc: x.createdAtUtc };
+    return { FirstName: x.firstName, LastName: x.lastName, PersonalId: x.personalId, DriverLicenseNumber: x.driverLicenseNumber,
+      Email: x.email, PhoneNumber: x.phoneNumber, IsActive: x.isActive, CreatedAtUtc: x.createdAtUtc };
+  }
+  purgeTabs() {
+    const cur = this.purgeKind(), q = this.q('purge');
+    return PURGE_KINDS.map(k => {
+      const n = this.purgeSource(k.id).filter(x => this.purgeVisible(k.id, x, q)).length, on = k.id === cur;
+      return { label: k.label, icon: k.icon, count: String(n), selected: on ? 'true' : 'false', weight: on ? 600 : 450,
+        bg: on ? 'var(--surface-3)' : 'transparent', fg: on ? 'var(--fg)' : 'var(--fg-2)', bd: on ? 'var(--line-2)' : 'transparent',
+        go: () => this.setState(st => ({ purgeKind: k.id, q: { ...st.q, purge: { ...(st.q.purge || {}), page: 1 } } })) };
+    });
+  }
+  submitPurge() {
+    const dg = this.state.dialog, f = this.state.form, kind = dg.kind, K = PURGE_KIND[kind];
+    const x = this.purgeFind(kind, dg.id);
+    if (!x) { this.refuse('This record is no longer in the list. Refresh the list.', true); return; }
+    const blk = this.purgeBlock(kind, x);
+    if (blk) { this.refuse(blk.conflict, true); return; }
+    const req = [{ key:'reason', msg:'A reason is required.' }].concat(f.reason === 'Other' ? [{ key:'note', msg:'A note is required when the reason is Other.' }] : []);
+    if (!this.guard(req)) return;
+    const ident = this.purgeIdent(kind, x), body = this.purgePayload(kind, x), aid = x.rentalAssignmentId;
+    const note = String(f.note || '').trim();
+    const reason = f.reason + (note ? ' \u2014 ' + note : '');
+    const actor = this.me().id;
+    this.mutate(db => {
+      if (kind === 'assignments') { db.assignments = db.assignments.filter(z => z.id !== x.id); delete db.authorizations[x.id]; delete db.interruptions[x.id]; }
+      else if (kind === 'authorizations' || kind === 'interruptions') {
+        const map = kind === 'authorizations' ? db.authorizations : db.interruptions;
+        map[aid] = (map[aid] || []).filter(z => z.id !== x.id);
+        if (!map[aid].length) delete map[aid];
+      }
+      else if (kind === 'vehicles') db.vehicles = db.vehicles.filter(z => z.id !== x.id);
+      else if (kind === 'customers') db.customers = db.customers.filter(z => z.id !== x.id);
+      else db.drivers = db.drivers.filter(z => z.id !== x.id);
+      db.audit.unshift({ id:'g' + Date.now(), eventType: K.event, actorUserId: actor, occurredAtUtc: new Date().toISOString(),
+        companyId:'c1', targetUserId:null, entityType: K.entity, entityId: x.id, recordLabel: ident, reason,
+        beforeJson: payload(body), afterJson: null });
+    });
+    this.done(K.Title + ' deleted', 'Written to the security audit.');
+  }
 
   listSpec() {
     const r = this.state.route.name, db = this.state.db, self = this;
@@ -3429,6 +3746,107 @@ class Component extends DCLogic {
       };
     }
 
+    if (r === 'deleterecords') {
+      const kind = this.purgeKind(), K = PURGE_KIND[kind];
+      const day = i => this.fmt(i, 'dateShort');
+      const period = (a2, b2) => day(a2) + ' \u2192 ' + (b2 ? day(b2) : 'open');
+      const asg = id => db.assignments.find(a2 => a2.id === id);
+      const rentCell = a2 => a2 ? self.cell(self.purgeIdent('assignments', a2), { wrap:true, quiet:true, link: () => self.go('assignment', a2.id) }) : self.cell('\u2014', { dim:true });
+      const delCell = x => { const b = self.purgeBlock(kind, x);
+        return self.cell(b ? 'Blocked' : 'Ready', { chip: b ? 'warn' : 'ok', shape: b ? '2px' : '50%', sub: b ? b.reason : '', subLinks: b ? b.links : [] }); };
+      const actCell = x => { const b = self.purgeBlock(kind, x);
+        return self.cell('', { del: { label:'Delete\u2026', tip: b ? b.reason + '.' : 'Delete this ' + K.one, disabled: !!b,
+          go: e => { if (e && e.stopPropagation) e.stopPropagation(); self.openDialog('record-delete', { kind, id: x.id }); } } }); };
+      const stateChip2 = x => self.cell(x.isActive ? 'Active' : 'Inactive', { chip: x.isActive ? 'ok' : 'mute', shape: x.isActive ? '50%' : '1px' });
+      const BY = {
+        assignments: { minWidth:'1220px', searchHint:'Plate, VIN or customer name',
+          columns:[{ key:'veh', label:'Vehicle', width:'176px' }, { key:'cus', label:'Customer', width:'auto' }, { key:'st', label:'Status', width:'118px' },
+            { key:'per', label:'Period', width:'172px' }, { key:'parts', label:'Parts', width:'168px', tightHide:true }, { key:'del', label:'Deletion', width:'254px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: a2 => { const v = db.vehicles.find(z => z.id === a2.vehicleId), c = db.customers.find(z => z.id === a2.customerId), pt = self.purgeParts(db, a2.id);
+            const parts = self.purgePartsText(pt);
+            return [ self.cell(v ? v.plateNumber : '\u2014', { mono:true, strong:true, quiet:true, link: () => self.go('assignment', a2.id), sub: v ? v.make + ' ' + v.model : '' }),
+              self.cell(self.displayName(c), { wrap:true }),
+              self.cell(E.status[a2.status], { chip: ASSIGN_TONE[a2.status], shape: a2.status === 1 ? '50%' : a2.status === 4 ? '2px' : a2.status === 3 ? '50% 50% 50% 0' : '1px' }),
+              self.cell(period(a2.startedAtUtc || a2.plannedStartAtUtc, a2.closedAtUtc || a2.plannedEndAtUtc), { mono:true, dim:true }),
+              self.cell(parts || 'No parts', { dim: !parts, wrap:true }), delCell(a2), actCell(a2) ]; },
+          card: a2 => { const v = db.vehicles.find(z => z.id === a2.vehicleId), c = db.customers.find(z => z.id === a2.customerId), pt = self.purgeParts(db, a2.id);
+            return { title: v ? v.plateNumber : '\u2014', titleMono:true, sub: (v ? v.make + ' ' + v.model + ' \u00b7 ' : '') + self.displayName(c),
+              facts:[{ label:'Status', value: E.status[a2.status] }, { label:'Period', value: period(a2.startedAtUtc || a2.plannedStartAtUtc, a2.closedAtUtc || a2.plannedEndAtUtc) },
+                { label:'Parts', wide:true, value: self.purgePartsText(pt) || 'No parts' }] }; },
+          open: a2 => self.go('assignment', a2.id) },
+        authorizations: { minWidth:'1180px', searchHint:'Driver, plate or customer name',
+          columns:[{ key:'drv', label:'Driver', width:'auto' }, { key:'rent', label:'Rental', width:'220px' }, { key:'per', label:'Period', width:'172px' },
+            { key:'st', label:'State', width:'176px' }, { key:'del', label:'Deletion', width:'254px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: z => { const d = z.driverId ? db.drivers.find(x2 => x2.id === z.driverId) : null;
+            return [ d ? self.cell(d.firstName + ' ' + d.lastName, { strong:true, quiet:true, wrap:true, link: () => self.go('driver', d.id) })
+                : self.cell('Business customer drivers', { strong:true, wrap:true }),
+              rentCell(asg(z.rentalAssignmentId)),
+              self.cell(period(z.authorizedFromUtc, z.stoppedAtUtc), { mono:true, dim:true }),
+              self.cell(z.stoppedAtUtc ? 'Stopped' : 'Open', { chip: z.stoppedAtUtc ? 'mute' : 'ok', shape: z.stoppedAtUtc ? '1px' : '50%', sub: z.stoppedAtUtc && z.stopReason ? E.stopReason[z.stopReason] : '' }),
+              delCell(z), actCell(z) ]; },
+          card: z => { const d = z.driverId ? db.drivers.find(x2 => x2.id === z.driverId) : null, a2 = asg(z.rentalAssignmentId);
+            return { title: d ? d.firstName + ' ' + d.lastName : 'Business customer drivers', sub: a2 ? self.purgeIdent('assignments', a2) : '',
+              facts:[{ label:'State', value: z.stoppedAtUtc ? 'Stopped' + (z.stopReason ? ' \u00b7 ' + E.stopReason[z.stopReason] : '') : 'Open' },
+                { label:'Period', value: period(z.authorizedFromUtc, z.stoppedAtUtc) }] }; },
+          open: z => self.go('assignment', z.rentalAssignmentId, 'coverage') },
+        interruptions: { minWidth:'1180px', searchHint:'Reason, note, plate or customer',
+          columns:[{ key:'rsn', label:'Reason', width:'210px' }, { key:'rent', label:'Rental', width:'220px' }, { key:'per', label:'Period', width:'172px' },
+            { key:'bill', label:'Billing impact', width:'150px', tightHide:true }, { key:'del', label:'Deletion', width:'254px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: i2 => [ self.cell(E.interruption[i2.reason], { chip: i2.endedAtUtc ? 'mute' : 'warn', shape: i2.endedAtUtc ? '1px' : '2px' }),
+            rentCell(asg(i2.rentalAssignmentId)),
+            self.cell(period(i2.startedAtUtc, i2.endedAtUtc), { mono:true, dim:true }),
+            self.cell(E.billing[i2.billingImpact], { dim:true, wrap:true }), delCell(i2), actCell(i2) ],
+          card: i2 => { const a2 = asg(i2.rentalAssignmentId);
+            return { title: E.interruption[i2.reason], sub: a2 ? self.purgeIdent('assignments', a2) : '',
+              facts:[{ label:'Period', value: period(i2.startedAtUtc, i2.endedAtUtc) }, { label:'Billing impact', value: E.billing[i2.billingImpact] }] }; },
+          open: i2 => self.go('assignment', i2.rentalAssignmentId, 'interruptions') },
+        vehicles: { minWidth:'1020px', searchHint:'Plate, VIN, make or model',
+          columns:[{ key:'plate', label:'Plate', width:'136px' }, { key:'mk', label:'Make, model, year', width:'auto' }, { key:'st', label:'Status', width:'128px' },
+            { key:'del', label:'Deletion', width:'300px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: v => [ self.cell(v.plateNumber, { mono:true, strong:true, quiet:true, link: () => self.go('vehicle', v.id) }),
+            self.cell(v.make + ' ' + v.model + ' \u00b7 ' + v.year, { wrap:true, sub: v.vinCode, subMono:true }),
+            stateChip2(v), delCell(v), actCell(v) ],
+          card: v => ({ title: v.plateNumber, titleMono:true, sub: v.make + ' ' + v.model + ' \u00b7 ' + v.year,
+            facts:[{ label:'Status', value: v.isActive ? 'Active' : 'Inactive' }, { label:'VIN', value: v.vinCode }] }),
+          open: v => self.go('vehicle', v.id) },
+        customers: { minWidth:'1020px', searchHint:'Name, identifier or email',
+          columns:[{ key:'cus', label:'Customer', width:'auto' }, { key:'type', label:'Type', width:'140px' }, { key:'st', label:'Status', width:'128px' },
+            { key:'del', label:'Deletion', width:'300px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: c => [ self.cell(self.displayName(c), { strong:true, quiet:true, wrap:true, link: () => self.go('customer', c.id), sub: c.type === 2 ? 'Reg. ' + (c.registrationCode || '\u2014') : (c.personalId || '\u2014'), subMono:true }),
+            self.cell(E.customerType[c.type], { chip: c.type === 2 ? 'info' : 'mute', shape: c.type === 2 ? '2px' : '50%' }),
+            stateChip2(c), delCell(c), actCell(c) ],
+          card: c => ({ title: self.displayName(c), sub: E.customerType[c.type] + ' \u00b7 ' + (c.email || ''),
+            facts:[{ label:'Status', value: c.isActive ? 'Active' : 'Inactive' }, { label:'Identifier', value: c.type === 2 ? 'Reg. ' + (c.registrationCode || '\u2014') : (c.personalId || '\u2014') }] }),
+          open: c => self.go('customer', c.id) },
+        drivers: { minWidth:'1040px', searchHint:'Name, licence number or email',
+          columns:[{ key:'drv', label:'Driver', width:'auto' }, { key:'lic', label:'Licence', width:'180px' }, { key:'st', label:'Status', width:'128px' },
+            { key:'del', label:'Deletion', width:'300px' }, { key:'act', label:'', width:'118px', align:'right' }],
+          cells: d => [ self.cell(d.firstName + ' ' + d.lastName, { strong:true, quiet:true, wrap:true, link: () => self.go('driver', d.id), sub: d.email }),
+            self.cell(d.driverLicenseNumber, { mono:true }), stateChip2(d), delCell(d), actCell(d) ],
+          card: d => ({ title: d.firstName + ' ' + d.lastName, sub: d.email,
+            facts:[{ label:'Status', value: d.isActive ? 'Active' : 'Inactive' }, { label:'Licence', value: d.driverLicenseNumber }] }),
+          open: d => self.go('driver', d.id) }
+      };
+      const B = BY[kind];
+      return {
+        key:'purge', minWidth: B.minWidth, searchHint: B.searchHint, searchMax:50, noSort:true, actionCards:true,
+        forbidden: !this.can('Records.Delete'), forbiddenPerm:'Records.Delete',
+        filters:[{ key:'show', label:'Show', options:[{ value:'out', label:'Out of use' }, { value:'all', label:'Everything' }] }],
+        moreFilters:[], columns: B.columns, source: this.purgeSource(kind),
+        match: (x, q2) => self.purgeVisible(kind, x, q2),
+        activeExtra: q2 => (q2.show || 'out') !== 'out',
+        sortVal: x => x.createdAtUtc || '', defaultDesc: true,
+        cells: B.cells,
+        card: x => { const b = self.purgeBlock(kind, x), c = B.card(x);
+          return { ...c, chip: b ? 'Blocked' : 'Ready', tone: b ? 'warn' : 'ok', chipShape: b ? '2px' : '50%',
+            reason: b ? b.reason : '', links: b ? b.links : [],
+            del: { label:'Delete\u2026', tip: b ? b.reason + '.' : 'Delete this ' + K.one, disabled: !!b,
+              go: e => { if (e && e.stopPropagation) e.stopPropagation(); self.openDialog('record-delete', { kind, id: x.id }); } } }; },
+        open: B.open,
+        empty:{ icon:'inventory_2', title:'Nothing to clean up', body:'No out-of-use records of this kind. Switch Show to Everything to see the rest.', action:null }
+      };
+    }
+
     if (r === 'audit') {
       const types = AUDIT_EVENT_TYPES;
       return {
@@ -3450,7 +3868,7 @@ class Component extends DCLogic {
         defaultDesc: true,
         cells: a => {
           const actor = db.users.find(u => u.id === a.actorUserId), target = db.users.find(u => u.id === a.targetUserId);
-          const tint = a.eventType.indexOf('Failed') > -1 || a.eventType.indexOf('Suspend') > -1 || a.eventType.indexOf('Reject') > -1 ? 'bad' : a.eventType.indexOf('Correct') > -1 ? 'warn' : a.eventType.indexOf('Revoke') > -1 ? 'mute' : 'accent';
+          const tint = a.eventType.indexOf('Failed') > -1 || a.eventType.indexOf('Suspend') > -1 || a.eventType.indexOf('Reject') > -1 || a.eventType.indexOf('Deleted') > -1 ? 'bad' : a.eventType.indexOf('Correct') > -1 ? 'warn' : a.eventType.indexOf('Revoke') > -1 ? 'mute' : 'accent';
           return [
             self.cell(this.eventLabel(a.eventType), { strong:true, wrap:true, edge: self.state.drawer && self.state.drawer.id === a.id ? '2px solid var(--accent)' : '2px solid transparent' }),
             self.cell(actor ? actor.firstName + ' ' + actor.lastName : 'System', { dim:true, wrap:true, sub: self.isTightTable(1280) ? (target ? 'on ' + target.firstName + ' ' + target.lastName : 'Not user-scoped') : '' }),
@@ -3487,8 +3905,8 @@ class Component extends DCLogic {
     const pages = Math.max(1, Math.ceil(total / size));
     const page = Math.min(q.page || 1, pages);
     const slice = rows.slice((page - 1) * size, page * size);
-    const hasSearchTerm = !!q.search || !!q.status || !!q.type || !!q.body || !!q.fuel || !!q.gearbox || !!q.year || !!q.role || !!q.event || (q.active !== undefined && q.active !== '');
-    const problem = { err403:{ icon:'lock', tint:'var(--warn)', title:'You cannot view this list', body:'Your role does not include the read permission this page requires. Nothing was loaded.', code:'HTTP 403 · policy: ' + (spec.key === 'audit' ? 'SecurityAudit.ReadCompany' : spec.key.charAt(0).toUpperCase() + spec.key.slice(1) + '.Read'), retry:false },
+    const hasSearchTerm = !!q.search || !!q.status || !!q.type || !!q.body || !!q.fuel || !!q.gearbox || !!q.year || !!q.role || !!q.event || (q.active !== undefined && q.active !== '') || (spec.activeExtra ? spec.activeExtra(q) : false);
+    const problem = spec.forbidden ? { icon:'lock', tint:'var(--warn)', title:'You cannot open this page', body:'Your role does not include the permission this page requires. Nothing was loaded.', code:'HTTP 403 \u00b7 policy: ' + spec.forbiddenPerm, retry:false } : { err403:{ icon:'lock', tint:'var(--warn)', title:'You cannot view this list', body:'Your role does not include the read permission this page requires. Nothing was loaded.', code:'HTTP 403 · policy: ' + (spec.key === 'audit' ? 'SecurityAudit.ReadCompany' : spec.key.charAt(0).toUpperCase() + spec.key.slice(1) + '.Read'), retry:false },
       err429:{ icon:'speed', tint:'var(--warn)', title:'Too many requests', body:'The API is rate limiting this client. Wait a moment before retrying — no data was lost.', code:'HTTP 429 · retry-after: 30 s', retry:true },
       err500:{ icon:'error', tint:'var(--bad)', title:'The request failed', body:'An unexpected server error occurred. Your filters and page position have been kept.', code:'HTTP 500 · trace: 8f2c-41ab', retry:true } }[ds];
     const emptyNow = ds === 'empty' || (ds === 'ready' && total === 0 && !hasSearchTerm);
@@ -3538,7 +3956,8 @@ class Component extends DCLogic {
       emptyActionLabel: noResult ? 'Clear filters' : (spec.empty.action ? spec.empty.action.label : ''),
       emptyActionIcon: noResult ? 'filter_alt_off' : (spec.empty.action ? spec.empty.action.icon : ''),
       emptyGo: noResult ? () => this.setState(s => ({ q: { ...s.q, [spec.key]: { search:'', page:1, size } } })) : (spec.empty.action ? spec.empty.action.go : () => {}),
-      showTable: showData && !cardMode, showCards: showData && cardMode,
+      showTable: showData && !cardMode, showCards: showData && cardMode && !spec.actionCards,
+      showActionCards: showData && cardMode && !!spec.actionCards,
       columns: (spec.columns || []).filter((c, i) => mask[i]).map((c, i, all) => {
         const active = by === c.key;
         return { label: c.label, align: c.align || 'left', width: shrink(c.width || 'auto'), justify: c.align === 'right' ? 'flex-end' : 'flex-start',
@@ -3566,6 +3985,19 @@ class Component extends DCLogic {
         lines: (c.lines || []).filter(Boolean).map(l => (typeof l === 'string' ? { text: l, font:'var(--font-sans)' } : { text: l.text, font: l.mono ? 'var(--font-mono)' : 'var(--font-sans)' })),
         hasLines: (c.lines || []).filter(Boolean).length > 0,
         hasChip2: !!c.chip2, chip2: c.chip2 || '', chip2Bg: t2.bg, chip2Fg: t2.fg, chip2Bd: t2.bd, chip2Shape: c.chip2Shape || '50% 50% 50% 0', chipBg: TONE[c.tone].bg, chipFg: TONE[c.tone].fg, chipBd: TONE[c.tone].bd, chipShape: c.chipShape || '50%', onClick: () => spec.open(item) }; }),
+      // Cards with their own row action cannot be one big button: they render as a block with a
+      // linked title and a full-width action, so both targets stay reachable on a phone.
+      actionCards: !spec.actionCards ? [] : slice.map(item => { const c = spec.card(item), tn = TONE[c.tone];
+        const stop = fn => (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } fn(); });
+        return { title: c.title, titleFont: c.titleMono ? 'var(--font-mono)' : 'var(--font-sans)',
+          sub: c.sub || '', hasSub: !!c.sub, onTitle: stop(() => spec.open(item)),
+          chip: c.chip, chipBg: tn.bg, chipFg: tn.fg, chipBd: tn.bd, chipShape: c.chipShape || '50%',
+          facts: (c.facts || []).map(f => ({ label: f.label, value: f.value, span: f.wide ? '1 / -1' : 'auto' })), hasFacts: (c.facts || []).length > 0,
+          hasReason: !!c.reason, reason: c.reason ? c.reason + '.' : '',
+          links: (c.links || []).map(l => ({ text: l.text, go: stop(l.go) })), hasLinks: (c.links || []).length > 0,
+          actLabel: c.del.label, actTip: c.del.tip, actDisabled: c.del.disabled ? 'true' : 'false',
+          actOpacity: c.del.disabled ? .45 : 1, actCursor: c.del.disabled ? 'not-allowed' : 'pointer',
+          actGo: c.del.disabled ? stop(() => this.toast('Not available', c.del.tip, 'warn')) : stop(c.del.go) }; }),
       showPager: showData, pageSizeLabel: String(size), onPageSize: e => this.patchQ(spec.key, { size: +e.target.value, page: 1 }),
       rangeLabel: total === 0 ? '' : ((page - 1) * size + 1) + '–' + Math.min(page * size, total) + ' of ' + total,
       pageLabel: page + ' / ' + pages,
@@ -3639,8 +4071,9 @@ class Component extends DCLogic {
       return { title, span: p.span || '1 / -1', hasDesc: !!p.desc, desc: p.desc || '', actions: p.actions || [],
       hasRows: !!(p.rows && p.rows.length), rows: p.rows || [],
       // `oneRow` keeps every fact of a panel on a single row from the desktop line up, where they
-      // all fit; below that line the wrapping auto-fit grid takes over unchanged.
-      rowCols: p.oneRow && this.state.w >= 1280 ? 'repeat(' + (p.rows || []).length + ',minmax(0,1fr))' : this.rowColsDefault(),
+      // all fit; below that line the wrapping auto-fit grid takes over unchanged. `fullRows` is the
+      // opposite case: rows whose value is a two-line block, one per line at every width.
+      rowCols: p.fullRows ? '1fr' : p.oneRow && this.state.w >= 1280 ? 'repeat(' + (p.rows || []).length + ',minmax(0,1fr))' : this.rowColsDefault(),
       // Seven tracks leave 104px of content per fact at 1280 and a short timestamp needs 105 — the
       // side pad comes in to 12px in one-row mode so the values stay on one line.
       rowPad: p.oneRow && this.state.w >= 1280 ? '13px 12px' : '13px 17px',
@@ -4139,16 +4572,36 @@ class Component extends DCLogic {
       if (!a) return { show:false };
       const actor = db.users.find(u => u.id === a.actorUserId), target = db.users.find(u => u.id === a.targetUserId);
       const diff = this.diffRows(a.beforeJson, a.afterJson);
+      const del = PURGE_EVENTS[a.eventType];
+      let body = null; if (del && a.beforeJson) { try { body = JSON.parse(a.beforeJson); } catch (e) { body = null; } }
+      const ISO2 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+      const lbl = k => String(k).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/ Utc$/, '').replace(/^./, ch => ch.toUpperCase());
+      const enumLbl = v => { const t2 = String(v).replace(/([a-z])([A-Z])/g, '$1 $2'); return t2.charAt(0).toUpperCase() + t2.slice(1).toLowerCase(); };
+      const val = v => v === null || v === undefined || v === '' ? '—' : (typeof v === 'string' && ISO2.test(v) ? this.fmt(v) : String(v));
       const panels = [
-        P('Event', { span:'1 / -1', desc:'All times UTC.',
-          rows:[R('Event', this.eventLabel(a.eventType)), R('Occurred', this.fmt(a.occurredAtUtc, 'iso'), { mono:true }),
+        P('Event', { span:'1 / -1', desc: del ? 'Times in Tallinn time.' : 'All times UTC.',
+          rows:[R('Event', this.eventLabel(a.eventType)), R('Occurred', del ? this.fmt(a.occurredAtUtc) : this.fmt(a.occurredAtUtc, 'iso'), { mono:true }),
             R('Actor', actor ? actor.firstName + ' ' + actor.lastName : 'System', actor ? { link: () => this.go('user', actor.id) } : { dim:true }),
             R('Target user', target ? target.firstName + ' ' + target.lastName : 'Not user-scoped', target ? { link: () => this.go('user', target.id) } : { dim:true }),
-            R('Entity', this.entityLabel(a.entityType)), R('Entity id', a.entityId, { mono:true, dim:true })] })
+            R('Entity', this.entityLabel(a.entityType))]
+            .concat(del ? [R('Record', a.recordLabel || a.entityId, { hint:'The record was deleted, so there is nothing to open.' })] : [])
+            .concat([R('Entity id', a.entityId, { mono:true, dim:true })]) })
       ];
-      if (diff && diff.length) panels.push(P(a.beforeJson ? 'Before → after' : 'Recorded values',
+      if (del) {
+        panels.push(P('Deleted record', { span:'1 / -1', desc:'The values the record held when it was deleted.',
+          rows: body ? Object.keys(body).filter(k => !Array.isArray(body[k])).map(k => R(lbl(k), val(body[k])))
+            : [R('Parsing', 'Unrecognised payload shape — see the raw values below', { dim:true })] }));
+        const AU = body && Array.isArray(body.Authorizations) ? body.Authorizations : [];
+        const IN = body && Array.isArray(body.Interruptions) ? body.Interruptions : [];
+        if (AU.length) panels.push(P('Deleted authorizations', { span:'1 / -1', fullRows:true,
+          rows: AU.map((z, i) => R('Authorization ' + (i + 1), (z.AuthorizationType === 'NamedDriver' ? (z.DriverName || 'Named driver') : 'Company-authorized drivers')
+            + '\n' + val(z.AuthorizedFromUtc) + ' → ' + (z.StoppedAtUtc ? val(z.StoppedAtUtc) : 'open') + (z.StopReason ? ' · ' + enumLbl(z.StopReason) : ''))) }));
+        if (IN.length) panels.push(P('Deleted interruptions', { span:'1 / -1', fullRows:true,
+          rows: IN.map((z, i) => R('Interruption ' + (i + 1), enumLbl(z.Reason) + '\n' + val(z.StartedAtUtc) + ' → ' + (z.EndedAtUtc ? val(z.EndedAtUtc) : 'open') + ' · ' + enumLbl(z.BillingImpact))) }));
+      }
+      if (!del && diff && diff.length) panels.push(P(a.beforeJson ? 'Before → after' : 'Recorded values',
         { span:'1 / -1', rows: diff.map(x => R(x.label, x.value, { mono:true, dim: x.unchanged })) }));
-      if (diff === null) panels.push(P('Payload', { span:'1 / -1', rows:[R('Parsing', 'Unrecognised payload shape — see the raw values below', { dim:true })] }));
+      if (!del && diff === null) panels.push(P('Payload', { span:'1 / -1', rows:[R('Parsing', 'Unrecognised payload shape — see the raw values below', { dim:true })] }));
       panels.push(P('Reason', { span:'1 / -1', rows:[R('Recorded reason', a.reason || 'No reason recorded', { dim: !a.reason })] }));
       panels.push(P('Raw payload', { span:'1 / -1',
         rows:[R('Before', a.beforeJson || '—', { mono:true, dim: !a.beforeJson }), R('After', a.afterJson || '—', { mono:true, dim: !a.afterJson })],
@@ -4156,10 +4609,34 @@ class Component extends DCLogic {
       return { show:true, cols: narrow ? '1fr' : 'repeat(2,minmax(0,1fr))',
         hasHero:true, heroChip:'Audit entry', heroShape:'2px',
         heroBg: TONE.mute.bg, heroFg: TONE.mute.fg, heroBd: TONE.mute.bd,
-        heroFacts:[{ label:'Occurred (UTC)', value: this.fmt(a.occurredAtUtc, 'iso'), font:'var(--font-mono)' },
+        heroFacts:[{ label: del ? 'Occurred' : 'Occurred (UTC)', value: del ? this.fmt(a.occurredAtUtc) : this.fmt(a.occurredAtUtc, 'iso'), font:'var(--font-mono)' },
           { label:'Actor', value: actor ? actor.firstName + ' ' + actor.lastName : 'System', font:'var(--font-sans)' },
           { label:'Entity', value: this.entityLabel(a.entityType), font:'var(--font-sans)' }],
         heroActions:[], hasTabs:false, tabs:[], panels };
+    }
+
+    if (r === 'deleterecords') {
+      if (!this.can('Records.Delete')) return shell;
+      const rows = db.audit.filter(x => PURGE_EVENTS[x.eventType]).slice()
+        .sort((x, y) => (x.occurredAtUtc < y.occurredAtUtc ? 1 : x.occurredAtUtc > y.occurredAtUtc ? -1 : 0))
+        .map(x => { const u = db.users.find(z => z.id === x.actorUserId);
+          return { when: this.fmt(x.occurredAtUtc), who: u ? u.firstName + ' ' + u.lastName : 'System',
+            what: this.entityLabel(x.entityType) + ' · ' + (x.recordLabel || x.entityId),
+            reason: x.reason || 'No reason recorded', go: () => this.go('auditentry', x.id) }; });
+      return { show:true, cols:'1fr', hasHero:false, heroFacts:[], heroActions:[], hasTabs:false, tabs:[], hasBanner:false,
+        panels:[ P('Recently deleted', { span:'1 / -1', desc:'Times in Tallinn time.', minWidth:'880px',
+          columns:[{ label:'When', width:'150px', keep:true }, { label:'Who', width:'176px' }, { label:'What', width:'auto' }, { label:'Reason', width:'300px' }],
+          ...(this.isPhone()
+            ? { tcards: rows.map(x => { const c = this.cell('Deleted', { chip:'mute', shape:'1px', actions:[{ icon:'open_in_new', label:'Open audit entry', fg:'var(--fg-2)', go: x.go }] });
+                return { title: x.what, sub: x.reason, hasSub:true, facts:[{ label:'When', value: x.when }, { label:'Who', value: x.who }],
+                  chipText:'Deleted', chipBg: c.chipBg, chipFg: c.chipFg, chipBd: c.chipBd, chipShape: c.chipShape, hasActions:true, actions: c.actions }; }) }
+            : { trows: rows.map(x => TR([
+                this.cell(x.when, { mono:true, dim:true, size:'12.5px', weight:400 }),
+                this.cell(x.who),
+                this.cell(x.what, { wrap:true, quiet:true, link: x.go }),
+                this.cell(x.reason, { wrap:true, dim:true })
+              ], { go: x.go })) }),
+          empty:{ icon:'history', title:'Nothing has been deleted yet', body:'Deletions made on this page appear here, newest first, each one linked to its security-audit entry.' } }) ] };
     }
 
     if (r === 'sysadmin') {
@@ -4353,9 +4830,11 @@ class Component extends DCLogic {
 
       pgSimple: ['attention','tasks','insurance'].includes(s.route.name),
       simple: this.simpleModel(),
-      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit'].includes(s.route.name),
+      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit','deleterecords'].includes(s.route.name),
       list: this.listModel(),
-      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess'].includes(s.route.name),
+      pgPurge: s.route.name === 'deleterecords' && this.can('Records.Delete'),
+      purgeTabs: s.route.name === 'deleterecords' ? this.purgeTabs() : [],
+      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess'].includes(s.route.name) || (s.route.name === 'deleterecords' && this.can('Records.Delete')),
       detail: { ...(() => { const d = this.detailModel(), card = this.isCardTier();
         // Counts drop only on the phone strip (<768). From 768 up the whole fact row renders as a
         // grid on its own line, so it can never be squeezed out above the lifecycle buttons.

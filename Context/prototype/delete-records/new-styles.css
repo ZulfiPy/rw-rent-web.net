@@ -1,0 +1,190 @@
+/* Delete records — new or changed CSS
+ * ------------------------------------------------------------------------------------------------
+ * There are none. The prototype carries no stylesheet and no CSS classes: every rule is an inline
+ * style on the element, and the only global CSS in the file is @font-face, @keyframes and the body
+ * reset — none of which this feature touched. So there is nothing to copy verbatim into a .css file.
+ *
+ * What follows is a reference, NOT a stylesheet: the inline declarations of the three pieces of UI
+ * this feature added, transcribed exactly as they appear in RW-Rent.dc.html, with their line
+ * numbers. Every value is an existing design token. No new colour was introduced.
+ */
+
+/* Page banner — RW-Rent.dc.html:644, the same recipe as the bad-tone dialog banner */
+.reference--purge-banner {
+  display: flex;
+  gap: 11px;
+  padding: 13px 15px;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-line);
+  border-radius: 12px;
+}
+.reference--purge-banner > [data-icon] {  /* icon: error */
+  font-size: 19px;
+  color: var(--bad);
+  flex: none;
+}
+.reference--purge-banner-title { font-size: 13.5px; font-weight: 600; color: var(--fg); }
+.reference--purge-banner-body  { margin: 3px 0 0; font-size: 13px; color: var(--fg-2); }
+
+/* Record-kind tab strip — RW-Rent.dc.html:651, the record pages' strip */
+.reference--purge-tablist {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.reference--purge-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  /* selected: background var(--surface-3), color var(--fg), border 1px solid var(--line-2), weight 600
+     unselected: background transparent, color var(--fg-2), border 1px solid transparent, weight 450 */
+}
+.reference--purge-tab:hover { color: var(--fg); }
+.reference--purge-tab > [data-icon] { font-size: 17px; }
+.reference--purge-tab-label { white-space: nowrap; }
+.reference--purge-tab-count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+
+/* Row action, in a table cell — RW-Rent.dc.html:814 */
+.reference--purge-row-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-line);
+  border-radius: 8px;
+  color: var(--bad);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  /* disabled: opacity .45; cursor not-allowed. enabled: opacity 1; cursor pointer */
+}
+.reference--purge-row-delete:hover { filter: brightness(1.08); }
+.reference--purge-row-delete > [data-icon] { font-size: 16px; }  /* icon: delete */
+
+/* Blocker links under a chip's secondary text — RW-Rent.dc.html:792 */
+.reference--purge-sublinks { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.reference--purge-sublink {
+  font-size: 11.5px;
+  color: var(--fg-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.reference--purge-sublink:hover { color: var(--fg); }
+
+/* Quiet dark link in a table cell — RW-Rent.dc.html:800, 3260
+   The one changed declaration in the whole feature: a cell link resolves its colour and underline
+   from the cell instead of hard-coding var(--accent). quiet: true gives the pair below; without it
+   the values stay var(--accent) and transparent, exactly as before. */
+.reference--cell-link {
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--fg);                      /* quiet; was var(--accent) */
+  border-bottom: 1px solid var(--line-3);/* quiet; was transparent */
+  cursor: pointer;
+}
+.reference--cell-link:hover { border-bottom-color: currentColor; }
+
+/* Phone action card — RW-Rent.dc.html:885 */
+.reference--purge-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.reference--purge-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reference--purge-card-title {           /* font-family is var(--font-mono) for a plate */
+  display: inline-block;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.reference--purge-card-sub {
+  font-size: 11.5px;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reference--purge-card-chip {            /* tone colours come from TONE[ok|warn] */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.reference--purge-card-chip-dot {        /* border-radius: 50% Ready, 2px Blocked */
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+.reference--purge-card-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 14px;
+}
+.reference--purge-card-fact-label {
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.reference--purge-card-fact-value {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reference--purge-card-reason {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--warn);
+  text-wrap: pretty;
+}
+.reference--purge-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-line);
+  border-radius: 9px;
+  color: var(--bad);
+  font-size: 13px;
+  font-weight: 500;
+  /* disabled: opacity .45; cursor not-allowed */
+}
+.reference--purge-card-action:hover { filter: brightness(1.08); }
