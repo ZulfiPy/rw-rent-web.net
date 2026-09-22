@@ -20,6 +20,15 @@ const factOf = (f: DeletedFact) => (
   <Fact key={f.key} label={f.label} mono={f.mono} dim={f.value === '—'}>{f.value}</Fact>
 );
 
+/** A list of deleted parts, one titled group of facts each: "Authorization 1", "Interruption 2". */
+const partGroups = (groups: DeletedFact[][], noun: string, nested = false) =>
+  groups.map((group, index) => (
+    <div key={`${noun}-${index}`} className={nested ? styles.subGroup : styles.group}>
+      <p className={nested ? styles.subGroupTitle : styles.groupTitle}>{noun} {index + 1}</p>
+      <FactGrid>{group.map(factOf)}</FactGrid>
+    </div>
+  ));
+
 export function AuditEntry() {
   const { entryId = '' } = useParams();
 
@@ -64,7 +73,7 @@ export function AuditEntry() {
 
   const diff = entry ? diffRows(entry.beforeJson, entry.afterJson) : null;
   const hasBefore = !!entry?.beforeJson;
-  /** A deletion's copy of the record it removed (Follow-up 8); null for every other entry. */
+  /** A deletion's copy of the record it removed (Follow-ups 8 and 9); null for every other entry. */
   const deleted = entry ? deletedRecord(entry.eventType, entry.beforeJson) : null;
 
   return (
@@ -94,6 +103,11 @@ export function AuditEntry() {
               {deleted.recordLabel ?? entry?.entityId ?? '—'}
             </Fact>
           ) : null}
+          {deleted?.removedWith ? (
+            <Fact label="Removed with driver" span="full" hint="The authorization went when this driver was deleted; the rental stays.">
+              {deleted.removedWith}
+            </Fact>
+          ) : null}
         </FactGrid>
       </Panel>
 
@@ -104,22 +118,35 @@ export function AuditEntry() {
           </Panel>
           {deleted.authorizations.length > 0 ? (
             <Panel title="Deleted authorizations">
-              {deleted.authorizations.map((group, index) => (
-                <div key={index} className={styles.group}>
-                  <p className={styles.groupTitle}>Authorization {index + 1}</p>
-                  <FactGrid>{group.map(factOf)}</FactGrid>
-                </div>
-              ))}
+              {partGroups(deleted.authorizations, 'Authorization')}
             </Panel>
           ) : null}
           {deleted.interruptions.length > 0 ? (
             <Panel title="Deleted interruptions">
-              {deleted.interruptions.map((group, index) => (
+              {partGroups(deleted.interruptions, 'Interruption')}
+            </Panel>
+          ) : null}
+          {deleted.rentals.length > 0 ? (
+            <Panel title="Deleted rental assignments" description="The rentals that went with the record, each with its own parts.">
+              {deleted.rentals.map((rental, index) => (
                 <div key={index} className={styles.group}>
-                  <p className={styles.groupTitle}>Interruption {index + 1}</p>
-                  <FactGrid>{group.map(factOf)}</FactGrid>
+                  <p className={styles.groupTitle}>
+                    Rental assignment {index + 1}{rental.recordLabel ? ` · ${rental.recordLabel}` : ''}
+                  </p>
+                  <FactGrid>{rental.facts.map(factOf)}</FactGrid>
+                  {partGroups(rental.authorizations, 'Authorization', true)}
+                  {partGroups(rental.interruptions, 'Interruption', true)}
                 </div>
               ))}
+            </Panel>
+          ) : null}
+          {deleted.clearedLinks.length > 0 ? (
+            <Panel title="Cleared customer links" description="These customer records were linked to the driver; the links were cleared and the customers stay.">
+              <FactGrid>
+                {deleted.clearedLinks.map((link) => (
+                  <Fact key={link.customerId} label="Customer record" span="full">{link.displayName}</Fact>
+                ))}
+              </FactGrid>
             </Panel>
           ) : null}
         </>

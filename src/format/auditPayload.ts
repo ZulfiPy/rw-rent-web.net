@@ -101,7 +101,7 @@ export function diffRows(
   });
 }
 
-/* the copy a deletion leaves (the backend's round 7) --------------------------------------- */
+/* the copy a deletion leaves (the backend's rounds 7 and 8) ------------------------------- */
 
 /**
  * The six event types a deletion on the Delete records page writes. `Company.Deleted` is not one of
@@ -112,21 +112,48 @@ export const RECORD_DELETION_EVENTS: readonly string[] = [
   'Vehicle.Deleted', 'Customer.Deleted', 'Driver.Deleted',
 ];
 
+/**
+ * An authorization that went with a deleted driver (round 8), written against the rental it
+ * belonged to. Its copy is flat and names the driver in `DeletedWithRecordLabel`.
+ */
+export const REMOVED_WITH_DRIVER_EVENT = 'DriverAuthorization.RemovedWithDriver';
+
 export interface DeletedFact { key: string; label: string; value: string; mono: boolean }
+
+/** One rental that went with a deleted vehicle or customer, with its own parts. */
+export interface DeletedRental {
+  recordLabel: string | null;
+  facts: DeletedFact[];
+  authorizations: DeletedFact[][];
+  interruptions: DeletedFact[][];
+}
+
+/** A customer record whose link to a deleted driver was cleared; the customer stays. */
+export interface ClearedLink { customerId: string; displayName: string }
 
 /** What an audit entry of a deletion shows instead of "Recorded values". */
 export interface DeletedRecord {
   /** The record's identifying text as the page showed it; null when the copy does not carry one. */
   recordLabel: string | null;
+  /** For an authorization that went with a deleted driver: that driver's label; null otherwise. */
+  removedWith: string | null;
   /** The record's own members; the label, the reason and the note are shown elsewhere. */
   facts: DeletedFact[];
-  /** A rental's parts that went with it, one group of facts per part. */
+  /** A rental's parts, or a driver's authorizations, that went with it: one group of facts each. */
   authorizations: DeletedFact[][];
   interruptions: DeletedFact[][];
+  /** The rentals that went with a deleted vehicle or customer, each with its own parts. */
+  rentals: DeletedRental[];
+  /** The customer records whose link to a deleted driver was cleared. */
+  clearedLinks: ClearedLink[];
 }
 
-/** Shown by the entry's own Record fact and Reason panel, so never repeated among the facts. */
-const SHOWN_ELSEWHERE = new Set(['RecordLabel', 'DeletionReason', 'DeletionNote']);
+/** Shown by the entry's own Record and Removed-with facts and its Reason panel, never among the facts. */
+const SHOWN_ELSEWHERE = new Set(['RecordLabel', 'DeletionReason', 'DeletionNote', 'DeletedWithRecordLabel']);
+
+/** The arrays a deletion's copy may carry (round 8); anything else falls back. */
+const PART_LISTS = ['Authorizations', 'Interruptions'];
+const COPY_LISTS = [...PART_LISTS, 'RentalAssignments', 'ClearedCustomerLinks'];
 
 /** Who created and who last changed the record, in the order a reader looks for them. */
 const WHO_AND_WHEN = ['CreatedAtUtc', 'CreatedByDisplayName', 'UpdatedAtUtc', 'UpdatedByDisplayName'];
@@ -170,29 +197,77 @@ function partsOf(value: unknown): DeletedFact[][] | null {
   return groups;
 }
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+const labelOf = (o: Record<string, unknown>) => (typeof o['RecordLabel'] === 'string' ? o['RecordLabel'] : null);
+
 /**
- * The copy of a deleted record, read from the entry's before-payload. Anything this does not
- * recognise — another event, an empty or unparseable payload, a member that is neither a scalar nor
- * one of a rental's two part lists — answers null, and the entry falls back to the ordinary payload
- * views exactly as before.
+ * The rentals that went with a vehicle or a customer: flat copies, each opening with its own label
+ * and carrying its own two part lists; null when it is anything else.
+ */
+function rentalsOf(value: unknown): DeletedRental[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const rentals: DeletedRental[] = [];
+  for (const rental of value) {
+    if (!isObject(rental)) return null;
+    if (Object.keys(rental).some((key) => Array.isArray(rental[key]) && !PART_LISTS.includes(key))) return null;
+    const facts = factsOf(rental, SHOWN_ELSEWHERE);
+    const authorizations = partsOf(rental['Authorizations']);
+    const interruptions = partsOf(rental['Interruptions']);
+    if (!facts || !authorizations || !interruptions) return null;
+    rentals.push({ recordLabel: labelOf(rental), facts, authorizations, interruptions });
+  }
+  return rentals;
+}
+
+/** The customer links a driver's deletion cleared, or null when the list is anything else. */
+function linksOf(value: unknown): ClearedLink[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const links: ClearedLink[] = [];
+  for (const link of value) {
+    if (!isObject(link) || typeof link['CustomerId'] !== 'string' || typeof link['CustomerDisplayName'] !== 'string') return null;
+    links.push({ customerId: link['CustomerId'], displayName: link['CustomerDisplayName'] });
+  }
+  return links;
+}
+
+/**
+ * The copy of a deleted record, read from the entry's before-payload: the six `*.Deleted` events
+ * (a rental's parts, round 8's rentals of a vehicle or a customer, a driver's authorizations and
+ * cleared customer links), and round 8's flat copy of an authorization that went with its driver.
+ * Anything this does not recognise — another event, an empty or unparseable payload, a member that
+ * is neither a scalar nor one of the known lists in its known shape — answers null, and the entry
+ * falls back to the ordinary payload views exactly as before.
  */
 export function deletedRecord(eventType: string | null | undefined, beforeJson: string | null | undefined): DeletedRecord | null {
-  if (!eventType || !RECORD_DELETION_EVENTS.includes(eventType)) return null;
+  const removedWithDriver = eventType === REMOVED_WITH_DRIVER_EVENT;
+  if (!eventType || !(removedWithDriver || RECORD_DELETION_EVENTS.includes(eventType))) return null;
   const body = parse(beforeJson);
   if (!body || Object.keys(body).length === 0) return null;
 
-  const arrays = Object.keys(body).filter((key) => Array.isArray(body[key]));
-  if (arrays.some((key) => key !== 'Authorizations' && key !== 'Interruptions')) return null;
+  const lists = removedWithDriver ? [] : COPY_LISTS;
+  if (Object.keys(body).some((key) => Array.isArray(body[key]) && !lists.includes(key))) return null;
 
   const facts = factsOf(body, SHOWN_ELSEWHERE);
   const authorizations = partsOf(body['Authorizations']);
   const interruptions = partsOf(body['Interruptions']);
-  if (!facts || !authorizations || !interruptions) return null;
+  const rentals = rentalsOf(body['RentalAssignments']);
+  const clearedLinks = linksOf(body['ClearedCustomerLinks']);
+  if (!facts || !authorizations || !interruptions || !rentals || !clearedLinks) return null;
+
+  const removedWith = typeof body['DeletedWithRecordLabel'] === 'string' ? body['DeletedWithRecordLabel'] : null;
+  if (removedWithDriver && !removedWith) return null;
 
   return {
-    recordLabel: typeof body['RecordLabel'] === 'string' ? body['RecordLabel'] : null,
+    recordLabel: labelOf(body),
+    removedWith: removedWithDriver ? removedWith : null,
     facts,
     authorizations,
     interruptions,
+    rentals,
+    clearedLinks,
   };
 }
