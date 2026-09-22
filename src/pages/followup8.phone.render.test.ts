@@ -5,7 +5,7 @@ import { RecordDeletionShow, RecordKind } from '@/api/dto';
 import { DeleteRecords } from './admin/DeleteRecords';
 import { clearRenders, page, renderPage } from './followup7b.support';
 import {
-  countsEverything, deletionsMade, driverBlockedTwice, rentalEnded, vehicleBlocked, vehicleReady,
+  countsEverything, deletionsMade, driverBlocked, rentalEnded, vehicleBlocked, vehicleReady,
 } from './followup8.support';
 
 /**
@@ -55,20 +55,22 @@ describe('the candidates on a phone', () => {
     expect(ready).not.toMatch(/<button[^>]*disabled[^>]*>(?:(?!<\/button>).)*Delete…/);
   });
 
-  test('a blocked card writes its reason, names the records in the way, and holds a disabled Delete…', () => {
+  test('a blocked card writes its reason, names the running rental in the way, and holds a disabled Delete…', () => {
     const list = vehicles.slice(0, vehicles.indexOf('Recently deleted'));
     const blocked = card(list, '482 TKL');
     expect(blocked).toContain('>Blocked<');
-    expect(blocked).toContain('2 rental assignments refer to this vehicle');
+    expect(blocked).toContain('A running rental refers to this vehicle. End it first');
     expect(blocked).toContain(`href="/rental-assignments/${vehicleBlocked.deletion.blocks[0]!.records[0]!.id}"`);
-    expect(blocked).toMatch(/<button[^>]*disabled[^>]*title="2 rental assignments refer to this vehicle\."/);
+    expect(blocked).toMatch(/<button[^>]*disabled[^>]*title="A running rental refers to this vehicle\. End it first\."/);
   });
 
-  test('a rental card spans its parts across the card, and a driver card carries both of its blocks', () => {
+  test('a rental card spans its parts across the card, and a driver card carries its block and what it would take', () => {
     const rentals = read(RecordKind.RentalAssignment, '/delete-records?show=all', [rentalEnded]);
     expect(card(rentals, '400 NDP')).toContain('1 authorization · 1 interruption');
-    const drivers = read(RecordKind.Driver, '/delete-records?kind=drivers&show=all', [driverBlockedTwice]);
-    expect(drivers).toContain('1 driver authorization refers to this driver and a customer record is linked to this driver record');
+    const drivers = read(RecordKind.Driver, '/delete-records?kind=drivers&show=all', [driverBlocked]);
+    const blocked = card(drivers, 'LV-AE-118440');
+    expect(blocked).toContain('This driver holds the only open authorization of a running rental');
+    expect(blocked).toContain('Takes 1 driver authorization with it. Clears the driver link of 1 customer record');
   });
 });
 

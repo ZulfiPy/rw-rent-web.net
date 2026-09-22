@@ -3,12 +3,15 @@ import { RecordKind } from './dto';
 import { codeToField } from './codes';
 import { ApiError, toFailure } from './problem';
 import { CANDIDATE_PATH } from './recordDeletions';
-import { deletionFailure } from '@/pages/admin/DeleteRecordDialog';
+import { deletionFailure, deletionInvalidates } from '@/pages/admin/DeleteRecordDialog';
+import { qk } from './queryKeys';
+import { runningVehicleRefusal } from '@/pages/followup9.support';
 
 /**
- * Follow-up 8: how the Delete records dialog reads the API's refusals. The field refusals go under
- * their inputs through the op's table; a record that became blocked or left the list comes back
- * with Refresh, like the concurrency conflict. The problem bodies are the ones the scratch API gave.
+ * Follow-ups 8 and 9: how the Delete records dialog reads the API's refusals. The field refusals go
+ * under their inputs through the op's table; a record that became blocked or left the list comes
+ * back with Refresh, like the concurrency conflict — a blocked one in the API's own words since
+ * round 8. The problem bodies are the ones the scratch API gave.
  */
 
 const refusal = (status: number, body: Record<string, unknown>) =>
@@ -32,17 +35,19 @@ describe('the dialog’s refusals', () => {
       errors: { Note: ['A note is required when the reason is Other.'] },
       code: 'record_deletions.note_required',
     });
-    expect(deletionFailure(RecordKind.Vehicle, error)).toBeNull();
+    expect(deletionFailure(error)).toBeNull();
     expect(toFailure(error, 'record-delete'))
       .toEqual({ kind: 'field', errors: { note: ['A note is required when the reason is Other.'] } });
   });
 
-  test('a record that became blocked is refused with its own sentence and Refresh', () => {
-    const error = refusal(409, {
-      title: 'Conflict', detail: 'One rental assignment still refers to this record.', code: 'record_deletions.blocked',
+  test('a record that became blocked is refused in the API’s own sentence for its reason, with Refresh', () => {
+    const { status, ...body } = runningVehicleRefusal;
+    const error = refusal(status!, body);
+    expect(deletionFailure(error)).toEqual({
+      kind: 'stale',
+      message: 'One of its rental assignments is running (Active). End it first; then the record can be deleted with its rentals.',
+      detail: 'Refresh the list.',
     });
-    expect(deletionFailure(RecordKind.Vehicle, error))
-      .toEqual({ kind: 'stale', message: 'This vehicle now has a rental assignment.', detail: 'Refresh the list.' });
   });
 
   test('a record that left the list is refused the same way, although a 404 reaches the app without its code', () => {
@@ -51,7 +56,7 @@ describe('the dialog’s refusals', () => {
     });
     // The shared reading knows no 404 and would give an unworded failure.
     expect(toFailure(error, 'record-delete').kind).toBe('unknown');
-    expect(deletionFailure(RecordKind.Driver, error))
+    expect(deletionFailure(error))
       .toEqual({ kind: 'stale', message: 'This record is no longer in the list.', detail: 'Refresh the list.' });
   });
 
@@ -59,7 +64,7 @@ describe('the dialog’s refusals', () => {
     const error = refusal(409, {
       title: 'Conflict', detail: 'The record changed concurrently.', code: 'record_deletions.concurrency_conflict',
     });
-    expect(deletionFailure(RecordKind.Vehicle, error)).toBeNull();
+    expect(deletionFailure(error)).toBeNull();
     expect(toFailure(error, 'record-delete').kind).toBe('stale');
   });
 });
@@ -74,5 +79,22 @@ describe('the lists', () => {
       [RecordKind.Customer]: 'customers',
       [RecordKind.Driver]: 'drivers',
     });
+  });
+});
+
+describe('what a deletion makes stale (Follow-up 9)', () => {
+  test('a cascade makes stale what went with the record, and the people whose histories listed it', () => {
+    const stale = (kind: RecordKind) => deletionInvalidates(kind).map((key) => key.join('/'));
+    const has = (kind: RecordKind, ...keys: (readonly unknown[])[]) =>
+      expect(stale(kind)).toEqual(expect.arrayContaining(keys.map((key) => key.join('/'))));
+    // A vehicle or a customer takes rentals, their authorizations and interruptions; the drivers'
+    // histories listed those authorizations.
+    has(RecordKind.Vehicle, qk.vehicles.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all);
+    has(RecordKind.Customer, qk.customers.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all);
+    // A driver takes authorizations off rentals and clears a customer's link.
+    has(RecordKind.Driver, qk.drivers.all, qk.customers.all, qk.assignments.all);
+    for (const kind of Object.values(RecordKind)) {
+      has(kind, qk.recordDeletions.all, qk.audit.all, qk.overview);
+    }
   });
 });

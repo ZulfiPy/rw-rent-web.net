@@ -16,7 +16,7 @@ const BACKEND_EVENT_TYPES = [
   'Authentication.SessionCreated',
   'Company.Created', 'Company.Deleted', 'Company.Updated',
   'Customer.Deleted', 'Driver.Deleted',
-  'DriverAuthorization.Corrected', 'DriverAuthorization.Deleted',
+  'DriverAuthorization.Corrected', 'DriverAuthorization.Deleted', 'DriverAuthorization.RemovedWithDriver',
   'Interruption.Corrected', 'Interruption.Deleted',
   'Registration.Activated', 'Registration.EmailConfirmationRotated', 'Registration.EmailConfirmed',
   'Registration.Expired', 'Registration.Rejected', 'Registration.Reopened',

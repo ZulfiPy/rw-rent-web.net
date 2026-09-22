@@ -11,16 +11,16 @@ import { Confirmation, DeleteRecords, RecentlyDeleted } from './admin/DeleteReco
 import { clearRenders, fact, page, renderPage as render } from './followup7b.support';
 import {
   authorizationBlocked, authorizationCollective, authorizationReady, countsEverything, countsOutOfUse,
-  customerBlocked, customerReady, deletionsMade, driverBlocked, driverBlockedTwice, driverReady,
-  interruptionEnded, interruptionOpen, rentalActive, rentalCancelled, rentalEnded, rentalEntry,
+  customerBlocked, customerReady, deletionsMade, driverBlocked, driverReady, driverReadyWithAuthorization,
+  interruptionEnded, interruptionOpen, rentalCancelled, rentalEnded, rentalEntry,
   vehicleBlocked, vehicleDeleted, vehicleEntry, vehicleReady,
 } from './followup8.support';
 
 /**
- * Follow-up 8, the Delete records page, rendered to markup from what the round-7 API answered on
- * the scratch stack (`followup8.support.ts`). Nothing is fetched. The run that builds this may not
- * sign in to the app in a browser, so this is how the signed-in page is checked; the reviewer's
- * browser steps are in `Context/wiring_report.md`.
+ * Follow-up 8, the Delete records page, rendered to markup from what the API answered on the
+ * scratch stack (`followup8.support.ts`, re-captured from the round-8 build for Follow-up 9).
+ * Nothing is fetched. The run that builds this may not sign in to the app in a browser, so this is
+ * how the signed-in page is checked; the reviewer's browser steps are in `Context/wiring_report.md`.
  */
 afterEach(clearRenders);
 
@@ -143,7 +143,7 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(markup).toContain('placeholder="Note, plate or customer"');
   });
 
-  test('vehicles: an inactive one nothing refers to is Ready, one two rentals refer to is Blocked and names them', () => {
+  test('vehicles: an inactive one with nothing to take is Ready, one with a running rental is Blocked and names it', () => {
     const markup = renderPage(RecordKind.Vehicle, [vehicleReady, vehicleBlocked], {
       at: '/delete-records?kind=vehicles&show=all', show: RecordDeletionShow.Everything,
     });
@@ -153,18 +153,21 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(ready).toContain(vehicleReady.vinCode);
     expect(ready).toContain('>Inactive<');
     expect(ready).toContain('>Ready<');
+    expect(ready).toContain('Nothing else goes with it');
     const blocked = row(markup, '482 TKL');
     expect(blocked).toContain('>Blocked<');
-    expect(blocked).toContain('2 rental assignments refer to this vehicle');
-    for (const record of vehicleBlocked.deletion.blocks[0]!.records) {
-      expect(blocked).toContain(`href="/rental-assignments/${record.id}"`);
-      expect(blocked).toContain(record.label);
-    }
+    expect(blocked).toContain('A running rental refers to this vehicle. End it first');
+    const running = vehicleBlocked.deletion.blocks[0]!.records;
+    expect(running).toHaveLength(1);
+    expect(blocked).toContain(`href="/rental-assignments/${running[0]!.id}"`);
+    expect(blocked).toContain(running[0]!.label);
+    // What would go once the rental is ended: both of its rentals with their parts.
+    expect(blocked).toContain('Takes 2 rental assignments, 2 driver authorizations and 1 interruption with it');
     expect(button(blocked, 'Delete…')).toContain('disabled');
-    expect(button(blocked, 'Delete…')).toContain('title="2 rental assignments refer to this vehicle."');
+    expect(button(blocked, 'Delete…')).toContain('title="A running rental refers to this vehicle. End it first."');
   });
 
-  test('customers: the type, the identifier, and a rental that blocks a business customer', () => {
+  test('customers: the type, the identifier, and a running rental that blocks a business customer', () => {
     const markup = renderPage(RecordKind.Customer, [customerReady, customerBlocked], {
       at: '/delete-records?kind=customers&show=all', show: RecordDeletionShow.Everything,
     });
@@ -173,26 +176,30 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(ready).toContain('>Private<');
     expect(ready).toContain(customerReady.identifier!);
     expect(ready).toContain('>Ready<');
-    const blocked = row(markup, 'Daugava Construction');
+    const blocked = row(markup, customerBlocked.displayName);
     expect(blocked).toContain('>Business<');
     expect(blocked).toContain(`Reg. ${customerBlocked.identifier}`);
-    expect(blocked).toMatch(/\d rental assignments? refers? to this customer/);
+    expect(blocked).toContain('A running rental refers to this customer. End it first');
+    const running = customerBlocked.deletion.blocks[0]!.records[0]!;
+    expect(blocked).toMatch(new RegExp(`<a [^>]*href="/rental-assignments/${running.id}"[^>]*>${running.label}</a>`));
   });
 
-  test('drivers: both of a driver’s blocks in one sentence, the linked customer and the authorization named', () => {
-    const markup = renderPage(RecordKind.Driver, [driverReady, driverBlockedTwice, driverBlocked], {
+  test('drivers: the only open cover of a running rental blocks a driver and names that rental; a link does not block', () => {
+    const markup = renderPage(RecordKind.Driver, [driverReady, driverBlocked, driverReadyWithAuthorization], {
       at: '/delete-records?kind=drivers&show=all', show: RecordDeletionShow.Everything,
     });
     expect(headers(markup)).toEqual(['Driver', 'Licence', 'Status', 'Deletion']);
     expect(row(markup, 'Normunds Zarins')).toContain('>Ready<');
-    const twice = row(markup, 'LV-AE-118440');
-    expect(twice).toContain('1 driver authorization refers to this driver and a customer record is linked to this driver record');
-    const customer = driverBlockedTwice.deletion.blocks[1]!.records[0]!;
-    expect(twice).toContain(`href="/customers/${customer.id}"`);
-    // The authorization in the way opens the driver's own page, which lists their authorizations.
-    const authorization = driverBlockedTwice.deletion.blocks[0]!.records[0]!;
-    expect(twice).toMatch(new RegExp(`<a [^>]*href="/drivers/${driverBlockedTwice.id}"[^>]*>${authorization.label}</a>`));
-    expect(row(markup, 'LV-AG-772013')).toContain('1 driver authorization refers to this driver<');
+    const blocked = row(markup, 'LV-AE-118440');
+    expect(blocked).toContain('This driver holds the only open authorization of a running rental');
+    // The record in the way is the running rental itself, which opens on its own page.
+    const running = driverBlocked.deletion.blocks[0]!.records[0]!;
+    expect(blocked).toMatch(new RegExp(`<a [^>]*href="/rental-assignments/${running.id}"[^>]*>${running.label}</a>`));
+    // The customer record linked to her is no block any more: it is what the deletion would clear.
+    expect(blocked).toContain('Takes 1 driver authorization with it. Clears the driver link of 1 customer record');
+    const withAuthorization = row(markup, 'LV-AG-772013');
+    expect(withAuthorization).toContain('>Ready<');
+    expect(withAuthorization).toContain('Takes 1 driver authorization with it<');
   });
 });
 
@@ -235,12 +242,14 @@ describe('the delete dialog', () => {
     expect(markup).toContain(`${vehicleReady.plateNumber} · Citroen Berlingo 2019 · Inactive`);
     expect(markup).toContain('This cannot be undone');
     expect(markup).toContain('The record is removed from the database for good.');
-    expect(markup).toContain('No rental assignment refers to this vehicle, so nothing else changes.');
+    // The vehicle takes nothing with it, and the tick names only the vehicle.
+    expect(markup).toContain('Nothing else goes with it.');
     expect(markup).toContain('One entry stays in the security audit');
     expect(markup).toContain('Select a reason');
     expect(markup).toContain('Practice or test record');
     expect(markup).toContain('Stored with the audit entry.');
     expect(markup).toContain('I understand this cannot be undone');
+    expect(markup).toContain('This vehicle cannot be restored from the app.');
   });
 
   test('keeps Delete permanently blocked until a reason, a note for Other, and the tick', () => {
@@ -275,13 +284,13 @@ describe('the delete dialog', () => {
     expect(conflict).toContain(`${STALE_MESSAGE}</strong>Refresh to load the current values, then try again.`);
   });
 
-  test('an Active rental says so instead, and counts the parts that go with it', () => {
-    const markup = dialog({ target: { kind: RecordKind.RentalAssignment, value: rentalActive } });
+  test('a rental’s dialog has no running-rental variant any more, and counts the parts it takes', () => {
+    const markup = dialog({ target: { kind: RecordKind.RentalAssignment, value: rentalEnded } });
     expect(markup).toContain('Delete rental assignment');
-    expect(markup).toContain('This rental is active');
-    expect(markup).toContain('Delete it only if this rental never happened.');
-    expect(markup).not.toContain('This cannot be undone<');
+    expect(markup).not.toContain('This rental is active');
+    expect(markup).toContain('This cannot be undone<');
     expect(markup).toContain('Its 1 driver authorization and 1 interruption are removed with it.');
+    expect(markup).toContain('This rental assignment and the 1 driver authorization and 1 interruption cannot be restored from the app.');
   });
 });
 

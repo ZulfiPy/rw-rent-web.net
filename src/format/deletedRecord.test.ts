@@ -2,11 +2,16 @@ import { describe, expect, test } from 'vitest';
 import { deletedRecord, diffRows } from './auditPayload';
 import { formatLocalStamp } from './datetime';
 import { rentalEntry, vehicleEntry } from '@/pages/followup8.support';
+import {
+  customerWithRentalsEntry, driverWithLinksEntry, removedWithDriverEntry, vehicleWithRentalsEntry,
+} from '@/pages/followup9.support';
 
 /**
- * Follow-up 8: the audit entry of a deletion shows the copy of the record it removed. The payload
- * reader learns this one shape — the six `*.Deleted` events of the backend's round 7 — and every
- * other payload, a malformed one included, renders exactly as before.
+ * Follow-ups 8 and 9: the audit entry of a deletion shows the copy of the record it removed. The
+ * payload reader learns these shapes — the six `*.Deleted` events, with round 8's rentals of a
+ * vehicle or a customer and a driver's authorizations and cleared links, and round 8's copy of an
+ * authorization that went with its driver — and every other payload, a malformed one included,
+ * renders exactly as before.
  */
 
 describe('the copy of a deleted vehicle', () => {
@@ -73,5 +78,65 @@ describe('everything else renders as it did', () => {
     // anything else as the unrecognised-shape fallback.
     expect(diffRows('{"RecordLabel":"x","Nested":{"a":1}}', null)).toBeNull();
     expect(diffRows('{"Make":"Citroen"}', null)).toEqual([{ label: 'Make', value: 'Citroen  →  —', unchanged: false }]);
+  });
+});
+
+describe('the copies round 8 writes (Follow-up 9)', () => {
+  test('a vehicle’s entry carries each rental that went with it, with its own label and parts', () => {
+    const copy = deletedRecord(vehicleWithRentalsEntry.eventType, vehicleWithRentalsEntry.beforeJson)!;
+    expect(copy.recordLabel).toMatch(/ · Toyota Yaris 2021$/);
+    expect(copy.facts.map((fact) => fact.key)).not.toContain('RentalAssignments');
+    expect(copy.rentals).toHaveLength(2);
+    const labels = copy.rentals.map((rental) => rental.recordLabel);
+    expect(labels.some((label) => /Riga Bakery/.test(label ?? ''))).toBe(true);
+    expect(labels.some((label) => /Sea Tours/.test(label ?? ''))).toBe(true);
+    // Each rental's facts leave its label out, as the record's own do; its parts are groups of their own.
+    expect(copy.rentals.every((rental) => !rental.facts.some((fact) => fact.key === 'RecordLabel'))).toBe(true);
+    expect(copy.rentals.reduce((n, rental) => n + rental.authorizations.length, 0)).toBe(2);
+    expect(copy.rentals.reduce((n, rental) => n + rental.interruptions.length, 0)).toBe(1);
+    expect(copy.authorizations).toEqual([]);
+    expect(copy.clearedLinks).toEqual([]);
+    expect(copy.removedWith).toBeNull();
+  });
+
+  test('a customer’s entry does the same', () => {
+    const copy = deletedRecord(customerWithRentalsEntry.eventType, customerWithRentalsEntry.beforeJson)!;
+    expect(copy.rentals.map((rental) => rental.facts.find((fact) => fact.key === 'Status')?.value).sort())
+      .toEqual(['Ended', 'Planned']);
+  });
+
+  test('a driver’s entry carries their authorizations, each naming its rental, and the cleared links', () => {
+    const copy = deletedRecord(driverWithLinksEntry.eventType, driverWithLinksEntry.beforeJson)!;
+    expect(copy.recordLabel).toMatch(/^Arta Skuja · /);
+    expect(copy.authorizations).toHaveLength(2);
+    expect(copy.authorizations.every((group) => group.some((fact) => fact.key === 'RentalAssignmentLabel' && fact.value !== '—')))
+      .toBe(true);
+    expect(copy.clearedLinks).toEqual([
+      { customerId: JSON.parse(driverWithLinksEntry.beforeJson!).ClearedCustomerLinks[0].CustomerId, displayName: 'Arta Skuja' },
+    ]);
+    expect(copy.rentals).toEqual([]);
+  });
+
+  test('an authorization that went with its driver names that driver, and its copy is the deleted record', () => {
+    const copy = deletedRecord(removedWithDriverEntry.eventType, removedWithDriverEntry.beforeJson)!;
+    expect(copy.removedWith).toMatch(/^Arta Skuja · /);
+    expect(copy.recordLabel).toMatch(/^Arta Skuja · F9G /);
+    expect(copy.facts.map((fact) => fact.key)).not.toContain('DeletedWithRecordLabel');
+    expect(copy.facts.map((fact) => fact.key)).toEqual(expect.arrayContaining(['AuthorizationType', 'RentalAssignmentLabel']));
+  });
+
+  test('a round-8 copy the reader does not recognise falls back as before', () => {
+    for (const [eventType, malformed] of [
+      ['Vehicle.Deleted', '{"RecordLabel":"x","RentalAssignments":[1]}'],
+      ['Vehicle.Deleted', '{"RecordLabel":"x","RentalAssignments":{"a":1}}'],
+      ['Customer.Deleted', '{"RecordLabel":"x","RentalAssignments":[{"RecordLabel":"y","Other":[1]}]}'],
+      ['Customer.Deleted', '{"RecordLabel":"x","RentalAssignments":[{"RecordLabel":"y","Authorizations":[2]}]}'],
+      ['Driver.Deleted', '{"RecordLabel":"x","ClearedCustomerLinks":[{"CustomerId":"c"}]}'],
+      ['Driver.Deleted', '{"RecordLabel":"x","ClearedCustomerLinks":"none"}'],
+      ['DriverAuthorization.RemovedWithDriver', '{"RecordLabel":"x"}'],
+      ['DriverAuthorization.RemovedWithDriver', '{"RecordLabel":"x","DeletedWithRecordLabel":"d","Authorizations":[]}'],
+    ] as const) {
+      expect(deletedRecord(eventType, malformed), `${eventType} ${malformed}`).toBeNull();
+    }
   });
 });
