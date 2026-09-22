@@ -19,7 +19,7 @@ import {
   ASSIGNMENT_STATUS_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL, INTERRUPTION_REASON_LABEL,
   LOCAL_TIME_NOTE, RECORD_KIND_LABEL, STOP_REASON_LABEL, SYSTEM_ACTOR, authorizationDriver,
   blockSentence, deletionPeriod, deletionReasonText, formatLocal, kindNoun, partsText, rentalPeriod,
-  type DeletionTarget,
+  takesSentence, wentWith, type DeletionTarget,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -46,9 +46,10 @@ import styles from './DeleteRecords.module.css';
  * its counts, the filter row, one table per kind with the server's verdict on every row, the phone
  * cards that carry their own action, the delete dialog, and Recently deleted.
  *
- * The server decides. Whether a row is Ready or Blocked, why, and which records are in the way all
- * come from the API (round 7); this page only words them. The kind, the filter, the search and the
- * page live in the URL; the search and the page reset when the kind changes, Show does not.
+ * The server decides. Whether a row is Ready or Blocked, why, which running rentals are in the way,
+ * and what a deletion would take along all come from the API (rounds 7 and 8; Follow-up 9); this page
+ * only words them. The kind, the filter, the search and the page live in the URL; the search and the
+ * page reset when the kind changes, Show does not.
  */
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -84,28 +85,20 @@ const SHOW_OPTIONS: FilterOption[] = [
 const isBlocked = (d: RecordDeletionInfo) => d.state === RecordDeletionState.Blocked;
 
 /**
- * Where a record in the way opens. A driver authorization is no page of its own and the API does
- * not name its rental, so the blocked driver's own page — which lists their authorizations — is it.
+ * Where a record in the way opens. Since round 8 every one is a running rental; anything else the
+ * API might name is shown as plain text.
  */
-function blockerHref(record: RecordDeletionBlockingRecordResponse, kind: RecordKind, rowId: string): string | null {
-  switch (record.kind) {
-    case RecordKind.RentalAssignment: return `/rental-assignments/${record.id}`;
-    case RecordKind.Vehicle: return `/vehicles/${record.id}`;
-    case RecordKind.Customer: return `/customers/${record.id}`;
-    case RecordKind.Driver: return `/drivers/${record.id}`;
-    case RecordKind.DriverAuthorization: return kind === RecordKind.Driver ? `/drivers/${rowId}` : null;
-    default: return null;
-  }
-}
+const blockerHref = (record: RecordDeletionBlockingRecordResponse): string | null =>
+  record.kind === RecordKind.RentalAssignment ? `/rental-assignments/${record.id}` : null;
 
-/** The records a block names, each one a quiet link where it has a page. */
-function Blockers({ kind, rowId, deletion }: { kind: RecordKind; rowId: string; deletion: RecordDeletionInfo }) {
+/** The records a block names, each one a quiet link to its rental. */
+function Blockers({ deletion }: { deletion: RecordDeletionInfo }) {
   const records = deletion.blocks.flatMap((block) => block.records);
   if (records.length === 0) return null;
   return (
     <span className={styles.blockers}>
       {records.map((record) => {
-        const href = blockerHref(record, kind, rowId);
+        const href = blockerHref(record);
         return href
           ? <Link key={`${record.kind}-${record.id}`} to={href} className={styles.blocker}>{record.label}</Link>
           : <span key={`${record.kind}-${record.id}`} className={styles.blockerPlain}>{record.label}</span>;
@@ -120,17 +113,22 @@ const VerdictChip = ({ deletion }: { deletion: RecordDeletionInfo }) => (
     : <Chip tone="ok" dot="50%">Ready</Chip>
 );
 
-/** The Deletion cell: the chip, the reason the server gave in words, and the records in the way. */
-function DeletionCell({ kind, rowId, deletion }: { kind: RecordKind; rowId: string; deletion: RecordDeletionInfo }) {
+/**
+ * The Deletion cell: the chip; for a blocked row the reason the server gave in words with the
+ * running rentals in the way; and for every row what a deletion takes along — for a blocked one
+ * too, because those numbers stay true once the block is lifted.
+ */
+function DeletionCell({ kind, deletion }: { kind: RecordKind; deletion: RecordDeletionInfo }) {
   return (
     <span className={table.stack}>
       <VerdictChip deletion={deletion} />
       {isBlocked(deletion) ? (
         <>
           <span className={`${table.sub} ${table.wrap}`}>{blockSentence(kind, deletion.blocks)}</span>
-          <Blockers kind={kind} rowId={rowId} deletion={deletion} />
+          <Blockers deletion={deletion} />
         </>
       ) : null}
+      <span className={`${table.sub} ${table.wrap}`}>{takesSentence(deletion.takes)}</span>
     </span>
   );
 }
@@ -609,12 +607,15 @@ export function DeleteRecords() {
                     </span>
                   ))}
                 </div>
-                {isBlocked(row.deletion) ? (
-                  <div className={styles.cardBlock}>
-                    <p className={styles.cardReason}>{blockSentence(kind, row.deletion.blocks)}</p>
-                    <Blockers kind={kind} rowId={row.id} deletion={row.deletion} />
-                  </div>
-                ) : null}
+                <div className={styles.cardBlock}>
+                  {isBlocked(row.deletion) ? (
+                    <>
+                      <p className={styles.cardReason}>{blockSentence(kind, row.deletion.blocks)}</p>
+                      <Blockers deletion={row.deletion} />
+                    </>
+                  ) : null}
+                  <p className={styles.cardTakes}>{takesSentence(row.deletion.takes)}</p>
+                </div>
                 <div className={styles.cardAction}>
                   <DeleteAction kind={kind} deletion={row.deletion} block onDelete={() => setDialog(targetOf(kind, item))} />
                 </div>
@@ -652,7 +653,7 @@ export function DeleteRecords() {
                       </td>
                     ))}
                     <td className={table.td}>
-                      <DeletionCell kind={kind} rowId={row.id} deletion={row.deletion} />
+                      <DeletionCell kind={kind} deletion={row.deletion} />
                     </td>
                     <td className={`${table.td} ${table.right}`}>
                       <span className={table.actionsCell}>
@@ -694,15 +695,18 @@ export function DeleteRecords() {
 }
 
 /**
- * The line a deletion leaves above the table (the app has no toast): what went, and that it is in
- * the security audit — a link to the entry for a reader who may read the audit.
+ * The line a deletion leaves above the table (the app has no toast): what was deleted, what went
+ * with it by the deletion's own answer (§9, 5), and that it is in the security audit — a link to
+ * the entry for a reader who may read the audit.
  */
 export function Confirmation({ done, canAudit }: { done: RecordDeletionResponse; canAudit: boolean }) {
+  const along = wentWith(done);
   return (
     <p className={styles.done} role="status">
       <span data-icon aria-hidden="true" className={styles.doneIcon}>check_circle</span>
       <span className={styles.doneText}>
         <span className={styles.doneTitle}>{RECORD_KIND_LABEL[done.kind]} deleted:</span> {done.recordLabel}.{' '}
+        {along ? `${along} ` : null}
         {canAudit
           ? <Link to={`/security-audit/${done.auditEntryId}`}>Written to the security audit.</Link>
           : 'Written to the security audit.'}

@@ -73,6 +73,8 @@
 .cardTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
 .cardSub { white-space: nowrap; }
 .cardReason { margin: 0; font-size: 12px; line-height: 1.45; color: var(--warn); text-wrap: pretty; }
+/* What a deletion takes along (Follow-up 9): the quiet line under the verdict on a card. */
+.cardTakes { margin: 0; font-size: 12px; line-height: 1.45; color: var(--fg-3); text-wrap: pretty; }
 .cardBlock { display: flex; flex-direction: column; gap: 4px; }
 .cardAction { display: flex; }
 
