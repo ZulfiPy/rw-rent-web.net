@@ -71,8 +71,10 @@ const SYSTEM_ADMINISTRATOR = [
   'Company.Create', 'Company.Delete', 'Users.ActivateCompanyPrincipal',
   'Users.SuspendRestoreCompanyPrincipal', 'Roles.ManageCompanyPrincipal', 'Sessions.ManageAnyUser',
   'SecurityAudit.ReadAll', 'SystemAdministration.Transfer', 'PrivilegedCorrections.Execute',
-  'Records.Delete',
+  'Records.Delete', 'Roles.ManageRecordDeleter',
 ];
+/** The Record deleter role alone (the backend's round 9): the right to delete and nothing else. */
+const RECORD_DELETER = ['Records.Delete'];
 
 describe('the table is the only source', () => {
   test('every route declares a permission, null said out loud', () => {
@@ -269,7 +271,7 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     expect(mayOpen('/system-administrator', COMPANY_PRINCIPAL)).toBe(false);
   });
 
-  test('only the administrator may open Delete records, by any spelling (Follow-up 8)', () => {
+  test('only the administrator and a Record deleter may open Delete records, by any spelling (Follow-ups 8 and 10)', () => {
     for (const persona of [VIEWER, FLEET_MANAGER, COMPANY_PRINCIPAL]) {
       expect(mayOpen('/delete-records', persona)).toBe(false);
       expect(mayOpen('/Delete-Records', persona)).toBe(false);
@@ -277,6 +279,21 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     }
     expect(mayOpen('/delete-records', SYSTEM_ADMINISTRATOR)).toBe(true);
     expect(mayOpen('/DELETE-RECORDS', SYSTEM_ADMINISTRATOR)).toBe(true);
+    expect(mayOpen('/delete-records', RECORD_DELETER)).toBe(true);
+    expect(mayOpen('/Delete-Records', RECORD_DELETER)).toBe(true);
+  });
+
+  test('a Record deleter with no other role reaches the ungated pages and Delete records, nothing else (Follow-up 10)', () => {
+    const reachable = ROUTES
+      .filter((route) => route.path !== '*' && mayOpen(route.path, RECORD_DELETER))
+      .map((route) => route.path);
+    expect(reachable).toEqual([
+      '/overview', '/needs-attention', '/tasks', '/insurance-cases', '/delete-records', '/profile',
+    ]);
+    const offered = NAV_GROUPS.flatMap((group) => group.items)
+      .filter((item) => item.permission !== null && createCan(RECORD_DELETER)(item.permission))
+      .map((item) => item.to);
+    expect(offered).toEqual(['/delete-records']);
   });
 
   test('an account with no permission at all reaches only the ungated pages', () => {

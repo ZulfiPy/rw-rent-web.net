@@ -3,7 +3,8 @@
 // Since the backend's round 6 the seven record responses name who created and who last changed the
 // record; a list item names nobody, so the two list items that share a record's shape omit both.
 // Since its round 7 the Delete records page reads its candidates, counts and deletions here too;
-// since its round 8 a deletion takes what hangs below the record, and the page reads what it takes.
+// since its round 8 a deletion takes what hangs below the record, and the page reads what it takes;
+// since its round 9 the right to delete is a role, Record deleter, that the administrator gives.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -23,6 +24,8 @@ export const ApplicationUserRole = {
   CompanyPrincipal: 2,
   FleetManager: 3,
   Viewer: 4,
+  /** The right to delete records on the Delete records page, and nothing else (the backend's round 9). */
+  RecordDeleter: 5,
 } as const;
 export type ApplicationUserRole = (typeof ApplicationUserRole)[keyof typeof ApplicationUserRole];
 

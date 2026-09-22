@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { SystemAdministratorTransferStatus, VehicleAvailability } from '@/api/dto';
+import { ApplicationUserRole, SystemAdministratorTransferStatus, VehicleAvailability } from '@/api/dto';
 import {
-  AUDIT_EVENT_LABELS, AUDIT_EVENT_TYPES, ENTITY_LABEL, TRANSFER_STATUS_LABEL,
-  VEHICLE_AVAILABILITY_LABEL, entityLabel, eventLabel,
+  AUDIT_EVENT_LABELS, AUDIT_EVENT_TYPES, ENTITY_LABEL, ROLE_LABEL, TRANSFER_STATUS_LABEL,
+  VEHICLE_AVAILABILITY_LABEL, entityLabel, eventLabel, primaryRoleLabel, rolesLabel,
 } from './labels';
 
 /**
@@ -88,5 +88,19 @@ describe('the two new enums', () => {
     expect(Object.values(SystemAdministratorTransferStatus)
       .every((v) => !!TRANSFER_STATUS_LABEL[v])).toBe(true);
     expect(TRANSFER_STATUS_LABEL[SystemAdministratorTransferStatus.Expired]).toBe('Expired');
+  });
+});
+
+describe('the Record deleter role (Follow-up 10)', () => {
+  it('is named "Record deleter" wherever roles are named', () => {
+    expect(ROLE_LABEL[ApplicationUserRole.RecordDeleter]).toBe('Record deleter');
+    expect(rolesLabel([ApplicationUserRole.RecordDeleter, ApplicationUserRole.Viewer])).toBe('Record deleter, Viewer');
+  });
+
+  it('ranks below Viewer: a Viewer who may also delete is, in one word, a Viewer', () => {
+    expect(primaryRoleLabel([ApplicationUserRole.RecordDeleter, ApplicationUserRole.Viewer])).toBe('Viewer');
+    expect(primaryRoleLabel([ApplicationUserRole.Viewer, ApplicationUserRole.RecordDeleter])).toBe('Viewer');
+    expect(primaryRoleLabel([ApplicationUserRole.RecordDeleter])).toBe('Record deleter');
+    expect(primaryRoleLabel([ApplicationUserRole.RecordDeleter, ApplicationUserRole.FleetManager])).toBe('Fleet Manager');
   });
 });

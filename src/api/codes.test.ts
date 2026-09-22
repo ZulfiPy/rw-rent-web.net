@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { KNOWN_CODES, codeToField } from './codes';
+import { FORM_LEVEL_CODES, KNOWN_CODES, codeToField } from './codes';
 
 /**
  * The refusal codes the app knows must be codes the API actually sends.
@@ -105,7 +105,24 @@ const BACKEND_CODES: readonly string[] = [
   'record_deletions.note_required',
   'record_deletions.note_too_long',
   'record_deletions.reason_required',
-  'record_deletions.record_id_required',];
+  'record_deletions.record_id_required',
+  // roles (13) — RoleAssignmentErrors.cs, with the backend's round 9 (Follow-up 10)
+  'roles.already_revoked',
+  'roles.assignment_not_found',
+  'roles.concurrency_conflict',
+  'roles.duplicate_effective',
+  'roles.email_domain_not_allowed',
+  'roles.email_domain_not_configured',
+  'roles.expired_assignment_historical',
+  'roles.final_company_principal',
+  'roles.forbidden',
+  'roles.invalid',
+  'roles.invalid_expiry',
+  'roles.temporary_only_principal',
+  'roles.user_not_found',
+  // email_change (1) — SelfProfileErrors.cs, the backend's round 9 (Follow-up 10)
+  'email_change.outside_company_domain',
+];
 
 describe('every code the app knows is one the API sends', () => {
   test('no entry names a code the backend does not have', () => {
@@ -170,6 +187,21 @@ describe('the codes corrected in Follow-up 5 reach their field', () => {
       expect(codeToField(dead, 'auth-stop'), dead).toBeUndefined();
       expect(codeToField(dead, 'interruption-create'), dead).toBeUndefined();
       expect(codeToField(dead, 'assignment-create'), dead).toBeUndefined();
+    }
+  });
+});
+
+describe('the refusals of the delete right (Follow-up 10)', () => {
+  test('a holder leaving the company domain is refused on the new address of the email change', () => {
+    expect(codeToField('email_change.outside_company_domain', 'profile-email')).toBe('newEmail');
+  });
+
+  test('the two refusals of the grant name no input: they stay the dialog banner, in the API’s words', () => {
+    expect(FORM_LEVEL_CODES).toEqual(['roles.email_domain_not_allowed', 'roles.email_domain_not_configured']);
+    for (const code of FORM_LEVEL_CODES) {
+      expect(KNOWN_CODES).toContain(code);
+      expect(codeToField(code, 'record-deleter-grant'), code).toBeUndefined();
+      expect(codeToField(code, 'role-grant'), code).toBeUndefined();
     }
   });
 });

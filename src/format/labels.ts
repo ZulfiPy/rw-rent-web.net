@@ -12,6 +12,7 @@ export const ROLE_LABEL: Record<ApplicationUserRole, string> = {
   [ApplicationUserRole.CompanyPrincipal]: 'Company Principal',
   [ApplicationUserRole.FleetManager]: 'Fleet Manager',
   [ApplicationUserRole.Viewer]: 'Viewer',
+  [ApplicationUserRole.RecordDeleter]: 'Record deleter',
 };
 export const NO_ROLE_LABEL = 'None';
 
@@ -20,6 +21,8 @@ const ROLE_RANK: Record<ApplicationUserRole, number> = {
   [ApplicationUserRole.CompanyPrincipal]: 3,
   [ApplicationUserRole.FleetManager]: 2,
   [ApplicationUserRole.Viewer]: 1,
+  // Below Viewer: a Viewer who may also delete is still, in one word, a Viewer.
+  [ApplicationUserRole.RecordDeleter]: 0,
 };
 
 /** Every effective role, in the order the API returns them. */

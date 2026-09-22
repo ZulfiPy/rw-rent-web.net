@@ -94,6 +94,25 @@ const RECORD_DELETE: Record<string, string> = {
   'record_deletions.confirmation_required': 'confirmed',
 };
 
+/**
+ * The profile's email change (the backend's round 9, PROFILE-004): a holder of the Record deleter
+ * role may not move their address out of the company's domain. The refusal names the new address.
+ */
+const EMAIL_CHANGE: Record<string, string> = {
+  'email_change.outside_company_domain': 'newEmail',
+};
+
+/**
+ * Refusals the app knows and deliberately keeps form-level: they name no input, so they arrive as the
+ * dialog's banner in the API's own sentence. The grant of the Record deleter role (round 9) is
+ * refused for an address outside the company's domain, naming the domain, and on an installation
+ * that has not set its domain, naming the setting. Listed so the catalogue test checks them too.
+ */
+const FORM_LEVEL: readonly string[] = [
+  'roles.email_domain_not_allowed',
+  'roles.email_domain_not_configured',
+];
+
 const BY_OP: Record<string, Record<string, string>> = {
   'assignment-create': {
     ...PARTIES,
@@ -136,6 +155,7 @@ const BY_OP: Record<string, Record<string, string>> = {
   'driver-edit': DRIVER,
   'correct-parties': PARTIES,
   'record-delete': RECORD_DELETE,
+  'profile-email': EMAIL_CHANGE,
   'correct-timeline': {
     ...PLANNED_DATES,
     'rental_assignments.return_time_invalid': 'closedAtUtc',
@@ -150,5 +170,12 @@ export function codeToField(code: string, op?: string): string | undefined {
 
 /** Every code the table knows, for the test that checks them against the backend's catalogue. */
 export const KNOWN_CODES: readonly string[] = [
-  ...new Set([...Object.keys(GLOBAL), ...Object.values(BY_OP).flatMap((t) => Object.keys(t))]),
+  ...new Set([
+    ...Object.keys(GLOBAL),
+    ...Object.values(BY_OP).flatMap((t) => Object.keys(t)),
+    ...FORM_LEVEL,
+  ]),
 ];
+
+/** The codes that stay form-level on purpose; none of them resolves to an input. */
+export const FORM_LEVEL_CODES: readonly string[] = FORM_LEVEL;

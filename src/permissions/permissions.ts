@@ -8,6 +8,8 @@ export const PERMISSIONS = [
   'Users.ActivateViewer', 'Users.ActivateFleetManager', 'Users.ActivateCompanyPrincipal',
   'Users.CorrectName', 'Users.SuspendRestoreOrdinary', 'Users.SuspendRestoreCompanyPrincipal',
   'Roles.ReadHistory', 'Roles.ManageViewerFleetManager', 'Roles.ManageCompanyPrincipal',
+  // Giving, changing and revoking the Record deleter role: the System Administrator's alone (round 9).
+  'Roles.ManageRecordDeleter',
   'Sessions.ManageOrdinaryCompanyUsers', 'Sessions.ManageAnyUser',
   'SecurityAudit.ReadCompany', 'SecurityAudit.ReadAll',
   'SystemAdministration.Transfer', 'PrivilegedCorrections.Execute',
@@ -17,7 +19,8 @@ export const PERMISSIONS = [
   'RentalAssignments.Read', 'RentalAssignments.Manage',
   'DriverAuthorizations.Read', 'DriverAuthorizations.Manage',
   'Interruptions.Read', 'Interruptions.Manage',
-  // The Delete records page (the backend's round 7): the System Administrator's alone.
+  // The Delete records page (the backend's round 7): the System Administrator's, and since round 9
+  // the Record deleter role's, which holds nothing else.
   'Records.Delete',
 ] as const;
 
