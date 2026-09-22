@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider, type QueryKey } from '@tanstack/react
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { qk } from '@/api';
 import type {
-  CompanyResponse, CustomerResponse, DriverResponse, PagedResponse, RentalAssignmentResponse,
-  SecurityAuditResponse, VehicleResponse,
+  CompanyResponse, CurrentUserResponse, CustomerResponse, DriverResponse, PagedResponse,
+  RentalAssignmentResponse, SecurityAuditResponse, VehicleResponse,
 } from '@/api/dto';
 import { AccessProvider } from '@/permissions/usePermissions';
 
@@ -21,12 +21,17 @@ export const clearRenders = () => clients.splice(0).forEach((client) => client.c
 
 const SIGNE = '9f2b7c41-0002-4a10-8b01-000000000002';
 
-/** The page component, the real permission provider and router, the cache pre-filled; no fetch. */
-export function renderPage(element: ReactElement, { at, route, permissions = [], data = [] }: {
+/**
+ * The page component, the real permission provider and router, the cache pre-filled; no fetch. The
+ * signed-in person is Signe Priede unless `me` names someone else (Follow-up 10: a Record deleter's
+ * own GET /api/me); `permissions` still decides what they may do.
+ */
+export function renderPage(element: ReactElement, { at, route, permissions = [], data = [], me }: {
   at: string;
   route: string;
   permissions?: string[];
   data?: Array<[QueryKey, unknown]>;
+  me?: CurrentUserResponse;
 }): string {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
   clients.push(client);
@@ -34,6 +39,7 @@ export function renderPage(element: ReactElement, { at, route, permissions = [],
     id: SIGNE, email: 'signe.priede@rwrent.example', firstName: 'Signe', lastName: 'Priede',
     phoneNumber: '+371 29 118 220', companyId: company.id, status: 2,
     passwordChangedAtUtc: '2026-01-01T00:00:00Z', pendingEmail: null, roles: [2], permissions,
+    ...(me ? { ...me, permissions } : {}),
   });
   for (const [key, value] of data) client.setQueryData(key, value);
   return renderToStaticMarkup(
