@@ -443,3 +443,82 @@ only for a reader of the audit.
 the backend's round 9, which also brings the role that gives the right):
 
 1. The row button reads "Delete", not "Delete…" (2026-09-22). Also on the phone card.
+
+## 10. Follow-up 10 — the Record deleter role in the app, and the owner's directions on the page
+
+> **Status: AUTHORISED 2026-09-22.** The app's half of the backend's round 9
+> (`RWRentApi-wiring/Context/round9_spec_and_plan.md`, report `Context/round9_report.md` §5 for the
+> contract), verified by the reviewer on 2026-09-22, plus the owner's directions collected under §9.
+> One side at a time: the backend is done and pushed; this follow-up runs in an agent run of its
+> own, in this worktree only. **The owner's API on 5001 still serves round 8 and is restarted by the
+> reviewer only after this follow-up is verified (with `ApiSecurity__RecordDeleterEmailDomain=rwrent.ee`
+> in its environment). The owner's app on 5173 runs from this worktree with hot reload.** The agent
+> never opens 5173, never signs in there, never calls 5001, never touches `rwrent_v1`. Its checks use
+> the scratch stack round 9 left running (the API on 5002 over `rwrent_check`, round-9 Release build,
+> domain `rwrent.example`) and a second Vite on 5174 (`VITE_API_BASE_URL=http://localhost:5002 npm run
+> dev -- --port 5174 --strictPort`) in a browser profile of its own.
+
+**The rules the app now shows** (the server decides; the app words it): the right to delete is the
+role Record deleter (`ApplicationUserRole.RecordDeleter = 5`), holding only `Records.Delete`; only
+the System Administrator gives it, changes its expiry and revokes it (`Roles.ManageRecordDeleter`);
+it can be given only to an active Company user whose email address is in the company's domain, a
+setting of the installation; a holder's email change to an address outside the domain is refused;
+"Recently deleted" shows a Company user only their Company's deletions.
+
+**What changes in the app.**
+
+1. **The contract.** `dto.ts`: `ApplicationUserRole.RecordDeleter = 5`. `permissions.ts`:
+   `Roles.ManageRecordDeleter`. `codes.ts`: `roles.email_domain_not_allowed` and
+   `roles.email_domain_not_configured` as form-level refusals of the grant (the API's own `detail`
+   names the domain or the setting; the app shows it as it is), and `email_change.outside_company_domain`
+   → `newEmail` in the profile's email-change op. The three catalogue literals follow.
+2. **The words.** `ROLE_LABEL[5] = 'Record deleter'`, ranked below Viewer, so every place that
+   names roles (the user directory and its role filter, the user record, the profile, the access
+   screens, chips) shows it with no further change. A person whose only role is Record deleter
+   reaches the Delete records page and their profile; the Overview's cards show their restricted
+   states as they do for any missing permission (no redesign, only a render test that it holds).
+3. **A dialog of its own** (the owner's decision, 2026-09-21), on the user record's Roles tab, beside
+   "Grant role", for a reader with `Roles.ManageRecordDeleter` and an Active, unprotected user who
+   does not hold an effective Record deleter role: the panel action "Give the delete right" (icon
+   `delete_sweep`). The dialog, modelled on the app's other role dialogs: title "Give the delete
+   right"; description "Makes <name> a Record deleter, who may delete records for good on the Delete
+   records page."; a warn-tone `DialogNote` "Every deletion they make is written to the security
+   audit with their name and reason. Only an address in the company's email domain can hold the
+   right."; the person's email as a fact; the optional expiry in the vocabulary of the Grant role
+   dialog (a date-time, "No expiry" when empty); submit "Give the delete right" (`primary`). A
+   refusal because of the domain or the missing setting is shown as a form-level banner with the
+   API's sentence. Success closes the dialog, reloads the history and the person's record. The
+   existing Grant role dialog keeps offering only Viewer, Fleet Manager and Company Principal.
+4. **Expiry and revocation** of a Record deleter assignment go through the existing row actions
+   (Expiry, Revoke), enabled only with `Roles.ManageRecordDeleter` (`canManageRole` extended); a
+   Principal sees the row without actions. The Roles panel's note names the delete right for a
+   reader who may give it ("… The delete right is given with its own action.").
+5. **The profile.** The email-change dialog carries the field refusal on the new address, worded by
+   the API. When the signed-in person holds the role (`me.roles` includes 5), the dialog's
+   description adds: "Because you hold the delete right, the new address must stay in the company's
+   email domain."
+6. **The owner's directions on the Delete records page** (§9): the row button reads "Delete", not
+   "Delete…", in the table and on the phone card; the hint texts stay.
+7. **Tests.** The catalogue literals (`routes.test.ts` personas, `codes.test.ts`, `labels.test.ts`
+   if it lists roles). New or rewritten: the role label and rank; the field mapping of the three
+   codes; render tests from API-shaped fixtures captured on the scratch stack for the Roles tab with
+   the new action for the administrator and without it for the Principal, the dialog with and
+   without an expiry and with the domain refusal, a Record deleter row with Expiry and Revoke for
+   the administrator only, the role's label in the directory, the record and the profile, the
+   profile's email dialog for a holder, the Delete records page for a bare Record deleter, and the
+   "Delete" button; each new test shown to fail against a deliberate breakage. Typecheck, tests and
+   build green; no new runtime dependency; `Context/prototype` untouched.
+
+**The joint check**, on the scratch stack only: through the API by script, as the seeded
+administrator, the grant to the seeded Viewer Toms Rudzitis, his reading of the page and one
+deletion of a practice record, his email change refused and accepted, the revocation; the screens
+rendered by the test suite and from the live answers; the steps that need a password typed into the
+app listed in the report for the owner's reviewer, who runs them on 5174. At the end stop Vite on
+5174 and leave the scratch API on 5002 running.
+
+Report: `Context/wiring_report.md` rewritten for this run. **Commits (the owner's rule): never the
+whole run in one commit, not one per file; several commits grouping what belongs together, in the
+order the code depends on, each `Wiring 29: …` with one plain sentence saying what the group is for;
+the report last as `Wiring 30: …`. Push with an ordinary `git push` when the run is complete and
+green, then check with `git ls-remote` that GitHub has the commits before saying so.** This document
+is not edited by the agent.
