@@ -55,7 +55,7 @@ function blockClause(kind: RecordKind, block: RecordDeletionBlockResponse): stri
 const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
- * The sentence under a Blocked chip and on its disabled Delete…: every block of the row, each with
+ * The sentence under a Blocked chip and on its disabled Delete: every block of the row, each with
  * a capital letter, with no full stop at the end. Round 8 gives a record one block at most; should
  * one ever carry two, they read as two sentences.
  */

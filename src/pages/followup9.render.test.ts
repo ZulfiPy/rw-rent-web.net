@@ -66,7 +66,7 @@ describe('the Deletion cell says what a deletion takes along', () => {
     const ready = row(markup, vehicleWithRentals.plateNumber);
     expect(ready).toContain('>Ready<');
     expect(ready).toContain('Takes 2 rental assignments, 2 driver authorizations and 1 interruption with it');
-    expect(button(ready, 'Delete…')).not.toContain('disabled');
+    expect(button(ready, 'Delete')).not.toContain('disabled');
   });
 
   test('a Ready driver says which authorizations go and which customer link is cleared', () => {
@@ -85,8 +85,8 @@ describe('a Blocked row of each reason names the running rental in the way, and 
     expect(running).toContain('This rental is running. End it first; then it can be deleted');
     linksEachRunningRental(running, rentalActive.deletion.blocks[0]!.records);
     expect(running).toContain('Takes 1 driver authorization and 1 interruption with it');
-    expect(button(running, 'Delete…')).toContain('disabled');
-    expect(button(running, 'Delete…')).toContain('title="This rental is running. End it first; then it can be deleted."');
+    expect(button(running, 'Delete')).toContain('disabled');
+    expect(button(running, 'Delete')).toContain('title="This rental is running. End it first; then it can be deleted."');
     // A Cancelled rental with no parts is Ready and takes nothing else.
     expect(row(markup, '660 BYH')).toContain('Nothing else goes with it');
   });
@@ -108,7 +108,7 @@ describe('a Blocked row of each reason names the running rental in the way, and 
     expect(running).toHaveLength(2);
     linksEachRunningRental(blocked, running);
     expect(blocked).toContain('Takes 2 rental assignments and 2 driver authorizations with it');
-    expect(button(blocked, 'Delete…')).toContain('title="2 running rentals refer to this customer. End them first."');
+    expect(button(blocked, 'Delete')).toContain('title="2 running rentals refer to this customer. End them first."');
   });
 
   test('a driver who holds the only open authorization of two running rentals', () => {

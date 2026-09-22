@@ -109,8 +109,8 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(ended).toContain('>Ended<');
     expect(ended).toContain('1 authorization · 1 interruption');
     expect(ended).toContain('>Ready<');
-    expect(button(ended, 'Delete…')).not.toContain('disabled');
-    expect(button(ended, 'Delete…')).toContain('title="Delete this rental assignment"');
+    expect(button(ended, 'Delete')).not.toContain('disabled');
+    expect(button(ended, 'Delete')).toContain('title="Delete this rental assignment"');
     expect(row(markup, '660 BYH')).toContain('No parts');
   });
 
@@ -126,8 +126,8 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(blocked).toContain('>Blocked<');
     expect(blocked).toContain('An active rental must keep at least one authorization');
     expect(blocked).toContain(`href="/rental-assignments/${authorizationBlocked.rentalAssignmentId}"`);
-    expect(button(blocked, 'Delete…')).toContain('disabled');
-    expect(button(blocked, 'Delete…')).toContain('title="An active rental must keep at least one authorization."');
+    expect(button(blocked, 'Delete')).toContain('disabled');
+    expect(button(blocked, 'Delete')).toContain('title="An active rental must keep at least one authorization."');
     expect(row(markup, 'Business customer drivers')).toContain('552 KLM · Nordwind Logistics');
   });
 
@@ -163,8 +163,8 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
     expect(blocked).toContain(running[0]!.label);
     // What would go once the rental is ended: both of its rentals with their parts.
     expect(blocked).toContain('Takes 2 rental assignments, 2 driver authorizations and 1 interruption with it');
-    expect(button(blocked, 'Delete…')).toContain('disabled');
-    expect(button(blocked, 'Delete…')).toContain('title="A running rental refers to this vehicle. End it first."');
+    expect(button(blocked, 'Delete')).toContain('disabled');
+    expect(button(blocked, 'Delete')).toContain('title="A running rental refers to this vehicle. End it first."');
   });
 
   test('customers: the type, the identifier, and a running rental that blocks a business customer', () => {

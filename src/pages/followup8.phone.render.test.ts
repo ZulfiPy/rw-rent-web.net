@@ -43,7 +43,7 @@ const card = (markup: string, text: string) => {
 describe('the candidates on a phone', () => {
   const vehicles = read(RecordKind.Vehicle, '/delete-records?kind=vehicles&show=all', [vehicleReady, vehicleBlocked]);
 
-  test('are cards, not a table, each with its verdict and its own full-width Delete…', () => {
+  test('are cards, not a table, each with its verdict and its own full-width Delete', () => {
     const list = vehicles.slice(0, vehicles.indexOf('Recently deleted'));
     expect(list).not.toContain('<table');
     const ready = card(list, vehicleReady.plateNumber);
@@ -51,11 +51,11 @@ describe('the candidates on a phone', () => {
     expect(ready).toContain('Citroen Berlingo · 2019');
     expect(ready).toContain('>Ready<');
     expect(ready).toContain('>VIN<');
-    expect(ready).toMatch(/<button[^>]*data-tone="danger"[^>]*>(?:(?!<\/button>).)*Delete…<\/button>/);
-    expect(ready).not.toMatch(/<button[^>]*disabled[^>]*>(?:(?!<\/button>).)*Delete…/);
+    expect(ready).toMatch(/<button[^>]*data-tone="danger"[^>]*>(?:(?!<\/button>).)*Delete<\/button>/);
+    expect(ready).not.toMatch(/<button[^>]*disabled[^>]*>(?:(?!<\/button>).)*Delete<\/button>/);
   });
 
-  test('a blocked card writes its reason, names the running rental in the way, and holds a disabled Delete…', () => {
+  test('a blocked card writes its reason, names the running rental in the way, and holds a disabled Delete', () => {
     const list = vehicles.slice(0, vehicles.indexOf('Recently deleted'));
     const blocked = card(list, '482 TKL');
     expect(blocked).toContain('>Blocked<');

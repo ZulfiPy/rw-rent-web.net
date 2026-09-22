@@ -41,8 +41,9 @@ import { DeleteRecordDialog } from './DeleteRecordDialog';
 import styles from './DeleteRecords.module.css';
 
 /**
- * Delete records (Follow-up 8): the System Administrator's page for removing, for good, records the
- * company no longer needs. A port of the handover: the bad-tone banner, the six-kind tab strip with
+ * Delete records (Follow-up 8): the page for removing, for good, records the company no longer
+ * needs — the System Administrator's, and since Follow-up 10 a Record deleter's, whom the
+ * administrator gives the right. A port of the handover: the bad-tone banner, the six-kind tab strip with
  * its counts, the filter row, one table per kind with the server's verdict on every row, the phone
  * cards that carry their own action, the delete dialog, and Recently deleted.
  *
@@ -134,8 +135,9 @@ function DeletionCell({ kind, deletion }: { kind: RecordKind; deletion: RecordDe
 }
 
 /**
- * Delete… on a row. A blocked one is the app's disable-with-reason button: pressing it does
- * nothing, and the reason is already written in the row.
+ * Delete on a row: "Delete", not "Delete…" (the owner's direction of 2026-09-22), in the table and on
+ * the phone card; the dialog that follows is the step that asks. A blocked one is the app's
+ * disable-with-reason button: pressing it does nothing, and the reason is already written in the row.
  */
 function DeleteAction({ kind, deletion, block, onDelete }: {
   kind: RecordKind;
@@ -145,7 +147,7 @@ function DeleteAction({ kind, deletion, block, onDelete }: {
 }) {
   return (
     <Button
-      label="Delete…"
+      label="Delete"
       icon="delete"
       tone="danger"
       small={!block}

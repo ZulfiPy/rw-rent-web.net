@@ -44,11 +44,11 @@ describe('the cards on a phone (Follow-up 9)', () => {
   const markup = customers([customerWithRentals, customerTwoRunning]);
   const cards = markup.slice(0, markup.indexOf('Recently deleted'));
 
-  test('a Ready card says what its deletion takes along, above its own Delete…', () => {
+  test('a Ready card says what its deletion takes along, above its own Delete', () => {
     const ready = card(cards, customerWithRentals.displayName);
     expect(ready).toContain('>Ready<');
     expect(ready).toContain('Takes 2 rental assignments, 2 driver authorizations and 1 interruption with it');
-    expect(ready).not.toMatch(/<button[^>]*disabled[^>]*>(?:(?!<\/button>).)*Delete…/);
+    expect(ready).not.toMatch(/<button[^>]*disabled[^>]*>(?:(?!<\/button>).)*Delete<\/button>/);
   });
 
   test('a blocked card writes its reason, links each running rental, and still says what would go', () => {
