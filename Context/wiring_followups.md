@@ -407,92 +407,34 @@ with Refresh. Audit links are links only for a reader of the audit.
 
 ## 9. Follow-up 9 — the Delete records page follows the hierarchy of deletion
 
-> **Status: AUTHORISED 2026-09-22.** The app's half of the backend's round 8
-> (`RWRentApi-wiring/Context/round8_spec_and_plan.md`, report `Context/round8_report.md` §5 for the
-> contract), which the owner decided on 2026-09-21 and the reviewer verified on 2026-09-22. One side
-> at a time: the backend is done and pushed; this follow-up runs in an agent run of its own, in this
-> worktree only. **The owner's API on 5001 still serves round 7 and is restarted by the reviewer only
-> after this follow-up is verified, so that the owner's app and API never disagree about the rules.
-> The owner's app on 5173 runs from this worktree with hot reload.** The agent never opens 5173,
-> never signs in there, never calls 5001, never touches `rwrent_v1`. Its checks use the scratch stack
-> round 8 left running (the API on 5002 over `rwrent_check`, round-8 Release build) and a second Vite
-> on 5174 (`VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`) in a
-> browser profile of its own.
+> **Status: IMPLEMENTED 2026-09-22, verified the same day** (backend round 8 `119b498`…`a6ff854`;
+> app `fe58b91`…`f02ae81` Wiring 27 in four grouped commits and `91eee2e` Wiring 28, pushed and
+> level with GitHub; report `Context/wiring_report.md`). Its specification was removed from here as
+> implemented; the report, the DELETE rules in the backend's `business_rules.md` and the code carry
+> it. Typecheck, 330 tests and the build are green. The reviewer built a small world on the scratch
+> stack (a vehicle, a customer linked to a driver, an ended rental with two drivers and an
+> interruption, a planned rental) and drove the page in a headless browser: Ready rows read "Takes 2
+> rental assignments, 2 driver authorizations and 1 interruption with it", the linked driver "Takes 1
+> driver authorization with it. Clears the driver link of 1 customer record", a bare row "Nothing
+> else goes with it"; once the planned rental was started, the rental, its vehicle, its customer and
+> its only driver all turned Blocked with the right sentence, the running rental linked under it and
+> Delete… disabled, while the other driver stayed Ready; the vehicle's and the customer's dialogs
+> count what goes and who stays, the driver's names the cleared link, and the tick's hint names the
+> numbers; the driver's deletion left the customer with its link cleared and the rental with its
+> other driver, its confirmation line reported both, its entry shows "Deleted authorizations" and
+> "Cleared customer links", and the Principal reads "Driver authorisation · Removed with driver" with
+> "The authorization went when this driver was deleted; the rental stays."; the customer's deletion
+> took both rentals and their parts, the vehicle stayed, and its entry groups "Rental assignment 1 ·
+> …" with their parts; a rental started while the vehicle's dialog was open was refused in the API's
+> own sentence with Refresh, after which the row was Blocked; at 402 pixels the cards carry the takes
+> line and the reason with no sideways scroll. The owner's API on 5001 was then restarted from the
+> round-8 build, so the owner's app and API agree; `rwrent_v1` holds no deletion.
 
-**The rules the page now shows** (the server decides; the app words it): a running (Active) rental
-is never deleted and has to be ended first; deleting a vehicle or a customer takes every one of its
-rentals with their parts, and is blocked only while one of them is running; deleting a driver takes
-every authorization of the driver and clears the driver link of a customer record that points to
-them (the customer stays), and is blocked only while the driver holds the only open authorization
-of a running rental; a single authorization is blocked as before; an interruption never.
-
-**What changes in the app.**
-
-1. **`dto.ts`** follows the live OpenAPI document of the round-8 build: `RecordDeletionBlockReason`
-   keeps 4 (`OnlyOpenAuthorizationOfActiveRental`) and gains 5 `RentalIsRunning`, 6
-   `HasRunningRental`, 7 `DriverHoldsOnlyOpenAuthorizationOfRunningRental`; values 1–3 are gone.
-   `RecordDeletionInfo` gains `takes` (`rentalAssignments`, `driverAuthorizations`,
-   `interruptions`, `customerLinksCleared`). `RecordDeletionResponse` gains
-   `deletedRentalAssignmentCount` and `clearedCustomerLinkCount`, and its two older counts now count
-   everything that went.
-2. **The words** (`src/format/recordDeletion.ts`): the four reasons: 5 "This rental is running. End
-   it first; then it can be deleted."; 6 "A running rental refers to this <vehicle|customer>. End it
-   first." (with the count when more than one: "2 running rentals refer to …"); 7 "This driver holds
-   the only open authorization of a running rental."; 4 as today. The blocking records are now always
-   rentals, so every one of them links to `/rental-assignments/{id}`. A new sentence says what a
-   deletion takes along, from `takes`, in this order and only the parts that are not zero: "Takes 2
-   rental assignments, 3 driver authorizations and 1 interruption with it" / "Clears the driver link
-   of 1 customer record" / "Nothing else goes with it". Singulars and plurals throughout.
-3. **The Deletion cell** of every row: the chip as today; under it, for a Ready row the takes
-   sentence; for a Blocked row the reason with its linked running rental(s), then the takes sentence
-   (the numbers stay true once the block is lifted). The phone card shows the same lines. The
-   "Parts" column of rentals stays as it is.
-4. **The dialog.** The "This rental is active" banner variant is removed: a running rental never
-   reaches the dialog Ready, and if it is submitted anyway the API's refusal is shown (below). The
-   consequences are built from the row's `takes`, with exact counts: a rental, its own parts as
-   today; a vehicle or a customer: "Its 2 rental assignments, with 3 driver authorizations and 1
-   interruption, are removed with it." and "The customers, vehicles and drivers of those rentals stay
-   as they are."; a driver: "Their 2 driver authorizations are removed from the rentals they were on;
-   those rentals stay." and, when links are cleared, "The link of 1 customer record to this driver is
-   cleared; the customer stays."; every kind keeps the audit line. The tick's hint names the numbers:
-   "This <kind> and the 2 rental assignments, 3 driver authorizations and 1 interruption cannot be
-   restored from the app." (or "This <kind> cannot be restored from the app." when nothing goes).
-5. **After a deletion** the confirmation line reports what went, from the response: "Customer
-   deleted: <label>. 2 rental assignments, 3 driver authorizations and 1 interruption went with it.
-   Written to the security audit." (the middle sentence only when something went; the cleared links
-   too). Invalidation grows with the cascade: a vehicle's or a customer's deletion also invalidates
-   the rentals, the authorizations, the interruptions and the drivers' histories; a driver's deletion
-   also invalidates the customers (a link was cleared) and the rentals.
-6. **The refusals.** `record_deletions.blocked` keeps its stale-style banner with Refresh; its text
-   is the API's own `detail` sentence (the server words each reason), not the app's.
-7. **The security audit.** `AUDIT_EVENTS` gains `DriverAuthorization.RemovedWithDriver` (label
-   "Driver authorisation · Removed with driver", the app's spelling). The entry page's deletion
-   reader (`deletedRecord` in `auditPayload.ts`) learns the round-8 copies: `RentalAssignments` on a
-   vehicle's or a customer's entry, each with its own `RecordLabel`, `Authorizations` and
-   `Interruptions`, shown as one titled group per rental ("Rental assignment 1 · <label>") with its
-   parts as sub-groups; `Authorizations` and `ClearedCustomerLinks` on a driver's entry ("Cleared
-   customer links", one line per customer); a `RemovedWithDriver` entry shows "Removed with driver:
-   <DeletedWithRecordLabel>" as a fact and its copy as "Deleted record". Any other shape falls back
-   as today.
-8. **Tests.** The catalogue literals follow (`labels.test.ts` the new event type). New or rewritten:
-   the wording of the four reasons, singulars and plurals, the takes sentence and the consequences
-   for each kind; the payload reader for the three new copies and the fallback; render tests from
-   API-shaped fixtures captured on the scratch stack for a Ready row with takes, a Blocked row of
-   each reason with its rental link, the dialog of a vehicle and of a driver with the numbers in the
-   consequences and the tick, the confirmation line, the audit entry of a customer with rentals and
-   of a driver with cleared links, and a `RemovedWithDriver` entry; the phone card. Each new test is
-   shown to fail against a deliberate breakage. Typecheck, tests and build green; no new runtime
-   dependency; `Context/prototype` untouched.
-
-**The joint check**, on the scratch stack only, as the seeded administrator: through the API by
-script, each rule once in each direction, and the screens rendered by the test suite and from the
-live answers; the steps that need a password typed into the app listed in the report for the owner's
-reviewer, who runs them on 5174. At the end stop Vite on 5174 and leave the scratch API on 5002
-running.
-
-Report: `Context/wiring_report.md` rewritten for this run. **Commits (the owner's rule): never the
-whole run in one commit, not one per file; several commits grouping what belongs together, in the
-order the code depends on, each `Wiring 27: …` with one plain sentence saying what the group is for;
-the report last as `Wiring 28: …`. Push with an ordinary `git push` when the run is complete and
-green, then check with `git ls-remote` that GitHub has the commits before saying so.** This document
-is not edited by the agent.
+**What the page is** (kept for the next reader): `/delete-records`, permission `Records.Delete`,
+administrator only until the right can be given (the next piece). The server decides what is Ready
+or Blocked and what a deletion takes along; the app words it. A running rental is never deleted and
+has to be ended first; a vehicle or a customer goes with its rentals and their parts; a driver goes
+with their authorizations and clears a customer's link to them. The app has no toast: a
+confirmation line replaces it. A blocked Delete… is the disabled-with-reason button. A refusal
+because the record became blocked or left the list is shown with Refresh. Audit links are links
+only for a reader of the audit.
