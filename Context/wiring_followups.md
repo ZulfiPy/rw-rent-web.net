@@ -438,3 +438,8 @@ with their authorizations and clears a customer's link to them. The app has no t
 confirmation line replaces it. A blocked Delete… is the disabled-with-reason button. A refusal
 because the record became blocked or left the list is shown with Refresh. Audit links are links
 only for a reader of the audit.
+
+**The owner's directions after trying the page** (collected for Follow-up 10, the app's half of
+the backend's round 9, which also brings the role that gives the right):
+
+1. The row button reads "Delete", not "Delete…" (2026-09-22). Also on the phone card.
