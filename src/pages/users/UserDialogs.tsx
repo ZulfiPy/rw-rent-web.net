@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   ApplicationUserRole,
-  type ApplicationUserResponse, type RoleAssignmentResponse, type SessionResponse,
+  type ApplicationUserResponse, type GrantRoleRequest, type RoleAssignmentResponse, type SessionResponse,
 } from '@/api/dto';
 import { activateUser, correctUserName, rejectRegistration, reopenRegistration, restoreUser, suspendUser } from '@/api/users';
 import { changeRoleExpiry, grantRole, revokeRole } from '@/api/roles';
@@ -13,6 +13,7 @@ import { ReseedScope } from '@/app/reseed';
 import { useAccess } from '@/permissions/usePermissions';
 import type { Permission } from '@/permissions/permissions';
 import { Dialog, DialogNote, DialogSection as Section } from '@/ui/Dialog';
+import { Fact, FactGrid } from '@/ui/FactGrid';
 import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 
 /** Everything a user record can open. The record page owns which are offered. */
@@ -24,6 +25,7 @@ export type UserDialogState =
   | { kind: 'suspend' }
   | { kind: 'restore' }
   | { kind: 'role-grant' }
+  | { kind: 'record-deleter-grant' }
   | { kind: 'role-expiry'; assignmentId: string }
   | { kind: 'role-revoke'; assignmentId: string }
   | { kind: 'session-revoke'; sessionId: string }
@@ -335,6 +337,65 @@ function RoleGrant({ user, onClose }: Common) {
   );
 }
 
+/**
+ * What "Give the delete right" sends: the Record deleter role, with the chosen date as its last valid
+ * day, or no expiry when none was chosen — the Grant role dialog's reading of the same field.
+ */
+export const recordDeleterGrant = (date: string): GrantRoleRequest => ({
+  role: ApplicationUserRole.RecordDeleter,
+  expiresAtUtc: date ? endOfDayLocal(date) : null,
+});
+
+/**
+ * The delete right is given in a dialog of its own (the owner's decision of 2026-09-21), never in
+ * Grant role. The API decides whether the person may hold it: an address outside the company's
+ * domain, or an installation without a domain, is refused as a conflict in the API's own sentence,
+ * which the dialog shows as its banner.
+ */
+function GiveDeleteRight({ user, onClose }: Common) {
+  const [date, setDate] = useState('');
+  const m = useActionMutation({
+    op: 'record-deleter-grant',
+    mutationFn: () => grantRole(user.id, recordDeleterGrant(date)),
+    invalidate: INVALIDATE,
+    onDone: onClose,
+  });
+
+  return (
+    <Dialog
+      title="Give the delete right"
+      icon="delete_sweep"
+      tone="ok"
+      width={520}
+      description={`Makes ${user.firstName} ${user.lastName} a Record deleter, who may delete records for good on the Delete records page.`}
+      submitLabel="Give the delete right"
+      submitTone="primary"
+      busy={m.busy}
+      failure={m.failure}
+      onClose={onClose}
+      onSubmit={() => m.submit(undefined)}
+      onRefresh={m.refresh}
+    >
+      <DialogNote icon="warning" tone="warn">
+        Every deletion they make is written to the security audit with their name and reason. Only an
+        address in the company's email domain can hold the right.
+      </DialogNote>
+      <FactGrid>
+        <Fact label="Login email" span="full">{user.email}</Fact>
+      </FactGrid>
+      <Field label="Expires" optional hint="Leave empty for no expiry. The chosen date is the last valid day." error={m.fields['expiresAtUtc']}>
+        <input
+          type="date"
+          className={f.control}
+          {...invalidProps(m.fields['expiresAtUtc'])}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+      </Field>
+    </Dialog>
+  );
+}
+
 function RoleExpiry({ user, onClose, assignment }: Common & { assignment: RoleAssignmentResponse }) {
   const [date, setDate] = useState(toDateOnlyLocal(assignment.expiresAtUtc));
   const m = useActionMutation({
@@ -503,6 +564,7 @@ function Current({ state, user, roles, sessions, onClose }: Omit<DialogsProps, '
     case 'suspend': return <Lifecycle user={user} onClose={onClose} kind="suspend" />;
     case 'restore': return <Lifecycle user={user} onClose={onClose} kind="restore" />;
     case 'role-grant': return <RoleGrant user={user} onClose={onClose} />;
+    case 'record-deleter-grant': return <GiveDeleteRight user={user} onClose={onClose} />;
     case 'role-expiry': {
       const assignment = roles.find((r) => r.id === state.assignmentId);
       return assignment

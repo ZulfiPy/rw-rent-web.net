@@ -156,10 +156,14 @@ export function UserRecord() {
   const u = user.data;
   const guarded = u ? isProtected(u) : false;
   const activeSessions = sessions.data?.items.filter((s) => s.isActive).length ?? 0;
+  // The Record deleter role has its own permission, the System Administrator's alone: a Principal
+  // sees such a row without actions (the backend's round 9).
   const canManageRole = (r: RoleAssignmentResponse) =>
-    r.role === ApplicationUserRole.CompanyPrincipal
-      ? can('Roles.ManageCompanyPrincipal')
-      : can('Roles.ManageViewerFleetManager');
+    r.role === ApplicationUserRole.RecordDeleter
+      ? can('Roles.ManageRecordDeleter')
+      : r.role === ApplicationUserRole.CompanyPrincipal
+        ? can('Roles.ManageCompanyPrincipal')
+        : can('Roles.ManageViewerFleetManager');
   const roleActionable = (r: RoleAssignmentResponse) =>
     r.isEffective && r.role !== ApplicationUserRole.SystemAdministrator && canManageRole(r);
 
@@ -192,6 +196,22 @@ export function UserRecord() {
     }
   }
   const lifecycleActions = lifecycleButtons.length ? <>{lifecycleButtons}</> : undefined;
+
+  // The panel's two grants. The delete right is given with its own action (the owner's decision of
+  // 2026-09-21), to an Active account outside the administrator's protection that does not hold it
+  // yet; whether the address is in the company's domain is the API's to say.
+  const mayGrant = !!u && u.status === ApplicationUserStatus.Active && !guarded;
+  const roleActions: ReactNode[] = [];
+  if (mayGrant && can('Roles.ManageViewerFleetManager')) {
+    roleActions.push(
+      <Button key="grant" label="Grant role" icon="add_moderator" tone="primary" small onClick={() => setDialog({ kind: 'role-grant' })} />,
+    );
+  }
+  if (u && mayGrant && can('Roles.ManageRecordDeleter') && !u.effectiveRoles.includes(ApplicationUserRole.RecordDeleter)) {
+    roleActions.push(
+      <Button key="delete-right" label="Give the delete right" icon="delete_sweep" small onClick={() => setDialog({ kind: 'record-deleter-grant' })} />,
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -304,13 +324,12 @@ export function UserRecord() {
         <Panel
           title="Role assignments"
           description="Full grant history including revoked and expired assignments."
-          actions={u && u.status === ApplicationUserStatus.Active && !guarded && can('Roles.ManageViewerFleetManager') ? (
-            <Button label="Grant role" icon="add_moderator" tone="primary" small onClick={() => setDialog({ kind: 'role-grant' })} />
-          ) : undefined}
+          actions={roleActions.length ? <>{roleActions}</> : undefined}
           note={
-            can('Roles.ManageCompanyPrincipal')
+            (can('Roles.ManageCompanyPrincipal')
               ? 'Viewer, Fleet Manager and Company Principal can be granted after activation. System Administrator is never grantable.'
-              : 'Only Viewer and Fleet Manager can be granted after activation. Company Principal grants need System Administrator.'
+              : 'Only Viewer and Fleet Manager can be granted after activation. Company Principal grants need System Administrator.')
+            + (can('Roles.ManageRecordDeleter') ? ' The delete right is given with its own action.' : '')
           }
         >
           {roles.data && roles.data.items.length === 0 ? (
