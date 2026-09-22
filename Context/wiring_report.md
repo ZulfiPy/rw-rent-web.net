@@ -1,458 +1,444 @@
-# Frontend Wiring — Follow-up 9, the Delete records page follows the hierarchy of deletion
+# Frontend Wiring — Follow-up 10, the Record deleter role in the app
 
-> Follow-up 9 (`Context/wiring_followups.md` §9): the app's half of the backend's round 8, which the
-> owner decided on 2026-09-21 and the reviewer verified on 2026-09-22. The contract is the live
-> OpenAPI document of the scratch API, explained by `RWRentApi-wiring/Context/round8_report.md` §5 and
-> the DELETE rules in `RWRentApi-wiring/Context/business_rules.md`. Worktree
-> `/Users/zulf/rw-rent-api/rw-rent-web-wiring`, branch `feature/backend-wiring`. Written 2026-09-22.
-> It replaces Follow-up 8's report, which git history keeps.
+> Follow-up 10 (`Context/wiring_followups.md` §10, with the owner's direction collected under §9): the
+> app's half of the backend's round 9, which the owner decided on 2026-09-20 to 2026-09-22 and the
+> reviewer verified on 2026-09-22. The contract is the live OpenAPI document of the scratch API,
+> explained by `RWRentApi-wiring/Context/round9_report.md` §5 and the ROLE, DELETE and PROFILE rules in
+> `RWRentApi-wiring/Context/business_rules.md`. Worktree `/Users/zulf/rw-rent-api/rw-rent-web-wiring`,
+> branch `feature/backend-wiring`. Written 2026-09-22. It replaces Follow-up 9's report, which git
+> history keeps.
 >
 > **The owner's side was never touched.** This run never opened 5173, never signed in anywhere, never
 > called 5001 and never wrote to `rwrent_v1`, whose read-only fingerprint is the same at the end as at
 > the start.
 >
-> - The API on 5001 still serves round 7. The reviewer restarts it only after this follow-up is
->   verified.
-> - The owner's app on 5173 hot-reloads from this worktree, so until then its Delete records page
->   meets an API that does not send what the page now reads (§8.1).
-> - Every live check used the scratch stack round 8 left running: the API on 5002 over `rwrent_check`,
->   from the round-8 Release build.
+> - The API on 5001 still serves round 8. The reviewer restarts it on the round-9 build only after
+>   this follow-up is verified, with `ApiSecurity__RecordDeleterEmailDomain=rwrent.ee` in its
+>   environment.
+> - The owner's app on 5173 hot-reloads from this worktree. Against the round-8 API it changes in one
+>   visible way only, the row button of Delete records now reading "Delete" (§8.1).
+> - Every live check used the scratch stack round 9 left running: the API on 5002 over `rwrent_check`,
+>   from the round-9 Release build, with the company's email domain `rwrent.example`.
 > - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, on
 >   5174 and 5002.**
 
 ## 1. Summary
 
-The Delete records page now shows round 8's rules, and it words them without deciding any of them.
+The right to delete is now a role in the app, "Record deleter", and the app words what the server
+decides about it without deciding any of it.
 
-- **The rules.** A running rental is never deleted and has to be ended first. A vehicle or a
-  customer is blocked only while one of its rentals runs, and otherwise goes with all of them. A
-  driver is blocked only while holding the only open cover of a running rental, and otherwise goes
-  with their authorizations and clears a customer's link.
-- **The Deletion cell and the phone card.** Every row says, under its verdict, what a deletion would
-  take along ("Takes 2 rental assignments, 2 driver authorizations and 1 interruption with it" /
-  "Clears the driver link of 1 customer record" / "Nothing else goes with it"). A blocked row names
-  the running rentals in its way, each a link to the rental.
-- **The dialog.** It counts what goes in its consequences and in the tick's hint.
-- **After a deletion.** The confirmation line reports what went, from the deletion's own answer.
-- **A refusal.** A record that became blocked is refused in the API's own sentence, with Refresh.
-- **The security audit.** It reads round 8's copies: a vehicle's or a customer's rentals, a driver's
-  authorizations and cleared customer links, and the new "Removed with driver" entry.
+- **The role everywhere roles are named.** The user directory, its role filter, the user record, the
+  profile and the chips name it "Record deleter", ranked below Viewer.
+- **Giving the right.** On a person's Roles tab the System Administrator finds "Give the delete right"
+  beside Grant role, for an Active account outside the administrator's protection that does not hold
+  the role yet. It opens a dialog of its own: who it makes a Record deleter, a warning that every
+  deletion is audited with their name and that only an address in the company's email domain can
+  hold the right, the person's login email, and an optional expiry.
+- **Refusals in the API's words.** An address outside the domain, or an installation without a domain,
+  is refused in the dialog's banner with the API's own sentence.
+- **Changing and taking it back.** Expiry and Revoke on a Record deleter row appear only for the
+  administrator; a Company Principal reads the row without actions. Grant role still offers only
+  Viewer, Fleet Manager and Company Principal.
+- **The email change.** A holder is told beforehand that the new address must stay in the company's
+  domain, and the API's refusal lands under the new address.
+- **A Record deleter with no other role** reaches the Delete records page and their profile; the
+  Overview shows its restricted states as for any missing permission.
+- **The owner's direction.** The row button of Delete records reads "Delete", in the table and on the
+  phone card.
 
 | | |
 |---|---|
-| Commits | four `Wiring 27` commits and this report's `Wiring 28`, pushed (§9) |
-| Tests | 305 → **330**, all green: 25 new, 15 of Follow-up 8's tests rewritten to round 8's rules (§2.6); the only other existing-test change is the event catalogue literal |
-| Breakages | 32 deliberate breakages, **32 caught**; every new or rewritten test fails against at least one |
-| Typecheck, build | green. The app code typechecks at every commit; the whole project, tests included, typechecks from the tests commit on. The build's chunk-size warning predates this run |
-| Joint check on 5002 | **28/28** API checks, each rule once in each direction; **22/22** screens rendered from those live answers |
-| New runtime dependency | none |
-| `Context/prototype`, `wiring_followups.md` | untouched |
-| The owner's side | 5001 and 5173 never used; `rwrent_v1` unchanged |
+| Commits | `db8b13c`, `7702181`, `0263c8a`, `c106436`, `3c5aa91`, and this report's (§9) |
+| Tests | 330 → **360**, all green: 30 new; 8 existing tests updated for the new label (and one renamed); the code catalogue and the route personas extended |
+| Typecheck, build | green; the build's chunk-size warning predates this run |
+| Each commit alone | 0 type errors and the full suite green at every one of the five |
+| Planted breakages | **30 planted, 30 caught**; every new or updated test fails against at least one |
+| Joint check | **18/18** through the API; the screens rendered from those very answers |
+| The owner's database | unchanged: same fingerprint before and after |
 
 ## 2. Implemented
 
-### 2.1 The contract (`src/api/dto.ts`), §9 point 1
+### 2.1 The contract and the words, §10 points 1 and 2
 
-- **`RecordDeletionBlockReason`** keeps 4 (`OnlyOpenAuthorizationOfActiveRental`) and gains 5
-  `RentalIsRunning`, 6 `HasRunningRental` and 7 `DriverHoldsOnlyOpenAuthorizationOfRunningRental`.
-  Values 1–3 are gone.
-- **`RecordDeletionInfo`** gains `takes` (`RecordDeletionTakes`: `rentalAssignments`,
-  `driverAuthorizations`, `interruptions`, `customerLinksCleared`).
-- **`RecordDeletionResponse`** gains `deletedRentalAssignmentCount` and `clearedCustomerLinkCount`.
-  Its two older counts are documented as counting everything that went.
-- **Checked against the API.** The fixtures are the API's answers typed as these DTOs, so a member the
-  API sends and `dto.ts` does not declare fails the typecheck. None does.
+- **`src/api/dto.ts`:** `ApplicationUserRole.RecordDeleter = 5`.
+- **`src/permissions/permissions.ts`:** `Roles.ManageRecordDeleter`, the permission that gives, changes
+  and revokes the role, the System Administrator's alone. `Records.Delete`'s comment names the role.
+- **`src/format/labels.ts`:** `ROLE_LABEL[5] = 'Record deleter'`, rank 0, below Viewer. So a Viewer who
+  may also delete is, in the sidebar's one word, a Viewer; someone who holds only the role is a
+  Record deleter. Every place that names roles (the directory and its role filter, the user record,
+  the profile, the access screens, chips) shows it with no further change: the filter already lists
+  every value of the enum.
+- **`src/api/codes.ts`:**
+  - `email_change.outside_company_domain` → `newEmail`, under the profile's email-change operation
+    `profile-email`;
+  - `roles.email_domain_not_allowed` and `roles.email_domain_not_configured` listed as deliberately
+    form-level refusals (`FORM_LEVEL_CODES`, part of `KNOWN_CODES`). They name no input, so a 409 with
+    either becomes the dialog's red banner, "The change was refused", with the API's own sentence
+    under it: the domain for the first, the missing setting for the second.
 
-### 2.2 The words (`src/format/recordDeletion.ts`), §9 point 2
+### 2.2 The Roles tab, §10 point 3 (the panel) and point 4
 
-- **The four reasons**, singular and plural:
-  - 4 unchanged: "An active rental must keep at least one authorization";
-  - 5: "This rental is running. End it first; then it can be deleted";
-  - 6: "A running rental refers to this vehicle|customer. End it first", or "2 running rentals refer
-    to this customer. End them first";
-  - 7: "This driver holds the only open authorization of a running rental", or "… of 2 running
-    rentals".
-- **`takesSentence`** builds the takes sentence: the records that go in the order rentals,
-  authorizations, interruptions, then the cleared links, only the parts that are not zero, or
-  "Nothing else goes with it".
-- **`deletionConsequences(kind, takes)`, `cannotBeRestored(kind, takes)` and `wentWith(response)`**
-  build the dialog's consequences, the tick's hint and the confirmation's middle sentence.
-- **`deletionRefusal(code, apiDetail)`** takes the API's `detail` as the bold line of a blocked
-  refusal.
+`src/pages/users/UserRecord.tsx`:
 
-### 2.3 The page (`src/pages/admin/DeleteRecords.tsx`), §9 points 3 and 5
+- **The panel's actions.** Grant role as before, and beside it **"Give the delete right"** (icon
+  `delete_sweep`) for a reader with `Roles.ManageRecordDeleter`, when the person is Active, is not the
+  protected System Administrator, and does not hold an effective Record deleter role
+  (`effectiveRoles`, the server's own answer). Both sit in the panel's action slot and wrap under the
+  heading at phone width.
+- **The note.** For a reader who may give the right it ends "… The delete right is given with its own
+  action."; a Principal's note is unchanged.
+- **`canManageRole`** answers a Record deleter row from `Roles.ManageRecordDeleter`, before the Company
+  Principal and Viewer/Fleet Manager rules. So Expiry and Revoke appear on an effective Record deleter
+  row for the administrator only, in the table and on the phone card; a Principal sees the row
+  without actions and still manages the Viewer and Fleet Manager rows as before.
 
-- **The Deletion cell.** The chip as before. Under it:
-  - for a Blocked row, the reason with its running rental(s), then the takes sentence;
-  - for a Ready row, the takes sentence.
+### 2.3 The dialog, §10 point 3
 
-  A blocked row keeps its takes sentence because the numbers stay true once the block is lifted.
-- **The phone card** carries the same lines: the reason in the warn ink, the links, and the takes
-  sentence as a quiet line.
-- **The blocking records.** Every one is a running rental now, so every one links to
-  `/rental-assignments/{id}`. Follow-up 8's special case — a blocking authorization opening its
-  driver's page — is gone, and that open item of Follow-up 8 is settled.
-- **Unchanged:** the Parts column of rentals.
-- **The confirmation line**: "Customer deleted: <label>. 2 rental assignments, 2 driver
-  authorizations and 1 interruption went with it. Written to the security audit." The middle
-  sentence appears only when something went, and the cleared links have one too.
+`src/pages/users/UserDialogs.tsx`, a dialog of its own (`record-deleter-grant`), modelled on Grant role:
 
-### 2.4 The dialog (`src/pages/admin/DeleteRecordDialog.tsx`), §9 points 4, 5 and 6
+- title "Give the delete right", icon `delete_sweep`;
+- description "Makes Toms Rudzitis a Record deleter, who may delete records for good on the Delete
+  records page.";
+- a warn-tone note: "Every deletion they make is written to the security audit with their name and
+  reason. Only an address in the company's email domain can hold the right.";
+- the person's login email as a fact;
+- the optional expiry in Grant role's words and form (a date, "Leave empty for no expiry. The chosen
+  date is the last valid day.", sent as the end of that day, Europe/Tallinn);
+- submit "Give the delete right" (`primary`).
 
-- **No running-rental banner.** The "This rental is active" variant is removed: a running rental
-  never reaches the dialog Ready, and the API refuses it anyway.
-- **The consequences** are built from the row's `takes`, with exact counts:
-  - a rental: its own parts, as before;
-  - a vehicle or a customer: "Its 2 rental assignments, with 2 driver authorizations and 1
-    interruption, are removed with it." and who stays (§7.1);
-  - a driver: "Their 2 driver authorizations are removed from the rentals they were on; those rentals
-    stay." and "The link of 1 customer record to this driver is cleared; the customer stays.";
-  - every kind keeps the audit line.
-- **The tick's hint** names the numbers: "This vehicle and the 2 rental assignments, 2 driver
-  authorizations and 1 interruption cannot be restored from the app.", or only the record when
-  nothing goes.
-- **Invalidation grows with the cascade:**
-  - a vehicle's or a customer's deletion also makes stale the rentals, the interruptions and the
-    drivers' histories;
-  - a driver's also makes stale the customers and the rentals.
-- **`record_deletions.blocked`** keeps its stale-style banner with Refresh. Its text is now the API's
-  own `detail`, e.g. "One of its rental assignments is running (Active). End it first; then the
-  record can be deleted with its rentals." A record that left the list keeps the app's words.
+What it sends is one small exported function, `recordDeleterGrant(date)`: role 5, and the expiry or
+null. It submits as its own operation, and a success closes the dialog and reloads the history, the
+person's record, their sessions and the audit, as every user dialog does. A refusal because of the
+domain or the missing setting is the banner of §2.1. Grant role keeps offering only Viewer, Fleet
+Manager and Company Principal.
 
-### 2.5 The security audit, §9 point 7
+### 2.4 The profile, §10 point 5
 
-- **`AUDIT_EVENTS`** gains `DriverAuthorization.RemovedWithDriver`, labelled "Driver authorisation ·
-  Removed with driver". The event filter offers it.
-- **`deletedRecord`** (`auditPayload.ts`) learns round 8's copies:
-  - `RentalAssignments` on a vehicle's or a customer's entry, each with its own `RecordLabel`,
-    `Authorizations` and `Interruptions`;
-  - `Authorizations` and `ClearedCustomerLinks` on a driver's entry;
-  - the flat copy of a `RemovedWithDriver` entry, with `DeletedWithRecordLabel`.
+`src/pages/account/Profile.tsx`, the email-change dialog (now also a named export, for the tests):
 
-  Any other shape falls back as before: an unknown list, a rental carrying an unknown list, a link
-  without a name, a `RemovedWithDriver` copy without the driver or with a list.
-- **The entry page** (`AuditEntry.tsx`):
-  - **"Deleted rental assignments"**: one titled group per rental ("Rental assignment 1 · F9O D09 ·
-    Lake House D09F"), with its parts as quieter sub-groups;
-  - **"Cleared customer links"**: one line per customer;
-  - **"Removed with driver"**: a fact naming the driver, with the authorization's copy as "Deleted
-    record";
-  - **a driver's authorizations** use the existing "Deleted authorizations" panel.
+- when the signed-in person holds the role (`me.roles` includes 5), the description adds "Because you
+  hold the delete right, the new address must stay in the company's email domain.";
+- the API's refusal, `400 email_change.outside_company_domain`, arrives with `errors.NewEmail`, so it
+  lands under "New email address" in the API's words, with the field marked invalid and no banner. A
+  refusal carrying only the code lands on the same field through the code table (§2.1).
 
-### 2.6 Tests, §9 point 8
+### 2.5 The owner's direction on the Delete records page, §10 point 6
 
-330 tests, all green: 25 new, and 15 of Follow-up 8's rewritten.
+`src/pages/admin/DeleteRecords.tsx`: the row button reads **"Delete"**, not "Delete…", in the table and
+on the phone card; its hint and its disabled reason are unchanged. The page's comment and a comment in
+`src/format/recordDeletion.ts` follow.
 
-**The fixtures were captured again.** Follow-up 8's fixtures were round-7 answers. They no longer
-typecheck against round 8's contract: they lack `takes`, and some use reasons 1–3. So they were
-captured again from the round-8 scratch API, not edited by hand.
+### 2.6 Tests, §10 point 7
 
-- `src/pages/followup8.support.ts` keeps Follow-up 8's names where a record still plays its part.
-  - `customerBlocked` is now Baltic Freight Partners: Daugava Construction has no running rental any
-    more and is Ready.
-  - `driverBlockedTwice` is gone, since no driver carries two blocks now.
-  - `driverReadyWithAuthorization` (Laura Ozola) is new.
-- `src/pages/followup9.support.ts` holds the round-8 scenarios:
-  - a vehicle and a customer that take rentals, and a customer and a driver blocked by two running
-    rentals;
-  - a driver with authorizations and a customer link;
-  - the deletions and their entries, a `RemovedWithDriver` entry, and the API's refusals.
+**30 new tests**, and existing tests updated only where §10 allows: the catalogue literals and the old
+"Delete…" label. No other existing test was deleted, skipped or weakened.
 
-**The rewritten tests: Follow-up 8's tests of the rules round 8 replaced, old and new expectation.**
+**The updated tests, each with its old and new expectation:**
 
-| # | Test (old → new name) | Old expectation | New expectation |
+| File | Test | Before | Now |
 |---|---|---|---|
-| 1 | `recordDeletion` "rental assignments that refer to a vehicle, or to a customer" → "a running rental that refers to a vehicle, or to a customer" | "1 rental assignment refers to this vehicle" / "2 … refer to this customer" | "A running rental refers to this vehicle. End it first" / "2 running rentals refer to this customer. End them first", also from the API's count |
-| 2 | "driver authorizations that refer to a driver" → "a driver who holds the only open authorization of a running rental, or of several" | "1 driver authorization refers to this driver" | "This driver holds the only open authorization of a running rental" / "… of 2 running rentals" |
-| 3 | "a customer record linked to a driver" → "a customer record linked to a driver blocks nothing: its link is what the deletion clears" | block "A customer record is linked to this driver record" | takes "Clears the driver link of 1 customer record" / "2 customer records", and the combined driver sentence |
-| 4 | "the two driver reasons at once make one sentence joined with 'and'" → "a running rental is refused by its own reason" | the two reasons in one sentence | "This rental is running. End it first; then it can be deleted" (round 8 gives a record one block at most) |
-| 5 | "a rental's consequences count its own parts, in the singular and the plural" (name kept) | parts from `{authorizations, interruptions}` | the same three sentences from the row's `takes` |
-| 6 | "every kind ends with the audit line, and the others say what stays" → "…; a vehicle, a customer and a driver say what they take along" | "No rental assignment refers to this vehicle, so nothing else changes." and the driver's twin | the rentals line with numbers, who stays, "Nothing else goes with it." for zero, the driver's authorizations and link lines |
-| 7 | "a record that became blocked, or left the list, is refused with its own sentence and Refresh" → "… in the API's own words; one that left the list in the app's" | the app's own title per kind ("This vehicle now has a rental assignment.") | the API's `detail` as the title; a record that left the list unchanged |
-| 8 | `recordDeletions` "a record that became blocked is refused with its own sentence and Refresh" → "… in the API's own sentence for its reason, with Refresh" | "This vehicle now has a rental assignment." | the captured refusal's own sentence |
-| 9 | `followup8.render` "vehicles: an inactive one nothing refers to is Ready, one two rentals refer to is Blocked and names them" → "vehicles: … one with a running rental is Blocked and names it" | "2 rental assignments refer to this vehicle", both rentals linked | reason 6 naming its one running rental, the takes sentence; the Ready row "Nothing else goes with it" |
-| 10 | "customers: … a rental that blocks a business customer" → "… a running rental that blocks …" | a count sentence on Daugava Construction | reason 6 on Baltic Freight Partners, linking its running rental |
-| 11 | "drivers: both of a driver's blocks in one sentence, the linked customer and the authorization named" → "drivers: the only open cover of a running rental blocks a driver and names that rental; a link does not block" | two blocks; the authorization linked to the driver's page | reason 7 linking the running rental; the link in the takes sentence; Laura Ozola Ready |
-| 12 | dialog "names the record, warns that it cannot be undone, and says what it does" (name kept) | "No rental assignment refers to this vehicle, so nothing else changes." | "Nothing else goes with it." and the tick "This vehicle cannot be restored from the app." |
-| 13 | "an Active rental says so instead, and counts the parts that go with it" → "a rental's dialog has no running-rental variant any more, and counts the parts it takes" | the "This rental is active" banner | the ordinary banner; the parts from `takes`; the tick names them |
-| 14 | `followup8.phone` "a blocked card writes its reason, names the records in the way…" → "… names the running rental in the way…" | "2 rental assignments refer to this vehicle" | "A running rental refers to this vehicle. End it first" |
-| 15 | "a rental card spans its parts…, and a driver card carries both of its blocks" → "…, and a driver card carries its block and what it would take" | the two-block sentence | reason 7 and the takes sentence |
+| `src/api/codes.test.ts` | the backend's catalogue (`BACKEND_CODES`) | users, rental assignments, authorizations, interruptions, drivers, record deletions | the same, plus the thirteen `roles.*` codes of `RoleAssignmentErrors.cs` and `email_change.outside_company_domain` |
+| `src/app/routes.test.ts` | the persona `SYSTEM_ADMINISTRATOR` | … `Records.Delete` | … `Records.Delete`, `Roles.ManageRecordDeleter` |
+| `src/app/routes.test.ts` | "only the administrator may open Delete records …" → "only the administrator and a Record deleter may open Delete records, by any spelling (Follow-ups 8 and 10)" | three roles refused, the administrator admitted | the same, and a new persona `RECORD_DELETER` (`Records.Delete` alone) admitted, by two spellings |
+| `src/format/labels.test.ts` | the imports | — | the role label and rank, for the new tests |
+| `src/pages/followup8.render.test.ts` | rental assignments; driver authorizations; vehicles (three tests) | `button(…, 'Delete…')` | `button(…, 'Delete')` |
+| `src/pages/followup8.phone.render.test.ts` | "… its own full-width Delete…" | a danger button ending `Delete…</button>`; no disabled button containing `Delete…` | the same with `Delete</button>`; the negative check now also requires the label to end the button, so it keeps its bite |
+| `src/pages/followup8.phone.render.test.ts` | "… holds a disabled Delete…" | the name only | the name only: "… holds a disabled Delete" |
+| `src/pages/followup9.render.test.ts` | a Ready vehicle; a running rental; a customer with two running rentals (three tests) | `button(…, 'Delete…')` | `button(…, 'Delete')` |
+| `src/pages/followup9.phone.render.test.ts` | "… above its own Delete…" | no disabled button containing `Delete…` | no disabled button ending `Delete</button>` |
 
-**Two smaller changes to existing tests:**
+`can.test.ts` holds persona lists too; §10 does not name it and none of its assertions concerns the
+new role, so it is unchanged.
 
-- Three `recordDeletions` tests changed only their call, `deletionFailure(kind, error)` →
-  `deletionFailure(error)`, with the same expectations.
-- `labels.test.ts`'s backend event catalogue gains `DriverAuthorization.RemovedWithDriver`.
-
-**The 25 new tests:**
+**The new tests:**
 
 | File | New | What they hold |
 |---|---|---|
-| `src/format/recordDeletion.test.ts` | 3 | the takes sentence in its order, singulars and plurals, and "Nothing else"; the tick's hint; the confirmation's middle sentence |
-| `src/format/deletedRecord.test.ts` | 5 | a vehicle's and a customer's rentals, a driver's authorizations and cleared links, a `RemovedWithDriver` copy, eight round-8 shapes that fall back |
-| `src/api/recordDeletions.test.ts` | 1 | what each cascade makes stale |
-| `src/pages/followup9.render.test.ts` | 14 | a Ready vehicle and driver with their takes; a Blocked row of each reason with its rental links (the plurals from the API's counts); the dialogs of a vehicle, a customer and a driver with the numbers in the consequences and the tick; the confirmation line; the event filter; the entries of a customer with rentals, a driver with cleared links, and a `RemovedWithDriver` entry |
-| `src/pages/followup9.phone.render.test.ts` | 2 | a Ready card with its takes line; a blocked card with its reason, both rental links, its takes line and a disabled Delete… |
+| `src/api/codes.test.ts` | 2 | the email refusal lands on `newEmail` under `profile-email`; the two grant refusals are the form-level list, known to the catalogue, and resolve to no input under the new dialog's operation or Grant role's |
+| `src/app/routes.test.ts` | 1 | a Record deleter with no other role reaches exactly the ungated pages and Delete records, and the menu offers them Delete records alone |
+| `src/format/labels.test.ts` | 2 | "Record deleter" in the label and in a list of roles; the rank below Viewer, in both orders, alone and beside Fleet Manager |
+| `src/pages/followup10.render.test.ts` | 12 | the Roles tab for the administrator: the action beside Grant role and the note's sentence; no second offer to a holder, whose effective row has Expiry and Revoke while a revoked row has none; not offered for a suspended account nor on the administrator's own record; the revocation's reason at the end. For a Principal: the row without actions, no offer for a holder or a non-holder, Grant role kept, the Viewer row still managed. The name in the directory row and its role filter, in the record's header and in the profile's Roles fact, in the API's order. A bare Record deleter: the Delete records page with each row's "Delete" and Recently deleted without audit links; the Overview's restricted states |
+| `src/pages/followup10.dialogs.render.test.ts` | 11 | the dialog's title, description, warn note, email and expiry, and its primary button; its own operation and the reloads; the request with and without an expiry, the dated one equal to the instant the API stored for the live grant; the outside-domain and no-domain refusals as the banner in the API's words; Grant role's three options; the Expiry and Revoke dialogs naming a Record deleter assignment; the holder's sentence, and none for a non-holder; the email refusal on the new address with no banner, also when it carries only its code |
+| `src/pages/followup10.phone.render.test.ts` | 2 | on a phone the Record deleter card carries Expiry and Revoke for the administrator, none for a Principal |
 
-**Every new or rewritten test can fail.**
+**How they are built.**
 
-- 32 breakages were planted one at a time and run against the deletion tests. Each file was
-  restored byte for byte. **All 32 were caught.**
-- Their JSON reports show every new or rewritten test failing against at least one breakage.
-- One new test first failed against none: the reason-4 row. Its rental is also linked from the row's
-  Rental column, so it could not see a broken blocker link. Its check now looks inside the Deletion
-  cell, and the broken link is caught.
-- What the breakages covered:
-  - each reason's words and plural; the noun of reason 6;
-  - the takes sentence's links, order and "Nothing else";
-  - the vehicle's and the driver's consequences; the tick; the confirmation and its links;
-  - the takes line in the cell and on the card; the rental links;
-  - the API's refusal words;
-  - the reader's lists, its nested-list guard, its link guard and its `RemovedWithDriver` event;
-  - the entry's link panel, rental title and "Removed with driver" fact; the event catalogue;
-  - the cascade's invalidation; a dialog counting nothing; the running-rental banner coming back.
+- The fixtures, `src/pages/followup10.support.ts`, are the joint check's own answers from the scratch
+  API (§4.1), written out as the DTOs. A member the API sends and `dto.ts` does not declare fails the
+  typecheck. All eighteen were compared with the saved live answers at the end: none differs. One more,
+  the no-domain refusal, cannot be provoked on the scratch stack, whose domain is set; it is the
+  backend's own sentence from `RoleAssignmentErrors.cs`, in the API's conflict envelope, and says so.
+- The shared render helper (`followup7b.support.ts`) takes an optional `me`, so a page can be rendered
+  as Toms instead of the Principal; without it nothing changes.
+- A server render cannot submit, so the dialog tests replace the one hook every dialog submits through.
+  The stand-in records the operation and reloads the dialog passes, and answers with the refusal a test
+  names, turned into a failure by the app's own `toFailure` under the dialog's own operation. That is
+  what the real hook does, so the real dialog and the real mapping are what is tested.
 
 ## 3. Not implemented or partial
 
+**Nothing of §10.** Every point is built and tested.
+
 ### 3.1 The steps that need a password typed into the app
 
-The browser steps of the joint check need the seed password typed into the sign-in page. The
-implementing agent may not do that, so they go to the owner's reviewer, on 5174 and 5002 (§5).
-Everything the page shows was also checked in three other ways:
+The browser steps of the joint check need the seed password typed into the sign-in page, which this
+run may not do. They are left for the owner's reviewer (§5). What they would show was covered here in
+three ways:
 
-- rendered by the test suite from answers captured on the scratch stack;
-- rendered again from the joint check's live answers (§4.2);
-- looked at in a browser through a preview outside the worktree (§4.3).
-
-- **Side that has to change:** none; it is a working rule.
-- **Option:** the reviewer runs §5.
-
-Nothing else of §9 is partial.
+- through the API, by script, as the same people (§4.1);
+- rendered from those answers by the real components (§4.2);
+- looked at in a preview of the real screens with those answers in the cache (§4.3).
 
 ## 4. Verification: the joint check
 
-Everything ran on the scratch stack only, as the seeded administrator, with the seeded Fleet
-Manager building records and the seeded Company Principal reading the audit.
+Everything ran on the scratch stack only.
 
-- **The scratch API** was used as round 8 left it: the API on 5002 over `rwrent_check`, from the
-  round-8 Release build. It already held round 8's check records and the reviewer's probe records.
-  It was not reseeded.
-- **Guards.** The API client refuses any address but `localhost:5002`. The seed password came from
-  the owner for this session and was passed in each command's environment; it is in no file.
+- **The scratch API** was used as round 9 and its review left it: the API on 5002 over `rwrent_check`,
+  round-9 Release build, domain `rwrent.example`. It was not reseeded. Its data already held round 9's
+  acceptance and the reviewer's probe, so Toms's history carries three earlier Record deleter
+  assignments, all revoked.
+- **Guards.** The API client refuses any address but `localhost:5002`; Mailpit was read only for this
+  run's own addresses. The seed password came from the owner for this session and was passed in each
+  command's environment; it is in no file.
 
-### 4.1 Through the API: each rule once in each direction — 28/28
+### 4.1 Through the API — 18/18
 
-`joint9.py`, in the run's scratchpad:
+`joint10.py`, in the run's scratchpad, as the seeded administrator Arturs Veidenbaums, with the
+Principal Signe Priede and the Fleet Manager Karlis Zvaigzne:
 
-- **a running rental:**
-  - Blocked by reason 5, naming itself, taking its cover and interruption;
-  - refused as `record_deletions.blocked` in the API's own sentence;
-  - ended, it is Ready and deletes, answering exactly what the list said;
-- **a vehicle:**
-  - with a Planned, an Ended and a Cancelled rental, Ready, taking 3 rentals, 3 covers and 1
-    interruption; it deletes with the same numbers, and the Principal reads its three rentals;
-  - with an Ended and a running rental, Blocked by reason 6, naming only the running one and still
-    counting both;
-- **a customer with two running rentals:**
-  - Blocked by 6 with a count of 2, and their driver by 7 with a count of 2;
-  - one ended, still Blocked by 1; both ended, Ready; it deletes with the same numbers;
-  - the vehicles and the driver stay;
-- **a driver with a cover beside a colleague's and a linked customer:**
-  - Ready, taking 2 authorizations and 1 link; deletes with the same numbers;
-  - the customer stays with the link cleared; the Principal reads the copy;
-  - the running rental's own history holds the `RemovedWithDriver` entry, and the rental runs on
-    under the colleague;
-- **the only open cover of a running rental:** Blocked by 4, and its driver by 7; a second cover
-  frees both;
-- **an interruption:** Ready, taking nothing, labelled "Car repair · …";
-- **a conflict raised by the data:** a vehicle Ready when read, then claimed by a running rental, is
-  refused in the API's own sentence;
-- **Recently deleted** lists the run's deletions newest first, the driver once;
-- **every tab's count** agrees with its list under both filters;
-- **the audit's event filter** finds `RemovedWithDriver` for the Principal.
+- **before:** the administrator's permissions carry `Roles.ManageRecordDeleter` and never the role;
+  the served document names 5 `RecordDeleter`; Toms Rudzitis is a Viewer without the right;
+- **the Principal's grant:** `403 roles.forbidden`;
+- **the grant:** 201, effective, no expiry. Toms's record, history and directory row carry the role,
+  and the Principal reads the same history. His own `GET /api/me` holds Viewer, Record deleter and
+  `Records.Delete`; he reads the six lists, the counts and the deletions made;
+- **one deletion:** the Fleet Manager builds a practice vehicle, "F107CB41C · Practice Follow-up ten
+  2026"; Toms finds it Ready and deletes it; it heads his Recently deleted, and the Principal reads the
+  entry by "Toms Rudzitis";
+- **a grant with an expiry** to Dita Smite, its expiry changed through the row action, the Principal's
+  expiry change and revocation of it refused `403 roles.forbidden`, then revoked by the administrator;
+- **the outside address:** the grant to the practice Viewer `outside.practice.bb86bb@example.com` is
+  `409 roles.email_domain_not_allowed`, "The Record deleter role can be given only to a user whose
+  email address is in the company's domain, rwrent.example.";
+- **a bare Record deleter:** with his Viewer role revoked for the check, Toms holds `Records.Delete`
+  alone, reads the page and Recently deleted, is refused `/api/vehicles`, and the Overview's counts are
+  all null. His Viewer role was then granted again;
+- **his email change:** to `toms.rudzitis@example.com`, `400 email_change.outside_company_domain` on
+  `NewEmail`; to `toms.rudzitis.f10@rwrent.example`, accepted and confirmed from Mailpit, and back to
+  his own address the same way;
+- **the revocation** with a reason: Toms is a Viewer again, refused the page, and the row keeps its
+  reason.
 
-### 4.2 The screens, rendered from those live answers — 22/22
+### 4.2 The screens, rendered from those answers
 
-`joint/joint9.live.test.ts`, run from outside the worktree with a scratch config that reuses the
-app's sources. It fed the live answers to the real components:
-
-- every live row through the page: its chip, its reason, a link to each running rental, the disabled
-  Delete… with the reason, and its takes sentence;
-- the dialogs of the live vehicle and driver;
-- the four live confirmation lines;
-- Recently deleted with the driver once;
-- the two live refusals, in the API's words with Refresh;
-- the live entries of the vehicle, the customer and the driver, and the `RemovedWithDriver` entry.
+The fixtures of §2.6 are those answers, compared field by field with the saved ones at the end. So the
+30 new tests are the render half of the joint check. They feed the answers to the real Roles tab,
+dialogs, directory, record, profile, Delete records page and Overview, as the administrator, the
+Principal, Toms holding the role, and Toms holding it alone.
 
 ### 4.3 In a browser
 
-- **The app on 5174.** It was started against 5002, from this worktree: `VITE_API_BASE_URL=
-  http://localhost:5002 npm run dev -- --port 5174 --strictPort`. `/delete-records` sent the
-  signed-out visitor to Sign in, and the app's requests went to 5002 only. No sign-in was made.
-  5174 is stopped.
-- **The preview on 5175.** A preview outside the worktree rendered the real page, dialog and entries
-  with the captured answers in the cache, with no API. I looked at it:
-  - at 1512: every column fits;
-  - at 834: nothing scrolls sideways, and the Deletion cell wraps its reason, links and takes;
-  - at 375: cards with their own Delete…, the reason in warn ink, and the takes line;
-  - the vehicle and driver dialogs, and the three new audit views;
+- **The app on 5174.** A Vite on 5174 was already running from this worktree against 5002,
+  `VITE_API_BASE_URL=http://localhost:5002 … --port 5174 --strictPort`, started earlier in the day
+  as the owner's practice copy. It is exactly the setup §10 asks for, so I used it rather than
+  replace a process that is not mine (§7.1). A gated page sent the signed-out visitor to Sign in, and
+  the app's only API request went to 5002 (`GET /api/me` → 401). No sign-in was made.
+- **The preview on 5175.** A preview outside the worktree rendered the real screens with the captured
+  answers in the cache. It installs no API transport, so nothing it did could leave the page. I looked
+  at it:
+  - at 1512: the Roles tab with both actions, the Record deleter rows, the dialog;
+  - at 375: the Roles cards, the two actions wrapped under the heading, the Record deleter card with
+    Expiry and Revoke, and no sideways scroll;
+  - the holder's email dialog with its sentence;
+  - the bare holder's Delete records page with each row's "Delete";
   - the console showed no errors.
 
-  It was stopped afterwards. The two launch entries added for 5174 and 5175 to the workspace's
-  launch file, outside the repositories, were removed again.
+  It was stopped afterwards, and the launch entry added for it to the workspace's launch file, outside
+  the repositories, was removed again.
 
-### 4.4 The test suite, and each commit
+### 4.4 The planted breakages — 30/30
 
-- Typecheck green, `npm test` 330/330, `npm run build` green.
-- Each commit alone, in a clean copy outside the worktree:
-  - the app code typechecks at every commit;
-  - the whole project typechecks from `f02ae81` on;
-  - before that commit, the 43 errors are Follow-up 8's tests and fixtures still in round 7's shape.
+Each breakage was written into a **copy** of the worktree outside it, never into the worktree: the
+owner's app on 5173 hot-reloads from the worktree, so none of them could reach it, even for a moment.
+The round's test files and Follow-up 8's and 9's page tests were run on each one, and the file was
+restored byte for byte.
 
-  A planted error proved the check real.
+| | Breakage | Caught by (among others) |
+|---|---|---|
+| F1 | the role is named "Record Deleter" | 11 tests: the directory, record, profile, dialogs, phone cards |
+| F2 | the role ranks above Viewer | the rank test |
+| F3 | `Roles.ManageRecordDeleter` missing from the catalogue | the typecheck (3 errors) — it is a type-only fact |
+| F4 | the email refusal has no field of its own | the code test, the code-only field test |
+| F5 | one grant refusal forgotten in the form-level list | the form-level test |
+| F6 | the grant refusals pinned to a field | both banner tests, the form-level test |
+| F7 | a Principal may change a Record deleter assignment | the Principal's row, the phone card |
+| F8 | the delete right offered to a Principal | the Principal's non-holder case (added after the first run missed this breakage, §7.4) |
+| F9 | offered again to its holder | the holder test |
+| F10 | offered whatever the account | the suspended and administrator cases |
+| F11 | the note without its sentence | the administrator's action test |
+| F12 | a revoked row keeps its actions | the holder test, the end-of-history test |
+| F13 | every row needs the delete-right permission | the Principal's Viewer row |
+| F14 | the dialog makes a Viewer | the dialog test |
+| F15 | the note not a warning | the dialog test |
+| F16 | no address in the dialog | the dialog test |
+| F17 | the chosen expiry dropped | the request test |
+| F18 | the dialog grants Viewer | the request test |
+| F19 | the dialog submits as Grant role | the operation test |
+| F20 | a success does not reload the history | the operation test |
+| F21 | Grant role also offers the delete right | Grant role's options |
+| F22 | the holder sentence shown to everyone | the non-holder test |
+| F23 | the holder sentence shown to nobody | the holder test |
+| F24 | the email dialog under another operation | the code-only field test |
+| F25 | the new address shows no refusal | both email refusal tests |
+| F26 | the row button reads "Delete…" again | 8 tests: seven of the updated label tests and the bare holder's page |
+| F27 | audit links for a reader without the audit | the bare holder's page, and two earlier tests of Recently deleted |
+| F28 | the Overview shows the locked audit card open | the bare holder's Overview |
+| F29 | Delete records asks for another permission | both routes tests, and an earlier one |
+| F30 | a Ready row's Delete disabled too | four label tests, among them the one whose check is only negative |
 
-### 4.5 The owner's side, untouched
+Every one of the 30 new tests and the 8 updated label tests fails against at least one breakage.
+
+### 4.5 The test suite, and each commit
+
+- Typecheck green, `npm test` 360/360 (330 before), `npm run build` green.
+- Each commit alone, in a clean copy outside the worktree (`git archive`, `node_modules` linked): the
+  whole project typechecks with 0 errors and the full suite passes at every one of the five, with 335
+  tests through the fourth and 360 at the fifth. The same typecheck reported F3's three errors, so the
+  check is real.
+
+### 4.6 The owner's side, untouched
 
 - 5001 and 5173 were never opened, called or signed into, and run on the processes they had.
-- `rwrent_v1`'s read-only fingerprint — the row counts of eleven tables and the latest write in ten
+- `rwrent_v1`'s read-only fingerprint — the row counts of twelve tables and the latest write in eleven
   of them — is identical at the start and at the end.
 - The backend worktree was only read.
 
-### 4.6 End state
+### 4.7 End state
 
-- The scratch API runs on 5002 **for the reviewer**, over `rwrent_check`. It holds the joint check's
-  records and a practice driver for step 5.6: Dace Ozolina, Ready, taking 2 authorizations and
-  clearing her own customer record's link.
-- My Vite on 5174 and the preview on 5175 are stopped.
-- The main checkouts are untouched.
-- The worktree is clean and pushed.
+- The scratch API runs on 5002 **for the reviewer**, over `rwrent_check`, domain `rwrent.example`.
+  - Toms Rudzitis is a Viewer again, with the joint check's Record deleter assignment revoked
+    ("Follow-up 10 check: the practice is over."). So "Give the delete right" is offered on his Roles
+    tab.
+  - Dita Smite holds her Viewer and Fleet Manager roles; her dated Record deleter assignment is
+    revoked.
+  - `outside.practice.bb86bb@example.com` is an active Viewer outside the domain.
+- The practice Vite on 5174, pointing at 5002, is still running as I found it (§7.1). My preview on
+  5175 is stopped.
+- The main checkouts are untouched. The worktree is clean and pushed.
 
 ## 5. For the owner's reviewer: the steps with the seed password
 
 ### 5.0 Before and after
 
-1. **Use a separate browser profile, or a headless browser.** Both stacks share the cookie names and
-   the key ring, and a browser does not separate `localhost` cookies by port. Signing in on 5174 in
-   the owner's profile would sign the owner out of 5173.
-2. Start the scratch app from this worktree:
-
-   ```bash
-   VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort
-   ```
-
-3. Afterwards, stop it with `kill $(lsof -ti tcp:5174)`. The scratch API on 5002 stays until the
-   review is over.
+- **Where:** the app on **5174** against the API on **5002** only. The practice Vite already serves
+  it; if it is gone, start it from this worktree with
+  `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`.
+- **Browser:** a browser profile of its own, because localhost cookies are shared across ports and a
+  sign-in on 5174 must never meet the owner's session on 5173.
+- **The people**, all with the seed password:
+  - the administrator `sysadmin@rwrent.example`;
+  - the Principal `signe.priede@rwrent.example`;
+  - the Viewer `toms.rudzitis@rwrent.example`.
+- **Afterwards:** revoke the delete right you gave (step 7), so the next reader finds the stack as
+  described in §4.7.
 
 ### 5.1 The steps
 
-Sign in as `sysadmin@rwrent.example` unless a step says otherwise, then Administration → Delete
-records, with Show set to **Everything**.
-
-1. **The running rental.** Rental assignments: 204 JLM · Anete Kalnina is Blocked.
-   - It reads "This rental is running. End it first; then it can be deleted".
-   - The rental itself is linked under the reason.
-   - It reads "Takes 1 driver authorization and 1 interruption with it".
-   - Its Delete… is disabled, with the reason as its hint.
-2. **A vehicle with a running rental.** Vehicles: 482 TKL reads "A running rental refers to this
-   vehicle. End it first", links 482 TKL · Baltic Freight Partners, and reads "Takes 2 rental
-   assignments, 2 driver authorizations and 1 interruption with it".
-3. **The plurals.**
-   - Customers: Two Cars D09F reads "2 running rentals refer to this customer. End them first", with
-     two links.
-   - Drivers: Ilmars Kronbergs reads "This driver holds the only open authorization of 2 running
-     rentals".
-   - Anete Kalnina reads reason 7 and "Takes 1 driver authorization with it. Clears the driver link
-     of 1 customer record".
-4. **A Ready row.** A row with nothing below it reads "Nothing else goes with it", for example
-   Normunds Zarins under Drivers.
-5. **A customer who takes rentals.**
-   1. Customers: open Delete… on Daugava Construction (Ready, "Takes 2 rental assignments with it").
-   2. The dialog reads "Its 2 rental assignments are removed with it." and "The vehicles and drivers
-      of those rentals stay as they are.".
-   3. The tick's hint reads "This customer and the 2 rental assignments cannot be restored from the
-      app.".
-   4. Choose a reason, tick, and delete.
-   5. Expect the line "Customer deleted: Daugava Construction. 2 rental assignments went with it.
-      Written to the security audit.".
-   6. Its link opens the entry, which shows "Deleted rental assignments" with "Rental assignment 1 ·
-      …" and "Rental assignment 2 · …".
-6. **A driver who takes authorizations and clears a link.**
-   1. Drivers: open Delete… on Dace Ozolina (Ready, "Takes 2 driver authorizations with it. Clears
-      the driver link of 1 customer record").
-   2. The dialog names both.
-   3. Delete. The line reads "2 driver authorizations went with it. The driver link of 1 customer
-      record was cleared.".
-   4. Customers: Dace Ozolina is still there.
-   5. The entry shows "Deleted authorizations" (two) and "Cleared customer links".
-   6. In Security audit, filter on "Driver authorisation · Removed with driver" and open the newest
-      entry: it names her under "Removed with driver".
-7. **A conflict with Refresh.**
-   1. Open Delete… on an active vehicle with no rentals, such as 400 NDP (its rental went with the
-      fixture capture) or J904E01 · Skoda Scala 2023.
-   2. As `karlis.zvaigzne@rwrent.example`, in a second separate profile, start a running rental on
-      it.
-   3. Submit the dialog.
-   4. Expect the banner "One of its rental assignments is running (Active). End it first; then the
-      record can be deleted with its rentals." with Refresh. Refresh closes the dialog and the row is
-      Blocked.
-8. **The phone.** Narrow below 768 pixels: every card shows its takes line; a blocked card shows the
-   reason in warn ink with its rental links.
-9. **Who sees the page.** Signed in as `signe.priede@rwrent.example` (Company Principal), the page is
-   still "Not available to you". The Principal can open the audit entries of steps 5 and 6.
+1. **The action beside Grant role.** As the administrator: Users → Toms Rudzitis → Roles.
+   - "Grant role" and "Give the delete right" stand side by side;
+   - the panel's note ends "The delete right is given with its own action.";
+   - the earlier Record deleter rows are Revoked, without actions.
+2. **The dialog.** Give the delete right:
+   - title "Give the delete right";
+   - "Makes Toms Rudzitis a Record deleter, who may delete records for good on the Delete records
+     page.";
+   - the amber note, his login email, and "Expires · optional" with "Leave empty for no expiry. The
+     chosen date is the last valid day.";
+   - leave the date empty and press **Give the delete right**: the dialog closes, a new row "Record
+     deleter · Effective · No expiry" heads the history, the header's Effective roles name Record
+     deleter, and the button is gone.
+3. **Expiry through the row action.** On that row, Expiry: choose a date and save. The row shows it;
+   change it back to empty if you like.
+4. **An address outside the domain.** Users → Outside Practice (`outside.practice.bb86bb@example.com`)
+   → Roles → Give the delete right → press the button. A red banner reads "The change was refused"
+   with "The Record deleter role can be given only to a user whose email address is in the company's
+   domain, rwrent.example."; nothing is granted.
+5. **As Toms.** Sign out; sign in as Toms.
+   - The menu offers Delete records; the page lists records, and each row's button reads **Delete**
+     (also at phone width, on the card).
+   - Profile → Change email: the description adds "Because you hold the delete right, the new address
+     must stay in the company's email domain."
+   - Type `toms.rudzitis@example.com` and the password, then send. The API's sentence "While you hold
+     the Record deleter role your email address must stay in the company's domain, rwrent.example."
+     appears under New email address, with no banner. Cancel.
+6. **As the Principal.** Sign in as Signe → Users → Toms → Roles.
+   - The Record deleter row has no Expiry and no Revoke;
+   - there is no "Give the delete right";
+   - the note does not mention it;
+   - the Viewer row still has its actions.
+7. **Taking it back.** As the administrator, Revoke on Toms's Record deleter row, with a reason. The
+   row turns Revoked with the reason, and "Give the delete right" is offered again.
+8. **Phone width** (≤ 402 px):
+   - the Roles tab's two actions wrap under the heading;
+   - the Record deleter card carries Expiry and Revoke for the administrator only;
+   - nothing scrolls sideways.
 
 ## 6. Decisions needed
 
-None to finish this follow-up. The words that are the app's own, where §9 gave none, are listed in
-§7 and can be changed on the owner's word.
+None. Four choices made where §10 left room, each reversible in a line:
+
+1. **The expiry is a date, not a date-time.** §10 says "a date-time … in the vocabulary of the Grant
+   role dialog", and that dialog asks for a date, the last valid day, sent as the end of that day. I
+   followed the dialog, its words included ("Leave empty for no expiry"). The live grant with an expiry
+   stored exactly the instant the dialog sends for its date (a test holds this).
+2. **The fact reads "Login email"**, as the user record's Account panel calls the address.
+3. **The dialog's tone is Grant role's** (`ok`), with the warning carried by the warn-tone note §10
+   names; the new panel button has the default tone beside Grant role's primary one.
+4. **The offer depends on `effectiveRoles`** from the person's record, the server's own answer, rather
+   than on the history rows.
 
 ## 7. Deviations
 
-1. **Who stays is named per kind.** §9 gives "The customers, vehicles and drivers of those rentals
-   stay as they are." for a vehicle or a customer. But the deleted vehicle is one side of every
-   rental it takes, so the app says:
-   - for a vehicle, "The customers and drivers of those rentals stay as they are.";
-   - for a customer, "The vehicles and drivers of those rentals stay as they are.";
-   - "that rental" in the singular.
-2. **Words §9 does not give, in the app's own style:**
-   - "Nothing else goes with it." in the dialog when a vehicle, a customer or a driver takes nothing;
-   - "End them first" after a plural reason 6;
-   - the confirmation's "The driver link of 1 customer record was cleared.";
-   - the hint under "Removed with driver" ("The authorization went when this driver was deleted; the
-     rental stays.");
-   - the descriptions of the two new audit panels.
-3. **The takes sentence** has no final full stop, like the block sentence it sits under; two
-   sentences join with ". ".
-4. **The tick's hint does not name cleared links.** A link is not a record that could be restored.
-5. **`blockSentence`** would join several blocks as sentences rather than with "and". Round 8 gives
-   a record one block at most, so this is never seen.
-6. **The table's takes sentence** uses the same quiet sub-line style as the reason; on a card the
-   reason is warn-coloured and the takes line quiet.
-7. **The fixtures were captured again** from the round-8 API (§2.6). The scratch data holds earlier
-   checks' records, so the counts in the fixtures are larger than the seed's. The capture deleted the
-   seeded 400 NDP rental and made its own records, as Follow-up 8's capture did.
-8. **The scratch stack was not reseeded.** It was used as round 8 and the reviewer left it; §5 names
-   records that exist in it now.
+1. **No Vite of my own on 5174.** One was already listening there, started from this worktree at
+   10:17 with `VITE_API_BASE_URL=http://localhost:5002 --port 5174 --strictPort`: the owner's
+   practice copy. It is the setup §10 describes, so I used it, and I left it running at the end rather
+   than stop a process I did not start. The owner allowed replacing the practice copy for round 9's
+   run, not for this one. The reviewer can use it as it is.
+2. **The breakages ran in a copy of the worktree**, not in the worktree as Follow-up 9's did, so the
+   owner's app on 5173 never hot-reloaded a breakage.
+3. **The no-domain refusal is written from the backend's source**, not captured (§2.6).
+4. **F8 was missed on the first run.** The Principal's tests rendered Toms while he held the role, so
+   the offer was hidden for him anyway. A case with a person who does not hold it was added and the
+   whole check run again; F30 was added afterwards for the updated label tests' negative checks.
+5. **The render helper gained an optional `me`, and the email dialog a named export**, both for the
+   tests; neither changes what the app does.
 
 ## 8. Open risks
 
-1. **Until the reviewer restarts 5001, the owner's Delete records page on 5173 will not work.** The
-   owner's app hot-reloads from this worktree and now expects round 8's answers (`takes`, reasons
-   5–7). The API on 5001 still sends round 7's, so the page cannot render its rows. The owner should
-   not open Delete records on 5173 until the restart. The rest of the app is not affected.
-2. **Cookies are shared between 5173 and 5174** in one browser profile (§5.0). Only a reviewer who
-   ignores §5.0 can trip on it, but the price is the owner being signed out.
-3. **The interruption reasons' words live in two places**, the app's labels and the backend's label
-   words (round 8). A reason renamed in one and not the other would make the page and the audit label
-   differ.
-4. **Long entries.** The entry of a vehicle or a customer with a long history lists every rental with
-   all its facts, which makes a long page. On this data that is nothing.
+1. **The owner's app on 5173 meets the round-8 API until the restart.** The round-8 API sends no role 5
+   and no `Roles.ManageRecordDeleter`, so the new action, the Record deleter rows and the holder's
+   sentence simply do not appear. The one visible change is the owner's own direction: the row button
+   reads "Delete". Nothing breaks.
+2. **The restart needs the domain.** The owner's API must start with
+   `ApiSecurity__RecordDeleterEmailDomain=rwrent.ee`; without it the dialog will show "…
+   ApiSecurity:RecordDeleterEmailDomain is empty on this installation." for every grant. That is
+   correct, but not what the owner wants.
+3. **The confirmation page's generic outcome.** If the API refuses a confirmation link because its
+   holder must stay in the domain, `/confirm-email-change` shows its usual "This confirmation link
+   cannot be used" screen, with the code line `email_change.outside_company_domain`, rather than the
+   API's sentence. It is reachable only in a race: a grant ends the session that asked for the change,
+   and the link is bound to that session. §10 does not cover this page. Option: an outcome of its own
+   for that code, worded by the API, in a later follow-up.
+4. **The role's name is written twice**, in the app's labels and in the API's messages ("Record
+   deleter"). They agree today.
 
 ## 9. Commits
 
 | Commit | Group | Files |
 |---|---|---|
-| `fe58b91` | the round-8 contract and its words, and the dialog that uses them | `src/api/dto.ts`, `src/format/labels.ts`, `src/format/recordDeletion.ts`, `src/pages/admin/DeleteRecordDialog.tsx` |
-| `4a3b81a` | the page says what each deletion takes along, links every running rental, reports what went | `src/pages/admin/DeleteRecords.tsx`, `src/pages/admin/DeleteRecords.module.css` |
-| `6118f67` | the security audit reads round 8's copies | `src/format/auditPayload.ts`, `src/pages/audit/AuditEntry.tsx`, `src/pages/audit/AuditEntry.module.css` |
-| `f02ae81` | the tests follow round 8 | `src/pages/followup8.support.ts`, `src/pages/followup9.support.ts`, `src/format/recordDeletion.test.ts`, `src/format/deletedRecord.test.ts`, `src/api/recordDeletions.test.ts`, `src/format/labels.test.ts`, `src/pages/followup8.render.test.ts`, `src/pages/followup8.phone.render.test.ts`, `src/pages/followup9.render.test.ts`, `src/pages/followup9.phone.render.test.ts` |
+| `db8b13c` | the role, its permission, its name and its refusals | `src/api/dto.ts`, `src/permissions/permissions.ts`, `src/format/labels.ts`, `src/api/codes.ts`, `src/api/codes.test.ts`, `src/format/labels.test.ts`, `src/app/routes.test.ts` |
+| `7702181` | the dialog of its own and the row actions on the Roles tab | `src/pages/users/UserRecord.tsx`, `src/pages/users/UserDialogs.tsx` |
+| `0263c8a` | the holder's email change | `src/pages/account/Profile.tsx` |
+| `c106436` | the row button reads Delete, with the tests that read its label | `src/pages/admin/DeleteRecords.tsx`, `src/format/recordDeletion.ts`, `src/pages/followup8.render.test.ts`, `src/pages/followup8.phone.render.test.ts`, `src/pages/followup9.render.test.ts`, `src/pages/followup9.phone.render.test.ts` |
+| `3c5aa91` | the screens rendered from the scratch stack's answers | `src/pages/followup7b.support.ts`, `src/pages/followup10.support.ts` (new), `src/pages/followup10.render.test.ts` (new), `src/pages/followup10.dialogs.render.test.ts` (new), `src/pages/followup10.phone.render.test.ts` (new) |
 | this one | the report | `Context/wiring_report.md` |
