@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { me as meApi, qk } from '@/api';
-import type { SessionResponse, Uuid } from '@/api/dto';
+import { ApplicationUserRole, type SessionResponse, type Uuid } from '@/api/dto';
 import { useActionMutation } from '@/app/useActionMutation';
 import { useCompanyName } from '@/app/useCompanyName';
 import { useSheetTier } from '@/app/useViewport';
@@ -482,7 +482,14 @@ function PasswordDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-function EmailDialog({ onClose }: { onClose: () => void }) {
+/**
+ * The login-email change. A holder of the Record deleter role may not leave the company's email
+ * domain (the backend's round 9): the dialog says so beforehand, and the API's refusal of an address
+ * outside it lands under the new address, in the API's own words.
+ */
+export function EmailDialog({ onClose }: { onClose: () => void }) {
+  const { me } = useAccess();
+  const holdsDeleteRight = me?.roles.includes(ApplicationUserRole.RecordDeleter) ?? false;
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const request = useActionMutation({
@@ -498,7 +505,10 @@ function EmailDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog
       title="Change login email"
-      description="A confirmation link is sent to the new address. The change applies only after you confirm it."
+      description={'A confirmation link is sent to the new address. The change applies only after you confirm it.'
+        + (holdsDeleteRight
+          ? ' Because you hold the delete right, the new address must stay in the company\'s email domain.'
+          : '')}
       icon="alternate_email"
       width={520}
       submitLabel="Send confirmation"
