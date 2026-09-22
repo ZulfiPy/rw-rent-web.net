@@ -2,13 +2,13 @@ import { useRef, useState } from 'react';
 import { qk } from '@/api';
 import { deleteRecord } from '@/api/recordDeletions';
 import {
-  AssignmentStatus, RecordDeletionReason, RecordKind,
+  RecordDeletionReason, RecordKind,
   type DeleteRecordRequest, type RecordDeletionResponse,
 } from '@/api/dto';
 import { isApiError, type Failure } from '@/api/problem';
 import {
-  DELETION_REASON_LABEL, candidateDescription, deletionConsequences, deletionRefusal, kindNoun,
-  type DeletionTarget,
+  DELETION_REASON_LABEL, candidateDescription, cannotBeRestored, deletionConsequences, deletionRefusal,
+  kindNoun, type DeletionTarget,
 } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { CheckCard } from '@/ui/CheckCard';
@@ -41,8 +41,10 @@ export function deletionFormBlocked(form: DeletionForm): string | null {
 
 /**
  * What a deletion of this kind makes stale: the page's own lists, counts and history, the audit,
- * the overview, and that kind's ordinary queries. A rental takes its parts with it and frees its
- * vehicle, so the vehicles, the interruptions and the drivers' authorization histories go too.
+ * the overview, and that kind's ordinary queries, growing with what the deletion takes along
+ * (§9, 5). A rental takes its parts with it and frees its vehicle; a vehicle or a customer takes
+ * rentals with their authorizations and interruptions, which the drivers' histories list; a driver
+ * takes authorizations off rentals and clears a customer's link.
  */
 export function deletionInvalidates(kind: RecordKind): ReadonlyArray<readonly unknown[]> {
   const page = [qk.recordDeletions.all, qk.audit.all, qk.overview];
@@ -54,30 +56,32 @@ export function deletionInvalidates(kind: RecordKind): ReadonlyArray<readonly un
     case RecordKind.Interruption:
       return [...page, qk.assignments.all, qk.interruptions.all];
     case RecordKind.Vehicle:
-      return [...page, qk.vehicles.all];
+      return [...page, qk.vehicles.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all];
     case RecordKind.Customer:
-      return [...page, qk.customers.all];
+      return [...page, qk.customers.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all];
     case RecordKind.Driver:
-      return [...page, qk.drivers.all];
+      return [...page, qk.drivers.all, qk.customers.all, qk.assignments.all];
   }
 }
 
 /**
  * A refusal the data raised after the list was loaded — the record became blocked, or left the
- * list — shown the way a concurrency conflict is: its own sentence, and Refresh. Every other
- * refusal (the fields, the concurrency conflict itself) is the shared reading's; null leaves it so.
+ * list — shown the way a concurrency conflict is: its own sentence, and Refresh. A blocked record
+ * is worded by the API itself (§9, 6). Every other refusal (the fields, the concurrency conflict
+ * itself) is the shared reading's; null leaves it so.
  */
-export function deletionFailure(kind: RecordKind, error: unknown): Failure | null {
+export function deletionFailure(error: unknown): Failure | null {
   if (!isApiError(error)) return null;
-  const refused = deletionRefusal(kind, error.code);
+  const refused = deletionRefusal(error.code, error.problem.detail);
   return refused ? { kind: 'stale', message: refused.title, detail: refused.detail } : null;
 }
 
 /**
  * The delete dialog, modelled on the Company's: the record, a bad-tone banner, what the deletion
- * does, a reason, a note, the explicit tick, and Delete permanently. A record that became blocked or
- * left the list since the page loaded is refused with Refresh, which reloads the list and closes
- * the dialog. `initial` seeds the form (the render tests use it).
+ * does and takes along (from the row's `takes`, with exact counts), a reason, a note, the explicit
+ * tick naming the numbers, and Delete permanently. A running rental never reaches it Ready; a record
+ * that became blocked or left the list since the page loaded is refused with Refresh, which reloads
+ * the list and closes the dialog. `initial` seeds the form (the render tests use it).
  */
 export function DeleteRecordDialog({ target, onClose, onDeleted, onRefresh, initial }: {
   target: DeletionTarget;
@@ -102,14 +106,10 @@ export function DeleteRecordDialog({ target, onClose, onDeleted, onRefresh, init
     onDone: () => {
       if (answer.current) onDeleted(answer.current);
     },
-    refusal: (error) => deletionFailure(kind, error),
+    refusal: deletionFailure,
   });
 
-  const activeRental = target.kind === RecordKind.RentalAssignment
-    && target.value.status === AssignmentStatus.Active;
-  const parts = target.kind === RecordKind.RentalAssignment
-    ? { authorizations: target.value.authorizationCount, interruptions: target.value.interruptionCount }
-    : undefined;
+  const takes = target.value.deletion.takes;
   const blocked = deletionFormBlocked({ reason, note, confirmed });
   const noteRequired = reason === RecordDeletionReason.Other;
 
@@ -135,14 +135,12 @@ export function DeleteRecordDialog({ target, onClose, onDeleted, onRefresh, init
       onSubmit={submit}
       onRefresh={onRefresh}
     >
-      <DialogNote icon="error" tone="bad" title={activeRental ? 'This rental is active' : 'This cannot be undone'}>
-        {activeRental
-          ? 'The vehicle is recorded as being with the customer right now. Delete it only if this rental never happened.'
-          : 'The record is removed from the database for good.'}
+      <DialogNote icon="error" tone="bad" title="This cannot be undone">
+        The record is removed from the database for good.
       </DialogNote>
 
       <ul className={dialogStyles.consequences}>
-        {deletionConsequences(kind, parts).map((line) => (
+        {deletionConsequences(kind, takes).map((line) => (
           <li key={line} className={dialogStyles.consequence}>{line}</li>
         ))}
       </ul>
@@ -179,7 +177,7 @@ export function DeleteRecordDialog({ target, onClose, onDeleted, onRefresh, init
 
       <CheckCard
         label="I understand this cannot be undone"
-        hint="The record and its parts cannot be restored from the app."
+        hint={cannotBeRestored(kind, takes)}
         checked={confirmed}
         onChange={setConfirmed}
       />

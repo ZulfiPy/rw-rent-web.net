@@ -2,8 +2,9 @@ import {
   AssignmentStatus, RecordDeletionBlockReason, RecordKind,
   type CustomerDeletionCandidateResponse, type DriverAuthorizationDeletionCandidateResponse,
   type DriverDeletionCandidateResponse, type InterruptionDeletionCandidateResponse,
-  type RecordDeletionBlockResponse, type RecordDeletionReason,
-  type RentalAssignmentDeletionCandidateResponse, type VehicleDeletionCandidateResponse,
+  type RecordDeletionBlockResponse, type RecordDeletionReason, type RecordDeletionResponse,
+  type RecordDeletionTakes, type RentalAssignmentDeletionCandidateResponse,
+  type VehicleDeletionCandidateResponse,
 } from '@/api/dto';
 import { formatLocal } from './datetime';
 import {
@@ -11,8 +12,9 @@ import {
 } from './labels';
 
 /**
- * The words of the Delete records page (Follow-up 8), from the handover's copy deck. The server
- * decides whether a record is Ready or Blocked and why; everything here only puts its answer into
+ * The words of the Delete records page (Follow-up 8, and Follow-up 9 for the backend's round 8),
+ * from the handover's copy deck and the ledger's §9. The server decides whether a record is Ready
+ * or Blocked, why, and what a deletion would take along; everything here only puts its answer into
  * sentences. Nothing here judges a record.
  */
 
@@ -24,35 +26,65 @@ export const COLLECTIVE_DRIVERS = 'Business customer drivers';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+/** "a vehicle", "a customer": the row's own kind inside a block sentence. */
+const referredNoun = (kind: RecordKind) => (kind === RecordKind.Customer ? 'customer' : 'vehicle');
+
 /**
- * One block, worded for the row it blocks. The count comes from the server; the noun for a
- * rental-assignment block is the row's own kind.
+ * One block, worded for the row it blocks (§9, 2). The count comes from the server; the records in
+ * the way are always running rentals, linked beside the sentence.
  */
 function blockClause(kind: RecordKind, block: RecordDeletionBlockResponse): string {
   switch (block.reason) {
-    case RecordDeletionBlockReason.ReferencedByRentalAssignments:
-      return `${plural(block.count, 'rental assignment refers', 'rental assignments refer')} to this ${
-        kind === RecordKind.Customer ? 'customer' : 'vehicle'}`;
-    case RecordDeletionBlockReason.ReferencedByDriverAuthorizations:
-      return `${plural(block.count, 'driver authorization refers', 'driver authorizations refer')} to this driver`;
-    case RecordDeletionBlockReason.LinkedFromCustomer:
-      return block.count === 1
-        ? 'a customer record is linked to this driver record'
-        : `${block.count} customer records are linked to this driver record`;
     case RecordDeletionBlockReason.OnlyOpenAuthorizationOfActiveRental:
       return 'an active rental must keep at least one authorization';
+    case RecordDeletionBlockReason.RentalIsRunning:
+      return 'this rental is running. End it first; then it can be deleted';
+    case RecordDeletionBlockReason.HasRunningRental:
+      return block.count === 1
+        ? `a running rental refers to this ${referredNoun(kind)}. End it first`
+        : `${block.count} running rentals refer to this ${referredNoun(kind)}. End them first`;
+    case RecordDeletionBlockReason.DriverHoldsOnlyOpenAuthorizationOfRunningRental:
+      return block.count === 1
+        ? 'this driver holds the only open authorization of a running rental'
+        : `this driver holds the only open authorization of ${block.count} running rentals`;
     default:
       return '';
   }
 }
 
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /**
- * The sentence under a Blocked chip and on its disabled Delete…: every block of the row, joined
- * with "and" (a driver can carry two at once), with a capital letter and no full stop.
+ * The sentence under a Blocked chip and on its disabled Delete…: every block of the row, each with
+ * a capital letter, with no full stop at the end. Round 8 gives a record one block at most; should
+ * one ever carry two, they read as two sentences.
  */
 export function blockSentence(kind: RecordKind, blocks: readonly RecordDeletionBlockResponse[]): string {
-  const text = blocks.map((block) => blockClause(kind, block)).filter(Boolean).join(' and ');
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return blocks.map((block) => blockClause(kind, block)).filter(Boolean).map(capital).join('. ');
+}
+
+/** "2 rental assignments, 3 driver authorizations and 1 interruption" — only the counts that are not zero. */
+function recordsList(takes: Pick<RecordDeletionTakes, 'rentalAssignments' | 'driverAuthorizations' | 'interruptions'>): string {
+  const bits: string[] = [];
+  if (takes.rentalAssignments) bits.push(plural(takes.rentalAssignments, 'rental assignment', 'rental assignments'));
+  if (takes.driverAuthorizations) bits.push(plural(takes.driverAuthorizations, 'driver authorization', 'driver authorizations'));
+  if (takes.interruptions) bits.push(plural(takes.interruptions, 'interruption', 'interruptions'));
+  return bits.length > 1 ? `${bits.slice(0, -1).join(', ')} and ${bits.at(-1)}` : bits[0] ?? '';
+}
+
+const customerRecords = (n: number) => plural(n, 'customer record', 'customer records');
+
+/**
+ * What a deletion takes along, from the server's `takes` (§9, 2): the records that go, then the
+ * customer links it clears, each only when not zero, or that nothing else goes. Like the block
+ * sentence, no full stop at the end.
+ */
+export function takesSentence(takes: RecordDeletionTakes): string {
+  const lines: string[] = [];
+  const records = recordsList(takes);
+  if (records) lines.push(`Takes ${records} with it`);
+  if (takes.customerLinksCleared) lines.push(`Clears the driver link of ${customerRecords(takes.customerLinksCleared)}`);
+  return lines.length ? lines.join('. ') : 'Nothing else goes with it';
 }
 
 const day = (iso: string | null | undefined) => formatLocal(iso, 'dateShort');
@@ -126,25 +158,44 @@ export function candidateDescription(row: DeletionTarget): string {
 export const AUDIT_CONSEQUENCE =
   'One entry stays in the security audit: you, the time, your reason and a copy of the deleted record.';
 
+/** A rental's own parts: "Its 2 driver authorizations and 1 interruption are removed with it." */
+function partsLine(takes: RecordDeletionTakes): string | null {
+  const a = takes.driverAuthorizations;
+  const i = takes.interruptions;
+  if (a + i === 0) return null;
+  const bits: string[] = [];
+  if (a) bits.push(plural(a, 'driver authorization', 'driver authorizations'));
+  if (i) bits.push(plural(i, 'interruption', 'interruptions'));
+  return `Its ${bits.join(' and ')} ${a + i === 1 ? 'is' : 'are'} removed with it.`;
+}
+
 /**
- * What a deletion does, in the dialog's consequence box. A rental's parts are counted by the server
- * on the row; the other kinds can only be Ready when nothing refers to them, so their second line
- * says so.
+ * The rentals a vehicle or a customer takes: "Its 2 rental assignments, with 3 driver
+ * authorizations and 1 interruption, are removed with it."
  */
-export function deletionConsequences(kind: RecordKind, parts?: { authorizations: number; interruptions: number }): string[] {
+function rentalsLine(takes: RecordDeletionTakes): string {
+  const rentals = plural(takes.rentalAssignments, 'rental assignment', 'rental assignments');
+  const parts = recordsList({ rentalAssignments: 0, driverAuthorizations: takes.driverAuthorizations, interruptions: takes.interruptions });
+  return `Its ${rentals}${parts ? `, with ${parts},` : ''} ${takes.rentalAssignments === 1 ? 'is' : 'are'} removed with it.`;
+}
+
+const NOTHING_ELSE = 'Nothing else goes with it.';
+
+/**
+ * What a deletion does, in the dialog's consequence box (§9, 4), built from the row's `takes` with
+ * exact counts. Every kind ends with the audit line.
+ */
+export function deletionConsequences(kind: RecordKind, takes: RecordDeletionTakes): string[] {
+  const noun = kindNoun(kind);
   switch (kind) {
     case RecordKind.RentalAssignment: {
-      const lines = ['The rental assignment is removed permanently.'];
-      const a = parts?.authorizations ?? 0;
-      const i = parts?.interruptions ?? 0;
-      if (a + i > 0) {
-        const bits: string[] = [];
-        if (a) bits.push(plural(a, 'driver authorization', 'driver authorizations'));
-        if (i) bits.push(plural(i, 'interruption', 'interruptions'));
-        lines.push(`Its ${bits.join(' and ')} ${a + i === 1 ? 'is' : 'are'} removed with it.`);
-      }
-      lines.push('The customer, the vehicle and the drivers stay as they are.');
-      return [...lines, AUDIT_CONSEQUENCE];
+      const parts = partsLine(takes);
+      return [
+        'The rental assignment is removed permanently.',
+        ...(parts ? [parts] : []),
+        'The customer, the vehicle and the drivers stay as they are.',
+        AUDIT_CONSEQUENCE,
+      ];
     }
     case RecordKind.DriverAuthorization:
       return [
@@ -158,42 +209,79 @@ export function deletionConsequences(kind: RecordKind, parts?: { authorizations:
         'The rental assignment, its authorizations and its other interruptions stay as they are.',
         AUDIT_CONSEQUENCE,
       ];
-    case RecordKind.Driver:
+    case RecordKind.Vehicle:
+    case RecordKind.Customer: {
+      // The record being deleted is one side of every rental it takes; only the other sides stay.
+      const others = kind === RecordKind.Vehicle ? 'customers and drivers' : 'vehicles and drivers';
       return [
-        'The driver is removed permanently.',
-        'No driver authorization and no customer record refer to this driver, so nothing else changes.',
+        `The ${noun} is removed permanently.`,
+        ...(takes.rentalAssignments
+          ? [rentalsLine(takes), `The ${others} of ${takes.rentalAssignments === 1 ? 'that rental' : 'those rentals'} stay as they are.`]
+          : [NOTHING_ELSE]),
         AUDIT_CONSEQUENCE,
       ];
-    default:
-      return [
-        `The ${kindNoun(kind)} is removed permanently.`,
-        `No rental assignment refers to this ${kindNoun(kind)}, so nothing else changes.`,
-        AUDIT_CONSEQUENCE,
-      ];
+    }
+    case RecordKind.Driver: {
+      const a = takes.driverAuthorizations;
+      const links = takes.customerLinksCleared;
+      const lines = ['The driver is removed permanently.'];
+      if (a) {
+        lines.push(a === 1
+          ? 'Their 1 driver authorization is removed from the rental it was on; that rental stays.'
+          : `Their ${a} driver authorizations are removed from the rentals they were on; those rentals stay.`);
+      }
+      if (links) {
+        lines.push(links === 1
+          ? 'The link of 1 customer record to this driver is cleared; the customer stays.'
+          : `The links of ${links} customer records to this driver are cleared; the customers stay.`);
+      }
+      if (!a && !links) lines.push(NOTHING_ELSE);
+      return [...lines, AUDIT_CONSEQUENCE];
+    }
   }
 }
 
 /**
- * A refusal the data raised after the list was loaded, split into the banner's bold line and the
- * instruction under it: the record gained a reference (`record_deletions.blocked`) or left the list
- * (`record_deletions.not_found`). Null for any other code.
+ * The hint under "I understand this cannot be undone" (§9, 4): the record and what goes with it,
+ * with the numbers. A cleared link is not a record, so it is not among them.
  */
-export function deletionRefusal(kind: RecordKind, code: string | undefined): { title: string; detail: string } | null {
+export function cannotBeRestored(kind: RecordKind, takes: RecordDeletionTakes): string {
+  const records = recordsList(takes);
+  return records
+    ? `This ${kindNoun(kind)} and the ${records} cannot be restored from the app.`
+    : `This ${kindNoun(kind)} cannot be restored from the app.`;
+}
+
+/**
+ * What went with a deleted record, from the deletion's answer (§9, 5), for the confirmation line:
+ * "2 rental assignments, 3 driver authorizations and 1 interruption went with it." and the cleared
+ * links; null when nothing went.
+ */
+export function wentWith(done: RecordDeletionResponse): string | null {
+  const lines: string[] = [];
+  const records = recordsList({
+    rentalAssignments: done.deletedRentalAssignmentCount,
+    driverAuthorizations: done.deletedAuthorizationCount,
+    interruptions: done.deletedInterruptionCount,
+  });
+  if (records) lines.push(`${capital(records)} went with it.`);
+  if (done.clearedCustomerLinkCount) {
+    lines.push(`The driver link of ${customerRecords(done.clearedCustomerLinkCount)} was cleared.`);
+  }
+  return lines.length ? lines.join(' ') : null;
+}
+
+/**
+ * A refusal the data raised after the list was loaded, split into the banner's bold line and the
+ * instruction under it (§9, 6). A record that became blocked (`record_deletions.blocked`) is worded
+ * by the server itself: the bold line is the API's own sentence for the reason. A record that left
+ * the list (`record_deletions.not_found`) keeps the app's words. Null for any other code.
+ */
+export function deletionRefusal(code: string | undefined, apiDetail?: string | null): { title: string; detail: string } | null {
   const detail = 'Refresh the list.';
   if (code === 'record_deletions.not_found') return { title: 'This record is no longer in the list.', detail };
   if (code !== 'record_deletions.blocked') return null;
-  switch (kind) {
-    case RecordKind.Vehicle:
-      return { title: 'This vehicle now has a rental assignment.', detail };
-    case RecordKind.Customer:
-      return { title: 'This customer now has a rental assignment.', detail };
-    case RecordKind.Driver:
-      return { title: 'This driver is now referenced by another record.', detail };
-    case RecordKind.DriverAuthorization:
-      return { title: 'This is now the only open authorization of an active rental.', detail };
-    default:
-      return { title: 'This record gained a reference while the list was open.', detail };
-  }
+  return { title: apiDetail?.trim() || 'This record can no longer be deleted.', detail };
 }
 
 /** "Practice or test record — made while teaching a new colleague." — the reason read back. */

@@ -188,7 +188,9 @@ export const AUDIT_EVENTS: Array<[string, string[], string?]> = [
   ['Session', ['RevokedByAdministrator', 'AllRevokedByAdministrator', 'Revoked', 'OthersRevoked']],
   ['Company', ['Created', 'Updated', 'Deleted']],
   ['RentalAssignment', ['Cancelled', 'TimelineCorrected', 'PartiesCorrected', 'Deleted'], 'Rental assignment'],
-  ['DriverAuthorization', ['Corrected', 'Deleted'], 'Driver authorisation'],
+  // RemovedWithDriver (round 8): an authorization that went with a deleted driver, written against
+  // the rental it belonged to, which lives on.
+  ['DriverAuthorization', ['Corrected', 'Deleted', 'RemovedWithDriver'], 'Driver authorisation'],
   ['Interruption', ['Corrected', 'Deleted']],
   // The deletions of the backend's round 7 (Follow-up 8). A deleted authorization or interruption
   // is written against its rental, so the entity is the rental while the event names the part.

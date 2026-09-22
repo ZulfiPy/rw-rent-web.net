@@ -2,7 +2,8 @@
 // is written against: GET http://localhost:5001/openapi/v1.json on the running API in Development.
 // Since the backend's round 6 the seven record responses name who created and who last changed the
 // record; a list item names nobody, so the two list items that share a record's shape omit both.
-// Since its round 7 the Delete records page reads its candidates, counts and deletions here too.
+// Since its round 7 the Delete records page reads its candidates, counts and deletions here too;
+// since its round 8 a deletion takes what hangs below the record, and the page reads what it takes.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -859,7 +860,7 @@ export interface OverviewSummaryResponse {
   pendingRegistrations?: number | null;
 }
 
-/* record deletions (the backend's round 7) ------------------------------ */
+/* record deletions (the backend's rounds 7 and 8) ----------------------- */
 
 /** The six kinds of record the Delete records page can remove. */
 export const RecordKind = {
@@ -884,15 +885,20 @@ export type RecordDeletionReason = (typeof RecordDeletionReason)[keyof typeof Re
 export const RecordDeletionState = { Ready: 1, Blocked: 2 } as const;
 export type RecordDeletionState = (typeof RecordDeletionState)[keyof typeof RecordDeletionState];
 
+/**
+ * Why a record cannot be deleted (round 8). Values 1–3 (round 7's references and customer link)
+ * were withdrawn and are not reused: a deletion now takes what hangs below the record, and only a
+ * running rental, or the last open cover of one, stands in its way.
+ */
 export const RecordDeletionBlockReason = {
-  /** A vehicle or a customer a rental assignment of any status refers to. */
-  ReferencedByRentalAssignments: 1,
-  /** A driver a driver authorization refers to. */
-  ReferencedByDriverAuthorizations: 2,
-  /** A driver a customer record is linked to. */
-  LinkedFromCustomer: 3,
   /** The only open authorization of an Active rental assignment. */
   OnlyOpenAuthorizationOfActiveRental: 4,
+  /** A rental assignment that is running (Active): it has to be ended first. */
+  RentalIsRunning: 5,
+  /** A vehicle or a customer one of whose rental assignments is running. */
+  HasRunningRental: 6,
+  /** A driver who holds the only open authorization of a running rental assignment. */
+  DriverHoldsOnlyOpenAuthorizationOfRunningRental: 7,
 } as const;
 export type RecordDeletionBlockReason =
   (typeof RecordDeletionBlockReason)[keyof typeof RecordDeletionBlockReason];
@@ -901,7 +907,7 @@ export type RecordDeletionBlockReason =
 export const RecordDeletionShow = { OutOfUse: 1, Everything: 2 } as const;
 export type RecordDeletionShow = (typeof RecordDeletionShow)[keyof typeof RecordDeletionShow];
 
-/** One record in the way of a deletion; its label is a rental's record label or a customer's name. */
+/** One record in the way of a deletion: since round 8 always a running rental, by its record label. */
 export interface RecordDeletionBlockingRecordResponse {
   kind: RecordKind;
   id: Uuid;
@@ -916,10 +922,25 @@ export interface RecordDeletionBlockResponse {
   records: RecordDeletionBlockingRecordResponse[];
 }
 
+/**
+ * What a deletion would take along (round 8): for a rental its own parts; for a vehicle or a
+ * customer every one of its rentals with their parts; for a driver their authorizations and the
+ * customer links it clears. Counted whatever the state, so the numbers stay true once a block is
+ * lifted.
+ */
+export interface RecordDeletionTakes {
+  rentalAssignments: number;
+  driverAuthorizations: number;
+  interruptions: number;
+  /** Customer records whose driver link would be cleared; the customers themselves stay. */
+  customerLinksCleared: number;
+}
+
 export interface RecordDeletionInfo {
   state: RecordDeletionState;
   /** Empty when the state is Ready. */
   blocks: RecordDeletionBlockResponse[];
+  takes: RecordDeletionTakes;
 }
 
 export interface RentalAssignmentDeletionCandidateResponse {
@@ -937,9 +958,9 @@ export interface RentalAssignmentDeletionCandidateResponse {
   plannedEndAtUtc?: Instant | null;
   startedAtUtc?: Instant | null;
   closedAtUtc?: Instant | null;
-  /** The driver authorizations that would go with it. */
+  /** Its own driver authorizations, which would go with it. */
   authorizationCount: number;
-  /** The interruptions that would go with it. */
+  /** Its own interruptions, which would go with it. */
   interruptionCount: number;
   deletion: RecordDeletionInfo;
 }
@@ -967,7 +988,7 @@ export interface DriverAuthorizationDeletionCandidateResponse {
 
 export interface InterruptionDeletionCandidateResponse {
   id: Uuid;
-  /** "<reason name> · <plate> · <customer>"; the reason is its API name, e.g. "CarRepair". */
+  /** "<reason> · <plate> · <customer>"; since round 8 the reason in words, e.g. "Car repair". */
   recordLabel: string;
   rentalAssignmentId: Uuid;
   rentalAssignmentLabel: string;
@@ -1065,7 +1086,12 @@ export interface RecordDeletionResponse {
   auditEntryId: Uuid;
   kind: RecordKind;
   recordLabel: string;
-  /** The rental's own authorizations that went with it; 0 for every other kind. */
+  /** Every driver authorization that went with the record (a rental's, a vehicle's or customer's rentals', a driver's). */
   deletedAuthorizationCount: number;
+  /** Every interruption that went with the record. */
   deletedInterruptionCount: number;
+  /** The rental assignments that went with a deleted vehicle or customer; 0 otherwise. */
+  deletedRentalAssignmentCount: number;
+  /** The customer records whose link to a deleted driver was cleared; 0 otherwise. */
+  clearedCustomerLinkCount: number;
 }
