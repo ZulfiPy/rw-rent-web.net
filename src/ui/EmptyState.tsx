@@ -3,14 +3,16 @@ import styles from './EmptyState.module.css';
 /**
  * The empty and problem states share one shell: icon, one line, one paragraph, optional retry.
  * `variant` picks the prototype's rule for the context: 'page' when the block owns the page area,
- * 'panel' when it sits inside a panel.
+ * 'panel' when it sits inside a panel. `action` is the one step that leads out of an empty state
+ * (Follow-up 11: Delete records' "Show everything"), in the retry button's form.
  */
-export function EmptyState({ icon, title, body, code, onRetry, variant = 'page' }: {
+export function EmptyState({ icon, title, body, code, onRetry, action, variant = 'page' }: {
   icon: string;
   title: string;
   body: string;
   code?: string | undefined;
   onRetry?: (() => void) | undefined;
+  action?: { label: string; icon: string; onClick: () => void } | undefined;
   variant?: 'page' | 'panel';
 }) {
   return (
@@ -23,6 +25,12 @@ export function EmptyState({ icon, title, body, code, onRetry, variant = 'page' 
         <button type="button" className={styles.retry} onClick={onRetry}>
           <span data-icon aria-hidden="true" className={styles.retryIcon}>refresh</span>
           Try again
+        </button>
+      ) : null}
+      {action ? (
+        <button type="button" className={styles.retry} onClick={action.onClick}>
+          <span data-icon aria-hidden="true" className={styles.retryIcon}>{action.icon}</span>
+          {action.label}
         </button>
       ) : null}
     </div>

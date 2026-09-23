@@ -21,10 +21,39 @@ import {
 /** "driver authorization" — the kind inside a sentence. */
 export const kindNoun = (kind: RecordKind) => RECORD_KIND_LABEL[kind].toLowerCase();
 
+/** "driver authorizations": every kind's plural is its noun and an s. */
+export const kindNouns = (kind: RecordKind) => `${kindNoun(kind)}s`;
+
 /** What a collective Business-customer authorization is called where a driver's name stands. */
 export const COLLECTIVE_DRIVERS = 'Business customer drivers';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * A record of each kind that is not out of use, in the words of the API's Show filter (round 7):
+ * out of use is a cancelled or ended rental, a stopped authorization, an ended interruption, an
+ * inactive vehicle, customer or driver.
+ */
+const IN_USE: Record<RecordKind, [one: string, many: string]> = {
+  [RecordKind.RentalAssignment]: ['planned or active rental assignment', 'planned or active rental assignments'],
+  [RecordKind.DriverAuthorization]: ['open driver authorization', 'open driver authorizations'],
+  [RecordKind.Interruption]: ['open interruption', 'open interruptions'],
+  [RecordKind.Vehicle]: ['active vehicle', 'active vehicles'],
+  [RecordKind.Customer]: ['active customer', 'active customers'],
+  [RecordKind.Driver]: ['active driver', 'active drivers'],
+};
+
+/**
+ * The empty list under "Out of use" (Follow-up 11, F11-3): how many records of the kind Everything
+ * holds, from the server's counts, or undefined while they are not known. With nothing out of use,
+ * each of them is one in use. Null when Everything holds none either, so the page offers no switch.
+ */
+export function outOfUseEmpty(kind: RecordKind, everything: number | undefined): string | null {
+  if (everything === 0) return null;
+  if (everything === undefined) return 'Everything lists the records still in use.';
+  const [one, many] = IN_USE[kind];
+  return `${plural(everything, one, many)} ${everything === 1 ? 'is' : 'are'} under Everything.`;
+}
 
 /** "a vehicle", "a customer": the row's own kind inside a block sentence. */
 const referredNoun = (kind: RecordKind) => (kind === RecordKind.Customer ? 'customer' : 'vehicle');

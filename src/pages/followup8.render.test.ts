@@ -30,9 +30,12 @@ const listQuery = (show: RecordDeletionShow, search?: string) => ({
   PageNumber: 1, PageSize: 20, Show: show, ...(search ? { Search: search } : {}),
 });
 
-/** The page at an address, with the kind's list, the counts and Recently deleted in the cache. */
+/**
+ * The page at an address, with the kind's list, the counts under both filters and Recently deleted in
+ * the cache. The page opens on Everything since Follow-up 11, so that is the list a bare address reads.
+ */
 function renderPage(kind: RecordKind, items: unknown[], {
-  at = '/delete-records', show = RecordDeletionShow.OutOfUse, search, permissions = ADMIN, made = deletionsMade,
+  at = '/delete-records', show = RecordDeletionShow.Everything, search, permissions = ADMIN, made = deletionsMade,
 }: {
   at?: string;
   show?: RecordDeletionShow;
@@ -46,7 +49,8 @@ function renderPage(kind: RecordKind, items: unknown[], {
     permissions,
     data: [
       [qk.recordDeletions.candidates(kind, listQuery(show, search)), page(items)],
-      [qk.recordDeletions.counts(show), show === RecordDeletionShow.Everything ? countsEverything : countsOutOfUse],
+      [qk.recordDeletions.counts(RecordDeletionShow.OutOfUse), countsOutOfUse],
+      [qk.recordDeletions.counts(RecordDeletionShow.Everything), countsEverything],
       [qk.recordDeletions.made({ PageSize: 20 }), page(made)],
     ],
   });
@@ -76,16 +80,19 @@ const headers = (markup: string) =>
 describe('the page frame', () => {
   const markup = renderPage(RecordKind.RentalAssignment, [rentalEnded, rentalCancelled]);
 
-  test('the bad-tone banner, the six kinds with their counts, and the Show filter', () => {
+  test('the bad-tone banner, the six kinds with their counts, and the Show filter, open on Everything (Follow-up 11)', () => {
     expect(markup).toContain('Deleted means gone');
     expect(markup).toContain('The record leaves the database. What stays is one entry in the security audit');
     for (const label of ['Rental assignments', 'Driver authorizations', 'Interruptions', 'Vehicles', 'Customers', 'Drivers']) {
       expect(markup).toContain(`${label}<span`);
     }
-    expect(markup).toMatch(new RegExp(`Rental assignments<span[^>]*>${countsOutOfUse.rentalAssignments}</span>`));
-    expect(markup).toMatch(new RegExp(`Vehicles<span[^>]*>${countsOutOfUse.vehicles}</span>`));
+    expect(markup).toMatch(new RegExp(`Rental assignments<span[^>]*>${countsEverything.rentalAssignments}</span>`));
+    expect(markup).toMatch(new RegExp(`Vehicles<span[^>]*>${countsEverything.vehicles}</span>`));
     expect(markup).toContain('>Show<');
-    expect(markup).toContain('>Out of use<');
+    expect(markup).toMatch(/_selectValue_[^"]*">Everything<\/span>/);
+    expect(markup).toContain('<option value="out-of-use">Out of use</option>');
+    // Everything is no filter: there is nothing to clear.
+    expect(markup).not.toContain('Clear filters');
     expect(markup).toContain('placeholder="Plate, VIN or customer name"');
   });
 
@@ -205,9 +212,12 @@ describe('each kind’s table, with the server’s verdict on every row', () => 
 
 describe('when there is nothing, and when the page is not yours', () => {
   test('nothing out of use of a kind is the empty state; a search that finds nothing says so', () => {
-    const empty = renderPage(RecordKind.Interruption, [], { at: '/delete-records?kind=interruptions' });
-    expect(empty).toContain('Nothing to clean up');
-    expect(empty).toContain('No out-of-use records of this kind. Switch Show to Everything to see the rest.');
+    const empty = renderPage(RecordKind.Interruption, [], {
+      at: '/delete-records?kind=interruptions&show=out-of-use', show: RecordDeletionShow.OutOfUse,
+    });
+    expect(empty).toContain('Nothing out of use here');
+    expect(empty).toContain(`${countsEverything.interruptions} open interruptions are under Everything.`);
+    expect(empty).toMatch(/<button[^>]*>(?:(?!<\/button>).)*visibility(?:(?!<\/button>).)*Show everything<\/button>/);
     expect(listOf(empty)).not.toContain('<table');
     const searched = renderPage(RecordKind.Vehicle, [], {
       at: '/delete-records?kind=vehicles&search=zzz', search: 'zzz',

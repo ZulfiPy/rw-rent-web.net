@@ -18,8 +18,8 @@ import { toFailure } from '@/api/problem';
 import {
   ASSIGNMENT_STATUS_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL, INTERRUPTION_REASON_LABEL,
   LOCAL_TIME_NOTE, RECORD_KIND_LABEL, STOP_REASON_LABEL, SYSTEM_ACTOR, authorizationDriver,
-  blockSentence, deletionPeriod, deletionReasonText, formatLocal, kindNoun, partsText, rentalPeriod,
-  takesSentence, wentWith, type DeletionTarget,
+  blockSentence, deletionPeriod, deletionReasonText, formatLocal, kindNoun, kindNouns, outOfUseEmpty,
+  partsText, rentalPeriod, takesSentence, wentWith, type DeletionTarget,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -51,6 +51,10 @@ import styles from './DeleteRecords.module.css';
  * and what a deletion would take along all come from the API (rounds 7 and 8; Follow-up 9); this page
  * only words them. The kind, the filter, the search and the page live in the URL; the search and the
  * page reset when the kind changes, Show does not.
+ *
+ * The page opens on Everything (Follow-up 11, F11-3): opened on "Out of use", every tab of a
+ * young company read 0 and an active customer seemed missing. "Out of use" stays as a filter, and
+ * its empty list says how many records Everything holds, with the switch to it.
  */
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -76,9 +80,12 @@ const KINDS: readonly KindTab[] = [
   { kind: RecordKind.Driver, slug: 'drivers', label: 'Drivers', icon: 'badge', count: 'drivers', search: 'Name, licence number or email' },
 ];
 
+/** Show's value in the URL for "Out of use"; without it the page shows Everything. */
+const OUT_OF_USE = 'out-of-use';
+
 const SHOW_OPTIONS: FilterOption[] = [
-  { value: '', label: 'Out of use' },
-  { value: 'all', label: 'Everything' },
+  { value: '', label: 'Everything' },
+  { value: OUT_OF_USE, label: 'Out of use' },
 ];
 
 /* the verdict ---------------------------------------------------------------------------------- */
@@ -447,7 +454,8 @@ export function DeleteRecords() {
 
   const tab = KINDS.find((k) => k.slug === params.get('kind')) ?? KINDS[0]!;
   const kind = tab.kind;
-  const show = params.get('show') === 'all' ? RecordDeletionShow.Everything : RecordDeletionShow.OutOfUse;
+  // Before Follow-up 11 the address said `show=all` for Everything; such a link still opens on it.
+  const show = params.get('show') === OUT_OF_USE ? RecordDeletionShow.OutOfUse : RecordDeletionShow.Everything;
   const search = params.get('search') ?? '';
   const pageNumber = Math.max(1, Number(params.get('page') ?? 1));
   const pageSize = Number(params.get('size') ?? DEFAULT_PAGE_SIZE);
@@ -486,6 +494,12 @@ export function DeleteRecords() {
     queryFn: () => countCandidates({ show }),
     enabled: allowed,
   });
+  /* Everything's totals, for the empty list under Out of use; under Everything the same query as the tabs'. */
+  const everything = useQuery({
+    queryKey: qk.recordDeletions.counts(RecordDeletionShow.Everything),
+    queryFn: () => countCandidates({ show: RecordDeletionShow.Everything }),
+    enabled: allowed,
+  });
   const made = useQuery({
     queryKey: qk.recordDeletions.made({ PageSize: 20 }),
     queryFn: () => listDeletions({ PageSize: 20 }),
@@ -512,7 +526,8 @@ export function DeleteRecords() {
   const page = candidates.data as PagedResponse<AnyCandidate> | undefined;
   const rows = page?.items.map((item) => ({ row: rowOf(kind, item), item })) ?? [];
   const spec = SPECS[kind];
-  const filtered = !!search || show === RecordDeletionShow.Everything;
+  const filtered = !!search || show === RecordDeletionShow.OutOfUse;
+  const inUse = outOfUseEmpty(kind, everything.data?.[tab.count]);
 
   const selectKind = (next: RecordKind) => {
     const slug = KINDS.find((k) => k.kind === next)?.slug ?? '';
@@ -555,7 +570,7 @@ export function DeleteRecords() {
             onChange={(next) => patch({ search: next })}
           />
           <SelectFilter
-            value={show === RecordDeletionShow.Everything ? 'all' : ''}
+            value={show === RecordDeletionShow.OutOfUse ? OUT_OF_USE : ''}
             options={SHOW_OPTIONS}
             label="Show"
             onChange={(next) => patch({ show: next })}
@@ -581,12 +596,15 @@ export function DeleteRecords() {
               title="No results for these filters"
               body="Nothing matches the current search and filters. Clearing them restores the full list."
             />
-          ) : (
+          ) : show === RecordDeletionShow.OutOfUse ? (
             <EmptyState
               icon="inventory_2"
-              title="Nothing to clean up"
-              body="No out-of-use records of this kind. Switch Show to Everything to see the rest."
+              title="Nothing out of use here"
+              body={inUse ?? `There are no ${kindNouns(kind)} under Everything either.`}
+              action={inUse ? { label: 'Show everything', icon: 'visibility', onClick: () => patch({ show: '' }) } : undefined}
             />
+          ) : (
+            <EmptyState icon="inventory_2" title="Nothing to delete" body={`There are no ${kindNouns(kind)}.`} />
           )
         ) : phone ? (
           <div className={cards.cards}>

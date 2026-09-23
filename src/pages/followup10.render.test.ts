@@ -157,7 +157,8 @@ describe('the role’s name wherever roles are named', () => {
 describe('a person who holds the Record deleter role alone', () => {
   test('reads the Delete records page, its rows with their Delete, and Recently deleted without audit links', () => {
     const markup = renderPage(h(DeleteRecords), {
-      at: '/delete-records?kind=vehicles',
+      // The captured lists are the Out of use ones, which the page no longer opens on (Follow-up 11).
+      at: '/delete-records?kind=vehicles&show=out-of-use',
       route: '/delete-records',
       permissions: meTomsBare.permissions,
       me: meTomsBare,
