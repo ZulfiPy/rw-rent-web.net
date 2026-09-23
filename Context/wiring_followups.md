@@ -94,6 +94,13 @@ Both `feature/backend-wiring` branches merge into their `main` only after the ow
 checkouts stay untouched, both branches keep receiving the next phases' commits, and the developer
 database keeps the seeded dataset.
 
+**Passed 2026-09-23.** The owner checked the app from an empty database as its real users (the
+administrator, a Company Principal, a Fleet Manager, a Viewer, the Record deleter role, customers,
+drivers, vehicles, rentals, the deletion of a customer and a driver) and declared the check done:
+"most of the things were tested, at least the things that I am going to use in most cases". Both
+`feature/backend-wiring` branches were fast-forwarded into their `main` the same day. Follow-up 11's
+findings (§11) are the first work after the merge.
+
 ## 4. Backlog — known, not scheduled
 
 1. The prototype file is out of date in two places (decisions 5 and 6): its transfer-acceptance
@@ -484,8 +491,8 @@ holder and shows the refusal on the new address.
 
 ## 11. Follow-up 11 — what the owner finds in the full check from an empty app
 
-> **Status: COLLECTING (from 2026-09-23).** The owner checks everything from an empty app (§1).
-> Findings are recorded here as they come and handed over as one batch.
+> **Status: COLLECTED 2026-09-23, to be handed over after the merge.** The owner checked the app
+> from an empty database (§1) and closed the check the same day; these three findings are the batch.
 
 - **F11-1. A refusal placed under a field that is scrolled out of view goes unnoticed** (owner,
   2026-09-23, bug). Creating an Active rental for 899LGR while it already has an Active rental: the
