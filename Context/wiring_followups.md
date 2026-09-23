@@ -508,3 +508,22 @@ holder and shows the refusal on the new address.
   and it stays there once the date has passed. Activating it while the vehicle still has an Active
   rental is refused ("The vehicle already has an active assignment."); the Active rental has to be
   ended first (ASSIGN-004).
+- **F11-2. The new-rental dialog warns before the refusal** (owner, 2026-09-23: "we have to see
+  informative information and if we do something wrong, the UI has to let us know"). When the
+  initial status is Active and the chosen vehicle is in use (the vehicle list's `availability` is
+  InUse and names `currentCustomerDisplayName`), a warn line under the Vehicle field says at once:
+  "This vehicle is in use by <customer>. End that rental first, or plan this one." with a link to
+  that rental; the same for a Planned rental whose planned range overlaps another Planned one is not
+  asked (the API's refusal, now visible through F11-1, is enough there). The API still decides; the
+  warning does not block the submit. Side: frontend only.
+- **F11-3. Delete records opens on "Out of use", so an active record seems missing** (owner,
+  2026-09-23, the second time: on 2026-09-21 in the practice copy too). The owner, signed in as the
+  daily account holding the Record deleter role, looked for the active customer Test Testovich
+  (one Planned rental) and found every tab at 0: the page opened on "Show: Out of use", which lists
+  only cancelled and ended rentals, stopped authorizations, ended interruptions and inactive
+  vehicles, customers and drivers. Under "Everything" the customer is there, Ready, taking its
+  planned rental with it. **Fix (reviewer's recommendation, the owner told):** the page opens on
+  "Everything"; "Out of use" stays as a filter; and the empty state under "Out of use" says how many
+  records "Everything" holds ("Nothing out of use here. 1 active customer is under Everything.") with
+  a button that switches the filter. The counts endpoint already answers both filters. Side:
+  frontend only.
