@@ -7,8 +7,8 @@ import { listDrivers } from '@/api/drivers';
 import { listVehicles } from '@/api/vehicles';
 import { createAssignment } from '@/api/rentalAssignments';
 import {
-  AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType,
-  type CustomerListItemResponse, type InitialAuthorizationRequest,
+  AssignmentDriverAuthorizationType, AssignmentStatus, CustomerType, VehicleAvailability,
+  type CustomerListItemResponse, type InitialAuthorizationRequest, type VehicleListItemResponse,
 } from '@/api/dto';
 import { fromLocalInput } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
@@ -26,7 +26,7 @@ const INVALIDATE = [
 const PICK = { PageSize: 100 } as const;
 
 /** The prototype's `driveMode`: one coverage mode at a time, or none while Planned. */
-type Mode = '' | 'customer' | 'named' | 'company';
+export type Mode = '' | 'customer' | 'named' | 'company';
 
 const LOCK_COMPANY_HINT = 'Collective authorization for this business customer’s drivers. '
   + 'One mode at a time — either named drivers or this.';
@@ -237,23 +237,59 @@ export function Coverage({ label, customer, mode, setMode, named, setNamed, comp
 }
 
 /**
+ * The chosen vehicle, when the new assignment would start Active while that vehicle is in use; null
+ * otherwise. Only the vehicle list's own `availability` is read (VEHICLE-009, the server's): the API
+ * still decides, and refuses such an assignment with `rental_assignments.vehicle_already_active`.
+ */
+export function vehicleInUse(
+  vehicle: VehicleListItemResponse | null | undefined,
+  initialStatus: AssignmentStatus,
+): VehicleListItemResponse | null {
+  return initialStatus === AssignmentStatus.Active && vehicle?.availability === VehicleAvailability.InUse
+    ? vehicle
+    : null;
+}
+
+/**
+ * The warning under the Vehicle field (Follow-up 11, F11-2): who has the vehicle, and a link to
+ * that rental. It blocks nothing.
+ */
+export function VehicleInUse({ vehicle }: { vehicle: VehicleListItemResponse }) {
+  const who = vehicle.currentCustomerDisplayName;
+  const rental = vehicle.currentAssignmentId
+    ? <Link to={`/rental-assignments/${vehicle.currentAssignmentId}`}>that rental</Link>
+    : 'that rental';
+  return <>This vehicle is in use{who ? ` by ${who}` : ''}. End {rental} first, or plan this one.</>;
+}
+
+/** What the form starts from; the render tests seed it. */
+export interface NewAssignmentForm {
+  customerId: string;
+  vehicleId: string;
+  initialStatus: AssignmentStatus;
+  mode: Mode;
+  named: string[];
+}
+
+/**
  * The prototype's `assignment-create`: parties, the initial lifecycle state, the timeline that state
  * implies, driver coverage and the assignment note. A Planned assignment may be saved without a
- * driver; an Active one may not, and the footnote says so before the button refuses.
+ * driver; an Active one may not, and the footnote says so before the button refuses. An Active one
+ * on a vehicle in use is warned about under the Vehicle field before anything is sent.
  */
-export function NewAssignment({ onClose }: { onClose: () => void }) {
+export function NewAssignment({ onClose, initial }: { onClose: () => void; initial?: Partial<NewAssignmentForm> }) {
   const navigate = useNavigate();
   const created = useRef<string | null>(null);
 
-  const [customerId, setCustomerId] = useState('');
-  const [vehicleId, setVehicleId] = useState('');
-  const [initialStatus, setInitialStatus] = useState<AssignmentStatus>(AssignmentStatus.Planned);
+  const [customerId, setCustomerId] = useState(initial?.customerId ?? '');
+  const [vehicleId, setVehicleId] = useState(initial?.vehicleId ?? '');
+  const [initialStatus, setInitialStatus] = useState<AssignmentStatus>(initial?.initialStatus ?? AssignmentStatus.Planned);
   const [plannedStart, setPlannedStart] = useState('');
   const [startedAt, setStartedAt] = useState('');
   const [plannedEnd, setPlannedEnd] = useState('');
   const [note, setNote] = useState('');
-  const [mode, setMode] = useState<Mode>('');
-  const [named, setNamed] = useState<string[]>([]);
+  const [mode, setMode] = useState<Mode>(initial?.mode ?? '');
+  const [named, setNamed] = useState<string[]>(initial?.named ?? []);
   const [companyNote, setCompanyNote] = useState('');
 
   const customers = useQuery({ queryKey: qk.customers.list(PICK), queryFn: () => listCustomers(PICK) });
@@ -261,6 +297,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
 
   const planned = initialStatus === AssignmentStatus.Planned;
   const customer = (customers.data?.items ?? []).find((c) => c.id === customerId) ?? null;
+  const inUse = vehicleInUse((vehicles.data?.items ?? []).find((v) => v.id === vehicleId), initialStatus);
   const business = customer?.type === CustomerType.Business;
 
   /** The prototype's `driverChoiceValid`: the chosen mode has everything it needs. */
@@ -362,7 +399,12 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
             ))}
           </select>
         </Field>
-        <Field label="Vehicle" required error={m.fields['vehicleId']}>
+        <Field
+          label="Vehicle"
+          required
+          warning={inUse ? <VehicleInUse vehicle={inUse} /> : undefined}
+          error={m.fields['vehicleId']}
+        >
           <select
             className={f.control}
             {...invalidProps(m.fields['vehicleId'])}

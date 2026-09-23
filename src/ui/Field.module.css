@@ -18,6 +18,9 @@ textarea.control { min-height: 76px; resize: vertical; }
 .hint { font-size: 11.5px; color: var(--fg-4); }
 .error { display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--bad); }
 .errorIcon { font-size: 14px; }
+/* Follow-up 11: the amber line a field shows before the API is asked, beside the red one it answers. */
+.warning { display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--warn); }
+.warningIcon { flex: none; font-size: 14px; }
 
 .choices { display: flex; flex-direction: column; gap: 8px; }
 .choice {
