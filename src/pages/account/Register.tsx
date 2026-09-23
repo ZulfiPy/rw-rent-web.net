@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { registrations } from '@/api';
 import { OWNS_UNAUTHORIZED } from '@/app/session';
 import { useGatedMutation } from '@/app/submitOnce';
+import { invalidProps } from '@/ui/Field';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
   PasswordChecklist, authStyles as styles,
@@ -83,8 +84,7 @@ export function Register() {
                 autoFocus
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                data-invalid={!!failure.fields['firstName']}
-                aria-invalid={failure.fields['firstName'] ? true : undefined}
+                {...invalidProps(failure.fields['firstName'])}
               />
             </AuthField>
             <AuthField label="Last name" required error={failure.fields['lastName']}>
@@ -94,8 +94,7 @@ export function Register() {
                 maxLength={100}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                data-invalid={!!failure.fields['lastName']}
-                aria-invalid={failure.fields['lastName'] ? true : undefined}
+                {...invalidProps(failure.fields['lastName'])}
               />
             </AuthField>
           </div>
@@ -110,8 +109,7 @@ export function Register() {
               placeholder="+371 20 000 000"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              data-invalid={!!failure.fields['phoneNumber']}
-              aria-invalid={failure.fields['phoneNumber'] ? true : undefined}
+              {...invalidProps(failure.fields['phoneNumber'])}
             />
           </AuthField>
 
@@ -123,8 +121,7 @@ export function Register() {
               maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              data-invalid={!!emailError}
-              aria-invalid={emailError ? true : undefined}
+              {...invalidProps(emailError)}
             />
           </AuthField>
 
@@ -135,8 +132,7 @@ export function Register() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              data-invalid={!!passwordError}
-              aria-invalid={passwordError ? true : undefined}
+              {...invalidProps(passwordError)}
             />
             <PasswordChecklist value={password} />
           </AuthField>

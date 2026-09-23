@@ -6,7 +6,8 @@ export { styles as fieldStyles };
 /**
  * The attributes a control carries while its field is showing a message: the prototype's invalid
  * border and fill, and the state assistive technology reads. Spread onto the input, select or
- * textarea inside a `Field` that takes an `error`.
+ * textarea inside a `Field` that takes an `error` — every one of them, because `aria-invalid` is also
+ * what a dialog finds the refused field by, to bring it into view (Follow-up 11, F11-1).
  */
 export function invalidProps(error?: string | null | undefined): {
   'data-invalid': boolean;

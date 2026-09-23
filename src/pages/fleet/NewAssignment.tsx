@@ -14,7 +14,7 @@ import { fromLocalInput } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { Dialog, DialogSection as Section, dialogStyles as section } from '@/ui/Dialog';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 import { customerDriveBlock } from './driverLink';
 import styles from './NewAssignment.module.css';
 
@@ -119,6 +119,7 @@ export function Coverage({ label, customer, mode, setMode, named, setNamed, comp
               <input
                 type="radio"
                 name="drive-mode"
+                {...invalidProps(checked ? coverageError : undefined)}
                 checked={checked}
                 disabled={!open}
                 onChange={() => choose(c.key)}
@@ -219,7 +220,7 @@ export function Coverage({ label, customer, mode, setMode, named, setNamed, comp
           >
             <textarea
               className={f.control}
-              data-invalid={!!noteError}
+              {...invalidProps(noteError)}
               rows={2}
               value={companyNote}
               onChange={(e) => setCompanyNote(e.target.value)}
@@ -351,7 +352,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
         <Field label="Customer" required error={m.fields['customerId']}>
           <select
             className={f.control}
-            data-invalid={!!m.fields['customerId']}
+            {...invalidProps(m.fields['customerId'])}
             value={customerId}
             onChange={(e) => { setCustomerId(e.target.value); setMode(''); setNamed([]); setCompanyNote(''); }}
           >
@@ -364,7 +365,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
         <Field label="Vehicle" required error={m.fields['vehicleId']}>
           <select
             className={f.control}
-            data-invalid={!!m.fields['vehicleId']}
+            {...invalidProps(m.fields['vehicleId'])}
             value={vehicleId}
             onChange={(e) => setVehicleId(e.target.value)}
           >
@@ -380,7 +381,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
         <Field label="Initial status" required error={m.fields['initialStatus']}>
           <select
             className={f.control}
-            data-invalid={!!m.fields['initialStatus']}
+            {...invalidProps(m.fields['initialStatus'])}
             value={String(initialStatus)}
             onChange={(e) => setInitialStatus(Number(e.target.value) as AssignmentStatus)}
           >
@@ -396,7 +397,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
             <input
               type="datetime-local"
               className={f.control}
-              data-invalid={!!m.fields['plannedStartAtUtc']}
+              {...invalidProps(m.fields['plannedStartAtUtc'])}
               value={plannedStart}
               onChange={(e) => setPlannedStart(e.target.value)}
             />
@@ -406,7 +407,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
             <input
               type="datetime-local"
               className={f.control}
-              data-invalid={!!m.fields['startedAtUtc']}
+              {...invalidProps(m.fields['startedAtUtc'])}
               value={startedAt}
               onChange={(e) => setStartedAt(e.target.value)}
             />
@@ -420,7 +421,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
           <input
             type="datetime-local"
             className={f.control}
-            data-invalid={!!m.fields['plannedEndAtUtc']}
+            {...invalidProps(m.fields['plannedEndAtUtc'])}
             value={plannedEnd}
             onChange={(e) => setPlannedEnd(e.target.value)}
           />
@@ -448,7 +449,7 @@ export function NewAssignment({ onClose }: { onClose: () => void }) {
         >
           <textarea
             className={f.control}
-            data-invalid={!!m.fields['note']}
+            {...invalidProps(m.fields['note'])}
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}

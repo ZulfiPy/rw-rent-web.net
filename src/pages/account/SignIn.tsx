@@ -5,6 +5,7 @@ import { auth, registrations } from '@/api';
 import { OWNS_UNAUTHORIZED, samePathOnly } from '@/app/session';
 import { useGatedMutation } from '@/app/submitOnce';
 import { useAccess } from '@/permissions/usePermissions';
+import { invalidProps } from '@/ui/Field';
 import {
   AuthAlert, AuthField, AuthHeading, AuthLayout, AuthOutcome, AuthSubmit, AuthSwitch,
   authStyles as styles,
@@ -157,8 +158,7 @@ export function SignIn() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              data-invalid={!!failure.fields['email']}
-              aria-invalid={failure.fields['email'] ? true : undefined}
+              {...invalidProps(failure.fields['email'])}
             />
           </AuthField>
           <AuthField
@@ -173,8 +173,7 @@ export function SignIn() {
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              data-invalid={!!failure.fields['password']}
-              aria-invalid={failure.fields['password'] ? true : undefined}
+              {...invalidProps(failure.fields['password'])}
             />
           </AuthField>
         </div>

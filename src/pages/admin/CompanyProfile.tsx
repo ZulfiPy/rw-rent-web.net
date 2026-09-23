@@ -11,7 +11,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Dialog, dialogStyles } from '@/ui/Dialog';
 import { Fact, FactGrid } from '@/ui/FactGrid';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 import { Panel } from '@/ui/Panel';
 import { PageHeader } from '@/ui/PageHeader';
 import { RecordBanner, recordStyles as shell } from '@/ui/RecordTabs';
@@ -20,7 +20,8 @@ type DialogState = { kind: 'create' } | { kind: 'edit' } | { kind: 'delete' } | 
 
 const INVALIDATE = [['company'], ['security-audit']] as const;
 
-function CompanyForm({ company, onClose }: { company: CompanyResponse | null; onClose: () => void }) {
+/** Create or edit the Company. Exported for its render test. */
+export function CompanyForm({ company, onClose }: { company: CompanyResponse | null; onClose: () => void }) {
   const editing = !!company;
   const [name, setName] = useState(company?.name ?? '');
   const [registrationNumber, setReg] = useState(company?.registrationNumber ?? '');
@@ -65,19 +66,19 @@ function CompanyForm({ company, onClose }: { company: CompanyResponse | null; on
         <p className={dialogStyles.sectionTitle}>Legal identity</p>
         <div className={dialogStyles.grid} data-cols="2">
           <Field label="Company name" required error={m.fields.name}>
-            <input className={f.control} data-invalid={!!m.fields.name} maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
+            <input className={f.control} {...invalidProps(m.fields.name)} maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label="Registration number" required error={m.fields.registrationNumber}>
-            <input className={`${f.control} ${f.mono}`} data-invalid={!!m.fields.registrationNumber} maxLength={50} value={registrationNumber} onChange={(e) => setReg(e.target.value)} />
+            <input className={`${f.control} ${f.mono}`} {...invalidProps(m.fields.registrationNumber)} maxLength={50} value={registrationNumber} onChange={(e) => setReg(e.target.value)} />
           </Field>
           <Field label="VAT number" optional error={m.fields.vatNumber}>
-            <input className={`${f.control} ${f.mono}`} data-invalid={!!m.fields.vatNumber} maxLength={50} value={vatNumber} onChange={(e) => setVat(e.target.value)} />
+            <input className={`${f.control} ${f.mono}`} {...invalidProps(m.fields.vatNumber)} maxLength={50} value={vatNumber} onChange={(e) => setVat(e.target.value)} />
           </Field>
           <Field label="Email" required error={m.fields.email}>
-            <input type="email" className={f.control} data-invalid={!!m.fields.email} maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" className={f.control} {...invalidProps(m.fields.email)} maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
           <Field label="Phone number" optional error={m.fields.phoneNumber}>
-            <input type="tel" className={f.control} data-invalid={!!m.fields.phoneNumber} maxLength={30} value={phoneNumber} onChange={(e) => setPhone(e.target.value)} />
+            <input type="tel" className={f.control} {...invalidProps(m.fields.phoneNumber)} maxLength={30} value={phoneNumber} onChange={(e) => setPhone(e.target.value)} />
           </Field>
         </div>
       </div>
@@ -85,7 +86,7 @@ function CompanyForm({ company, onClose }: { company: CompanyResponse | null; on
         <p className={dialogStyles.sectionTitle}>Address</p>
         <div className={dialogStyles.grid} data-cols="1">
           <Field label="Legal address" required error={m.fields.legalAddress}>
-            <textarea className={f.control} data-invalid={!!m.fields.legalAddress} rows={2} maxLength={2000} value={legalAddress} onChange={(e) => setAddress(e.target.value)} />
+            <textarea className={f.control} {...invalidProps(m.fields.legalAddress)} rows={2} maxLength={2000} value={legalAddress} onChange={(e) => setAddress(e.target.value)} />
           </Field>
         </div>
       </div>

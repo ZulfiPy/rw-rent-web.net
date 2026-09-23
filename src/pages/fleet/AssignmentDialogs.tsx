@@ -26,7 +26,7 @@ import { useActionMutation } from '@/app/useActionMutation';
 import { ReseedScope } from '@/app/reseed';
 import { Dialog, DialogNote, DialogSection as Section, dialogStyles } from '@/ui/Dialog';
 import { CheckCard } from '@/ui/CheckCard';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 
 export type AssignmentDialogState =
   | { kind: 'edit' }
@@ -67,7 +67,7 @@ function ReasonField({ value, error, onChange }: {
     <Field label="Reason for the correction" required hint={REASON_HINT} error={error}>
       <textarea
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         rows={3}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -89,7 +89,7 @@ function DateTimeField({ label, value, error, hint, required, optional, onChange
       <input
         type="datetime-local"
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -124,7 +124,7 @@ function EnumSelect<T extends number>({ label, value, options, labels, error, re
     <Field label={label} error={error} required={required}>
       <select
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         value={String(value)}
         onChange={(e) => onChange(Number(e.target.value) as T)}
       >
@@ -179,14 +179,14 @@ function Edit({ assignment: a, onClose }: Common) {
     >
       <Section title="Parties">
       <Field label="Customer" required error={m.fields['customerId']}>
-        <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+        <select className={f.control} {...invalidProps(m.fields['customerId'])} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
             <option key={c.id} value={c.id}>{c.displayName}{c.isActive ? '' : ' · inactive'}</option>
           ))}
         </select>
       </Field>
       <Field label="Vehicle" required error={m.fields['vehicleId']}>
-        <select className={f.control} data-invalid={!!m.fields['vehicleId']} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+        <select className={f.control} {...invalidProps(m.fields['vehicleId'])} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
           {(vehicles.data?.items ?? []).map((v) => (
             <option key={v.id} value={v.id}>{v.plateNumber} · {v.make} {v.model}</option>
           ))}
@@ -212,7 +212,7 @@ function Edit({ assignment: a, onClose }: Common) {
       </Section>
       <Section title="Note" cols={1}>
       <Field label="Assignment note" optional error={m.fields['note']}>
-        <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
     </Dialog>
@@ -354,7 +354,7 @@ function Cancel({ assignment: a, onClose }: Common) {
       >
         <textarea
           className={f.control}
-          data-invalid={!!m.fields['cancellationNote']}
+          {...invalidProps(m.fields['cancellationNote'])}
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -425,7 +425,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
           hint={startLicence ? <span className={f.mono}>{startLicence}</span> : undefined}
           error={m.fields['driverId']}
         >
-          <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+          <select className={f.control} {...invalidProps(m.fields['driverId'])} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (
               <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>
@@ -441,7 +441,7 @@ function AuthStart({ assignment: a, onClose, businessCustomer }: Common & { busi
         hint={collective ? 'Required: describe the agreed collective coverage.' : undefined}
         error={m.fields['note']}
       >
-        <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
       {collective ? (
@@ -533,7 +533,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
         hint={reason === AuthorizationStopReason.Other ? 'Required when the reason is Other.' : undefined}
         error={m.fields['note']}
       >
-        <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
 
@@ -576,7 +576,7 @@ function AuthStop({ assignment: a, onClose, authorization: z, businessCustomer }
                 : 'Drivers already authorized on this assignment are not listed.'}
               error={m.fields['driverId']}
             >
-              <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+              <select className={f.control} {...invalidProps(m.fields['driverId'])} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
                 <option value="">Select a driver</option>
                 {replacementDrivers.map((d) => (
                   <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>
@@ -665,7 +665,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
           hint={correctLicence ? <span className={f.mono}>{correctLicence}</span> : undefined}
           error={m.fields['driverId']}
         >
-          <select className={f.control} data-invalid={!!m.fields['driverId']} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+          <select className={f.control} {...invalidProps(m.fields['driverId'])} value={driverId} onChange={(e) => setDriverId(e.target.value)}>
             <option value="">Select a driver</option>
             {(drivers.data?.items ?? []).map((d) => (
               <option key={d.id} value={d.id}>{d.firstName} {d.lastName}{d.isActive ? '' : ' · inactive'}</option>
@@ -686,7 +686,7 @@ function AuthCorrect({ assignment: a, onClose, authorization: z, businessCustome
         />
       ) : null}
       <Field label="Note" optional error={m.fields['note']}>
-        <textarea className={f.control} data-invalid={!!m.fields['note']} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
       <Section title="Audit" cols={1}>
@@ -796,7 +796,7 @@ function InterruptionForm({ assignment: a, onClose, interruption, correct }: Com
           : 'Required: every interruption carries a note.'}
         error={m.fields['note']}
       >
-        <textarea className={f.control} data-invalid={!!m.fields['note']} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
       {correct ? (
@@ -882,14 +882,14 @@ function CorrectParties({ assignment: a, onClose }: Common) {
       <DialogNote icon="warning" tone="warn" title="Privileged correction">{CORRECTION_NOTE}</DialogNote>
       <Section title="Corrected values">
       <Field label="Customer" required error={m.fields['customerId']}>
-        <select className={f.control} data-invalid={!!m.fields['customerId']} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+        <select className={f.control} {...invalidProps(m.fields['customerId'])} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {(customers.data?.items ?? []).map((c) => (
             <option key={c.id} value={c.id}>{c.displayName}{c.isActive ? '' : ' · inactive'}</option>
           ))}
         </select>
       </Field>
       <Field label="Vehicle" required error={m.fields['vehicleId']}>
-        <select className={f.control} data-invalid={!!m.fields['vehicleId']} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+        <select className={f.control} {...invalidProps(m.fields['vehicleId'])} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
           {(vehicles.data?.items ?? []).map((v) => (
             <option key={v.id} value={v.id}>{v.plateNumber} · {v.make} {v.model}</option>
           ))}
@@ -957,7 +957,7 @@ function CorrectTimeline({ assignment: a, onClose }: Common) {
         <DateTimeField label="Closed at" value={closedAt} required error={m.fields['closedAtUtc']} onChange={setClosedAt} />
       ) : null}
       <Field label="Assignment note" optional error={m.fields['note']}>
-        <textarea className={f.control} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={f.control} {...invalidProps(m.fields['note'])} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
       </Section>
       <Section title="Audit" cols={1}>

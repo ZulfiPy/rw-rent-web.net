@@ -179,6 +179,7 @@ export function DeleteRecordDialog({ target, onClose, onDeleted, onRefresh, init
         label="I understand this cannot be undone"
         hint={cannotBeRestored(kind, takes)}
         checked={confirmed}
+        error={m.fields['confirmed']}
         onChange={setConfirmed}
       />
       {m.fields['confirmed'] ? (

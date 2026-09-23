@@ -300,7 +300,7 @@ function CustomerForm({ customer, focus, onClose }: {
         <Field label="Address" required error={m.fields.address}>
           <textarea
             className={f.control}
-            data-invalid={!!m.fields.address}
+            {...invalidProps(m.fields.address)}
             rows={2}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -323,7 +323,7 @@ function CustomerForm({ customer, focus, onClose }: {
             <select
               ref={linkControl}
               className={f.control}
-              data-invalid={!!m.fields.driverId}
+              {...invalidProps(m.fields.driverId)}
               value={driverId}
               onChange={(e) => setDriverId(e.target.value)}
             >
@@ -412,7 +412,7 @@ function DriverForm({ driver, onClose }: { driver: DriverResponse | null; onClos
         <Field label="Address" required error={m.fields.address}>
           <textarea
             className={f.control}
-            data-invalid={!!m.fields.address}
+            {...invalidProps(m.fields.address)}
             rows={2}
             value={address}
             onChange={(e) => setAddress(e.target.value)}

@@ -1,6 +1,7 @@
 import { useEffect, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { themeIcon, themeLabel, themeTip, toggleTheme, useTheme } from '@/app/theme';
+import { invalidProps } from '@/ui/Field';
 import { passwordRules } from './password';
 import type { Outcome } from './outcomes';
 import styles from './Auth.module.css';
@@ -334,8 +335,7 @@ export function ResetScreen({
               maxLength={254}
               value={email.value}
               onChange={(e) => email.onChange(e.target.value)}
-              data-invalid={!!email.error}
-              aria-invalid={email.error ? true : undefined}
+              {...invalidProps(email.error)}
             />
           </AuthField>
         ) : null}
@@ -347,8 +347,7 @@ export function ResetScreen({
               autoComplete="new-password"
               value={newPassword.value}
               onChange={(e) => newPassword.onChange(e.target.value)}
-              data-invalid={!!newPassword.error}
-              aria-invalid={newPassword.error ? true : undefined}
+              {...invalidProps(newPassword.error)}
             />
             <PasswordChecklist value={newPassword.value} />
           </AuthField>
@@ -365,8 +364,7 @@ export function ResetScreen({
               autoComplete="current-password"
               value={currentPassword.value}
               onChange={(e) => currentPassword.onChange(e.target.value)}
-              data-invalid={!!currentPassword.error}
-              aria-invalid={currentPassword.error ? true : undefined}
+              {...invalidProps(currentPassword.error)}
             />
           </AuthField>
         ) : null}

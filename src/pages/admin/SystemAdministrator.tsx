@@ -20,7 +20,7 @@ import { Chip } from '@/ui/Chip';
 import { Dialog, dialogStyles } from '@/ui/Dialog';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
-import { Field, fieldStyles as f } from '@/ui/Field';
+import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 import { Panel } from '@/ui/Panel';
 import { PageHeader } from '@/ui/PageHeader';
 import { RecordBanner, recordStyles as shell } from '@/ui/RecordTabs';
@@ -55,7 +55,7 @@ function PasswordField({ value, error, onChange }: {
       <input
         type="password"
         className={f.control}
-        data-invalid={!!error}
+        {...invalidProps(error)}
         autoComplete="current-password"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -64,7 +64,8 @@ function PasswordField({ value, error, onChange }: {
   );
 }
 
-function Initiate({ onClose }: { onClose: () => void }) {
+/** Names the next System Administrator. Exported for its render test. */
+export function Initiate({ onClose }: { onClose: () => void }) {
   const [targetEmail, setEmail] = useState('');
   const [currentPassword, setPassword] = useState('');
   const [reason, setReason] = useState('');
@@ -99,7 +100,7 @@ function Initiate({ onClose }: { onClose: () => void }) {
           <input
             type="email"
             className={f.control}
-            data-invalid={!!m.fields.targetEmail}
+            {...invalidProps(m.fields.targetEmail)}
             maxLength={254}
             value={targetEmail}
             onChange={(e) => setEmail(e.target.value)}
@@ -109,7 +110,7 @@ function Initiate({ onClose }: { onClose: () => void }) {
         <Field label="Reason" required hint={REASON_HINT} error={m.fields.reason}>
           <textarea
             className={f.control}
-            data-invalid={!!m.fields.reason}
+            {...invalidProps(m.fields.reason)}
             rows={3}
             maxLength={1000}
             value={reason}
@@ -180,7 +181,7 @@ function CancelTransfer({ transferId, onClose }: { transferId: Uuid; onClose: ()
         <Field label="Reason" required error={m.fields.reason}>
           <textarea
             className={f.control}
-            data-invalid={!!m.fields.reason}
+            {...invalidProps(m.fields.reason)}
             rows={3}
             maxLength={1000}
             value={reason}

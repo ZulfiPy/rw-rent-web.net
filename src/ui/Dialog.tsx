@@ -113,6 +113,29 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+/**
+ * What every control inside a `Field` that shows the API's message carries (`invalidProps`), and so
+ * what a field refusal is found by. A control marked only with `data-invalid` is painted red but
+ * never found (Follow-up 11, F11-1).
+ */
+export const INVALID_CONTROL = '[aria-invalid="true"]';
+
+/**
+ * A field-error response leaves its message under an input that may be out of view in a sheet
+ * that scrolls inside. Bring the first invalid control to the middle of the body and focus it.
+ * The body's own scrollTop moves, so the page behind the dialog stays put. Answers the control it
+ * brought into view, or null when the body holds none.
+ */
+export function revealFirstInvalid(body: HTMLElement): HTMLElement | null {
+  const el = body.querySelector<HTMLElement>(INVALID_CONTROL);
+  if (!el) return null;
+  const eb = el.getBoundingClientRect();
+  const bb = body.getBoundingClientRect();
+  body.scrollTop += (eb.top - bb.top) - (bb.height - eb.height) / 2;
+  el.focus({ preventScroll: true });
+  return el;
+}
+
 export function Dialog({
   title, description, icon, tone = 'accent', width = 560, submitLabel, submitIcon, submitTone = 'primary',
   submitBlocked, busy, failure, children, info, footnote, hideCancel, onClose, onSubmit, onRefresh,
@@ -163,20 +186,10 @@ export function Dialog({
     return () => opener?.focus();
   }, []);
 
-  /**
-   * A field-error response leaves its message under an input that may be out of view in a sheet
-   * that scrolls inside. Bring the first invalid control to the middle of the body and focus it.
-   * The body's own scrollTop moves, so the page behind the dialog stays put.
-   */
+  /** A field refusal brings its control into view (`revealFirstInvalid`). */
   useEffect(() => {
     if (!failure || (failure.kind !== 'field' && failure.kind !== 'field-code')) return;
-    const body = bodyRef.current;
-    const el = body?.querySelector<HTMLElement>('[aria-invalid="true"]');
-    if (!body || !el) return;
-    const eb = el.getBoundingClientRect();
-    const bb = body.getBoundingClientRect();
-    body.scrollTop += (eb.top - bb.top) - (bb.height - eb.height) / 2;
-    el.focus({ preventScroll: true });
+    if (bodyRef.current) revealFirstInvalid(bodyRef.current);
   }, [failure]);
 
   /** Tab and Shift+Tab wrap inside the panel while it is open. */

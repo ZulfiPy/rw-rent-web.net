@@ -180,7 +180,7 @@ function Activate({ user, onClose }: Common) {
             const date = picked[role] ?? '';
             return (
               <span key={role} className={f.choice} data-checked={checked}>
-                <input type="checkbox" checked={checked} onChange={() => toggle(role)} />
+                <input type="checkbox" {...invalidProps(m.fields['roles'])} checked={checked} onChange={() => toggle(role)} />
                 <span className={f.choiceBody}>
                   <span className={f.choiceRow}>{ROLE_LABEL[role]}</span>
                   {checked ? (
@@ -320,7 +320,7 @@ function RoleGrant({ user, onClose }: Common) {
       onRefresh={m.refresh}
     >
       <Field label="Role" error={m.fields['role']}>
-        <select className={f.control} value={role} onChange={(e) => setRole(e.target.value)}>
+        <select className={f.control} {...invalidProps(m.fields['role'])} value={role} onChange={(e) => setRole(e.target.value)}>
           {grantable.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
         </select>
       </Field>
