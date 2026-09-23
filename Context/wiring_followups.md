@@ -481,3 +481,30 @@ administrator's own action "Give the delete right" on a person's Roles tab, with
 Expiry and Revoke on such a row for the administrator only; the API's refusals shown in its own
 words (an address outside the domain, no domain set); the profile's email-change dialog warns a
 holder and shows the refusal on the new address.
+
+## 11. Follow-up 11 — what the owner finds in the full check from an empty app
+
+> **Status: COLLECTING (from 2026-09-23).** The owner checks everything from an empty app (§1).
+> Findings are recorded here as they come and handed over as one batch.
+
+- **F11-1. A refusal placed under a field that is scrolled out of view goes unnoticed** (owner,
+  2026-09-23, bug). Creating an Active rental for 899LGR while it already has an Active rental: the
+  API refuses with `rental_assignments.vehicle_already_active`, the app maps it to `vehicleId` and
+  writes "The vehicle already has an active assignment." under the Vehicle field at the top of the
+  dialog, but the owner had scrolled down to "Create assignment" and nothing visible happened. The
+  Activate dialog's form-level refusal ("The change was refused") was seen at once. **Cause:** the
+  shared `Dialog` scrolls the first invalid control into view and focuses it, finding it by
+  `[aria-invalid="true"]` (`src/ui/Dialog.tsx`, the effect after the focus trap), but 46 controls in
+  the app mark themselves invalid with `data-invalid` only, not through `invalidProps`
+  (`src/ui/Field.tsx`), so the scroll never finds them: `NewAssignment.tsx`, `AssignmentDialogs.tsx`,
+  `FleetDialogs.tsx`, `CompanyProfile.tsx`, `SystemAdministrator.tsx` and the account pages. **Fix:**
+  every form control marks itself invalid with `invalidProps` (which also tells a screen reader), so
+  the existing scroll-and-focus works in every dialog; a render test per dialog file that a field
+  refusal sets `aria-invalid`, and one test that the dialog scrolls to it. Side: frontend only.
+- **Explained, no change (owner's question, 2026-09-23): what happens when a planned rental's start
+  time arrives.** Nothing automatic: the planned start is an expectation (ASSIGN-010); the rental
+  stays Planned until someone activates it (the actual handover time) or cancels it. From three days
+  before its planned start the Overview's open-work queue lists it as "Planned handover — <plate>",
+  and it stays there once the date has passed. Activating it while the vehicle still has an Active
+  rental is refused ("The vehicle already has an active assignment."); the Active rental has to be
+  ended first (ASSIGN-004).
