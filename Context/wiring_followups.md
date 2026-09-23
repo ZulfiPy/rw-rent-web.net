@@ -23,6 +23,16 @@ ones by then), the app at `http://localhost:5173`, the API at `http://localhost:
 `http://localhost:8025`, the seed password kept outside the repository. Differences from the
 prototype found there become the next follow-up.
 
+**2026-09-23: the owner's full check starts from an empty app**, at their request, with everything
+built (rounds 2–9, follow-ups up to 10, the deletion feature complete): the owner registers the
+administrator and the other accounts themselves, confirms them in Mailpit, activates them with
+different roles, enters their own data and checks the app as its users. The reviewer took a copy of
+the previous real data first (`~/rwrent-backup-2026-09-23-0727.sql`, outside the repository), emptied
+`rwrent_v1`, applied the six migrations and restarted the API on 5001 from the round-9 build with the
+company's email domain `rwrent.ee`; the practice copy (5002, 5174, `rwrent_check`) was removed. The
+reviewer runs the one terminal step the check needs (the bootstrap of the administrator). Findings go
+into a new follow-up here.
+
 ## 2. Verification tables and accounts
 
 ### 2.1 Account screens — prototype screen → app route → what to compare
