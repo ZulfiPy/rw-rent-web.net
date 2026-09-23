@@ -489,60 +489,40 @@ Expiry and Revoke on such a row for the administrator only; the API's refusals s
 words (an address outside the domain, no domain set); the profile's email-change dialog warns a
 holder and shows the refusal on the new address.
 
-## 11. Follow-up 11 — what the owner finds in the full check from an empty app
+## 11. Follow-up 11 — what the owner found in the full check from an empty app
 
-> **Status: AUTHORISED 2026-09-23, after the merge.** The owner checked the app from an empty
-> database (§1) and closed the check the same day; F11-1 to F11-3 are the batch, frontend only.
-> **The first work after the merge goes on a branch of its own:** `followup-11`, created from `main`
-> in this worktree, pushed, and fast-forwarded into `main` by the reviewer after verification. **The
-> owner's real data is in `rwrent_v1` behind the API on 5001 (round-9 build) and the app on 5173,
-> which runs from this worktree with hot reload.** The agent never opens 5173, never signs in there,
-> never calls 5001, never writes to `rwrent_v1`; its checks run on a scratch stack it builds itself as
-> `RWRentApi-wiring/Context/round9_report.md` §7 describes (`rwrent_check`, the API on 5002 in Release
-> with `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, Vite on 5174) in a browser profile of
-> its own. Tests for each item, each shown to fail against a deliberate breakage; typecheck, tests and
-> build green; no new runtime dependency. Report: `Context/wiring_report.md` rewritten. Commits: several
-> grouped commits, `Wiring 31: …` with one plain sentence each, the report last as `Wiring 32: …`,
-> pushed with an ordinary push and checked with `git ls-remote`. This document is not edited by the
-> agent.
+> **Status: IMPLEMENTED 2026-09-23, verified the same day** (app `8fe6531`…`ed22493` Wiring 31 in
+> four grouped commits and `148196e` Wiring 32, on the branch `followup-11`, pushed and level with
+> GitHub, then fast-forwarded into `main`; report `Context/wiring_report.md`). The first work after the
+> merge, frontend only. Its specification was removed from here as implemented; the report and the
+> code carry it. Typecheck, 387 tests and the build are green. The reviewer drove the app in a
+> headless browser on the scratch stack, as the Fleet Manager, the Principal and the administrator:
+> a new Active rental of 204 JLM shows at once, in amber under Vehicle, "This vehicle is in use by
+> Anete Kalnina. End that rental first, or plan this one.", with "that rental" linking to her rental;
+> the line goes for Planned and for a free vehicle; Create assignment stays enabled; pressed from the
+> bottom of the dialog, the API's refusal brings the body back to the top (738 → 0) with the Vehicle
+> select red, focused and carrying "The vehicle already has an active assignment."; nothing was
+> created; the link opens her rental and closes the dialog. Record interruption with its end before
+> its start, and the Company form with "not-an-address", focus the refused field the same way. Delete
+> records opens on Everything (tabs 12, 6, 4, 10, 7, 7, no Clear filters, Martins Ozols Ready and
+> taking his rental); under Out of use the Customers tab is empty with "Nothing out of use here",
+> "7 active customers are under Everything." and Show everything, which switches back; Clear filters
+> does too; an old `show=all` link opens Everything; at 402 px the warning wraps and nothing scrolls
+> sideways. Nothing on the backend changed; the owner's API on 5001 kept running.
 
-- **F11-1. A refusal placed under a field that is scrolled out of view goes unnoticed** (owner,
-  2026-09-23, bug). Creating an Active rental for 899LGR while it already has an Active rental: the
-  API refuses with `rental_assignments.vehicle_already_active`, the app maps it to `vehicleId` and
-  writes "The vehicle already has an active assignment." under the Vehicle field at the top of the
-  dialog, but the owner had scrolled down to "Create assignment" and nothing visible happened. The
-  Activate dialog's form-level refusal ("The change was refused") was seen at once. **Cause:** the
-  shared `Dialog` scrolls the first invalid control into view and focuses it, finding it by
-  `[aria-invalid="true"]` (`src/ui/Dialog.tsx`, the effect after the focus trap), but 46 controls in
-  the app mark themselves invalid with `data-invalid` only, not through `invalidProps`
-  (`src/ui/Field.tsx`), so the scroll never finds them: `NewAssignment.tsx`, `AssignmentDialogs.tsx`,
-  `FleetDialogs.tsx`, `CompanyProfile.tsx`, `SystemAdministrator.tsx` and the account pages. **Fix:**
-  every form control marks itself invalid with `invalidProps` (which also tells a screen reader), so
-  the existing scroll-and-focus works in every dialog; a render test per dialog file that a field
-  refusal sets `aria-invalid`, and one test that the dialog scrolls to it. Side: frontend only.
-- **Explained, no change (owner's question, 2026-09-23): what happens when a planned rental's start
-  time arrives.** Nothing automatic: the planned start is an expectation (ASSIGN-010); the rental
-  stays Planned until someone activates it (the actual handover time) or cancels it. From three days
-  before its planned start the Overview's open-work queue lists it as "Planned handover — <plate>",
-  and it stays there once the date has passed. Activating it while the vehicle still has an Active
-  rental is refused ("The vehicle already has an active assignment."); the Active rental has to be
-  ended first (ASSIGN-004).
-- **F11-2. The new-rental dialog warns before the refusal** (owner, 2026-09-23: "we have to see
-  informative information and if we do something wrong, the UI has to let us know"). When the
-  initial status is Active and the chosen vehicle is in use (the vehicle list's `availability` is
-  InUse and names `currentCustomerDisplayName`), a warn line under the Vehicle field says at once:
-  "This vehicle is in use by <customer>. End that rental first, or plan this one." with a link to
-  that rental; the same for a Planned rental whose planned range overlaps another Planned one is not
-  asked (the API's refusal, now visible through F11-1, is enough there). The API still decides; the
-  warning does not block the submit. Side: frontend only.
-- **F11-3. Delete records opens on "Out of use", so an active record seems missing** (owner,
-  2026-09-23, the second time: on 2026-09-21 in the practice copy too). The owner, signed in as the
-  daily account holding the Record deleter role, looked for the active customer Test Testovich
-  (one Planned rental) and found every tab at 0: the page opened on "Show: Out of use", which lists
-  only cancelled and ended rentals, stopped authorizations, ended interruptions and inactive
-  vehicles, customers and drivers. Under "Everything" the customer is there, Ready, taking its
-  planned rental with it. **Fix (reviewer's recommendation, the owner told):** the page opens on
-  "Everything"; "Out of use" stays as a filter; and the empty state under "Out of use" says how many
-  records "Everything" holds ("Nothing out of use here. 1 active customer is under Everything.") with
-  a button that switches the filter. The counts endpoint already answers both filters. Side:
-  frontend only.
+**What it is** (kept for the next reader): every form control marks a refused field through
+`invalidProps`, so every dialog brings the refused field into view and focuses it (a source check
+keeps hand-set marks out); the new-rental dialog warns under Vehicle when an Active rental would take
+a vehicle in use, and blocks nothing; Delete records opens on Everything, and Out of use's empty list
+says how many records Everything holds, with the switch.
+
+**Explained, no change (the owner's question): what happens when a planned rental's start time
+arrives.** Nothing automatic: the planned start is an expectation (ASSIGN-010); the rental stays
+Planned until someone activates it (the actual handover time) or cancels it. From three days before
+its planned start the Overview's open-work queue lists it as "Planned handover — <plate>", and it
+stays there once the date has passed. Activating it while the vehicle still has an Active rental is
+refused; the Active rental has to be ended first (ASSIGN-004).
+
+**Found in the review, not part of it:** some of the API's refusals name its request members
+("EndedAtUtc must be later than StartedAtUtc.", "'Email' is not a valid email address."), and the
+app shows them as they come. Backend backlog item 25; the app needs no change.
