@@ -491,8 +491,20 @@ holder and shows the refusal on the new address.
 
 ## 11. Follow-up 11 — what the owner finds in the full check from an empty app
 
-> **Status: COLLECTED 2026-09-23, to be handed over after the merge.** The owner checked the app
-> from an empty database (§1) and closed the check the same day; these three findings are the batch.
+> **Status: AUTHORISED 2026-09-23, after the merge.** The owner checked the app from an empty
+> database (§1) and closed the check the same day; F11-1 to F11-3 are the batch, frontend only.
+> **The first work after the merge goes on a branch of its own:** `followup-11`, created from `main`
+> in this worktree, pushed, and fast-forwarded into `main` by the reviewer after verification. **The
+> owner's real data is in `rwrent_v1` behind the API on 5001 (round-9 build) and the app on 5173,
+> which runs from this worktree with hot reload.** The agent never opens 5173, never signs in there,
+> never calls 5001, never writes to `rwrent_v1`; its checks run on a scratch stack it builds itself as
+> `RWRentApi-wiring/Context/round9_report.md` §7 describes (`rwrent_check`, the API on 5002 in Release
+> with `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, Vite on 5174) in a browser profile of
+> its own. Tests for each item, each shown to fail against a deliberate breakage; typecheck, tests and
+> build green; no new runtime dependency. Report: `Context/wiring_report.md` rewritten. Commits: several
+> grouped commits, `Wiring 31: …` with one plain sentence each, the report last as `Wiring 32: …`,
+> pushed with an ordinary push and checked with `git ls-remote`. This document is not edited by the
+> agent.
 
 - **F11-1. A refusal placed under a field that is scrolled out of view goes unnoticed** (owner,
   2026-09-23, bug). Creating an Active rental for 899LGR while it already has an Active rental: the
