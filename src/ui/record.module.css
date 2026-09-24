@@ -15,6 +15,10 @@
 .bannerIcon { flex: none; font-size: 19px; color: var(--warn); }
 .banner[data-tone='bad'] .bannerIcon { color: var(--bad); }
 .banner[data-tone='info'] .bannerIcon { color: var(--info); }
+.banner[data-tone='ok'] { background: var(--ok-soft); border-color: var(--ok-line); }
+.banner[data-tone='ok'] .bannerIcon { color: var(--ok); }
+.banner[data-tone='mute'] { background: var(--mute-soft); border-color: var(--mute-line); }
+.banner[data-tone='mute'] .bannerIcon { color: var(--mute); }
 .bannerTitle { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--fg); }
 .bannerBody { margin: 3px 0 0; font-size: 13px; color: var(--fg-2); text-wrap: pretty; }
 
@@ -53,6 +57,11 @@
 }
 .tabIcon { font-size: 17px; }
 .count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+/* A compact strip (Tasks' three views) fits the phone whole: no icons, tighter tabs. */
+@media (max-width: 639px) {
+  .tabs[data-compact='true'] .tab { padding: 8px 11px; }
+  .tabs[data-compact='true'] .tabIcon { display: none; }
+}
 
 /* On the phone tier the strip is wider than the screen. It still scrolls, but the scrollbar is not
    part of the control, and the clipped edge fades out so the tab under it reads as more. The fade

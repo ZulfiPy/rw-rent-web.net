@@ -22,11 +22,15 @@ function opens(e: MouseEvent<HTMLElement>): boolean {
 const ROW = table.row ?? '';
 const ROW_NAV = `${ROW} ${table.rowNav ?? ''}`;
 
+/**
+ * Typed for any element, so a table row and a phone card that opens a record (Follow-up 12's task
+ * card) share one behaviour.
+ */
 export interface RowNavProps {
   className: string;
-  onClick?: (e: MouseEvent<HTMLTableRowElement>) => void;
-  onAuxClick?: (e: MouseEvent<HTMLTableRowElement>) => void;
-  onMouseDown?: (e: MouseEvent<HTMLTableRowElement>) => void;
+  onClick?: (e: MouseEvent<HTMLElement>) => void;
+  onAuxClick?: (e: MouseEvent<HTMLElement>) => void;
+  onMouseDown?: (e: MouseEvent<HTMLElement>) => void;
 }
 
 /**

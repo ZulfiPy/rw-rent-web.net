@@ -11,7 +11,7 @@ import styles from './RecordHeader.module.css';
  */
 export function RecordHeader({
   backTo, backLabel, title, mono, description, badges, code, pageId, headerActions, actionsKey,
-  chip, actions, children,
+  chip, actions, stackActions, children,
 }: {
   backTo: string;
   backLabel: string;
@@ -29,6 +29,8 @@ export function RecordHeader({
   chip?: { label: string; tone: Tone; dot: string };
   /** The prototype's `heroActions`, inside the band at its trailing edge. */
   actions?: ReactNode;
+  /** Below 640 the actions take a row each at full width (a task's three), not two up. */
+  stackActions?: boolean;
   children?: ReactNode;
 }) {
   usePageHeader({
@@ -50,7 +52,7 @@ export function RecordHeader({
   const facts = Children.toArray(children);
 
   return (
-    <div className={styles.hero}>
+    <div className={styles.hero} data-stack={stackActions ? 'true' : undefined}>
       {chip ? <Chip tone={chip.tone} dot={chip.dot} size="hero">{chip.label}</Chip> : null}
       {facts.length ? (
         <div className={styles.facts}>

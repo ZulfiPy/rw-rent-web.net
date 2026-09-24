@@ -16,10 +16,15 @@ type Fade = 'none' | 'start' | 'end' | 'both';
  * tab is always brought fully into view, and the clipped edge fades so what is cut off reads as
  * more rather than as the end of the strip.
  */
-export function RecordTabs<T extends string>({ tabs, active, onSelect }: {
+export function RecordTabs<T extends string>({ tabs, active, onSelect, compact }: {
   tabs: Array<RecordTab<T>>;
   active: T;
   onSelect: (next: T) => void;
+  /**
+   * A short strip that fits the phone whole (Follow-up 12, Tasks): below 640 its tabs drop their
+   * icons and tighten, so nothing scrolls.
+   */
+  compact?: boolean;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const opened = useRef(false);
@@ -75,7 +80,7 @@ export function RecordTabs<T extends string>({ tabs, active, onSelect }: {
   }, [syncFade]);
 
   return (
-    <div ref={strip} className={styles.tabs} role="tablist" data-fade={fade}>
+    <div ref={strip} className={styles.tabs} role="tablist" data-fade={fade} data-compact={compact ? 'true' : undefined}>
       {tabs.map((t) => (
         <button
           key={t.id}
@@ -94,19 +99,23 @@ export function RecordTabs<T extends string>({ tabs, active, onSelect }: {
   );
 }
 
-/** The record-level state banner: an open interruption, a protected account, a blocked lifecycle. */
+/**
+ * The record-level state banner: an open interruption, a protected account, a blocked lifecycle. A
+ * finished task's is `ok` and a cancelled one's `mute`, and a finished task's has no body
+ * (Follow-up 12).
+ */
 export function RecordBanner({ icon, title, body, tone }: {
   icon: string;
   title: string;
-  body: string;
-  tone?: 'warn' | 'bad' | 'info';
+  body?: string | null;
+  tone?: 'warn' | 'bad' | 'info' | 'ok' | 'mute';
 }) {
   return (
     <div className={styles.banner} data-tone={tone}>
       <span data-icon aria-hidden="true" className={styles.bannerIcon}>{icon}</span>
       <div>
         <p className={styles.bannerTitle}>{title}</p>
-        <p className={styles.bannerBody}>{body}</p>
+        {body ? <p className={styles.bannerBody}>{body}</p> : null}
       </div>
     </div>
   );

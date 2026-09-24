@@ -138,7 +138,8 @@ export function revealFirstInvalid(body: HTMLElement): HTMLElement | null {
 
 export function Dialog({
   title, description, icon, tone = 'accent', width = 560, submitLabel, submitIcon, submitTone = 'primary',
-  submitBlocked, busy, failure, children, info, footnote, hideCancel, onClose, onSubmit, onRefresh,
+  submitBlocked, busy, failure, children, info, footnote, hideCancel, cancelLabel = 'Cancel', onClose, onSubmit,
+  onRefresh,
 }: {
   title: string;
   description?: string;
@@ -159,6 +160,11 @@ export function Dialog({
   footnote?: string;
   /** A dialog that only reads — the prototype's access sheet — closes with one action, not two. */
   hideCancel?: boolean;
+  /**
+   * The ghost button's label, where "Cancel" would say the opposite of what it does: the Cancel task
+   * dialog closes with "Keep task" (Follow-up 12). It stays enabled beside a stale record, as Cancel does.
+   */
+  cancelLabel?: string;
   onClose: () => void;
   onSubmit: () => void;
   onRefresh?: () => void;
@@ -263,7 +269,7 @@ export function Dialog({
         <div className={styles.footer}>
           {footnote ? <span className={styles.footnote}>{footnote}</span> : null}
           <span className={styles.spacer} />
-          {hideCancel ? null : <Button label="Cancel" tone="ghost" onClick={onClose} />}
+          {hideCancel ? null : <Button label={cancelLabel} tone="ghost" onClick={onClose} />}
           <Button
             label={submitLabel}
             icon={submitIcon}
