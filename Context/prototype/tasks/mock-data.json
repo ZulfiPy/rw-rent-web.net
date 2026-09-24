@@ -1,0 +1,454 @@
+{
+  "_about": "Seed tasks of the approved Tasks prototype (RW-Rent.dc.html, DB.tasks). The prototype computes every time relative to the moment it loads; the ISO values below are resolved for the reference moment, and _relative gives the rule so fixtures can stay relative. Object properties are camelCase, as in the prototype DB. status is the WorkTaskStatus name; statusValue is its enum number (the prototype DB stores the number).",
+  "reference": {
+    "date": "2026-09-24",
+    "now": "2026-09-24T09:00:00+03:00",
+    "tz": "Europe/Tallinn (UTC+03:00 until 25 Oct)"
+  },
+  "expectedCounts": {
+    "navigationCount": {
+      "u4": 4,
+      "u2": 2,
+      "u5": 2
+    },
+    "tabs": {
+      "u4": {
+        "mine": 4,
+        "involving": 1,
+        "finished": 1
+      },
+      "u2": {
+        "mine": 2,
+        "involving": 1,
+        "finished": 2
+      },
+      "u5": {
+        "mine": 0,
+        "involving": 3,
+        "finished": 0
+      }
+    }
+  },
+  "people": [
+    {
+      "id": "u1",
+      "name": "Arturs Veidenbaums",
+      "role": "SystemAdministrator",
+      "note": "not a Company person: no tasks, never offered as a step person, no Tasks destination"
+    },
+    {
+      "id": "u2",
+      "name": "Signe Priede",
+      "role": "CompanyPrincipal",
+      "persona": true
+    },
+    {
+      "id": "u3",
+      "name": "Karlis Zvaigzne",
+      "role": "FleetManager",
+      "persona": false,
+      "note": "offered in the Person list; no seed tasks"
+    },
+    {
+      "id": "u4",
+      "name": "Dita Smite",
+      "role": "FleetManager",
+      "persona": true
+    },
+    {
+      "id": "u5",
+      "name": "Toms Rudzitis",
+      "role": "Viewer",
+      "persona": true
+    },
+    {
+      "id": "u11",
+      "name": "Raivis Dumins",
+      "status": "Suspended",
+      "note": "not offered in the Person list"
+    }
+  ],
+  "records": {
+    "vehicles": [
+      {
+        "id": "v6",
+        "guid": "71b5e29d-8c04-4f36-a950-13d86e7c02b5",
+        "plateNumber": "204 JLM",
+        "label": "Hyundai Kona Electric"
+      },
+      {
+        "id": "v9",
+        "guid": "c9538e26-70b1-4d85-a3f2-08db64e17c59",
+        "plateNumber": "444 WKS",
+        "label": "Nissan Qashqai"
+      },
+      {
+        "id": "v2",
+        "guid": "b8e40d17-92a5-4c63-8f71-05d29ab6e740",
+        "plateNumber": "119 MPR",
+        "label": "Volvo XC60"
+      }
+    ],
+    "customers": [
+      {
+        "id": "cu4",
+        "guid": "a05c38e1-7f42-49b6-9d13-84e2c06b71fa",
+        "name": "Martins Ozols",
+        "type": "Private",
+        "isActive": true
+      },
+      {
+        "id": "cu5",
+        "guid": "6e93df20-4a15-4c78-83b9-1fc750d28e46",
+        "name": "Ventspils Marine Services",
+        "type": "Business",
+        "isActive": false
+      }
+    ],
+    "rentalAssignments": [
+      {
+        "id": "a3",
+        "guid": "2ae6f118-7c40-4d91-b23f-58e0a6741cc9",
+        "vehicleId": "v7",
+        "vehiclePlateNumber": "552 KLM",
+        "customerId": "cu3",
+        "customerName": "Nordwind Logistics",
+        "status": "Active"
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "wt1",
+      "title": "Prepare 204 JLM for a rental",
+      "description": "Adding it to Bolt comes first. The car wash can happen any time before the handover.",
+      "dueAtUtc": "2026-09-27T09:00:00+00:00",
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": "v6",
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [
+        {
+          "id": "ws11",
+          "workTaskId": "wt1",
+          "position": 1,
+          "title": "Add to Bolt",
+          "responsibleUserId": "u4",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-23T08:20:00+00:00",
+          "doneByUserId": "u4",
+          "_relative": {
+            "doneAtUtc": "yesterday 11:20"
+          }
+        },
+        {
+          "id": "ws12",
+          "workTaskId": "wt1",
+          "position": 2,
+          "title": "Apply for the taxi licence",
+          "responsibleUserId": "u2",
+          "dueAtUtc": "2026-09-26T13:00:00+00:00",
+          "doneAtUtc": null,
+          "doneByUserId": null,
+          "_relative": {
+            "dueAtUtc": "in 2 days 16:00"
+          }
+        },
+        {
+          "id": "ws13",
+          "workTaskId": "wt1",
+          "position": 3,
+          "title": "Car wash",
+          "responsibleUserId": "u5",
+          "dueAtUtc": "2026-09-25T07:00:00+00:00",
+          "doneAtUtc": null,
+          "doneByUserId": null,
+          "_relative": {
+            "dueAtUtc": "tomorrow 10:00"
+          }
+        },
+        {
+          "id": "ws14",
+          "workTaskId": "wt1",
+          "position": 4,
+          "title": "Handover",
+          "responsibleUserId": "u4",
+          "dueAtUtc": "2026-09-27T09:00:00+00:00",
+          "doneAtUtc": null,
+          "doneByUserId": null,
+          "_relative": {
+            "dueAtUtc": "in 3 days 12:00"
+          }
+        }
+      ],
+      "createdByUserId": "u4",
+      "createdAtUtc": "2026-09-22T06:14:00+00:00",
+      "updatedAtUtc": "2026-09-23T08:20:00+00:00",
+      "updatedByUserId": "u4",
+      "_relative": {
+        "dueAtUtc": "in 3 days 12:00",
+        "createdAtUtc": "2 days ago 09:14",
+        "updatedAtUtc": "yesterday 11:20"
+      }
+    },
+    {
+      "id": "wt2",
+      "title": "Reassign the parking fine to the driver",
+      "description": "Fine from Riga City Police, issued while the car was with Nordwind Logistics.",
+      "dueAtUtc": "2026-09-23T12:00:00+00:00",
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": null,
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": "a3",
+      "cancellationNote": null,
+      "steps": [],
+      "createdByUserId": "u4",
+      "createdAtUtc": "2026-09-21T07:02:00+00:00",
+      "updatedAtUtc": null,
+      "updatedByUserId": null,
+      "_relative": {
+        "dueAtUtc": "yesterday 15:00 (overdue)",
+        "createdAtUtc": "3 days ago 10:02"
+      }
+    },
+    {
+      "id": "wt3",
+      "title": "Prepare the rental agreement for Martins Ozols",
+      "description": null,
+      "dueAtUtc": "2026-09-24T14:00:00+00:00",
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": null,
+      "customerId": "cu4",
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [],
+      "createdByUserId": "u2",
+      "createdAtUtc": "2026-09-23T13:40:00+00:00",
+      "updatedAtUtc": null,
+      "updatedByUserId": null,
+      "_relative": {
+        "dueAtUtc": "today 17:00; if that is less than 30 min away, now + 1 h, capped at 23:45 (always later today)",
+        "createdAtUtc": "yesterday 16:40"
+      }
+    },
+    {
+      "id": "wt4",
+      "title": "Book a service for 444 WKS and tell the driver",
+      "description": null,
+      "dueAtUtc": null,
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": "v9",
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [
+        {
+          "id": "ws41",
+          "workTaskId": "wt4",
+          "position": 1,
+          "title": "Book the service appointment",
+          "responsibleUserId": "u4",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-22T07:05:00+00:00",
+          "doneByUserId": "u4",
+          "_relative": {
+            "doneAtUtc": "2 days ago 10:05"
+          }
+        },
+        {
+          "id": "ws42",
+          "workTaskId": "wt4",
+          "position": 2,
+          "title": "Tell the driver the time",
+          "responsibleUserId": "u5",
+          "dueAtUtc": "2026-09-23T14:00:00+00:00",
+          "doneAtUtc": null,
+          "doneByUserId": null,
+          "_relative": {
+            "dueAtUtc": "yesterday 17:00 (overdue)"
+          }
+        }
+      ],
+      "createdByUserId": "u4",
+      "createdAtUtc": "2026-09-20T05:50:00+00:00",
+      "updatedAtUtc": "2026-09-22T07:05:00+00:00",
+      "updatedByUserId": "u4",
+      "_relative": {
+        "createdAtUtc": "4 days ago 08:50",
+        "updatedAtUtc": "2 days ago 10:05"
+      }
+    },
+    {
+      "id": "wt5",
+      "title": "Handle the windscreen insurance case of 204 JLM",
+      "description": "Stone chip on the windscreen, reported by the driver. The insurer needs the photos and the repair invoice.",
+      "dueAtUtc": "2026-10-04T13:00:00+00:00",
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": "v6",
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [
+        {
+          "id": "ws51",
+          "workTaskId": "wt5",
+          "position": 1,
+          "title": "Collect the photos",
+          "responsibleUserId": "u5",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-21T11:10:00+00:00",
+          "doneByUserId": "u5",
+          "_relative": {
+            "doneAtUtc": "3 days ago 14:10"
+          }
+        },
+        {
+          "id": "ws52",
+          "workTaskId": "wt5",
+          "position": 2,
+          "title": "Send the claim to the insurer",
+          "responsibleUserId": "u2",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-22T06:40:00+00:00",
+          "doneByUserId": "u2",
+          "_relative": {
+            "doneAtUtc": "2 days ago 09:40"
+          }
+        },
+        {
+          "id": "ws53",
+          "workTaskId": "wt5",
+          "position": 3,
+          "title": "Pick up the repair invoice",
+          "responsibleUserId": "u4",
+          "dueAtUtc": null,
+          "doneAtUtc": null,
+          "doneByUserId": null,
+          "_relative": {}
+        }
+      ],
+      "createdByUserId": "u2",
+      "createdAtUtc": "2026-09-19T08:30:00+00:00",
+      "updatedAtUtc": "2026-09-22T06:40:00+00:00",
+      "updatedByUserId": "u2",
+      "_relative": {
+        "dueAtUtc": "in 10 days 16:00",
+        "createdAtUtc": "5 days ago 11:30",
+        "updatedAtUtc": "2 days ago 09:40"
+      }
+    },
+    {
+      "id": "wt6",
+      "title": "Order two spare key fobs",
+      "description": null,
+      "dueAtUtc": null,
+      "status": "Open",
+      "statusValue": 1,
+      "closedAtUtc": null,
+      "vehicleId": null,
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [],
+      "createdByUserId": "u4",
+      "createdAtUtc": "2026-09-23T06:05:00+00:00",
+      "updatedAtUtc": null,
+      "updatedByUserId": null,
+      "_relative": {
+        "createdAtUtc": "yesterday 09:05"
+      }
+    },
+    {
+      "id": "wt7",
+      "title": "Register 119 MPR in Bolt",
+      "description": null,
+      "dueAtUtc": null,
+      "status": "Finished",
+      "statusValue": 2,
+      "closedAtUtc": "2026-09-22T13:02:00+00:00",
+      "vehicleId": "v2",
+      "customerId": null,
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": null,
+      "steps": [
+        {
+          "id": "ws71",
+          "workTaskId": "wt7",
+          "position": 1,
+          "title": "Add to Bolt",
+          "responsibleUserId": "u4",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-18T10:25:00+00:00",
+          "doneByUserId": "u4",
+          "_relative": {
+            "doneAtUtc": "6 days ago 13:25"
+          }
+        },
+        {
+          "id": "ws72",
+          "workTaskId": "wt7",
+          "position": 2,
+          "title": "Apply for the taxi licence",
+          "responsibleUserId": "u2",
+          "dueAtUtc": null,
+          "doneAtUtc": "2026-09-21T08:48:00+00:00",
+          "doneByUserId": "u2",
+          "_relative": {
+            "doneAtUtc": "3 days ago 11:48"
+          }
+        }
+      ],
+      "createdByUserId": "u4",
+      "createdAtUtc": "2026-09-16T06:30:00+00:00",
+      "updatedAtUtc": "2026-09-22T13:02:00+00:00",
+      "updatedByUserId": "u4",
+      "_relative": {
+        "closedAtUtc": "2 days ago 16:02",
+        "createdAtUtc": "8 days ago 09:30",
+        "updatedAtUtc": "2 days ago 16:02"
+      }
+    },
+    {
+      "id": "wt8",
+      "title": "Prepare an agreement for Ventspils Marine Services",
+      "description": null,
+      "dueAtUtc": null,
+      "status": "Cancelled",
+      "statusValue": 3,
+      "closedAtUtc": "2026-09-21T07:15:00+00:00",
+      "vehicleId": null,
+      "customerId": "cu5",
+      "driverId": null,
+      "rentalAssignmentId": null,
+      "cancellationNote": "The customer changed their mind.",
+      "steps": [],
+      "createdByUserId": "u2",
+      "createdAtUtc": "2026-09-18T11:00:00+00:00",
+      "updatedAtUtc": "2026-09-21T07:15:00+00:00",
+      "updatedByUserId": "u2",
+      "_relative": {
+        "closedAtUtc": "3 days ago 10:15",
+        "createdAtUtc": "6 days ago 14:00",
+        "updatedAtUtc": "3 days ago 10:15"
+      }
+    }
+  ]
+}

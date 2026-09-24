@@ -492,11 +492,12 @@ table{border-collapse:collapse}
                 </sc-for>
               </section>
 
+              <sc-if value="{{ showTasksCard }}" hint-placeholder-val="{{ true }}">
               <section style="display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-1)">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line)">
                   <div style="display:flex;flex-direction:column;gap:2px">
                     <h2 style="margin:0;font-size:14px;font-weight:600;color:var(--fg)">Open tasks</h2>
-                    <p style="margin:0;font-size:12.5px;color:var(--fg-3)">Work items linked to an assignment or a vehicle.</p>
+                    <p style="margin:0;font-size:12.5px;color:var(--fg-3)">Your open steps and your own tasks, earliest due first. Times in Tallinn time.</p>
                   </div>
                   <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);white-space:nowrap">{{ tasksCount }}</span>
                 </div>
@@ -507,16 +508,20 @@ table{border-collapse:collapse}
                   </div>
                 </sc-if>
                 <sc-for list="{{ tasks }}" as="t" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:center;gap:13px;padding:13px 17px;border-bottom:1px solid var(--line);color:var(--fg)">
+                  <button type="button" onClick="{{ t.go }}" style="display:flex;align-items:center;gap:13px;padding:13px 17px;background:transparent;border:none;border-bottom:1px solid var(--line);text-align:left;color:var(--fg);width:100%" style-hover="background:var(--surface-2)">
                     <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border-radius:8px;background:{{ t.tintBg }};border:1px solid {{ t.tintBd }};color:{{ t.tint }}"><span data-icon style="font-size:17px">{{ t.icon }}</span></span>
                     <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
                       <span style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
                       <span style="font-size:12.5px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sub }}</span>
                     </span>
-                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);flex:none">{{ t.when }}</span>
-                  </div>
+                    <span style="display:flex;align-items:center;gap:10px;flex:none">
+                      <span style="font-family:var(--font-mono);font-size:11px;color:{{ t.whenFg }}">{{ t.when }}</span>
+                      <span data-icon style="font-size:17px;color:var(--fg-4)">chevron_right</span>
+                    </span>
+                  </button>
                 </sc-for>
               </section>
+              </sc-if>
             </div>
 
             <div style="display:flex;flex-direction:column;gap:14px">
@@ -657,6 +662,21 @@ table{border-collapse:collapse}
               </button>
             </sc-for>
           </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ pgTasks }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px">
+          <div role="tablist" aria-label="Task lists" style="display:flex;flex-wrap:nowrap;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:11px;width:max-content;max-width:100%;overflow-x:auto">
+            <sc-for list="{{ taskTabs }}" as="t" hint-placeholder-count="3">
+              <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="display:flex;align-items:center;gap:8px;flex:none;padding:{{ t.pad }};background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }};border-radius:8px;font-size:13.5px;font-weight:{{ t.weight }}" style-hover="color:var(--fg)">
+                <span data-icon style="font-size:17px;display:{{ t.iconDisplay }}">{{ t.icon }}</span>
+                <span style="white-space:nowrap">{{ t.label }}</span>
+                <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3)">{{ t.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <span style="margin-left:auto;font-size:12px;color:var(--fg-3)">Times in Tallinn time.</span>
         </div>
         </sc-if>
 
@@ -801,6 +821,7 @@ table{border-collapse:collapse}
                           <span style="display:flex;flex-direction:column;gap:2px;align-items:{{ c.alignItems }}">
                             <a href="#" onClick="{{ c.onLink }}" style="width:fit-content;max-width:100%;font-family:{{ c.font }};font-size:{{ c.size }};font-weight:600;color:{{ c.linkFg }};white-space:{{ c.wrap }};text-decoration:none;border-bottom:1px solid {{ c.linkEdge }};cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.text }}</a>
                             <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-family:{{ c.subFont }};font-size:{{ c.subSize }};color:var(--fg-3)">{{ c.sub }}</span></sc-if>
+                            <sc-for list="{{ c.extraSubs }}" as="l" hint-placeholder-count="0"><span style="font-size:{{ c.subSize }};color:var(--fg-3)">{{ l.text }}</span></sc-for>
                           </span>
                         </sc-if>
                         <sc-if value="{{ c.isText }}" hint-placeholder-val="{{ true }}">
@@ -812,6 +833,33 @@ table{border-collapse:collapse}
                         <sc-if value="{{ c.isDelete }}" hint-placeholder-val="{{ false }}">
                           <span style="display:flex;align-items:center;justify-content:flex-end">
                             <button type="button" onClick="{{ c.delGo }}" aria-disabled="{{ c.delDisabled }}" title="{{ c.delTip }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;background:var(--bad-soft);border:1px solid var(--bad-line);border-radius:8px;color:var(--bad);font-size:12.5px;font-weight:500;white-space:nowrap;opacity:{{ c.delOpacity }};cursor:{{ c.delCursor }}" style-hover="filter:brightness(1.08)"><span data-icon style="font-size:16px">delete</span><span>{{ c.delLabel }}</span></button>
+                          </span>
+                        </sc-if>
+                        <sc-if value="{{ c.isProgress }}" hint-placeholder-val="{{ false }}">
+                          <span style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                            <span style="font-size:13px;color:{{ c.progressFg }};white-space:nowrap">{{ c.text }}</span>
+                            <sc-if value="{{ c.hasBar }}" hint-placeholder-val="{{ false }}">
+                              <span aria-hidden="true" style="display:block;width:100%;max-width:112px;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden"><span style="display:block;height:100%;width:{{ c.barPct }};border-radius:2px;background:var(--ok)"></span></span>
+                            </sc-if>
+                            <sc-if value="{{ c.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--fg-3)">{{ c.sub }}</span></sc-if>
+                          </span>
+                        </sc-if>
+                        <sc-if value="{{ c.isSteps }}" hint-placeholder-val="{{ false }}">
+                          <span style="display:flex;flex-direction:column;gap:9px;min-width:0">
+                            <sc-for list="{{ c.steps }}" as="st" hint-placeholder-count="1">
+                              <span style="display:flex;align-items:center;gap:10px;min-width:0">
+                                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                                  <span style="font-size:13px;color:var(--fg);overflow-wrap:anywhere">{{ st.title }}</span>
+                                  <span style="font-size:12px;color:{{ st.dueFg }};white-space:nowrap">{{ st.dueText }}</span>
+                                </span>
+                                <sc-if value="{{ st.isDone }}" hint-placeholder-val="{{ false }}">
+                                  <span style="display:inline-flex;align-items:center;gap:4px;flex:none;font-size:12px;font-weight:500;color:var(--ok);white-space:nowrap"><span data-icon style="font-size:15px">check</span><span>Done</span></span>
+                                </sc-if>
+                                <sc-if value="{{ st.hasAct }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" onClick="{{ st.go }}" onKeyDown="{{ st.stopKey }}" style="display:flex;align-items:center;gap:5px;flex:none;padding:5px 10px;background:{{ st.bg }};border:1px solid var(--line-2);border-radius:7px;color:var(--fg);font-size:12px;font-weight:500;white-space:nowrap" style-hover="background:var(--surface-3)"><span data-icon style="font-size:15px">{{ st.icon }}</span><span>{{ st.label }}</span></button>
+                                </sc-if>
+                              </span>
+                            </sc-for>
                           </span>
                         </sc-if>
                         <sc-if value="{{ c.isActions }}" hint-placeholder-val="{{ false }}">
@@ -916,6 +964,56 @@ table{border-collapse:collapse}
             </div>
           </sc-if>
 
+          <sc-if value="{{ list.showTaskCards }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ list.taskCards }}" as="c" hint-placeholder-count="3">
+                <div onClick="{{ c.onOpen }}" style="display:flex;flex-direction:column;gap:11px;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer" style-hover="background:var(--surface-2)">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <span style="display:flex;min-width:0"><a href="#" onClick="{{ c.onTitle }}" style="max-width:100%;font-size:14px;font-weight:600;color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line-3);overflow-wrap:anywhere;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ c.title }}</a></span>
+                      <sc-for list="{{ c.subs }}" as="l" hint-placeholder-count="1"><span style="font-size:11.5px;color:var(--fg-3)">{{ l.text }}</span></sc-for>
+                    </div>
+                    <sc-if value="{{ c.hasChip }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-flex;align-items:center;gap:6px;flex:none;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:{{ c.chipBg }};color:{{ c.chipFg }};border:1px solid {{ c.chipBd }}"><span aria-hidden="true" style="width:6px;height:6px;border-radius:{{ c.chipShape }};background:currentColor"></span>{{ c.chip }}</span>
+                    </sc-if>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px">
+                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                      <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-4)">Steps</span>
+                      <span style="font-size:12.5px;color:{{ c.progressFg }}">{{ c.progress }}</span>
+                      <sc-if value="{{ c.hasBar }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display:block;width:100%;max-width:140px;height:4px;margin-top:2px;border-radius:2px;background:var(--surface-3);overflow:hidden"><span style="display:block;height:100%;width:{{ c.barPct }};border-radius:2px;background:var(--ok)"></span></span></sc-if>
+                    </span>
+                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                      <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-4)">{{ c.dueLabel }}</span>
+                      <span style="font-size:12.5px;font-weight:500;color:{{ c.dueFg }}">{{ c.due }}</span>
+                    </span>
+                  </div>
+                  <sc-if value="{{ c.hasSteps }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-4)">{{ c.stepsLabel }}</span>
+                      <sc-for list="{{ c.steps }}" as="st" hint-placeholder-count="1">
+                        <div style="display:flex;flex-direction:column;gap:9px;padding:10px 12px;background:var(--inset);border:1px solid var(--line);border-radius:10px">
+                          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                              <span style="font-size:13px;color:var(--fg);overflow-wrap:anywhere">{{ st.title }}</span>
+                              <span style="font-size:12px;color:{{ st.dueFg }}">{{ st.dueText }}</span>
+                            </span>
+                            <sc-if value="{{ st.isDone }}" hint-placeholder-val="{{ false }}">
+                              <span style="display:inline-flex;align-items:center;gap:4px;flex:none;font-size:12px;font-weight:500;color:var(--ok)"><span data-icon style="font-size:15px">check</span><span>Done</span></span>
+                            </sc-if>
+                          </div>
+                          <sc-if value="{{ st.hasAct }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{ st.go }}" onKeyDown="{{ st.stopKey }}" style="display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 14px;background:{{ st.bg }};border:1px solid var(--line-2);border-radius:9px;color:var(--fg);font-size:13px;font-weight:500" style-hover="background:var(--surface-3)"><span data-icon style="font-size:17px">{{ st.icon }}</span><span>{{ st.label }}</span></button>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ list.showPager }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)">
               <span style="font-size:12.5px;color:var(--fg-3)">{{ list.rangeLabel }}</span>
@@ -959,7 +1057,8 @@ table{border-collapse:collapse}
                 <span style="display:flex;flex-direction:column;align-self:center;justify-content:{{ detail.heroFactJustify }};min-height:{{ detail.heroFactMin }};gap:1px;min-width:0;grid-column:{{ h.span }}">
                   <span style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-4)">{{ h.label }}</span>
                   <span style="display:flex;flex-direction:column;justify-content:flex-start;gap:1px;min-width:0;min-height:{{ detail.heroBodyMin }}">
-                    <span style="font-family:{{ h.font }};font-size:13px;color:var(--fg);min-width:0;overflow-wrap:anywhere">{{ h.value }}</span>
+                    <sc-if value="{{ h.isPlain }}" hint-placeholder-val="{{ true }}"><span style="font-family:{{ h.font }};font-size:13px;color:{{ h.fg }};min-width:0;overflow-wrap:anywhere">{{ h.value }}</span></sc-if>
+                    <sc-if value="{{ h.isLink }}" hint-placeholder-val="{{ false }}"><a href="#" onClick="{{ h.linkGo }}" style="width:fit-content;max-width:100%;font-family:{{ h.font }};font-size:13px;font-weight:500;color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line-3);overflow-wrap:anywhere;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ h.value }}</a></sc-if>
                     <sc-if value="{{ h.hasSub }}" hint-placeholder-val="{{ false }}">
                       <span style="font-size:11.5px;color:var(--fg-3)">{{ h.sub }}</span>
                     </sc-if>
@@ -995,7 +1094,7 @@ table{border-collapse:collapse}
               <span data-icon style="font-size:19px;color:{{ detail.bannerFg }};flex:none">{{ detail.bannerIcon }}</span>
               <div style="min-width:0">
                 <div style="font-size:13.5px;font-weight:600;color:var(--fg)">{{ detail.bannerTitle }}</div>
-                <p style="margin:3px 0 0;font-size:13px;color:var(--fg-2)">{{ detail.bannerBody }}</p>
+                <sc-if value="{{ detail.bannerHasBody }}" hint-placeholder-val="{{ true }}"><p style="margin:3px 0 0;font-size:13px;color:var(--fg-2)">{{ detail.bannerBody }}</p></sc-if>
               </div>
             </div>
           </sc-if>
@@ -1015,6 +1114,28 @@ table{border-collapse:collapse}
                   </div>
                 </div>
 
+                <sc-if value="{{ p.hasText }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;padding:14px 17px 16px;max-width:80ch;font-size:13.5px;line-height:1.6;color:var(--fg);white-space:pre-line;overflow-wrap:anywhere">{{ p.text }}</p>
+                </sc-if>
+                <sc-if value="{{ p.hasSteps }}" hint-placeholder-val="{{ false }}">
+                  <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column">
+                    <sc-for list="{{ p.steps }}" as="st" hint-placeholder-count="3">
+                      <li style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:13px 17px;border-bottom:1px solid var(--line)">
+                        <span aria-hidden="true" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none;border-radius:7px;background:{{ st.numBg }};border:1px solid {{ st.numBd }};color:{{ st.numFg }};font-family:var(--font-mono);font-size:12px;font-weight:500">{{ st.num }}</span>
+                        <span style="flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:2px">
+                          <span style="font-size:13.5px;font-weight:500;color:var(--fg);overflow-wrap:anywhere">{{ st.title }}</span>
+                          <span style="display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;color:var(--fg-3)"><span>{{ st.person }}</span><span style="color:{{ st.dueFg }}">{{ st.dueText }}</span></span>
+                        </span>
+                        <span style="display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 10px;margin-left:auto;min-width:0">
+                          <span style="display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:{{ st.chipBg }};color:{{ st.chipFg }};border:1px solid {{ st.chipBd }}"><span aria-hidden="true" style="width:6px;height:6px;flex:none;border-radius:{{ st.chipShape }};background:currentColor"></span><span>{{ st.state }}</span></span>
+                          <sc-if value="{{ st.hasAct }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{ st.actGo }}" style="display:flex;align-items:center;justify-content:center;gap:6px;min-height:{{ st.btnH }};padding:7px 12px;background:{{ st.actBg }};border:1px solid var(--line-2);border-radius:8px;color:var(--fg);font-size:12.5px;font-weight:500;white-space:nowrap" style-hover="background:var(--surface-3)"><span data-icon style="font-size:16px">{{ st.actIcon }}</span><span>{{ st.actLabel }}</span></button>
+                          </sc-if>
+                        </span>
+                      </li>
+                    </sc-for>
+                  </ol>
+                </sc-if>
                 <sc-if value="{{ p.hasRows }}" hint-placeholder-val="{{ false }}">
                   <div style="display:grid;grid-template-columns:{{ p.rowCols }};gap:1px;background:var(--line)">
                     <sc-for list="{{ p.rows }}" as="r" hint-placeholder-count="4">
@@ -1294,6 +1415,53 @@ table{border-collapse:collapse}
                 <span style="font-size:12px;line-height:1.45;color:var(--fg-3);font-family:{{ sec.picker.hintFont }}">{{ sec.picker.hint }}</span>
               </div>
             </sc-if>
+            <sc-if value="{{ sec.hasSteps }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ sec.steps }}" as="st" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--inset);border:1px solid {{ st.bd }};border-radius:10px">
+                    <span aria-hidden="true" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none;margin-top:26px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line-2);font-family:var(--font-mono);font-size:12px;color:var(--fg-2)">{{ st.num }}</span>
+                    <div style="flex:1;min-width:0;display:grid;grid-template-columns:{{ sec.stepCols }};gap:11px 12px">
+                      <label style="display:flex;flex-direction:column;gap:6px;min-width:0;grid-column:1 / -1">
+                        <span style="display:flex;align-items:baseline;gap:6px;font-size:12.5px;font-weight:500;color:var(--fg-2)"><span>Title</span><span style="font-size:11px;font-weight:400;color:var(--fg-4)">required</span></span>
+                        <input type="text" value="{{ st.title }}" onChange="{{ st.onTitle }}" maxLength="200" aria-invalid="{{ st.titleInvalid }}" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid {{ st.titleBorder }};border-radius:8px;color:var(--fg);font-size:13.5px;outline:none" style-focus="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)" />
+                        <sc-if value="{{ st.hasTitleErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--bad)"><span data-icon style="font-size:15px;margin-top:1px">error</span><span>{{ st.titleErr }}</span></span></sc-if>
+                      </label>
+                      <label style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                        <span style="display:flex;align-items:baseline;gap:6px;font-size:12.5px;font-weight:500;color:var(--fg-2)"><span>Person</span><span style="font-size:11px;font-weight:400;color:var(--fg-4)">required</span></span>
+                        <span style="position:relative;display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid {{ st.userBorder }};border-radius:8px" style-focus-within="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)">
+                          <span style="flex:1;min-width:0;font-size:13.5px;color:{{ st.userFg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.userDisplay }}</span>
+                          <span data-icon style="font-size:17px;color:var(--fg-3);flex:none">expand_more</span>
+                          <select value="{{ st.userValue }}" onChange="{{ st.onUser }}" aria-label="Person" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none">
+                            <sc-for list="{{ st.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                          </select>
+                        </span>
+                        <sc-if value="{{ st.hasUserErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--bad)"><span data-icon style="font-size:15px;margin-top:1px">error</span><span>{{ st.userErr }}</span></span></sc-if>
+                      </label>
+                      <label style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                        <span style="display:flex;align-items:baseline;gap:6px;font-size:12.5px;font-weight:500;color:var(--fg-2)"><span>Due</span><span style="font-size:11px;font-weight:400;color:var(--fg-4)">· optional</span></span>
+                        <input type="datetime-local" value="{{ st.due }}" onChange="{{ st.onDue }}" style="width:100%;min-width:0;padding:9px 11px;background:var(--surface-2);border:1px solid {{ st.dueBorder }};border-radius:8px;color:var(--fg);font-size:13.5px;outline:none" style-focus="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)" />
+                        <sc-if value="{{ st.hasDueErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--bad)"><span data-icon style="font-size:15px;margin-top:1px">error</span><span>{{ st.dueErr }}</span></span></sc-if>
+                      </label>
+                      <sc-if value="{{ st.hasDone }}" hint-placeholder-val="{{ false }}">
+                        <span style="grid-column:1 / -1;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ok)"><span data-icon style="font-size:15px">check_circle</span><span>{{ st.doneText }}</span></span>
+                      </sc-if>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:none;margin-top:26px">
+                      <button type="button" onClick="{{ st.upGo }}" disabled="{{ st.upOff }}" aria-label="Move step up" title="Move step up" style="display:flex;align-items:center;justify-content:center;width:{{ sec.stepBtn }};height:{{ sec.stepBtn }};padding:0;background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;color:var(--fg-2);opacity:{{ st.upOpacity }}" style-hover="background:var(--surface-3);color:var(--fg)"><span data-icon style="font-size:17px">arrow_upward</span></button>
+                      <button type="button" onClick="{{ st.downGo }}" disabled="{{ st.downOff }}" aria-label="Move step down" title="Move step down" style="display:flex;align-items:center;justify-content:center;width:{{ sec.stepBtn }};height:{{ sec.stepBtn }};padding:0;background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;color:var(--fg-2);opacity:{{ st.downOpacity }}" style-hover="background:var(--surface-3);color:var(--fg)"><span data-icon style="font-size:17px">arrow_downward</span></button>
+                      <button type="button" onClick="{{ st.removeGo }}" aria-label="Remove step" title="Remove step" style="display:flex;align-items:center;justify-content:center;width:{{ sec.stepBtn }};height:{{ sec.stepBtn }};padding:0;background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;color:var(--fg-2)" style-hover="background:var(--surface-3);color:var(--fg)"><span data-icon style="font-size:17px">close</span></button>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ sec.noSteps }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;padding:12px 13px;background:var(--inset);border:1px dashed var(--line-2);border-radius:10px;font-size:12.5px;color:var(--fg-3)">{{ sec.stepsEmpty }}</p>
+                </sc-if>
+                <div style="display:flex">
+                  <button type="button" onClick="{{ sec.addStep }}" style="display:flex;align-items:center;gap:6px;min-height:{{ sec.addH }};padding:8px 13px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;color:var(--fg);font-size:13px;font-weight:500" style-hover="background:var(--surface-3)"><span data-icon style="font-size:16px">add</span><span>Add step</span></button>
+                </div>
+                <p style="margin:0;font-size:12px;line-height:1.5;color:var(--fg-3);text-wrap:pretty">{{ sec.stepsHint }}</p>
+              </div>
+            </sc-if>
             <div style="display:grid;grid-template-columns:{{ sec.cols }};gap:13px">
               <sc-for list="{{ sec.fields }}" as="f" hint-placeholder-count="2">
                 <label style="display:flex;flex-direction:column;gap:6px;grid-column:{{ f.span }}">
@@ -1530,7 +1698,9 @@ const FAIL_SIM = {
   'role-revoke': { fields:{ reason:'Reason must be at least 3 characters.' }, conflict:'That role assignment is no longer effective.' },
   'company-create': { fields:{ registrationNumber:'That registration number belongs to another Company.' }, conflict:'The operating Company already exists.' },
   'company-edit': { fields:{ registrationNumber:'That registration number belongs to another Company.' }, conflict:'The Company profile changed while you had this open.' },
-  'transfer-initiate': { fields:{ targetEmail:'That account cannot receive the transfer.', currentPassword:'That is not your current password.' }, conflict:'A transfer is already pending. Cancel it before starting another.' }
+  'transfer-initiate': { fields:{ targetEmail:'That account cannot receive the transfer.', currentPassword:'That is not your current password.' }, conflict:'A transfer is already pending. Cancel it before starting another.' },
+  'task-create': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'The record this task is about was deleted moments ago. Choose another one or none.' },
+  'task-edit': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'The task was finished or cancelled while you had this open.' }
 };
 // Every event type the API can emit, in prefix groups. The Event type filter is driven by this
 // catalog rather than by the rows currently loaded, so the choices never depend on the page.
@@ -1639,6 +1809,19 @@ const ENUM_RAW = { authType: { 1:'NamedDriver', 2:'CompanyAuthorizedDrivers' }, 
 const REG_AT = { u8: -44, u9: -24 * 14 };
 // Activation stamps the record, so an activated user's Last updated is never empty.
 const ACT_AT = { u5: -24 * 70 };
+// Task seed times are local wall-clock times n days from today, the way a person sets a due date.
+const dayAt = (n, h, m) => { const d = new Date(now); d.setDate(d.getDate() + n); d.setHours(h, m, 0, 0); return d.toISOString(); };
+const todayLater = () => { const d = new Date(now); d.setHours(17, 0, 0, 0); if (d.getTime() > now + 30 * 60e3) return d.toISOString();
+  const e = new Date(now); e.setHours(23, 45, 0, 0); return new Date(Math.max(Math.min(now + 60 * 60e3, e.getTime()), now + 60e3)).toISOString(); };
+const WS = (id, tid, pos, title, uid, due, done, by) => ({ id, workTaskId:tid, position:pos, title, responsibleUserId:uid, dueAtUtc: due || null, doneAtUtc: done || null, doneByUserId: by || null });
+// What a task may be about: at most one of the four references.
+const TASK_ABOUT = [
+  { id:'vehicle', label:'Vehicle', field:'vehicleId', noun:'vehicle' },
+  { id:'customer', label:'Customer', field:'customerId', noun:'customer' },
+  { id:'driver', label:'Driver', field:'driverId', noun:'driver' },
+  { id:'assignment', label:'Rental assignment', field:'rentalAssignmentId', noun:'rental assignment' }
+];
+const TASK_STATUS = { 1:['Open','info','2px'], 2:['Finished','ok','50%'], 3:['Cancelled','mute','1px'] };
 
 const DB = {
   company: { id:'c1', name:'RW-Rent Fleet Services', registrationNumber:'40203881204', vatNumber:'LV40203881204', legalAddress:'Brivibas gatve 214, Riga, LV-1039', email:'operations@rwrent.example', phoneNumber:'+371 66 120 400', createdAtUtc: at(-24 * 300), updatedAtUtc: at(-18) },
@@ -1768,6 +1951,36 @@ const DB = {
     { id:'g12', eventType:'Registration.Submitted', actorUserId:'u9', occurredAtUtc:at(REG_AT.u9), companyId:'c1', targetUserId:'u9', entityType:'ApplicationUser', entityId:'u9', reason:null, beforeJson:null, afterJson:'{"Status":"PendingActivation","RegistrationExpiresAtUtc":"' + atRaw(REG_AT.u9 + 24*7) + '"}' },
     { id:'g13', eventType:'Authentication.PasswordChanged', actorUserId:'u3', occurredAtUtc:at(-24*74), companyId:'c1', targetUserId:'u3', entityType:'ApplicationUser', entityId:'u3', reason:null, beforeJson:null, afterJson:null }
   ],
+  tasks: [
+    { id:'wt1', title:'Prepare 204 JLM for a rental', description:'Adding it to Bolt comes first. The car wash can happen any time before the handover.', dueAtUtc: dayAt(3, 12, 0), status:1, closedAtUtc:null,
+      vehicleId:'v6', customerId:null, driverId:null, rentalAssignmentId:null, cancellationNote:null,
+      steps:[ WS('ws11','wt1',1,'Add to Bolt','u4',null,dayAt(-1, 11, 20),'u4'), WS('ws12','wt1',2,'Apply for the taxi licence','u2',dayAt(2, 16, 0)), WS('ws13','wt1',3,'Car wash','u5',dayAt(1, 10, 0)), WS('ws14','wt1',4,'Handover','u4',dayAt(3, 12, 0)) ],
+      createdByUserId:'u4', createdAtUtc: dayAt(-2, 9, 14), updatedAtUtc: dayAt(-1, 11, 20), updatedByUserId:'u4' },
+    { id:'wt2', title:'Reassign the parking fine to the driver', description:'Fine from Riga City Police, issued while the car was with Nordwind Logistics.', dueAtUtc: dayAt(-1, 15, 0), status:1, closedAtUtc:null,
+      vehicleId:null, customerId:null, driverId:null, rentalAssignmentId:'a3', cancellationNote:null, steps:[],
+      createdByUserId:'u4', createdAtUtc: dayAt(-3, 10, 2), updatedAtUtc:null, updatedByUserId:null },
+    { id:'wt3', title:'Prepare the rental agreement for Martins Ozols', description:null, dueAtUtc: todayLater(), status:1, closedAtUtc:null,
+      vehicleId:null, customerId:'cu4', driverId:null, rentalAssignmentId:null, cancellationNote:null, steps:[],
+      createdByUserId:'u2', createdAtUtc: dayAt(-1, 16, 40), updatedAtUtc:null, updatedByUserId:null },
+    { id:'wt4', title:'Book a service for 444 WKS and tell the driver', description:null, dueAtUtc:null, status:1, closedAtUtc:null,
+      vehicleId:'v9', customerId:null, driverId:null, rentalAssignmentId:null, cancellationNote:null,
+      steps:[ WS('ws41','wt4',1,'Book the service appointment','u4',null,dayAt(-2, 10, 5),'u4'), WS('ws42','wt4',2,'Tell the driver the time','u5',dayAt(-1, 17, 0)) ],
+      createdByUserId:'u4', createdAtUtc: dayAt(-4, 8, 50), updatedAtUtc: dayAt(-2, 10, 5), updatedByUserId:'u4' },
+    { id:'wt5', title:'Handle the windscreen insurance case of 204 JLM', description:'Stone chip on the windscreen, reported by the driver. The insurer needs the photos and the repair invoice.', dueAtUtc: dayAt(10, 16, 0), status:1, closedAtUtc:null,
+      vehicleId:'v6', customerId:null, driverId:null, rentalAssignmentId:null, cancellationNote:null,
+      steps:[ WS('ws51','wt5',1,'Collect the photos','u5',null,dayAt(-3, 14, 10),'u5'), WS('ws52','wt5',2,'Send the claim to the insurer','u2',null,dayAt(-2, 9, 40),'u2'), WS('ws53','wt5',3,'Pick up the repair invoice','u4') ],
+      createdByUserId:'u2', createdAtUtc: dayAt(-5, 11, 30), updatedAtUtc: dayAt(-2, 9, 40), updatedByUserId:'u2' },
+    { id:'wt6', title:'Order two spare key fobs', description:null, dueAtUtc:null, status:1, closedAtUtc:null,
+      vehicleId:null, customerId:null, driverId:null, rentalAssignmentId:null, cancellationNote:null, steps:[],
+      createdByUserId:'u4', createdAtUtc: dayAt(-1, 9, 5), updatedAtUtc:null, updatedByUserId:null },
+    { id:'wt7', title:'Register 119 MPR in Bolt', description:null, dueAtUtc:null, status:2, closedAtUtc: dayAt(-2, 16, 2),
+      vehicleId:'v2', customerId:null, driverId:null, rentalAssignmentId:null, cancellationNote:null,
+      steps:[ WS('ws71','wt7',1,'Add to Bolt','u4',null,dayAt(-6, 13, 25),'u4'), WS('ws72','wt7',2,'Apply for the taxi licence','u2',null,dayAt(-3, 11, 48),'u2') ],
+      createdByUserId:'u4', createdAtUtc: dayAt(-8, 9, 30), updatedAtUtc: dayAt(-2, 16, 2), updatedByUserId:'u4' },
+    { id:'wt8', title:'Prepare an agreement for Ventspils Marine Services', description:null, dueAtUtc:null, status:3, closedAtUtc: dayAt(-3, 10, 15),
+      vehicleId:null, customerId:'cu5', driverId:null, rentalAssignmentId:null, cancellationNote:'The customer changed their mind.', steps:[],
+      createdByUserId:'u2', createdAtUtc: dayAt(-6, 14, 0), updatedAtUtc: dayAt(-3, 10, 15), updatedByUserId:'u2' }
+  ],
   transfers: [
     { id:'tr1', currentAdministratorUserId:'u1', targetUserId:'u2', initiatedAtUtc:at(-6), expiresAtUtc:at(18), cancelledAtUtc:null, acceptedAtUtc:null, isRecovery:false }
   ]
@@ -1814,7 +2027,7 @@ class Component extends DCLogic {
       const n = localStorage.getItem('rwrent.nav2'); if (n === 'expanded' || n === 'collapsed') this.setState({ nav: n });
       const r = localStorage.getItem('rwrent.role'); if (r && ROLE_CHAIN[r]) this.setState({ role: r });
       const saved = localStorage.getItem('rwrent.db');
-      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-21') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
+      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-22') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
     } catch (e) {}
     try {
       const raw = (window.location.hash || '').replace(/^#/, '');
@@ -1933,7 +2146,7 @@ class Component extends DCLogic {
         { id:'attention', label:'Needs attention', icon:'flag', perm:null, badge: this.queueModel().length } ] },
       { label:'Operations', items:[
         { id:'assignments', label:'Rental assignments', icon:'assignment', perm:'RentalAssignments.Read' },
-        { id:'tasks', label:'Tasks', icon:'checklist', perm:null },
+        { id:'tasks', label:'Tasks', icon:'checklist', perm:null, companyOnly:true, badge: this.tasksTodo().length },
         { id:'insurance', label:'Insurance cases', icon:'shield', perm:null } ] },
       { label:'Fleet', items:[ { id:'vehicles', label:'Vehicles', icon:'directions_car', perm:'Vehicles.Read' } ] },
       { label:'Business relationships', items:[
@@ -1951,8 +2164,8 @@ class Component extends DCLogic {
     const exp = this.navIsExpanded();
     if (this.perms().length === 0) return [];
     return raw.map((g, gi) => {
-      const items = g.items.filter(i => !i.perm || this.can(i.perm)).map(i => {
-        const active = r === i.id || (r === 'assignment' && i.id === 'assignments') || (r === 'vehicle' && i.id === 'vehicles') || (r === 'customer' && i.id === 'customers') || (r === 'driver' && i.id === 'drivers') || (r === 'user' && i.id === 'users');
+      const items = g.items.filter(i => (!i.perm || this.can(i.perm)) && !(i.companyOnly && this.isSysAdmin())).map(i => {
+        const active = r === i.id || (r === 'task' && i.id === 'tasks') || (r === 'assignment' && i.id === 'assignments') || (r === 'vehicle' && i.id === 'vehicles') || (r === 'customer' && i.id === 'customers') || (r === 'driver' && i.id === 'drivers') || (r === 'user' && i.id === 'users');
         return {
           ...i,
           go: () => this.go(i.id),
@@ -1975,6 +2188,82 @@ class Component extends DCLogic {
 
       return { label: g.label, items, showRule: !exp && gi > 0 };
     }).filter(g => g.items.length > 0);
+  }
+
+  // ---- Tasks ----------------------------------------------------------------------------------
+  isSysAdmin() { return this.state.role === 'SystemAdministrator'; }
+  userName(id) { const u = this.state.db.users.find(x => x.id === id); return u ? u.firstName + ' ' + u.lastName : 'Unknown user'; }
+  // The Company's people: its active users. The System Administrator is not one of them.
+  taskPeople() { return this.state.db.users.filter(u => u.companyId && u.status === 2 && !u.protected && u.effectiveRoles.indexOf(1) < 0); }
+  // A task without steps is its creator's alone; with steps, its creator and every person on them see it.
+  taskVisible(t, uid) { return t.createdByUserId === uid || t.steps.some(s => s.responsibleUserId === uid); }
+  // The creator marks any step; the step's person marks it and undoes only their own mark; only while open.
+  canToggleStep(t, s, uid) { const me = uid || this.me().id;
+    return t.status === 1 && (t.createdByUserId === me || (s.responsibleUserId === me && (!s.doneAtUtc || s.doneByUserId === me))); }
+  taskAbout(t) {
+    const db = this.state.db, K = TASK_ABOUT.find(k => t && t[k.field]);
+    if (!K) return null;
+    const id = t[K.field]; let text = null, go = null;
+    if (K.id === 'vehicle') { const v = db.vehicles.find(x => x.id === id); if (v) { text = v.plateNumber; go = () => this.go('vehicle', v.id); } }
+    if (K.id === 'customer') { const c = db.customers.find(x => x.id === id); if (c) { text = this.displayName(c); go = () => this.go('customer', c.id); } }
+    if (K.id === 'driver') { const d = db.drivers.find(x => x.id === id); if (d) { text = d.firstName + ' ' + d.lastName; go = () => this.go('driver', d.id); } }
+    if (K.id === 'assignment') { const a = db.assignments.find(x => x.id === id);
+      if (a) { const v = db.vehicles.find(x => x.id === a.vehicleId), c = db.customers.find(x => x.id === a.customerId);
+        text = (v ? v.plateNumber : '\u2014') + ' \u00b7 ' + this.displayName(c); go = () => this.go('assignment', a.id); } }
+    return { kind: K.id, id, label: K.label + ' \u00b7 ' + (text || 'deleted record'), text: text || '', go };
+  }
+  aboutOptions(kind) {
+    const db = this.state.db, K = TASK_ABOUT.find(k => k.id === kind), ph = [{ value:'', label:'Choose a ' + K.noun }];
+    const off = x => x.isActive === false ? ' \u00b7 inactive' : '';
+    if (kind === 'vehicle') return ph.concat(db.vehicles.map(v => ({ value:v.id, label: v.plateNumber + ' \u00b7 ' + v.make + ' ' + v.model + off(v) })));
+    if (kind === 'customer') return ph.concat(db.customers.map(c => ({ value:c.id, label: this.displayName(c) + off(c) })));
+    if (kind === 'driver') return ph.concat(db.drivers.map(d => ({ value:d.id, label: d.firstName + ' ' + d.lastName + off(d) })));
+    return ph.concat(db.assignments.map(a => { const v = db.vehicles.find(x => x.id === a.vehicleId), c = db.customers.find(x => x.id === a.customerId);
+      return { value:a.id, label: (v ? v.plateNumber : '\u2014') + ' \u00b7 ' + this.displayName(c) + ' \u00b7 ' + E.status[a.status] }; }));
+  }
+  // A passed due date is overdue (bad); later today is warn; anything else is a plain local time.
+  dueInfo(iso) {
+    if (!iso) return { text:'\u2014', tone:null, fg:'var(--fg-3)' };
+    const d = new Date(iso), p = n => String(n).padStart(2, '0');
+    if (d.getTime() < Date.now()) return { text:'Overdue \u00b7 ' + this.fmt(iso, 'dateShort'), tone:'bad', fg:'var(--bad)' };
+    if (d.toDateString() === new Date().toDateString()) return { text:'Due today \u00b7 ' + p(d.getHours()) + ':' + p(d.getMinutes()), tone:'warn', fg:'var(--warn)' };
+    return { text: this.fmt(iso), tone:null, fg:'var(--fg-2)' };
+  }
+  // What the person has to do: their steps not yet done in open tasks, plus their own open tasks without steps.
+  tasksTodo(uid) {
+    if (this.isSysAdmin()) return [];
+    const me = uid || this.me().id, out = [];
+    (this.state.db.tasks || []).filter(t => t.status === 1).forEach(t => {
+      if (!t.steps.length) { if (t.createdByUserId === me) out.push({ task:t, step:null, due:t.dueAtUtc }); return; }
+      t.steps.filter(s => s.responsibleUserId === me && !s.doneAtUtc).forEach(s => out.push({ task:t, step:s, due: s.dueAtUtc || t.dueAtUtc }));
+    });
+    const T = x => x ? Date.parse(x) : Infinity;
+    return out.sort((a, b) => (T(a.due) - T(b.due)) || (Date.parse(b.task.createdAtUtc) - Date.parse(a.task.createdAtUtc)));
+  }
+  taskTab() { const t = this.state.route.tab; return ['mine','involving','finished'].includes(t) ? t : 'mine'; }
+  // On Involving me the due that matters is the person's own earliest open step; elsewhere the task's.
+  taskDueKey(t, tab, me) {
+    if (tab === 'involving') { const mine = t.steps.filter(s => s.responsibleUserId === me && !s.doneAtUtc && s.dueAtUtc).map(s => Date.parse(s.dueAtUtc));
+      if (mine.length) return new Date(Math.min.apply(null, mine)).toISOString(); }
+    return t.dueAtUtc || null;
+  }
+  taskRows(tab) {
+    const me = this.me().id;
+    const all = this.isSysAdmin() ? [] : (this.state.db.tasks || []).filter(t => this.taskVisible(t, me));
+    const pick = tab === 'involving' ? all.filter(t => t.status === 1 && t.createdByUserId !== me)
+      : tab === 'finished' ? all.filter(t => t.status !== 1)
+      : all.filter(t => t.status === 1 && t.createdByUserId === me);
+    const T = x => x ? Date.parse(x) : Infinity;
+    return pick.slice().sort((a, b) => tab === 'finished' ? T(b.closedAtUtc) - T(a.closedAtUtc)
+      : (T(this.taskDueKey(a, tab, me)) - T(this.taskDueKey(b, tab, me))) || (Date.parse(b.createdAtUtc) - Date.parse(a.createdAtUtc)))
+      .map((t, i) => ({ ...t, _ord: i }));
+  }
+  taskTabs() {
+    const cur = this.taskTab(), phone = this.isPhone();
+    return [['mine','My tasks','person'], ['involving','Involving me','group'], ['finished','Finished','inventory_2']].map(([id, label, icon]) => { const on = id === cur;
+      return { label, icon, count: String(this.taskRows(id).length), selected: on ? 'true' : 'false', weight: on ? 600 : 450,
+        bg: on ? 'var(--surface-3)' : 'transparent', fg: on ? 'var(--fg)' : 'var(--fg-2)', bd: on ? 'var(--line-2)' : 'transparent',
+        iconDisplay: phone ? 'none' : 'inline-block', pad: phone ? '8px 11px' : '8px 13px', go: () => this.go('tasks', null, id) }; });
   }
 
   isNarrow() { return this.state.w < 1024; }
@@ -2004,20 +2293,25 @@ class Component extends DCLogic {
       out.push({ key:'int', label:'Open interruptions', icon:'pause_circle', color:'var(--bad)', value: String(open), unit:'unclosed', go: () => { this.setListQ('assignments', { status:'1' }); this.go('assignments'); } });
     }
     const cards = out.slice(0, 4);
-    cards.push({ key:'task', label:'Open tasks', icon:'checklist', color:'var(--info)', value: String(this.tasksModel().length), unit:'unfinished', go: () => {} });
+    if (!this.isSysAdmin()) cards.push({ key:'task', label:'Open tasks', icon:'checklist', color:'var(--info)', value: String(this.tasksModel().length), unit:'to do', go: () => this.go('tasks') });
     cards.push({ key:'ins', label:'Unresolved insurance cases', icon:'policy', color:'var(--warn)', value: String(this.insuranceModel().length), unit:'cases', go: () => {} });
     return cards;
   }
 
+  // The Overview card: the signed-in person's to-do items, earliest due first.
   tasksModel() {
     const W = { tintBg:'var(--warn-soft)', tintBd:'var(--warn-line)', tint:'var(--warn)' };
+    const B = { tintBg:'var(--bad-soft)', tintBd:'var(--bad-line)', tint:'var(--bad)' };
     const N = { tintBg:'var(--surface-3)', tintBd:'var(--line-2)', tint:'var(--fg-2)' };
-    return [
-      { id:'t1', icon:'assignment_late', ...W, title:'Signed handover protocol missing — 552 KLM', sub:'Nordwind Logistics · due today', when:'today' },
-      { id:'t2', icon:'photo_camera', ...W, title:'Upload return inspection — 204 JLM', sub:'Anete Kalnina · overdue', when:'2 d ago' },
-      { id:'t3', icon:'speed', ...N, title:'Confirm return mileage — 444 WKS', sub:'Martins Ozols · awaiting driver', when:'in 2 d' },
-      { id:'t4', icon:'receipt_long', ...N, title:'Renew road tax — 770 HDV', sub:'Expires end of month', when:'in 9 d' }
-    ];
+    const me = this.me().id;
+    return this.tasksTodo().map(x => {
+      const di = this.dueInfo(x.due), ab = this.taskAbout(x.task);
+      const from = x.task.createdByUserId !== me ? 'from ' + this.userName(x.task.createdByUserId) : '';
+      return { id: (x.step || x.task).id, icon: x.step ? 'checklist' : 'task_alt', ...(di.tone === 'bad' ? B : di.tone === 'warn' ? W : N),
+        title: x.step ? x.step.title : x.task.title,
+        sub: [ab ? ab.label : '', from].filter(Boolean).join(' \u00b7 ') || (x.step ? x.task.title : ''),
+        when: x.due ? di.text : 'No due date', whenFg: di.tone ? di.fg : 'var(--fg-3)', go: () => this.go('task', x.task.id) };
+    });
   }
 
   insuranceModel() {
@@ -2042,10 +2336,6 @@ class Component extends DCLogic {
       heading:'Open queue', sub:'Registrations first, then open interruptions, then upcoming handovers.',
       count: n => n + ' item' + (n === 1 ? '' : 's'),
       emptyIcon:'task_alt', emptyTitle:'Nothing waiting' });
-    if (r === 'tasks') return wrap(this.tasksModel(), {
-      heading:'Open tasks', sub:'Work items linked to an assignment or a vehicle.',
-      count: n => n + ' open', emptyIcon:'task_alt', emptyTitle:'No open tasks',
-      notice:'Task management is still being built on the backend. The records below are sample data — creating, assigning and closing tasks is not available yet.' });
     if (r === 'insurance') return wrap(this.insuranceModel(), {
       heading:'Unresolved cases', sub:'Claims and policies with an action outstanding.',
       count: n => n + ' case' + (n === 1 ? '' : 's'), emptyIcon:'verified_user', emptyTitle:'No open cases',
@@ -2101,7 +2391,7 @@ class Component extends DCLogic {
     const M = {
       overview: { crumbs:[['Overview']], title:'Overview', desc:'Your fleet, rentals, and pending work at a glance.', actions:[] },
       attention: { crumbs:[['Needs attention']], title:'Needs attention', desc:'Every record with an open decision or an unclosed timeline, in one queue.', actions:[] },
-      tasks: { crumbs:[['Tasks']], title:'Tasks', desc:'Work items linked to an assignment or a vehicle.', actions:[] },
+      tasks: { crumbs:[['Tasks']], title:'Tasks', desc:'Your tasks, and the steps others have given you. Only a task\u2019s creator changes or finishes it.', actions: this.isSysAdmin() ? [] : [A('New task','add',() => this.openDialog('task-create'),'primary')] },
       insurance: { crumbs:[['Insurance cases']], title:'Insurance cases', desc:'Claims and policy records tied to fleet vehicles.', actions:[] },
       assignments: { crumbs:[['Rental assignments']], title:'Rental assignments', desc:'Every vehicle handover, its authorized drivers and its interruptions.', actions:[A('New assignment','add',() => this.openDialog('assignment-create'),'primary', this.req('RentalAssignments.Manage'), !this.can('RentalAssignments.Manage'))] },
       vehicles: { crumbs:[['Vehicles']], title:'Vehicles', desc:'', actions:[A('Add vehicle','add',() => this.openDialog('vehicle-create'),'primary', this.req('Vehicles.Manage'), !this.can('Vehicles.Manage'))] },
@@ -2182,10 +2472,16 @@ class Component extends DCLogic {
       }
       m = { crumbs:[['Drivers','drivers'],[name]], title: name, desc:'', badges, code: d ? d.driverLicenseNumber : '', actions: acts };
     }
+    if (r === 'task') {
+      const t = (db.tasks || []).find(x => x.id === this.state.route.id);
+      const ok = !!t && !this.isSysAdmin() && this.taskVisible(t, this.me().id);
+      const from = ['mine','involving','finished'].includes(this.state.route.from) ? this.state.route.from : null;
+      m = { crumbs:[['Tasks', 'tasks', from], [ok ? t.title : 'Task']], title: ok ? t.title : 'Task', desc: ok ? 'Times in Tallinn time.' : '', actions:[] };
+    }
     if (!m) m = { crumbs:[['Overview']], title:'Overview', desc:'', actions:[] };
     const crumbs = m.crumbs.map((c, i) => {
       const last = i === m.crumbs.length - 1;
-      return { label: c[0], isLink: !last && !!c[1], isPlain: !last && !c[1], isLast: last, hasSep: !last, hasLead: i === 0 && m.crumbs.length === 1, go: c[1] ? () => this.go(c[1]) : () => {} };
+      return { label: c[0], isLink: !last && !!c[1], isPlain: !last && !c[1], isLast: last, hasSep: !last, hasLead: i === 0 && m.crumbs.length === 1, go: c[1] ? () => this.go(c[1], null, c[2] || null) : () => {} };
     });
     const TN = t => TONE[t] || TONE.mute;
     return { crumbs, title: m.title, desc: m.desc, pageId: m.pageId || '', actions: m.actions,
@@ -2249,6 +2545,11 @@ class Component extends DCLogic {
     if (type === 'me-phone') Object.assign(f, { phoneNumber: (find(db.users, this.me().id) || {}).phoneNumber || this.me().phoneNumber });
     if (type === 'me-password') Object.assign(f, { currentPassword:'', newPassword:'' });
     if (type === 'me-email') Object.assign(f, { newEmail:'', currentPassword:'' });
+    if (type === 'task-create') Object.assign(f, { title:'', description:'', dueAtUtc:'', aboutKind:'', aboutId:'', steps:[] });
+    if (type === 'task-edit') { const tk = (db.tasks || []).find(x => x.id === p.id) || { steps:[] }; const ab = this.taskAbout(tk);
+      Object.assign(f, { title: tk.title || '', description: tk.description || '', dueAtUtc: this.toLocal(tk.dueAtUtc), aboutKind: ab ? ab.kind : '', aboutId: ab ? ab.id : '',
+        steps: tk.steps.slice().sort((a, b) => a.position - b.position).map(s => ({ key: s.id, id: s.id, title: s.title, userId: s.responsibleUserId, due: this.toLocal(s.dueAtUtc), doneAtUtc: s.doneAtUtc, doneByUserId: s.doneByUserId })) }); }
+    if (type === 'task-cancel') Object.assign(f, { cancellationNote:'' });
     this.setState({ dialog: { type, ...p }, form: f, errors: {}, dialogFail: null });
   }
   closeDialog() { this.setState({ dialog: null, errors: {}, dialogFail: null }); }
@@ -2256,7 +2557,7 @@ class Component extends DCLogic {
   fromLocal(v) { return v ? new Date(v).toISOString() : null; }
   setForm(k, v) { this.setState(s => ({ form: { ...s.form, [k]: v }, errors: { ...s.errors, [k]: undefined } })); }
   mutate(fn) { const db = JSON.parse(JSON.stringify(this.state.db)); fn(db); this.setState({ db }); this.saveDb(db); }
-  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-21'); } catch (e) {} }
+  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-22'); } catch (e) {} }
   openInts(db, aid) { return (db.interruptions[aid] || []).filter(i => !i.endedAtUtc); }
   availability(db, v) {
     if (!v.isActive) return { label:null, customer:null };
@@ -2331,7 +2632,7 @@ class Component extends DCLogic {
       bg: f[key] ? 'var(--surface-3)' : 'var(--surface-2)', bd: f[key] ? 'var(--line-3)' : 'var(--line-2)' }; };
     const SEC = (label, cols, fields, checks, extra) => ({ hasLabel: !!label, label: label || '', cols: narrow ? '1fr' : (cols || '1fr 1fr'), fields: fields || [], checks: checks || [],
       hasNote: !!(extra && extra.note), note: (extra && extra.note) || '',
-      hasChoices: false, choices: [], hasPicker: false,
+      hasChoices: false, choices: [], hasPicker: false, hasSteps: false, steps: [], noSteps: false, addStep: () => {}, stepsHint: '', stepsEmpty: '', stepCols: '1fr 1fr', stepBtn: '30px', addH: 'auto',
       picker: { label:'', display:'', options:[], value:'', onChange: () => {}, onAdd: () => {}, addDisabled: true, addOpacity: .45, hint:'', chosen:[], hasChosen:false, hasEmpty:false, emptyText:'' },
       ...(extra || {}) });
     const A = (label, kind, go, icon, disabled) => ({ label, go: disabled ? (() => {}) : go, hasIcon: !!icon, icon: icon || '',
@@ -2768,12 +3069,58 @@ class Component extends DCLogic {
         actions:[cancel, A(item.isActive ? 'Deactivate' : 'Activate', item.isActive ? 'danger' : 'primary', () => this.submitToggle(kind, dg.id))] };
     }
 
+    if (t === 'task-create' || t === 'task-edit') {
+      const create = t === 'task-create', me = this.me().id;
+      const pOpts = [{ value:'', label:'Choose a person' }].concat(this.taskPeople().map(u => ({ value:u.id, label: u.firstName + ' ' + u.lastName + (u.id === me ? ' (you)' : '') })));
+      const kindF = F('aboutKind', 'About', { optional:true, kind:'select', options:[{ value:'', label:'Nothing' }].concat(TASK_ABOUT.map(k => ({ value:k.id, label:k.label }))) });
+      kindF.onChange = e => { const v = e.target.value; this.setState(s => ({ form: { ...s.form, aboutKind: v, aboutId: '' }, errors: { ...s.errors, aboutId: undefined } })); };
+      const fields = [F('title', 'Title', { required:true, maxLength:200, span:'1 / -1' }),
+        F('description', 'Description', { optional:true, kind:'textarea', rows:3, maxLength:4000, span:'1 / -1' }),
+        F('dueAtUtc', 'Due', { optional:true, kind:'datetime' }), kindF];
+      const K = TASK_ABOUT.find(k => k.id === f.aboutKind);
+      if (K) fields.push(F('aboutId', K.label, { required:true, kind:'select', options: this.aboutOptions(K.id), span:'1 / -1' }));
+      const list = Array.isArray(f.steps) ? f.steps : [];
+      const BD = x => x ? 'var(--bad-line)' : 'var(--line-2)';
+      const stepRows = list.map((st, i) => {
+        const e1 = err['st:' + st.key + ':title'], e2 = err['st:' + st.key + ':userId'], e3 = err['st:' + st.key + ':due'];
+        const opts = pOpts.slice(); if (st.userId && !opts.some(o => o.value === st.userId)) opts.push({ value: st.userId, label: this.userName(st.userId) });
+        const hit = opts.find(o => o.value === (st.userId || '')) || opts[0];
+        return { key: st.key, num: String(i + 1), title: st.title || '', onTitle: ev => this.setStep(st.key, { title: ev.target.value }, 'title'),
+          titleBorder: BD(e1), hasTitleErr: !!e1, titleErr: e1 || '', titleInvalid: e1 ? 'true' : undefined,
+          userValue: st.userId || '', userDisplay: hit.label, userFg: st.userId ? 'var(--fg)' : 'var(--fg-3)', options: opts,
+          onUser: ev => this.setStep(st.key, { userId: ev.target.value }, 'userId'), userBorder: BD(e2), hasUserErr: !!e2, userErr: e2 || '',
+          due: st.due || '', onDue: ev => this.setStep(st.key, { due: ev.target.value }, 'due'), dueBorder: BD(e3), hasDueErr: !!e3, dueErr: e3 || '',
+          hasDone: !!st.doneAtUtc, doneText: st.doneAtUtc ? 'Done \u00b7 ' + this.userName(st.doneByUserId) + ', ' + this.fmt(st.doneAtUtc) : '',
+          upGo: () => this.moveStep(st.key, -1), downGo: () => this.moveStep(st.key, 1), removeGo: () => this.removeStep(st.key),
+          upOff: i === 0, downOff: i === list.length - 1, upOpacity: i === 0 ? .35 : 1, downOpacity: i === list.length - 1 ? .35 : 1,
+          bd: e1 || e2 || e3 ? 'var(--bad-line)' : 'var(--line)' };
+      });
+      const stepSec = { ...SEC('Steps', '1fr', []), hasSteps: true, steps: stepRows, noSteps: stepRows.length === 0, addStep: () => this.addStep(),
+        stepsHint: 'Everyone named on a step sees this task and can mark their own step done. Only you change or finish the task.',
+        stepsEmpty: 'No steps: the task stays yours alone.', stepCols: phoneSheet ? '1fr' : '1fr 1fr', stepBtn: phoneSheet ? '44px' : '30px', addH: phoneSheet ? '44px' : 'auto' };
+      m = { title: create ? 'New task' : 'Edit task', desc:'', icon:'checklist', tone:'accent', maxW:'720px',
+        sections:[SEC('Task', '1fr 1fr', fields), stepSec],
+        actions:[cancel, A(create ? 'Create task' : 'Save changes', 'primary', () => this.submitTask(t, dg.id))] };
+    }
+    if (t === 'task-finish') {
+      const tk = (db.tasks || []).find(x => x.id === dg.id);
+      const open = tk ? tk.steps.slice().sort((a, b) => a.position - b.position).filter(s => !s.doneAtUtc) : [];
+      const names = open.map(s => s.title + ' (' + this.userName(s.responsibleUserId) + ')').join(', ');
+      m = { title:'Finish task', desc: open.length ? '' : 'Finish this task? It leaves everyone\u2019s open list.', icon:'task_alt', tone:'ok', maxW:'500px',
+        banner: open.length ? { tone:'warn', title: open.length + (open.length === 1 ? ' step is' : ' steps are') + ' not done: ' + names + '.', body:'Finish anyway?' } : null,
+        sections:[], consequences:[{ text:'It stays readable under Finished for everyone on it.' }, { text:'Its steps can no longer be marked done or undone.' }],
+        actions:[cancel, A('Finish task', 'primary', () => this.submitTaskClose('finish', dg.id))] };
+    }
+    if (t === 'task-cancel') m = { title:'Cancel task', desc:'The task moves to Finished as Cancelled. Everyone on it can still read it there.', icon:'block', tone:'mute', maxW:'520px',
+      sections:[SEC(null, '1fr', [F('cancellationNote', 'Why', { optional:true, kind:'textarea', rows:3, maxLength:1000, span:'1 / -1' })])],
+      actions:[{ ...A('Keep task', 'ghost', () => this.closeDialog()), keep:true }, A('Cancel task', 'primary', () => this.submitTaskClose('cancel', dg.id))] };
+
     if (!m.title) m = { title:'Not available', desc:'', sections:[], actions:[cancel] };
     const tn = TONE[m.tone || 'accent'];
     const bn = m.banner ? TONE[m.banner.tone] : null;
     // Shared failure surface: a stale record also disables every action except Cancel until refreshed.
     const fail = this.state.dialogFail, stale = !!fail && fail.kind === 'stale';
-    const acts = (m.actions || []).map(a => (stale && a.label !== 'Cancel')
+    const acts = (m.actions || []).map(a => (stale && a.label !== 'Cancel' && !a.keep)
       ? { ...a, go: () => {}, disabled:true, opacity:.55, cursor:'not-allowed', bg:'var(--surface-3)', fg:'var(--fg-4)', bd:'var(--line-2)' } : a);
     return { open:true, maxW: phoneSheet ? '100%' : (m.maxW || '560px'), pad: phoneSheet ? '0' : (narrow ? '16px' : '48px 24px'),
       align: phoneSheet ? 'flex-end' : 'flex-start', margin: phoneSheet ? '0' : 'auto', radius: phoneSheet ? '18px 18px 0 0' : '16px', maxH: phoneSheet ? '92vh' : 'none',
@@ -3242,10 +3589,72 @@ class Component extends DCLogic {
     this.mutate(db2 => { const u = db2.users.find(x => x.id === id); if (u) u.pendingEmail = f.newEmail; });
     this.done('Confirmation sent', 'The change applies once you confirm it from ' + f.newEmail + '.');
   }
+  setStep(key, patch, field) { this.setState(s => ({ form: { ...s.form, steps: (s.form.steps || []).map(x => x.key === key ? { ...x, ...patch } : x) },
+    errors: { ...s.errors, ['st:' + key + ':' + field]: undefined } })); }
+  addStep() { const key = 'n' + Date.now() + Math.floor(Math.random() * 1000);
+    this.setState(s => ({ form: { ...s.form, steps: (s.form.steps || []).concat([{ key, id:null, title:'', userId:'', due:'', doneAtUtc:null, doneByUserId:null }]) } })); }
+  removeStep(key) { this.setState(s => ({ form: { ...s.form, steps: (s.form.steps || []).filter(x => x.key !== key) } })); }
+  moveStep(key, dir) { this.setState(s => { const list = (s.form.steps || []).slice(), i = list.findIndex(x => x.key === key), j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return {}; const tmp = list[i]; list[i] = list[j]; list[j] = tmp; return { form: { ...s.form, steps: list } }; }); }
+  toggleStep(tid, sid) {
+    const t = (this.state.db.tasks || []).find(x => x.id === tid), st = t && t.steps.find(x => x.id === sid), me = this.me().id;
+    if (!t || !st || !this.canToggleStep(t, st, me)) { this.toast('Not available', 'Only the task\u2019s creator, or the step\u2019s person for their own mark, can change this step.', 'warn'); return; }
+    const iso = new Date().toISOString(), done = !st.doneAtUtc;
+    this.mutate(db => { const x = db.tasks.find(z => z.id === tid), y = x.steps.find(z => z.id === sid);
+      y.doneAtUtc = done ? iso : null; y.doneByUserId = done ? me : null; x.updatedAtUtc = iso; x.updatedByUserId = me; });
+    this.toast(done ? 'Step done' : 'Step open again', st.title, 'ok');
+  }
+  submitTask(t, id) {
+    const f = this.state.form, me = this.me().id, errors = {};
+    const K = TASK_ABOUT.find(k => k.id === f.aboutKind);
+    if (!String(f.title || '').trim()) errors.title = 'Enter a title for the task.';
+    if (K && !f.aboutId) errors.aboutId = 'Choose the ' + K.noun + ' this task is about.';
+    const tDue = f.dueAtUtc ? new Date(f.dueAtUtc).getTime() : null;
+    const steps = Array.isArray(f.steps) ? f.steps : [];
+    steps.forEach(st => {
+      if (!String(st.title || '').trim()) errors['st:' + st.key + ':title'] = 'Every step needs a title.';
+      if (!st.userId) errors['st:' + st.key + ':userId'] = 'Every step needs a person.';
+      if (st.due && tDue !== null && new Date(st.due).getTime() > tDue) errors['st:' + st.key + ':due'] = 'A step cannot be due after the task.';
+    });
+    if (Object.keys(errors).length) { this.setState({ errors, dialogFail: null }); return; }
+    const cur = t === 'task-edit' ? (this.state.db.tasks || []).find(x => x.id === id) : null;
+    const conflict = t !== 'task-edit' ? null : !cur ? 'This task no longer exists.' : cur.status !== 1 ? 'This task was finished or cancelled and can no longer be changed.'
+      : cur.createdByUserId !== me ? 'Only the task\u2019s creator can change it.' : null;
+    if (!this.guard([], conflict)) return;
+    const iso = new Date().toISOString(), tid = cur ? cur.id : 'wt' + Date.now(), stamp = Date.now();
+    const about = { vehicleId:null, customerId:null, driverId:null, rentalAssignmentId:null };
+    if (K) about[K.field] = f.aboutId;
+    const rec = { title: String(f.title).trim(), description: String(f.description || '').trim() || null, dueAtUtc: this.fromLocal(f.dueAtUtc), ...about,
+      // A done step keeps its mark when it is renamed or moved; Position follows the order in the dialog.
+      steps: steps.map((st, i) => ({ id: st.id || ('ws' + stamp + i), workTaskId: tid, position: i + 1, title: String(st.title).trim(), responsibleUserId: st.userId,
+        dueAtUtc: this.fromLocal(st.due), doneAtUtc: st.doneAtUtc || null, doneByUserId: st.doneByUserId || null })) };
+    this.mutate(db => {
+      if (!db.tasks) db.tasks = [];
+      if (cur) Object.assign(db.tasks.find(x => x.id === tid), rec, { updatedAtUtc: iso, updatedByUserId: me });
+      else db.tasks.unshift({ id: tid, ...rec, status:1, closedAtUtc:null, cancellationNote:null, createdByUserId: me, createdAtUtc: iso, updatedAtUtc:null, updatedByUserId:null });
+    });
+    if (cur) { this.done('Task saved'); return; }
+    this.closeDialog();
+    this.toast('Task created', rec.steps.length ? 'Everyone named on a step can see it now.' : 'Only you can see it.', 'ok');
+    this.go('task', tid, null, 'mine');
+  }
+  submitTaskClose(kind, id) {
+    const tk = (this.state.db.tasks || []).find(x => x.id === id), me = this.me().id;
+    const conflict = !tk ? 'This task no longer exists.' : tk.status !== 1 ? 'This task was already finished or cancelled.'
+      : tk.createdByUserId !== me ? 'Only the task\u2019s creator can finish or cancel it.' : null;
+    if (!this.guard([], conflict)) return;
+    const iso = new Date().toISOString(), note = String(this.state.form.cancellationNote || '').trim();
+    this.mutate(db => { const x = db.tasks.find(z => z.id === id); x.status = kind === 'finish' ? 2 : 3; x.closedAtUtc = iso; x.updatedAtUtc = iso; x.updatedByUserId = me;
+      if (kind === 'cancel') x.cancellationNote = note || null; });
+    this.done(kind === 'finish' ? 'Task finished' : 'Task cancelled', 'It moved to Finished.');
+  }
+
   cell(text, o) {
     const p = o || {};
     const stopGo = fn => (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } fn(); });
-    return { isText: !p.chip && !p.actions && !p.link && !p.del, isChip: !!p.chip, isActions: !!p.actions,
+    return { isText: !p.chip && !p.actions && !p.link && !p.del && !p.progress && !p.steps, isChip: !!p.chip, isActions: !!p.actions,
+      isProgress: !!p.progress, hasBar: !!(p.progress && p.progress.n), barPct: p.progress ? p.progress.pct : '0%', progressFg: p.progress && !p.progress.n ? 'var(--fg-3)' : 'var(--fg-2)',
+      isSteps: !!p.steps, steps: p.steps || [], extraSubs: (p.extra || []).map(x => ({ text: x })),
       isDelete: !!p.del,
       delLabel: p.del ? p.del.label : '', delTip: p.del ? (p.del.tip || p.del.label) : '',
       delDisabled: p.del && p.del.disabled ? 'true' : 'false', delOpacity: p.del && p.del.disabled ? .45 : 1,
@@ -3262,14 +3671,14 @@ class Component extends DCLogic {
       // `subs` stacks several muted sub-lines under the value/chip (folded columns at tablet widths).
       subLines: (p.subs || (p.sub ? [{ text: p.sub, mono: !!p.subMono }] : [])).filter(l => l && l.text).map(l => ({ text: String(l.text), font: l.mono ? 'var(--font-mono)' : 'var(--font-sans)' })),
       font: p.mono ? 'var(--font-mono)' : 'var(--font-sans)', subFont: p.subMono ? 'var(--font-mono)' : 'var(--font-sans)',
-      size: p.size || '13px', weight: p.weight || (p.strong ? 600 : 450), fg: p.dim ? 'var(--fg-3)' : 'var(--fg)', subSize: '11.5px',
+      size: p.size || '13px', weight: p.weight || (p.strong ? 600 : 450), fg: p.tone ? TONE[p.tone].fg : p.dim ? 'var(--fg-3)' : 'var(--fg)', subSize: '11.5px',
       // The list tier carries the reviewed table vocabulary (ported back from rw-rent-web's
       // table.module.css): a title at 13.5/600, machine values in mono at 12.5, plain text at 13 in
       // --fg-2, anything dim at --fg-4, and a 12px sub-line unless it is mono. Panels and cards keep
       // the values above; listModel swaps these in for a list row.
       listSize: p.size || (p.mono ? (p.strong ? '13px' : '12.5px') : (p.strong ? '13.5px' : '13px')),
-      listWeight: p.weight || (p.strong ? 600 : 400),
-      listFg: p.dim ? 'var(--fg-4)' : p.strong ? 'var(--fg)' : p.mono ? 'var(--fg-3)' : 'var(--fg-2)',
+      listWeight: p.weight || (p.strong ? 600 : p.tone ? 500 : 400),
+      listFg: p.tone ? TONE[p.tone].fg : p.dim ? 'var(--fg-4)' : p.strong ? 'var(--fg)' : p.mono ? 'var(--fg-3)' : 'var(--fg-2)',
       listSubSize: p.subMono ? '11.5px' : '12px',
       wrap: p.wrap ? 'normal' : 'nowrap', align: p.align || 'left', alignItems: p.align === 'right' ? 'flex-end' : 'flex-start',
       leftEdge: p.edge || 'none', actions: (p.actions || []).map(a => ({ ...a, tip: a.tip || a.label, ariaDisabled: a.disabled ? 'true' : 'false', cursor: a.disabled ? 'not-allowed' : 'pointer', opacity: a.disabled ? .38 : 1, go: a.disabled ? (e => { if (e && e.stopPropagation) e.stopPropagation(); this.toast('Not available', a.tip || 'This action is not available here.', 'warn'); }) : a.go })),
@@ -3492,6 +3901,72 @@ class Component extends DCLogic {
       }
       return out;
     };
+
+    if (r === 'tasks') {
+      const me = this.me().id, tab = this.taskTab(), inv = tab === 'involving', fin = tab === 'finished', tight = this.isTightTable();
+      const byPos = (a, b) => a.position - b.position;
+      const names = t => { const ids = []; t.steps.slice().sort(byPos).forEach(x => { if (ids.indexOf(x.responsibleUserId) < 0) ids.push(x.responsibleUserId); });
+        const n = ids.map(id => self.userName(id)); return n.length ? n.slice(0, 2).join(', ') + (n.length > 2 ? ' +' + (n.length - 2) : '') : ''; };
+      const prog = t => { const n = t.steps.length, d = t.steps.filter(x => x.doneAtUtc).length; return { n, d, text: n ? d + ' of ' + n + ' done' : 'No steps', pct: n ? Math.round(d / n * 100) + '%' : '0%' }; };
+      const stop = fn => (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } fn(); });
+      const mine = t => t.steps.filter(x => x.responsibleUserId === me).sort(byPos).map(x => {
+        const d = self.dueInfo(x.dueAtUtc), live = !x.doneAtUtc && !!d.tone;
+        return { title: x.title, isDone: !!x.doneAtUtc,
+          dueText: !x.dueAtUtc ? 'No due date' : live ? d.text : 'Due ' + self.fmt(x.dueAtUtc), dueFg: live ? d.fg : 'var(--fg-3)',
+          hasAct: self.canToggleStep(t, x, me), label: x.doneAtUtc ? 'Undo' : 'Mark done', icon: x.doneAtUtc ? 'undo' : 'check',
+          bg: x.doneAtUtc ? 'transparent' : 'var(--surface-2)', go: stop(() => self.toggleStep(t.id, x.id)), stopKey: e => e.stopPropagation() };
+      });
+      const from = t => t.createdByUserId !== me ? 'from ' + self.userName(t.createdByUserId) : '';
+      const open = t => self.go('task', t.id, null, tab);
+      const cols = [{ key:'task', label:'Task', width:'auto' }, { key:'steps', label:'Steps', width: inv ? '150px' : '170px' }];
+      if (inv) cols.push({ key:'your', label:'Your step', width:'290px' });
+      cols.push({ key:'people', label:'People', width: inv ? '200px' : '240px', tightHide: inv });
+      cols.push(fin ? { key:'closed', label:'Closed', width:'170px' } : { key:'due', label:'Due', width:'170px' });
+      const empty = {
+        mine:{ icon:'task_alt', title:'No open tasks', body:'Press New task to write down what must not be forgotten.', action:{ label:'New task', icon:'add', go: () => this.openDialog('task-create') } },
+        involving:{ icon:'group', title:'Nobody is waiting on you', body:'When someone gives you a step in their task, it appears here.', action:null },
+        finished:{ icon:'inventory_2', title:'Nothing finished yet', body:'', action:null } }[tab];
+      return {
+        key:'tasks', noun:'task', minWidth: inv ? '1020px' : '800px', searchHint:'Task, step or record', searchMax:100, noSort:true, taskCards:true,
+        filters:[{ key:'due', label:'Due', options:[{ value:'', label:'Any due date' }, { value:'overdue', label:'Overdue' }, { value:'week', label:'Due in the next 7 days' }, { value:'none', label:'No due date' }] }],
+        moreFilters:[], columns: cols, source: this.taskRows(tab),
+        activeExtra: q2 => !!q2.due,
+        match: (t, q2) => {
+          const hay = (t.title + ' ' + t.steps.map(x => x.title).join(' ') + ' ' + ((self.taskAbout(t) || {}).label || '')).toLowerCase();
+          if (q2.search && hay.indexOf(q2.search.toLowerCase()) < 0) return false;
+          const k = self.taskDueKey(t, tab, me), ms = k ? Date.parse(k) : null, n = Date.now();
+          if (q2.due === 'overdue') return ms !== null && ms < n;
+          if (q2.due === 'week') return ms !== null && ms >= n && ms <= n + 7 * D;
+          if (q2.due === 'none') return ms === null;
+          return true;
+        },
+        sortVal: t => t._ord,
+        cells: t => {
+          const ab = self.taskAbout(t), pr = prog(t), fr = from(t), di = self.dueInfo(t.dueAtUtc), ppl = names(t);
+          const out = [
+            self.cell(t.title, { link: () => open(t), quiet:true, strong:true, wrap:true, sub: ab ? ab.label : '', extra: fr ? [fr] : [] }),
+            self.cell(pr.text, { progress: pr, sub: inv && tight && ppl ? ppl : '' })
+          ];
+          if (inv) out.push(self.cell('', { steps: mine(t) }));
+          out.push(self.cell(ppl || '\u2014', { dim: !ppl, wrap:true }));
+          out.push(fin ? self.cell(t.status === 2 ? 'Finished' : 'Cancelled', { chip: t.status === 2 ? 'ok' : 'mute', shape: t.status === 2 ? '50%' : '1px', sub: self.fmt(t.closedAtUtc) })
+            : self.cell(t.dueAtUtc ? di.text : '\u2014', { tone: di.tone || null, dim: !t.dueAtUtc }));
+          return out;
+        },
+        card: t => ({ title: t.title, chip:'', tone:'mute' }),
+        taskCard: t => {
+          const ab = self.taskAbout(t), pr = prog(t), fr = from(t), di = self.dueInfo(t.dueAtUtc), tn = TONE[t.status === 2 ? 'ok' : 'mute'], st = inv ? mine(t) : [];
+          return { onOpen: () => open(t), onTitle: stop(() => open(t)), title: t.title,
+            subs: [ab ? ab.label : '', fr].filter(Boolean).map(x => ({ text: x })),
+            hasChip: fin, chip: t.status === 2 ? 'Finished' : 'Cancelled', chipBg: tn.bg, chipFg: tn.fg, chipBd: tn.bd, chipShape: t.status === 2 ? '50%' : '1px',
+            progress: pr.text, progressFg: pr.n ? 'var(--fg-2)' : 'var(--fg-3)', hasBar: pr.n > 0, barPct: pr.pct,
+            dueLabel: fin ? 'Closed' : 'Due', due: fin ? self.fmt(t.closedAtUtc) : t.dueAtUtc ? di.text : 'No due date',
+            dueFg: !fin && di.tone ? di.fg : (fin || t.dueAtUtc) ? 'var(--fg-2)' : 'var(--fg-3)',
+            hasSteps: st.length > 0, stepsLabel: st.length > 1 ? 'Your steps' : 'Your step', steps: st };
+        },
+        open, empty
+      };
+    }
 
     if (r === 'vehicles') return {
       key:'vehicles', minWidth:'1180px', tightMax:1280, searchHint:'Plate, VIN, make or model', searchMax:50,
@@ -3942,7 +4417,7 @@ class Component extends DCLogic {
       moreFilters: (spec.moreFilters || []).map(f => { const cur = q[f.key] || ''; const opts = f.options || []; const hit = opts.find(o => o.value === cur) || opts[0];
         return { label: f.label, value: cur, display: hit ? hit.label : cur, isSelect: f.kind !== 'date', isDate: f.kind === 'date', options: opts, hasHint: !!f.hint, hint: f.hint || '', onChange: e => this.patchQ(spec.key, { [f.key]: e.target.value, page: 1 }) }; }),
       hasActiveFilters: hasSearchTerm, clearFilters: () => this.setState(s => ({ q: { ...s.q, [spec.key]: { search:'', page:1, size, sortBy: by, dir, more: !!q.more } } })),
-      countLabel: showData ? total + ' record' + (total === 1 ? '' : 's') : '',
+      countLabel: showData ? total + ' ' + (spec.noun || 'record') + (total === 1 ? '' : 's') : '',
       isLoading, skeletons:[{ a:'110px', b:'190px' },{ a:'96px', b:'220px' },{ a:'118px', b:'170px' },{ a:'104px', b:'204px' },{ a:'112px', b:'182px' },{ a:'98px', b:'212px' }],
       isProblem: !!problem, problemIcon: problem ? problem.icon : '', problemTint: problem ? problem.tint : '',
       problemBg: problem ? (problem.tint === 'var(--bad)' ? 'var(--bad-soft)' : 'var(--warn-soft)') : '', problemBd: problem ? (problem.tint === 'var(--bad)' ? 'var(--bad-line)' : 'var(--warn-line)') : '',
@@ -3956,7 +4431,8 @@ class Component extends DCLogic {
       emptyActionLabel: noResult ? 'Clear filters' : (spec.empty.action ? spec.empty.action.label : ''),
       emptyActionIcon: noResult ? 'filter_alt_off' : (spec.empty.action ? spec.empty.action.icon : ''),
       emptyGo: noResult ? () => this.setState(s => ({ q: { ...s.q, [spec.key]: { search:'', page:1, size } } })) : (spec.empty.action ? spec.empty.action.go : () => {}),
-      showTable: showData && !cardMode, showCards: showData && cardMode && !spec.actionCards,
+      showTable: showData && !cardMode, showCards: showData && cardMode && !spec.actionCards && !spec.taskCards,
+      showTaskCards: showData && cardMode && !!spec.taskCards, taskCards: spec.taskCards && showData && cardMode ? slice.map(spec.taskCard) : [],
       showActionCards: showData && cardMode && !!spec.actionCards,
       columns: (spec.columns || []).filter((c, i) => mask[i]).map((c, i, all) => {
         const active = by === c.key;
@@ -4069,6 +4545,7 @@ class Component extends DCLogic {
         minWidth: sh(c.minWidth || (c.width && c.width !== 'auto' ? c.width : 0), c.keep) }));
       const need = cols.reduce((n, c) => n + (parseFloat(c.minWidth) || parseFloat(c.width) || 0), 0);
       return { title, span: p.span || '1 / -1', hasDesc: !!p.desc, desc: p.desc || '', actions: p.actions || [],
+      hasText: !!p.text, text: p.text || '', hasSteps: !!(p.steps && p.steps.length), steps: p.steps || [],
       hasRows: !!(p.rows && p.rows.length), rows: p.rows || [],
       // `oneRow` keeps every fact of a panel on a single row from the desktop line up, where they
       // all fit; below that line the wrapping auto-fit grid takes over unchanged. `fullRows` is the
@@ -4089,7 +4566,7 @@ class Component extends DCLogic {
       minWidth: dense ? Math.max(need, 0) + 'px' : (p.minWidth || '760px'),
       headPad: dense || p.compactPad ? '9px 9px' : '9px 16px', cellPad: dense || p.compactPad ? '9px 9px' : '11px 16px', headWrap: dense || p.compactPad ? 'normal' : 'nowrap',
       columns: cols,
-      isEmpty: !!p.empty && !(p.trows && p.trows.length) && !(p.rows && p.rows.length) && !(p.tcards && p.tcards.length),
+      isEmpty: !!p.empty && !(p.trows && p.trows.length) && !(p.rows && p.rows.length) && !(p.tcards && p.tcards.length) && !(p.steps && p.steps.length),
       emptyIcon: p.empty ? p.empty.icon : '', emptyTitle: p.empty ? p.empty.title : '', emptyBody: p.empty ? p.empty.body : '',
       hasNote: !!p.note, note: p.note || '', noteIcon: p.noteIcon || 'info',
       noteBg: p.noteTone === 'warn' ? 'var(--warn-soft)' : 'var(--inset)', noteBd: p.noteTone === 'warn' ? 'var(--warn-line)' : 'var(--line)',
@@ -4100,6 +4577,48 @@ class Component extends DCLogic {
     const tabs = (list, current) => list.map(t => ({ label:t.label, icon:t.icon, hasCount: t.count !== undefined, count: t.count === undefined ? '' : String(t.count),
       selected: t.id === current ? 'true' : 'false', go: t.go, weight: t.id === current ? 600 : 450,
       bg: t.id === current ? 'var(--surface-3)' : 'transparent', fg: t.id === current ? 'var(--fg)' : 'var(--fg-2)', bd: t.id === current ? 'var(--line-2)' : 'transparent' }));
+
+    if (r === 'task') {
+      const t = (db.tasks || []).find(x => x.id === s.route.id), me = this.me().id;
+      if (!t || this.isSysAdmin() || !this.taskVisible(t, me)) return { show:true, cols:'1fr', hasHero:false, heroFacts:[], heroActions:[], hasTabs:false, tabs:[], hasBanner:false,
+        panels:[P('Task', { empty:{ icon:'lock', title:'This task is not shared with you', body:'A task is seen by its creator and by the people named on its steps.' } })] };
+      const creator = t.createdByUserId === me, open = t.status === 1;
+      const steps = t.steps.slice().sort((a, b) => a.position - b.position), doneN = steps.filter(x => x.doneAtUtc).length;
+      const ab = this.taskAbout(t), di = this.dueInfo(t.dueAtUtc), ST = TASK_STATUS[t.status];
+      const heroActions = creator && open ? [A('Edit', 'edit', () => this.openDialog('task-edit', { id:t.id })),
+        A('Finish task', 'task_alt', () => this.openDialog('task-finish', { id:t.id }), 'primary'),
+        A('Cancel task', 'block', () => this.openDialog('task-cancel', { id:t.id }))] : [];
+      const stepRows = steps.map((st, i) => {
+        const d2 = this.dueInfo(st.dueAtUtc), live = open && !st.doneAtUtc && !!d2.tone, tn = st.doneAtUtc ? TONE.ok : TONE.mute;
+        return { num: String(i + 1), title: st.title, person: this.userName(st.responsibleUserId) + (st.responsibleUserId === me ? ' (you)' : ''),
+          dueText: !st.dueAtUtc ? 'No due date' : live ? d2.text : 'Due ' + this.fmt(st.dueAtUtc), dueFg: live ? d2.fg : 'var(--fg-3)',
+          state: st.doneAtUtc ? 'Done \u00b7 ' + this.userName(st.doneByUserId) + ', ' + this.fmt(st.doneAtUtc) : 'Open',
+          chipBg: tn.bg, chipFg: tn.fg, chipBd: tn.bd, chipShape: st.doneAtUtc ? '50%' : '2px',
+          numBg: st.doneAtUtc ? 'var(--ok-soft)' : 'var(--surface-2)', numBd: st.doneAtUtc ? 'var(--ok-line)' : 'var(--line-2)', numFg: st.doneAtUtc ? 'var(--ok)' : 'var(--fg-2)',
+          hasAct: this.canToggleStep(t, st, me), actLabel: st.doneAtUtc ? 'Undo' : 'Mark done', actIcon: st.doneAtUtc ? 'undo' : 'check',
+          actBg: st.doneAtUtc ? 'transparent' : 'var(--surface-2)', btnH: this.isPhone() ? '44px' : 'auto', actGo: () => this.toggleStep(t.id, st.id) };
+      });
+      const panels = [];
+      if (t.description) panels.push(P('Description', { text: t.description }));
+      panels.push(P('Steps', { desc: steps.length ? 'In the order ' + (creator ? 'you' : 'the creator') + ' set. Steps do not wait for each other.' : '', steps: stepRows,
+        empty:{ icon:'person', title:'No steps', body:'This task is yours alone.' } }));
+      panels.push(P('Record', { rows:[R('Created', this.fmt(t.createdAtUtc), { mono:true, sub:'by ' + this.userName(t.createdByUserId) }),
+        R('Last updated', t.updatedAtUtc ? this.fmt(t.updatedAtUtc) : 'Never', { mono: !!t.updatedAtUtc, dim: !t.updatedAtUtc, sub: t.updatedByUserId ? 'by ' + this.userName(t.updatedByUserId) : '' })] }));
+      const who = this.userName(t.createdByUserId), fin = t.status === 2;
+      return { show:true, cols:'1fr',
+        hasHero:true, heroChip: ST[0], heroShape: ST[2], heroBg: TONE[ST[1]].bg, heroFg: TONE[ST[1]].fg, heroBd: TONE[ST[1]].bd,
+        heroFacts:[
+          { label:'Created by', value: who, hasSub:true, sub: this.fmt(t.createdAtUtc), font:'var(--font-sans)' },
+          { label:'Due', value: t.dueAtUtc ? this.fmt(t.dueAtUtc) : 'No due date', font:'var(--font-sans)', fg: open && di.tone ? di.fg : t.dueAtUtc ? 'var(--fg)' : 'var(--fg-3)',
+            hasSub: open && !!di.tone, sub: open && di.tone === 'bad' ? 'Overdue' : open && di.tone === 'warn' ? 'Due today' : '' },
+          { label:'About', value: ab ? ab.label : 'Nothing', go: ab && ab.go ? ab.go : null, font:'var(--font-sans)', fg: ab ? 'var(--fg)' : 'var(--fg-3)' },
+          { label:'Progress', value: steps.length ? doneN + ' of ' + steps.length + ' steps done' : 'No steps', font:'var(--font-sans)' } ],
+        heroActions, hasTabs:false, tabs:[],
+        hasBanner: !open, bannerTitle: (fin ? 'Finished by ' : 'Cancelled by ') + who + ' on ' + this.fmt(t.closedAtUtc),
+        bannerBody: t.status === 3 ? (t.cancellationNote || 'No reason given.') : '',
+        bannerBg: fin ? 'var(--ok-soft)' : 'var(--mute-soft)', bannerBd: fin ? 'var(--ok-line)' : 'var(--mute-line)', bannerFg: fin ? 'var(--ok)' : 'var(--mute)',
+        bannerIcon: fin ? 'task_alt' : 'block', panels };
+    }
 
     if (r === 'assignment') {
       const a = db.assignments.find(x => x.id === s.route.id); if (!a) return shell;
@@ -4794,9 +5313,10 @@ class Component extends DCLogic {
       // minmax(0,…), never a bare 1fr: an auto track minimum lets the queue rows' nowrap
       // ellipsized titles size the track to their full text width and scroll the page sideways.
       overviewCols: s.w < 1400 ? 'minmax(0,1fr)' : 'minmax(0,1.2fr) minmax(0,1.2fr) minmax(290px,.95fr)',
+      showTasksCard: !this.isSysAdmin(),
       tasks: this.tasksModel(),
       tasksEmpty: this.tasksModel().length === 0,
-      tasksCount: this.tasksModel().length + ' open',
+      tasksCount: this.tasksModel().length + ' to do',
       insurance: this.insuranceModel(),
       insuranceEmpty: this.insuranceModel().length === 0,
       insuranceCount: this.insuranceModel().length + ' case' + (this.insuranceModel().length === 1 ? '' : 's'),
@@ -4828,13 +5348,14 @@ class Component extends DCLogic {
       sessionToggleLabel: s.signedIn ? 'Sign out of prototype' : 'Enter application',
       toggleSession: () => this.setState({ signedIn: !s.signedIn, route: { name:'overview', id:null, tab:null } }),
 
-      pgSimple: ['attention','tasks','insurance'].includes(s.route.name),
+      pgSimple: ['attention','insurance'].includes(s.route.name),
       simple: this.simpleModel(),
-      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit','deleterecords'].includes(s.route.name),
+      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit','deleterecords'].includes(s.route.name) || (s.route.name === 'tasks' && !this.isSysAdmin()),
+      pgTasks: s.route.name === 'tasks' && !this.isSysAdmin(), taskTabs: s.route.name === 'tasks' ? this.taskTabs() : [],
       list: this.listModel(),
       pgPurge: s.route.name === 'deleterecords' && this.can('Records.Delete'),
       purgeTabs: s.route.name === 'deleterecords' ? this.purgeTabs() : [],
-      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess'].includes(s.route.name) || (s.route.name === 'deleterecords' && this.can('Records.Delete')),
+      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess','task'].includes(s.route.name) || (s.route.name === 'deleterecords' && this.can('Records.Delete')),
       detail: { ...(() => { const d = this.detailModel(), card = this.isCardTier();
         // Counts drop only on the phone strip (<768). From 768 up the whole fact row renders as a
         // grid on its own line, so it can never be squeezed out above the lifecycle buttons.
@@ -4872,7 +5393,9 @@ class Component extends DCLogic {
           heroFactJustify: card ? 'flex-start' : 'center',
           heroBodyMin: card ? '32px' : '0',
           heroFactsFlex: s.w < 1280 ? '1 1 100%' : '1 1 auto',
-          heroFacts: facts.map((f, i) => ({ ...f, span: f.wide && card ? '1 / -1' : 'auto', hasGap: wideFacts && i > 0 })) }; })(),
+          heroFacts: facts.map((f, i) => ({ ...f, span: f.wide && card ? '1 / -1' : 'auto', hasGap: wideFacts && i > 0,
+            isPlain: !f.go, isLink: !!f.go, linkGo: f.go ? (e => { if (e && e.preventDefault) e.preventDefault(); f.go(); }) : (() => {}), fg: f.fg || 'var(--fg)' })),
+          bannerHasBody: !!d.bannerBody }; })(),
         rowCols: this.rowColsDefault(),
         heroActW: this.isCardTier() ? '100%' : 'auto', heroBtnFlex: this.isCardTier() ? '1 1 100%' : '0 0 auto',
         heroActMl: !this.isCardTier() && s.w < 1280 ? 'auto' : '0' },

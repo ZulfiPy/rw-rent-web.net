@@ -1,0 +1,424 @@
+/* RW-Rent · Tasks — new and changed styles
+   Source: RW-Rent.dc.html (approved prototype). Line numbers refer to that file.
+
+   The prototype is inline-styled. This feature adds NO global stylesheet rules: the <helmet><style>
+   block (tokens, resets, keyframes) is unchanged. What is new or changed for Tasks is the inline
+   declarations below, copied verbatim, one entry per element, in file order.
+   {{ … }} marks a value computed at runtime; HANDOVER.md section e gives the values per tier.
+   style-hover / style-focus / style-focus-within are the prototype's :hover / :focus / :focus-within. */
+
+/* ================================================================
+   Overview · Open tasks card rows — lines 510–523 (the card shell, header and empty state are unchanged;
+   the card is now wrapped in <sc-if showTasksCard> at line 495, which carries no style)
+   ================================================================ */
+
+/* L511 <button> */
+/*   style: */ display:flex; align-items:center; gap:13px; padding:13px 17px; background:transparent; border:none; border-bottom:1px solid var(--line); text-align:left; color:var(--fg); width:100%;
+/*   style-hover: */ background:var(--surface-2);
+
+/* L512 <span> */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:30px; height:30px; flex:none; border-radius:8px; background:{{ t.tintBg }}; border:1px solid {{ t.tintBd }}; color:{{ t.tint }};
+
+/* L512 <span> "{{ t.icon }}" */
+/*   style: */ font-size:17px;
+
+/* L513 <span> */
+/*   style: */ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;
+
+/* L514 <span> "{{ t.title }}" */
+/*   style: */ font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+
+/* L515 <span> "{{ t.sub }}" */
+/*   style: */ font-size:12.5px; color:var(--fg-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+
+/* L517 <span> */
+/*   style: */ display:flex; align-items:center; gap:10px; flex:none;
+
+/* L518 <span> "{{ t.when }}" */
+/*   style: */ font-family:var(--font-mono); font-size:11px; color:{{ t.whenFg }};
+
+/* L519 <span> "chevron_right" */
+/*   style: */ font-size:17px; color:var(--fg-4);
+
+/* ================================================================
+   Tasks page · tab strip (pgTasks) — lines 668–681
+   ================================================================ */
+
+/* L669 <div> */
+/*   style: */ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;
+
+/* L670 <div> */
+/*   style: */ display:flex; flex-wrap:nowrap; gap:4px; padding:4px; background:var(--surface); border:1px solid var(--line); border-radius:11px; width:max-content; max-width:100%; overflow-x:auto;
+
+/* L672 <button> */
+/*   style: */ display:flex; align-items:center; gap:8px; flex:none; padding:{{ t.pad }}; background:{{ t.bg }}; color:{{ t.fg }}; border:1px solid {{ t.bd }}; border-radius:8px; font-size:13.5px; font-weight:{{ t.weight }};
+/*   style-hover: */ color:var(--fg);
+
+/* L673 <span> "{{ t.icon }}" */
+/*   style: */ font-size:17px; display:{{ t.iconDisplay }};
+
+/* L674 <span> "{{ t.label }}" */
+/*   style: */ white-space:nowrap;
+
+/* L675 <span> "{{ t.count }}" */
+/*   style: */ font-family:var(--font-mono); font-size:11px; color:var(--fg-3);
+
+/* L679 <span> "Times in Tallinn time." */
+/*   style: */ margin-left:auto; font-size:12px; color:var(--fg-3);
+
+/* ================================================================
+   List table · Steps cell (c.isProgress) — lines 838–846
+   ================================================================ */
+
+/* L839 <span> */
+/*   style: */ display:flex; flex-direction:column; gap:6px; min-width:0;
+
+/* L840 <span> "{{ c.text }}" */
+/*   style: */ font-size:13px; color:{{ c.progressFg }}; white-space:nowrap;
+
+/* L842 <span> */
+/*   style: */ display:block; width:100%; max-width:112px; height:4px; border-radius:2px; background:var(--surface-3); overflow:hidden;
+
+/* L842 <span> */
+/*   style: */ display:block; height:100%; width:{{ c.barPct }}; border-radius:2px; background:var(--ok);
+
+/* L844 <span> "{{ c.sub }}" */
+/*   style: */ font-size:12px; color:var(--fg-3);
+
+/* ================================================================
+   List table · Your step cell (c.isSteps) — lines 847–864
+   ================================================================ */
+
+/* L848 <span> */
+/*   style: */ display:flex; flex-direction:column; gap:9px; min-width:0;
+
+/* L850 <span> */
+/*   style: */ display:flex; align-items:center; gap:10px; min-width:0;
+
+/* L851 <span> */
+/*   style: */ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;
+
+/* L852 <span> "{{ st.title }}" */
+/*   style: */ font-size:13px; color:var(--fg); overflow-wrap:anywhere;
+
+/* L853 <span> "{{ st.dueText }}" */
+/*   style: */ font-size:12px; color:{{ st.dueFg }}; white-space:nowrap;
+
+/* L856 <span> */
+/*   style: */ display:inline-flex; align-items:center; gap:4px; flex:none; font-size:12px; font-weight:500; color:var(--ok); white-space:nowrap;
+
+/* L856 <span> "check" */
+/*   style: */ font-size:15px;
+
+/* L859 <button> */
+/*   style: */ display:flex; align-items:center; gap:5px; flex:none; padding:5px 10px; background:{{ st.bg }}; border:1px solid var(--line-2); border-radius:7px; color:var(--fg); font-size:12px; font-weight:500; white-space:nowrap;
+/*   style-hover: */ background:var(--surface-3);
+
+/* L859 <span> "{{ st.icon }}" */
+/*   style: */ font-size:15px;
+
+/* ================================================================
+   List · phone task cards (list.showTaskCards) — lines 967–1015
+   ================================================================ */
+
+/* L968 <div> */
+/*   style: */ display:flex; flex-direction:column;
+
+/* L970 <div> */
+/*   style: */ display:flex; flex-direction:column; gap:11px; padding:14px 16px; border-bottom:1px solid var(--line); cursor:pointer;
+/*   style-hover: */ background:var(--surface-2);
+
+/* L971 <div> */
+/*   style: */ display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+
+/* L972 <div> */
+/*   style: */ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;
+
+/* L973 <span> */
+/*   style: */ display:flex; min-width:0;
+
+/* L973 <a> "{{ c.title }}" */
+/*   style: */ max-width:100%; font-size:14px; font-weight:600; color:var(--fg); text-decoration:none; border-bottom:1px solid var(--line-3); overflow-wrap:anywhere; cursor:pointer;
+/*   style-hover: */ border-bottom-color:currentColor;
+
+/* L974 <span> "{{ l.text }}" */
+/*   style: */ font-size:11.5px; color:var(--fg-3);
+
+/* L977 <span> */
+/*   style: */ display:inline-flex; align-items:center; gap:6px; flex:none; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:500; background:{{ c.chipBg }}; color:{{ c.chipFg }}; border:1px solid {{ c.chipBd }};
+
+/* L977 <span> "{{ c.chip }}" */
+/*   style: */ width:6px; height:6px; border-radius:{{ c.chipShape }}; background:currentColor;
+
+/* L980 <div> */
+/*   style: */ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 14px;
+
+/* L981 <span> */
+/*   style: */ display:flex; flex-direction:column; gap:3px; min-width:0;
+
+/* L982 <span> "Steps" */
+/*   style: */ font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--fg-4);
+
+/* L983 <span> "{{ c.progress }}" */
+/*   style: */ font-size:12.5px; color:{{ c.progressFg }};
+
+/* L984 <span> */
+/*   style: */ display:block; width:100%; max-width:140px; height:4px; margin-top:2px; border-radius:2px; background:var(--surface-3); overflow:hidden;
+
+/* L984 <span> */
+/*   style: */ display:block; height:100%; width:{{ c.barPct }}; border-radius:2px; background:var(--ok);
+
+/* L986 <span> */
+/*   style: */ display:flex; flex-direction:column; gap:3px; min-width:0;
+
+/* L987 <span> "{{ c.dueLabel }}" */
+/*   style: */ font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--fg-4);
+
+/* L988 <span> "{{ c.due }}" */
+/*   style: */ font-size:12.5px; font-weight:500; color:{{ c.dueFg }};
+
+/* L992 <div> */
+/*   style: */ display:flex; flex-direction:column; gap:8px;
+
+/* L993 <span> "{{ c.stepsLabel }}" */
+/*   style: */ font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--fg-4);
+
+/* L995 <div> */
+/*   style: */ display:flex; flex-direction:column; gap:9px; padding:10px 12px; background:var(--inset); border:1px solid var(--line); border-radius:10px;
+
+/* L996 <div> */
+/*   style: */ display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+
+/* L997 <span> */
+/*   style: */ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;
+
+/* L998 <span> "{{ st.title }}" */
+/*   style: */ font-size:13px; color:var(--fg); overflow-wrap:anywhere;
+
+/* L999 <span> "{{ st.dueText }}" */
+/*   style: */ font-size:12px; color:{{ st.dueFg }};
+
+/* L1002 <span> */
+/*   style: */ display:inline-flex; align-items:center; gap:4px; flex:none; font-size:12px; font-weight:500; color:var(--ok);
+
+/* L1002 <span> "check" */
+/*   style: */ font-size:15px;
+
+/* L1006 <button> */
+/*   style: */ display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:0 14px; background:{{ st.bg }}; border:1px solid var(--line-2); border-radius:9px; color:var(--fg); font-size:13px; font-weight:500;
+/*   style-hover: */ background:var(--surface-3);
+
+/* L1006 <span> "{{ st.icon }}" */
+/*   style: */ font-size:17px;
+
+/* ================================================================
+   Record page · panel text (p.hasText) — lines 1117–1119
+   ================================================================ */
+
+/* L1118 <p> "{{ p.text }}" */
+/*   style: */ margin:0; padding:14px 17px 16px; max-width:80ch; font-size:13.5px; line-height:1.6; color:var(--fg); white-space:pre-line; overflow-wrap:anywhere;
+
+/* ================================================================
+   Record page · panel step rows (p.hasSteps) — lines 1120–1138
+   ================================================================ */
+
+/* L1121 <ol> */
+/*   style: */ margin:0; padding:0; list-style:none; display:flex; flex-direction:column;
+
+/* L1123 <li> */
+/*   style: */ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:13px 17px; border-bottom:1px solid var(--line);
+
+/* L1124 <span> "{{ st.num }}" */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:26px; height:26px; flex:none; border-radius:7px; background:{{ st.numBg }}; border:1px solid {{ st.numBd }}; color:{{ st.numFg }}; font-family:var(--font-mono); font-size:12px; font-weight:500;
+
+/* L1125 <span> */
+/*   style: */ flex:1 1 200px; min-width:0; display:flex; flex-direction:column; gap:2px;
+
+/* L1126 <span> "{{ st.title }}" */
+/*   style: */ font-size:13.5px; font-weight:500; color:var(--fg); overflow-wrap:anywhere;
+
+/* L1127 <span> */
+/*   style: */ display:flex; flex-wrap:wrap; gap:2px 12px; font-size:12.5px; color:var(--fg-3);
+
+/* L1127 <span> "{{ st.dueText }}" */
+/*   style: */ color:{{ st.dueFg }};
+
+/* L1129 <span> */
+/*   style: */ display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px 10px; margin-left:auto; min-width:0;
+
+/* L1130 <span> */
+/*   style: */ display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:500; background:{{ st.chipBg }}; color:{{ st.chipFg }}; border:1px solid {{ st.chipBd }};
+
+/* L1130 <span> */
+/*   style: */ width:6px; height:6px; flex:none; border-radius:{{ st.chipShape }}; background:currentColor;
+
+/* L1132 <button> */
+/*   style: */ display:flex; align-items:center; justify-content:center; gap:6px; min-height:{{ st.btnH }}; padding:7px 12px; background:{{ st.actBg }}; border:1px solid var(--line-2); border-radius:8px; color:var(--fg); font-size:12.5px; font-weight:500; white-space:nowrap;
+/*   style-hover: */ background:var(--surface-3);
+
+/* L1132 <span> "{{ st.actIcon }}" */
+/*   style: */ font-size:16px;
+
+/* ================================================================
+   Dialog · step rows (sec.hasSteps) — lines 1418–1464
+   ================================================================ */
+
+/* L1419 <div> */
+/*   style: */ display:flex; flex-direction:column; gap:10px;
+
+/* L1421 <div> */
+/*   style: */ display:flex; align-items:flex-start; gap:10px; padding:12px; background:var(--inset); border:1px solid {{ st.bd }}; border-radius:10px;
+
+/* L1422 <span> "{{ st.num }}" */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:26px; height:26px; flex:none; margin-top:26px; border-radius:7px; background:var(--surface-2); border:1px solid var(--line-2); font-family:var(--font-mono); font-size:12px; color:var(--fg-2);
+
+/* L1423 <div> */
+/*   style: */ flex:1; min-width:0; display:grid; grid-template-columns:{{ sec.stepCols }}; gap:11px 12px;
+
+/* L1424 <label> */
+/*   style: */ display:flex; flex-direction:column; gap:6px; min-width:0; grid-column:1 / -1;
+
+/* L1425 <span> */
+/*   style: */ display:flex; align-items:baseline; gap:6px; font-size:12.5px; font-weight:500; color:var(--fg-2);
+
+/* L1425 <span> "required" */
+/*   style: */ font-size:11px; font-weight:400; color:var(--fg-4);
+
+/* L1426 <input> */
+/*   style: */ width:100%; padding:9px 11px; background:var(--surface-2); border:1px solid {{ st.titleBorder }}; border-radius:8px; color:var(--fg); font-size:13.5px; outline:none;
+/*   style-focus: */ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring);
+
+/* L1427 <span> */
+/*   style: */ display:flex; align-items:flex-start; gap:6px; font-size:12.5px; color:var(--bad);
+
+/* L1427 <span> "error" */
+/*   style: */ font-size:15px; margin-top:1px;
+
+/* L1429 <label> */
+/*   style: */ display:flex; flex-direction:column; gap:6px; min-width:0;
+
+/* L1430 <span> */
+/*   style: */ display:flex; align-items:baseline; gap:6px; font-size:12.5px; font-weight:500; color:var(--fg-2);
+
+/* L1430 <span> "required" */
+/*   style: */ font-size:11px; font-weight:400; color:var(--fg-4);
+
+/* L1431 <span> */
+/*   style: */ position:relative; display:flex; align-items:center; gap:8px; width:100%; padding:9px 11px; background:var(--surface-2); border:1px solid {{ st.userBorder }}; border-radius:8px;
+/*   style-focus-within: */ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring);
+
+/* L1432 <span> "{{ st.userDisplay }}" */
+/*   style: */ flex:1; min-width:0; font-size:13.5px; color:{{ st.userFg }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+
+/* L1433 <span> "expand_more" */
+/*   style: */ font-size:17px; color:var(--fg-3); flex:none;
+
+/* L1434 <select> */
+/*   style: */ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none;
+
+/* L1438 <span> */
+/*   style: */ display:flex; align-items:flex-start; gap:6px; font-size:12.5px; color:var(--bad);
+
+/* L1438 <span> "error" */
+/*   style: */ font-size:15px; margin-top:1px;
+
+/* L1440 <label> */
+/*   style: */ display:flex; flex-direction:column; gap:6px; min-width:0;
+
+/* L1441 <span> */
+/*   style: */ display:flex; align-items:baseline; gap:6px; font-size:12.5px; font-weight:500; color:var(--fg-2);
+
+/* L1441 <span> "· optional" */
+/*   style: */ font-size:11px; font-weight:400; color:var(--fg-4);
+
+/* L1442 <input> */
+/*   style: */ width:100%; min-width:0; padding:9px 11px; background:var(--surface-2); border:1px solid {{ st.dueBorder }}; border-radius:8px; color:var(--fg); font-size:13.5px; outline:none;
+/*   style-focus: */ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring);
+
+/* L1443 <span> */
+/*   style: */ display:flex; align-items:flex-start; gap:6px; font-size:12.5px; color:var(--bad);
+
+/* L1443 <span> "error" */
+/*   style: */ font-size:15px; margin-top:1px;
+
+/* L1446 <span> */
+/*   style: */ grid-column:1 / -1; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ok);
+
+/* L1446 <span> "check_circle" */
+/*   style: */ font-size:15px;
+
+/* L1449 <div> */
+/*   style: */ display:flex; flex-direction:column; gap:4px; flex:none; margin-top:26px;
+
+/* L1450 <button> */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:{{ sec.stepBtn }}; height:{{ sec.stepBtn }}; padding:0; background:var(--surface-2); border:1px solid var(--line-2); border-radius:7px; color:var(--fg-2); opacity:{{ st.upOpacity }};
+/*   style-hover: */ background:var(--surface-3); color:var(--fg);
+
+/* L1450 <span> "arrow_upward" */
+/*   style: */ font-size:17px;
+
+/* L1451 <button> */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:{{ sec.stepBtn }}; height:{{ sec.stepBtn }}; padding:0; background:var(--surface-2); border:1px solid var(--line-2); border-radius:7px; color:var(--fg-2); opacity:{{ st.downOpacity }};
+/*   style-hover: */ background:var(--surface-3); color:var(--fg);
+
+/* L1451 <span> "arrow_downward" */
+/*   style: */ font-size:17px;
+
+/* L1452 <button> */
+/*   style: */ display:flex; align-items:center; justify-content:center; width:{{ sec.stepBtn }}; height:{{ sec.stepBtn }}; padding:0; background:var(--surface-2); border:1px solid var(--line-2); border-radius:7px; color:var(--fg-2);
+/*   style-hover: */ background:var(--surface-3); color:var(--fg);
+
+/* L1452 <span> "close" */
+/*   style: */ font-size:17px;
+
+/* L1457 <p> "{{ sec.stepsEmpty }}" */
+/*   style: */ margin:0; padding:12px 13px; background:var(--inset); border:1px dashed var(--line-2); border-radius:10px; font-size:12.5px; color:var(--fg-3);
+
+/* L1459 <div> */
+/*   style: */ display:flex;
+
+/* L1460 <button> */
+/*   style: */ display:flex; align-items:center; gap:6px; min-height:{{ sec.addH }}; padding:8px 13px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:8px; color:var(--fg); font-size:13px; font-weight:500;
+/*   style-hover: */ background:var(--surface-3);
+
+/* L1460 <span> "add" */
+/*   style: */ font-size:16px;
+
+/* L1462 <p> "{{ sec.stepsHint }}" */
+/*   style: */ margin:0; font-size:12px; line-height:1.5; color:var(--fg-3); text-wrap:pretty;
+
+/* ================================================================
+   List table · Task cell second sub-line (c.extraSubs) — line 824
+   ================================================================ */
+
+/* L824 <span> "{{ l.text }}" */
+/*   style: */ font-size:{{ c.subSize }}; color:var(--fg-3);
+
+/* ================================================================
+   Record hero · fact value, plain (h.isPlain) — CHANGED: color was var(--fg), now {{ h.fg }} — line 1060
+   ================================================================ */
+
+/* L1060 <span> "{{ h.value }}" */
+/*   style: */ font-family:{{ h.font }}; font-size:13px; color:{{ h.fg }}; min-width:0; overflow-wrap:anywhere;
+
+/* ================================================================
+   Record hero · fact value, link (h.isLink) — NEW — line 1061
+   ================================================================ */
+
+/* L1061 <a> "{{ h.value }}" */
+/*   style: */ width:fit-content; max-width:100%; font-family:{{ h.font }}; font-size:13px; font-weight:500; color:var(--fg); text-decoration:none; border-bottom:1px solid var(--line-3); overflow-wrap:anywhere; cursor:pointer;
+/*   style-hover: */ border-bottom-color:currentColor;
+
+/* ================================================================
+   Record banner · body now optional (detail.bannerHasBody) — style unchanged — line 1097
+   ================================================================ */
+
+/* L1097 <p> "{{ detail.bannerBody }}" */
+/*   style: */ margin:3px 0 0; font-size:13px; color:var(--fg-2);
+
+/* ================================================================
+   Overview · Open tasks card — CHANGED lines (for comparison)
+   Before (row, a <div>): display:flex; align-items:center; gap:13px; padding:13px 17px; border-bottom:1px solid var(--line); color:var(--fg)
+   Before (when): font-family:var(--font-mono); font-size:11px; color:var(--fg-3); flex:none
+   After: see the block above (row is a <button> like the Needs attention rows; when colour is {{ t.whenFg }}; a chevron was added).
+   ================================================================ */
