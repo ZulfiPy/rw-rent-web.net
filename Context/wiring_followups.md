@@ -532,3 +532,84 @@ refused; the Active rental has to be ended first (ASSIGN-004).
 **Found in the review, not part of it:** some of the API's refusals name its request members
 ("EndedAtUtc must be later than StartedAtUtc.", "'Email' is not a valid email address."), and the
 app shows them as they come. Backend backlog item 25; the app needs no change.
+
+## 12. Follow-up 12 — Tasks in the app
+
+> **Status: AUTHORISED 2026-09-24, when the owner sends the Follow-up 12 prompt.** The app's half
+> of Tasks. The backend's half is round 10 (`RWRentApi-wiring/Context/round10_spec_and_plan.md`; its
+> report `Context/round10_report.md`, §5 "Contract deltas"), verified and in `main`. Frontend only.
+> **Branch: `feature/backend-wiring` in this worktree** (the owner's rule: the implementation agent
+> works only on the wiring branches, never on `main`); the reviewer fast-forwards `main` after
+> verification. **The owner's real data is in `rwrent_v1` behind the API on 5001 (still round 9, no
+> tasks) and the app on 5173, which runs from this worktree with hot reload.** The agent never opens
+> 5173, never signs in there, never calls 5001, never writes to `rwrent_v1`; its checks run on a
+> scratch stack it builds itself as `RWRentApi-wiring/Context/round10_report.md` §7 describes it
+> (`rwrent_check` migrated and seeded by round 10's Release build, which brings the prototype's
+> eight tasks; the API on 5002; Vite on 5174), in a browser profile of its own. Tests for each item,
+> each shown to fail against a deliberate breakage; typecheck, tests and build green; no new runtime
+> dependency. Report: `Context/wiring_report.md` rewritten. Commits: several grouped commits,
+> `Wiring 33: …`, the report last as `Wiring 34: …`, pushed with an ordinary push and checked with
+> `git ls-remote`. This document is not edited by the agent.
+
+**The source.** The approved prototype and its handover in `Context/prototype/`: `RW-Rent.dc.html`
+(it opens with `support.js` beside it), `tasks/HANDOVER.md` (a: how to see every state; b and c: the
+pieces reused and added; d: the behaviour; e: the layout values per tier; f: the copy deck; g: what
+it invented), `tasks/new-styles.css` and `tasks/mock-data.json`. The look, the layout and the words
+come from there, built with the app's own components as Delete records was. The rules come from the
+API, and the app never re-implements one: who may mark, undo or change is read from `canMarkDone`,
+`canUndo`, `canChange` and `viewerIsCreator` in its answers. Where the handover and the API differ,
+the API wins and the report says where.
+
+- **F12-1. The Tasks section replaces the placeholder.** `/tasks` (the list) and `/tasks/:taskId`
+  (one task), both requiring `Tasks.Use`, which joins the app's list of permissions. The sample Tasks
+  page and its rows go (`Tasks` in `src/pages/simple/Placeholders.tsx`, `TASKS` and `TASKS_NOTICE`
+  in `src/pages/overview/sample.ts`). **Insurance cases stays exactly as it is**, "Under
+  development", by the owner's decision.
+- **F12-2. The list page**, as handover e and f show it: the header "Tasks" with its description and
+  **New task**; the tab strip My tasks / Involving me / Finished with the counts of
+  `GET /api/tasks/counts`; the search and the Due filter; each tab's columns (Task with its record
+  and "from <name>", Steps with the progress bar, Your step with Mark done, or Done and Undo, on
+  Involving me, People, Due or Closed) in the order the API gives; paging; the empty states and the
+  no-results state; the phone cards. The tab, the search, the filter and the page live in the
+  address, as on Delete records.
+- **F12-3. The task's page**, as handover e and f show it: the breadcrumb and the header; the hero
+  with the status chip, Created by, Due (with Overdue or Due today), About (the record as a link, or
+  "<Kind> · deleted record" when `aboutRecordExists` is false) and Progress, and, only when
+  `canChange`, Edit, Finish task and Cancel task; the Description panel; the Steps panel with each
+  step's person (" (you)" for the reader), due, state, and the Mark done or Undo the API allows; the
+  banner of a finished and of a cancelled task; the Record panel with who created it and who last
+  changed it; the "not shared with you" state for `403 tasks.not_shared` and the not-found state for
+  `404 tasks.not_found`.
+- **F12-4. New task and Edit task**, one dialog (handover e and f): the Task section (Title,
+  Description, Due, and About: the kind, then the record from that kind's own list, the first 100 as
+  the new-rental dialog offers them, inactive records marked); the Steps section (one row per step
+  with Title, Person from `GET /api/tasks/people` with " (you)", Due, move up, move down and remove;
+  Add step; the hint; the line shown without steps; a done step shows its "Done · <name>, <time>"; a
+  step's current person no longer offered is still shown). An edit sends the steps with their `id`s
+  in the order shown. After Create the new task's page opens. Every refusal lands where it belongs:
+  field errors under their fields, a step's under that step's row (`steps[i].title`,
+  `steps[i].responsibleUserId`, `steps[i].dueAtUtc`, as the app's problem mapping already
+  normalises them), `tasks.about_record_not_found` under the record's select (added to
+  `src/api/codes.ts` for the two task writes), the rest in the dialog's refusal banner, and a lost
+  race with the existing stale-record banner and its Refresh.
+- **F12-5. Finish, cancel, mark and undo** (handover f): the finish confirmation, in warn tone and
+  naming the steps still open when there are any, with its consequences; the cancel dialog with the
+  optional "Why". Mark done and Undo are single actions without a dialog, on the list and on the
+  page; a refusal shows the API's sentence where the action was.
+- **F12-6. The count and the Overview**, for a holder of `Tasks.Use` only: the navigation's count on
+  Tasks is `toDo` of `GET /api/tasks/counts` (the sidebar and the phone drawer, as the other counts);
+  the Overview's "Open tasks" tile reads that count, "to do", and opens Tasks; the Overview's "Open
+  tasks" card lists `GET /api/tasks/to-do`, with the description, rows and empty state handover f
+  gives, each row opening its task. Without `Tasks.Use` (the System Administrator, and every user of
+  an API that does not grant it yet, which is the owner's 5001 until the reviewer upgrades it) none
+  of this shows and no tasks request is made. The Insurance tile and card stay as they are.
+- **F12-7. Freshness.** Every write refreshes what it changes (the task, the three views, the counts
+  and the to-do list), so the count and the Overview follow a mark at once.
+- Times are local ("19 Sep, 09:41") with "Times in Tallinn time." where the handover puts it; people
+  by their display name; the three tiers of handover e, light and dark, with no sideways scrolling.
+  The app has no toasts: where the prototype shows one, the change itself is what the person sees
+  (the page opens, the row moves, the banner appears).
+
+**After it.** The reviewer checks it, fast-forwards `main`, then takes a copy of `rwrent_v1`,
+applies `V9WorkTasks` to it, restarts the owner's API on the round-10 build, and the owner uses Tasks
+on real data. Insurance cases follow the same path later, from their own brainstorm.
