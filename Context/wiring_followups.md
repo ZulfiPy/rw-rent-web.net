@@ -121,6 +121,11 @@ findings (§11) are the first work after the merge.
    `src/pages/simple/`). The owner parked their design on 2026-09-16 (facts gathered: the prototype
    defined only a queue stub for each; the backend has nothing; the vehicle carries no policy,
    road-tax or inspection dates). The app ships without them until that phase is opened.
+   **The phase is open (2026-09-23).** The brainstorm lives in the backend's
+   `Context/tasks_brainstorm.md`. The owner approved Claude Design's prototype of the Tasks section on
+   2026-09-24; its handover is filed in `Context/prototype/` (`RW-Rent.dc.html` replaced, `support.js`
+   to open it locally, `tasks/` with the note, the new styles and the mock data). The backend comes
+   first, then the app builds the section from the handover. Insurance cases are not designed yet.
 8. **Next phase, not yet brainstormed: the full change history and a deletions page.** The owner
    decided on 2026-09-19 that every change on every record is tracked (who, what, when, the old and
    the new value), and on 2026-09-20 that a record that is not needed can really be deleted, on one
@@ -146,7 +151,8 @@ findings (§11) are the first work after the merge.
    added mock data. It is unpacked beside the repositories, never into them; the implementation
    agent builds the page from it inside the current app, as the account screens were ported.
    The handover arrived on 2026-09-21 and is filed in `Context/prototype/` (`RW-Rent.dc.html`
-   replaced, `delete-records/` added); the prototype changed only for this feature. Decided the
+   replaced, `delete-records/` added, removed again on 2026-09-24 once the page was built and verified);
+   the prototype changed only for this feature. Decided the
    same day: the right to delete is given in a dialog of its own, not in the Grant role dialog, and
    it gets no prototype: it is described in a specification and judged in the app. Order: first the
    page for the administrator (§8 below), checked by the owner, then the giving of the right.
