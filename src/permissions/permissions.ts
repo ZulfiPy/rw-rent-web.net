@@ -22,6 +22,9 @@ export const PERMISSIONS = [
   // The Delete records page (the backend's round 7): the System Administrator's, and since round 9
   // the Record deleter role's, which holds nothing else.
   'Records.Delete',
+  // Tasks (the backend's round 10): the Viewer's, and so the Fleet Manager's and the Company
+  // Principal's. The System Administrator and a Record deleter alone never hold it.
+  'Tasks.Use',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

@@ -25,7 +25,7 @@ export const isApiError = (e: unknown): e is ApiError => e instanceof ApiError;
 export type Failure =
   /** 400 with errors → messages under their fields. */
   | { kind: 'field'; errors: Record<string, string[]> }
-  /** A coded 400 or 409 whose code maps to one input; the message hangs under that input. */
+  /** A coded 400, 404 or 409 whose code maps to one input; the message hangs under that input. */
   | { kind: 'field-code'; field: string; message: string; code: string }
   /** 400 with a code that maps to no input → validation message above the footer. */
   | { kind: 'form'; message: string; code?: string }
@@ -109,6 +109,13 @@ export function toFailure(error: unknown, op?: string): Failure {
     const field = error.code ? codeToField(error.code, op) : undefined;
     if (field) return { kind: 'field-code', field, message, code: error.code as string };
     return { kind: 'conflict', message, code: error.code };
+  }
+
+  if (status === 404) {
+    // A 404 that names what one input chose belongs under that input too: a task's record that no
+    // longer exists (the backend's round 10). Without an entry for the op it stays as it was.
+    const field = error.code ? codeToField(error.code, op) : undefined;
+    if (field) return { kind: 'field-code', field, message, code: error.code as string };
   }
 
   return { kind: 'unknown', message };

@@ -21,3 +21,4 @@ export * as interruptions from './interruptions';
 export * as systemAdministrator from './systemAdministrator';
 export * as overview from './overview';
 export * as recordDeletions from './recordDeletions';
+export * as tasks from './tasks';

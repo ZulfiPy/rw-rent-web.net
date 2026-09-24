@@ -2,7 +2,7 @@ import type {
   AuthorizationsQuery, CompanyInterruptionsQuery, CustomersQuery, DriverAuthorizationsQuery,
   DriversQuery, InterruptionsQuery, RecordDeletionCandidatesQuery, RecordDeletionShow, RecordKind,
   RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery, SystemAdministratorTransferQuery,
-  UsersQuery, VehiclesQuery, PagedQuery, Uuid,
+  UsersQuery, VehiclesQuery, PagedQuery, Uuid, WorkTaskQuery, WorkTaskToDoQuery,
 } from './dto';
 
 /** One key factory per resource. Mutations invalidate by prefix: qk.users.all, qk.roles.of(id), … */
@@ -71,5 +71,17 @@ export const qk = {
       ['record-deletions', 'candidates', kind, q] as const,
     counts: (show: RecordDeletionShow) => ['record-deletions', 'counts', show] as const,
     made: (q: PagedQuery) => ['record-deletions', 'made', q] as const,
+  },
+  /**
+   * Tasks: one prefix, so every write refreshes the task, the three views, the counts, the to-do list
+   * and the people at once, and the navigation's count and the Overview follow a mark straight away.
+   */
+  tasks: {
+    all: ['tasks'] as const,
+    list: (q: WorkTaskQuery) => ['tasks', 'list', q] as const,
+    counts: ['tasks', 'counts'] as const,
+    toDo: (q: WorkTaskToDoQuery) => ['tasks', 'to-do', q] as const,
+    people: ['tasks', 'people'] as const,
+    detail: (id: Uuid) => ['tasks', 'detail', id] as const,
   },
 };

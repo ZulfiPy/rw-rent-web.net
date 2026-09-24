@@ -103,6 +103,17 @@ const EMAIL_CHANGE: Record<string, string> = {
 };
 
 /**
+ * A task's two writes (the backend's round 10). The one refusal that names an input without an
+ * `errors` entry is the record the task is about: a new or changed one that no longer exists is
+ * `404 tasks.about_record_not_found`, and it belongs under the record's select. Every other refusal
+ * of these writes either carries its field under `errors` (a step's own included, keyed
+ * `steps[i].title`, `steps[i].responsibleUserId`, `steps[i].dueAtUtc`) or names no input.
+ */
+const TASK_WRITE: Record<string, string> = {
+  'tasks.about_record_not_found': 'aboutRecordId',
+};
+
+/**
  * Refusals the app knows and deliberately keeps form-level: they name no input, so they arrive as the
  * dialog's banner in the API's own sentence. The grant of the Record deleter role (round 9) is
  * refused for an address outside the company's domain, naming the domain, and on an installation
@@ -156,6 +167,8 @@ const BY_OP: Record<string, Record<string, string>> = {
   'correct-parties': PARTIES,
   'record-delete': RECORD_DELETE,
   'profile-email': EMAIL_CHANGE,
+  'task-create': TASK_WRITE,
+  'task-edit': TASK_WRITE,
   'correct-timeline': {
     ...PLANNED_DATES,
     'rental_assignments.return_time_invalid': 'closedAtUtc',

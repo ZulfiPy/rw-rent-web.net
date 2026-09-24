@@ -122,6 +122,21 @@ const BACKEND_CODES: readonly string[] = [
   'roles.user_not_found',
   // email_change (1) — SelfProfileErrors.cs, the backend's round 9 (Follow-up 10)
   'email_change.outside_company_domain',
+  // tasks (14) — WorkTaskErrors.cs, the backend's round 10 (Follow-up 12)
+  'tasks.about_record_not_found',
+  'tasks.closed',
+  'tasks.concurrency_conflict',
+  'tasks.creator_only',
+  'tasks.mark_not_yours',
+  'tasks.not_found',
+  'tasks.not_shared',
+  'tasks.person_not_available',
+  'tasks.step_already_done',
+  'tasks.step_due_after_task',
+  'tasks.step_not_done',
+  'tasks.step_not_found',
+  'tasks.step_not_in_task',
+  'tasks.step_not_yours',
 ];
 
 describe('every code the app knows is one the API sends', () => {

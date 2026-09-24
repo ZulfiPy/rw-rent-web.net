@@ -3,7 +3,7 @@ import type {
   AuthorizationsQuery, CompanyInterruptionsQuery, CustomersQuery, DriverAuthorizationsQuery,
   DriversQuery, InterruptionsQuery, PagedQuery, RecordDeletionCandidatesQuery,
   RecordDeletionCountsQuery, RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery,
-  SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery,
+  SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery, WorkTaskQuery, WorkTaskToDoQuery,
 } from './dto';
 
 /**
@@ -18,6 +18,7 @@ export type QueryContract = [
   AssertQuery<InterruptionsQuery>, AssertQuery<CompanyInterruptionsQuery>,
   AssertQuery<DriverAuthorizationsQuery>, AssertQuery<SystemAdministratorTransferQuery>,
   AssertQuery<RecordDeletionCandidatesQuery>, AssertQuery<RecordDeletionCountsQuery>,
+  AssertQuery<WorkTaskQuery>, AssertQuery<WorkTaskToDoQuery>,
 ];
 
 export const get = <T>(path: string, query?: Query) => transport().request<T>('GET', path, { query });

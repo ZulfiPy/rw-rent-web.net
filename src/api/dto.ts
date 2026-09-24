@@ -4,7 +4,8 @@
 // record; a list item names nobody, so the two list items that share a record's shape omit both.
 // Since its round 7 the Delete records page reads its candidates, counts and deletions here too;
 // since its round 8 a deletion takes what hangs below the record, and the page reads what it takes;
-// since its round 9 the right to delete is a role, Record deleter, that the administrator gives.
+// since its round 9 the right to delete is a role, Record deleter, that the administrator gives;
+// since its round 10 a person keeps tasks, each with steps given to the Company's people.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -1098,3 +1099,180 @@ export interface RecordDeletionResponse {
   /** The customer records whose link to a deleted driver was cleared; 0 otherwise. */
   clearedCustomerLinkCount: number;
 }
+
+/* tasks (the backend's round 10) ----------------------------------------- */
+
+/**
+ * A task's state. Open until its creator finishes or cancels it; a closed task stays readable under
+ * Finished and accepts no change.
+ */
+export const WorkTaskStatus = { Open: 1, Finished: 2, Cancelled: 3 } as const;
+export type WorkTaskStatus = (typeof WorkTaskStatus)[keyof typeof WorkTaskStatus];
+
+/** The kind of the one record a task is about. A reference without a foreign key: the record may be gone. */
+export const WorkTaskAboutKind = { Vehicle: 1, Customer: 2, Driver: 3, RentalAssignment: 4 } as const;
+export type WorkTaskAboutKind = (typeof WorkTaskAboutKind)[keyof typeof WorkTaskAboutKind];
+
+/** The three views of the reader's tasks, each with the order the server gives it. */
+export const WorkTaskView = { MyTasks: 1, InvolvingMe: 2, Finished: 3 } as const;
+export type WorkTaskView = (typeof WorkTaskView)[keyof typeof WorkTaskView];
+
+/** The due filter, applied by the server to the date the view is ordered by. */
+export const WorkTaskDueFilter = { Overdue: 1, NextSevenDays: 2, NoDueDate: 3 } as const;
+export type WorkTaskDueFilter = (typeof WorkTaskDueFilter)[keyof typeof WorkTaskDueFilter];
+
+/** One step, with the reader's own rights on it: the app reads them, it never works them out. */
+export interface WorkTaskStepResponse {
+  id: Uuid;
+  position: number;
+  title: string;
+  responsibleUserId: Uuid;
+  responsibleDisplayName: string;
+  dueAtUtc?: Instant | null;
+  doneAtUtc?: Instant | null;
+  doneByUserId?: Uuid | null;
+  doneByDisplayName?: string | null;
+  /** The reader may mark the step done now. */
+  canMarkDone: boolean;
+  /** The reader may undo the step's mark now. */
+  canUndo: boolean;
+}
+
+/** One task, as its page reads it and as every write answers with it. */
+export interface WorkTaskResponse {
+  id: Uuid;
+  title: string;
+  description?: string | null;
+  dueAtUtc?: Instant | null;
+  status: WorkTaskStatus;
+  closedAtUtc?: Instant | null;
+  cancellationNote?: string | null;
+  aboutKind?: WorkTaskAboutKind | null;
+  aboutRecordId?: Uuid | null;
+  /** The record's text (a plate; a name; a rental's plate and customer); null when none or gone. */
+  aboutLabel?: string | null;
+  /** False when the task is about nothing or its record no longer exists. */
+  aboutRecordExists: boolean;
+  stepCount: number;
+  doneStepCount: number;
+  /** In their order. */
+  steps: WorkTaskStepResponse[];
+  viewerIsCreator: boolean;
+  /** The reader may edit, finish and cancel the task. */
+  canChange: boolean;
+  concurrencyToken: Uuid;
+  createdAtUtc: Instant;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+  /** The last change of the task or its steps, a mark included; null when never changed. */
+  updatedAtUtc?: Instant | null;
+  updatedByUserId?: Uuid | null;
+  updatedByDisplayName?: string | null;
+}
+
+/** One task of a view. */
+export interface WorkTaskListItemResponse {
+  id: Uuid;
+  title: string;
+  status: WorkTaskStatus;
+  dueAtUtc?: Instant | null;
+  closedAtUtc?: Instant | null;
+  aboutKind?: WorkTaskAboutKind | null;
+  aboutRecordId?: Uuid | null;
+  aboutLabel?: string | null;
+  aboutRecordExists: boolean;
+  stepCount: number;
+  doneStepCount: number;
+  /** The distinct names of the people on the steps, in step order. */
+  people: string[];
+  /** The reader's own steps, in order; empty when they have none. */
+  yourSteps: WorkTaskStepResponse[];
+  viewerIsCreator: boolean;
+  createdAtUtc: Instant;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+}
+
+/** One to-do item: a step of the reader's not yet done in an open task, or their own open task without steps. */
+export interface WorkTaskToDoItemResponse {
+  taskId: Uuid;
+  /** Null for a task without steps. */
+  stepId?: Uuid | null;
+  /** The step's title, or the task's for a task without steps. */
+  title: string;
+  taskTitle: string;
+  /** The step's due date, else the task's. */
+  dueAtUtc?: Instant | null;
+  aboutKind?: WorkTaskAboutKind | null;
+  aboutLabel?: string | null;
+  aboutRecordExists: boolean;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+}
+
+/** Each view's size and the to-do count, before any search or filter. */
+export interface WorkTaskCountsResponse {
+  myTasks: number;
+  involvingMe: number;
+  finished: number;
+  /** The count on Tasks. */
+  toDo: number;
+}
+
+/** A person a step may be given to now. */
+export interface WorkTaskPersonResponse {
+  userId: Uuid;
+  displayName: string;
+}
+
+export interface WorkTaskStepRequest {
+  title: string;
+  responsibleUserId: Uuid;
+  dueAtUtc?: Instant | null;
+}
+
+/** A step of an edit: an existing step carries its id and keeps its mark; a new one has none. */
+export interface UpdateWorkTaskStepRequest extends WorkTaskStepRequest {
+  id?: Uuid | null;
+}
+
+export interface CreateWorkTaskRequest {
+  title: string;
+  description?: string | null;
+  dueAtUtc?: Instant | null;
+  /** Given together with `aboutRecordId`, or neither. */
+  aboutKind?: WorkTaskAboutKind | null;
+  aboutRecordId?: Uuid | null;
+  /** In the order the creator sets; required, empty for a task without steps. */
+  steps: WorkTaskStepRequest[];
+}
+
+/** The whole task as its creator now wants it: the steps sent replace the task's, in their order. */
+export interface UpdateWorkTaskRequest {
+  title: string;
+  description?: string | null;
+  dueAtUtc?: Instant | null;
+  aboutKind?: WorkTaskAboutKind | null;
+  aboutRecordId?: Uuid | null;
+  steps: UpdateWorkTaskStepRequest[];
+}
+
+export interface CancelWorkTaskRequest {
+  /** Optional; a blank note is stored as none. */
+  note?: string | null;
+}
+
+/**
+ * One view of the reader's tasks. Each view has its own order, so the list takes no sort field:
+ * the API refuses one. Search covers the title, the steps' titles and the record's text.
+ */
+export type WorkTaskQuery = {
+  View: WorkTaskView;
+  Due?: WorkTaskDueFilter;
+  Search?: string;
+  PageNumber?: number;
+  PageSize?: number;
+}
+
+/** A page of the reader's to-do items, earliest due first. */
+export type WorkTaskToDoQuery = { PageNumber?: number; PageSize?: number }
