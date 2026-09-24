@@ -1,342 +1,378 @@
-# Frontend Wiring — Follow-up 11, what the owner found in the full check from an empty app
+# Frontend Wiring — Follow-up 12, Tasks in the app
 
-> Follow-up 11 (`Context/wiring_followups.md` §11): three things the owner found on 2026-09-23 while
-> checking the app on real data from an empty database, frontend only. It is the first work after both
-> repositories were merged into `main`, on a branch of its own: `followup-11`, created from `main` in
-> this worktree and fast-forwarded into `main` by the reviewer after verification. Worktree
-> `/Users/zulf/rw-rent-api/rw-rent-web-wiring`. Written 2026-09-23. It replaces Follow-up 10's report,
-> which git history keeps.
+> Follow-up 12 (`Context/wiring_followups.md` §12): the app's half of Tasks, the backend's half being
+> round 10 (`RWRentApi-wiring/Context/round10_report.md`, §5 the contract), verified and in `main`.
+> Frontend only, on `feature/backend-wiring` in this worktree
+> (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main` after
+> verification. Written 2026-09-24. It replaces Follow-up 11's report, which git history keeps.
 >
-> **The owner's side was never touched.** This run never opened 5173, never signed in anywhere, never
-> called 5001 and never wrote to `rwrent_v1`, whose read-only fingerprint is the same at the end as at
-> the start. The backend worktree was only built (in Release) and run.
+> **The owner's side was never touched.** This run never opened 5173, never signed in anywhere,
+> never called 5001 and never wrote to `rwrent_v1`; its read-only fingerprint is the same at the end
+> as at the start. The backend worktree was only built (in Release) and run, never changed.
 >
-> - The owner's app on 5173 hot-reloads from this worktree, so it has shown this run's changes as they
->   were written. All three are app-only and work with the round-9 API the owner's 5001 serves.
-> - Every live check used a scratch stack built for this run: `rwrent_check`, freshly seeded, behind the
->   API on 5002 (round-9 Release build, company email domain `rwrent.example`).
+> - The owner's app on 5173 hot-reloads from this worktree, so it shows this run's code. Its API on
+>   5001 still serves round 9, whose `GET /api/me` holds no `Tasks.Use`: the owner sees no Tasks
+>   entry, no Open tasks tile or card, and the app asks nothing about tasks, as §12 says it must be
+>   until the reviewer upgrades 5001. Insurance cases is unchanged.
+> - Every live check used a scratch stack built for this run: `rwrent_check`, created, migrated and
+>   seeded by round 10's Release build (the prototype's eight tasks), behind the API on 5002.
 > - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, on
 >   5174 and 5002.**
 
 ## 1. Summary
 
-- **F11-1, a refused field is brought into view.** Every form control now marks itself invalid through
-  `invalidProps`, the one shared way, which also sets `aria-invalid`. That is what the shared dialog
-  looks for after a field refusal to scroll the field into the middle of its body and focus it. The
-  owner's case works: an Active rental on a vehicle in use, submitted from the bottom of the dialog,
-  now scrolls back to Vehicle, which is red, focused and carries the API's sentence.
-- **F11-2, the new-rental dialog warns before the refusal.** With the initial status Active and a
-  vehicle in use chosen, an amber line under Vehicle says at once "This vehicle is in use by Anete
-  Kalnina. End that rental first, or plan this one.", "that rental" being a link to it. It blocks
-  nothing; the API still decides.
-- **F11-3, Delete records opens on Everything.** "Out of use" stays as a filter. When it is empty, it
-  says how many records Everything holds ("Nothing out of use here" / "7 active customers are under
-  Everything.") and offers "Show everything", which switches the filter.
+- **F12-1.** `/tasks` and `/tasks/:taskId` need `Tasks.Use`, which joins the app's permissions. The
+  sample Tasks page and its sample rows are gone. Insurance cases stays exactly as it was, "Under
+  development", in the navigation, on its page and on the Overview.
+- **F12-2, the list.** The header "Tasks" with New task; the strip My tasks / Involving me / Finished
+  with the server's counts and "Times in Tallinn time."; the search and the Due filter; each view's
+  columns in the order the API gives; the reader's own steps with Mark done or Undo on Involving me;
+  paging; the empty states and the no-results state; the phone cards. The view, the search, the
+  filter and the page are in the address.
+- **F12-3, a task's page.** The breadcrumb back to the view it came from; the hero with the status,
+  Created by, Due (Overdue or Due today in their tones), About (the record as a link, or
+  "Vehicle · deleted record") and Progress; Edit, Finish task and Cancel task only when the API says
+  `canChange`; the finished and cancelled banners; Description; Steps, each with " (you)", its due,
+  its state and the action the API allows; Record; the "not shared with you" and not-found states.
+- **F12-4, New task and Edit task,** one dialog: the Task section and the Steps section with Add step,
+  move up, move down and remove. An edit sends every step with its id in the order shown, so a done
+  step keeps its mark. Every refusal lands where it belongs: a field's under the field, a step's under
+  that step's row, a record that is gone under the record's select, a lost race as the stale banner
+  with Refresh, the rest in the banner. After Create the new task's page opens.
+- **F12-5.** Finish task names the steps still open, in the warn tone; Cancel task has its optional
+  Why and "Keep task". Mark done and Undo are single actions; a refusal shows the API's sentence under
+  its step.
+- **F12-6 and F12-7.** The count on Tasks (sidebar and phone drawer) is the to-do count; the Overview's
+  Open tasks tile reads it and its card lists the to-do items. Without `Tasks.Use` none of this shows
+  and nothing is asked. Every write refreshes the task, the three views, the counts and the to-do list,
+  so the count and the Overview follow a mark at once.
+- **The app judges nothing.** Who may mark, undo or change is read from `canMarkDone`, `canUndo`,
+  `canChange` and `viewerIsCreator`; an empty title, a step without a person, a step due after the
+  task are the API's refusals, never the app's own checks.
 
 | | |
 |---|---|
-| Commits | `8fe6531`, `905aa2f`, `36cd9f3`, `ed22493`, and this report's (§9), on `followup-11` |
-| Tests | 360 → **387**, all green: 27 new; 3 existing tests and the render helper they share updated, because they assumed the old default filter (§2.4) |
+| Commits | `8a73732`, `ac3b89a`, `b669aad`, `0c04526`, `a71ce3a`, `c2e62e6` (`Wiring 33`) and this report's (`Wiring 34`), on `feature/backend-wiring` (§9) |
+| Tests | 387 → **468**, all green: 81 new; 5 existing tests updated as the run's rules allow, 1 extended (§2.8) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
-| Each commit alone | 0 type errors and the full suite green at every one of the four |
-| Planted breakages | **42 planted**: 40 caught by the suite; the other 2 act only in a live page, and the browser preview shows both (§4.4) |
-| Joint check | **25/25** through the API; the screens rendered from those very answers, all 29 fixtures identical to them |
+| Each commit alone | 0 type errors and the full suite green at every one of the six (§4.5) |
+| Planted breakages | **66 planted, 66 caught** by the suite (§4.4) |
+| Joint check | **44/44** through the API, on a freshly seeded database; the 70 fixtures compared with a second fresh run (§4.1, §4.2) |
+| In a browser | the real pages at 1512, 834 and 402, dark and light, in a preview outside the repositories; two look defects found there and fixed (§4.3) |
 | The owner's database | unchanged: same fingerprint before and after |
 
 ## 2. Implemented
 
-### 2.1 F11-1: every control marks itself through `invalidProps`
+### 2.1 The API layer
 
-**The cause, as §11 found it.** The shared `Dialog` finds the refused field by `[aria-invalid="true"]`,
-brings it to the middle of its scrolling body and focuses it. 46 controls marked themselves with
-`data-invalid` instead:
+- `src/api/dto.ts`: the round-10 contract as the OpenAPI document serves it, members and optionality
+  from its `required` arrays: the four enums (`WorkTaskStatus`, `WorkTaskAboutKind`, `WorkTaskView`,
+  `WorkTaskDueFilter`), `WorkTaskResponse`, `WorkTaskStepResponse`, `WorkTaskListItemResponse`,
+  `WorkTaskToDoItemResponse`, `WorkTaskCountsResponse`, `WorkTaskPersonResponse`, the requests, and
+  the two queries. `WorkTaskQuery` has no sort field: the API refuses one.
+- `src/api/tasks.ts`: the eleven operations. `src/api/queryKeys.ts`: `qk.tasks`, one prefix for the
+  task, the views, the counts, the to-do list and the people.
+- `src/api/codes.ts`: `tasks.about_record_not_found` names `aboutRecordId` for `task-create` and
+  `task-edit`. It is a 404, so `src/api/problem.ts` now reads a 404 whose code the op's table maps as
+  a field refusal too; any other 404 is read as before.
+- `src/permissions/permissions.ts`: `Tasks.Use`.
 
-- 36 in dialogs, with `data-invalid` alone: painted red, never found. They are in `NewAssignment.tsx`
-  (8), `AssignmentDialogs.tsx` (15), `FleetDialogs.tsx` (3), `CompanyProfile.tsx` (6) and
-  `SystemAdministrator.tsx` (4).
-- 10 on the account screens (`AuthLayout.tsx` 3, `Register.tsx` 5, `SignIn.tsx` 2), which had also
-  written `aria-invalid` by hand. Their markup is identical now; only the way it is written changed.
+### 2.2 The words (`src/format/tasks.ts`)
 
-**Six more places marked nothing at all**, so the same refusal was lost there too. They mark
-themselves now:
+From the handover's copy deck: "Vehicle · 204 JLM" (the app adds the kind's word to the API's
+`aboutLabel`), "Vehicle · deleted record" when `aboutRecordExists` is false; "Overdue · 23 Sep",
+"Due today · 17:00", "27 Sep, 12:00", a step's "Due 26 Sep, 16:00" and "No due date", with Tallinn's
+day deciding what "today" is; "1 of 4 done", "1 of 4 steps done", "No steps"; "Signe Priede, Toms
+Rudzitis +1"; "from Dita Smite"; "Done · Dita Smite, 23 Sep, 14:10"; " (you)"; the finish warning
+"2 steps are not done: Car wash (Toms Rudzitis), Handover (Dita Smite)."; the banners "Finished by …
+on …" and "Cancelled by … on …" with the reason or "No reason given."; the About lists' options
+("204 JLM · Hyundai Kona Electric", " · inactive", "552 KLM · Nordwind Logistics · Active").
 
-- the assignment note of Edit;
-- the assignment note of Correct timeline;
-- Grant role's Role select;
-- the Initial roles check boxes of Activate, all of them, on a refusal of `roles`;
-- the chosen coverage of the new-rental dialog, on a refusal of the driver, the authorization type or
-  its start (the coverage block shows the API's sentence under the choices);
-- the delete dialog's tick, "I understand this cannot be undone": `CheckCard` takes an `error` and
-  marks its box.
+### 2.3 F12-1 and F12-6: the routes, the count, the Overview
 
-**The dialog.** `src/ui/Dialog.tsx` names what it looks for (`INVALID_CONTROL`) and its scroll-and-focus
-(`revealFirstInvalid`), which the effect calls after a field refusal as before. Behaviour unchanged; the
-tests can now reach it.
+- `src/app/routes.tsx`: both routes need `Tasks.Use`; the navigation entry carries the count `tasks`.
+  The router's guard and the navigation filter already hide a gated page from a reader without its
+  permission, so the System Administrator and a Record deleter alone see no Tasks entry.
+- `src/app/AppShell.tsx`: the count is `toDo` of `GET /api/tasks/counts`, drawn as the other counts
+  (sidebar expanded and the phone drawer), none when zero.
+- `src/pages/tasks/taskAddress.ts` holds `useTaskCounts`, enabled only with `Tasks.Use`.
+- `src/pages/overview/Overview.tsx`: the Open tasks tile ("to do", opening Tasks) and card (the to-do
+  list's first 100, earliest due first, each row a link to its task with the tile's tone for overdue
+  or due today, "No open tasks" when empty) show only for a holder; the Insurance tile and card are
+  untouched. `src/pages/overview/sample.ts` keeps only the insurance rows;
+  `src/pages/simple/Placeholders.tsx` only Insurance cases.
 
-### 2.2 F11-2: the warning under Vehicle
+### 2.4 F12-2: the list (`src/pages/tasks/Tasks.tsx`)
 
-`src/pages/fleet/NewAssignment.tsx`:
+Built with the app's list vocabulary as Delete records was: `PageHeader` with New task, `RecordTabs`
+(compact: below 640 the tabs drop their icons and tighten to `8px 11px`, so all three fit), the
+toolbar's `SearchInput` and `SelectFilter`, the shared table with its row navigation, `Pagination`,
+`EmptyState`. The column sets and widths are the handover's: My tasks and Finished Task / Steps 170 /
+People 240 / Due or Closed 170 (min 800), Involving me Task / Steps 150 / Your step 290 / People 200 /
+Due 170 (min 1020); at 768–1023 fixed layout at 71% and, on Involving me, People folds into a line
+under Steps. Below 768 each task is a card that opens its task when tapped, with Steps and its bar,
+Due or Closed, and on Involving me the reader's steps, each with a 44px Mark done or Undo.
 
-- `vehicleInUse(vehicle, initialStatus)` answers the chosen vehicle when the initial status is Active and
-  the vehicle list's own `availability` is In use, else null. It reads the server's answer only
-  (VEHICLE-009); a Reserved vehicle (a planned rental's) is not warned about.
-- `VehicleInUse` words it: "This vehicle is in use by \<customer\>. End that rental first, or plan this
-  one.", with "that rental" linking to `/rental-assignments/<currentAssignmentId>`. Without a name or a
-  rental id in the answer it drops the name or the link.
-- It sits under the Vehicle select, in a new amber slot of the shared field: `Field` takes a `warning`
-  (`src/ui/Field.tsx`, `.warning` in `Field.module.css`, the `--warn` token, both themes).
-- It blocks nothing: with a driver named, Create assignment stays enabled. If the person submits
-  anyway, the API's refusal lands under the same field (F11-1), in red below the amber line.
+### 2.5 F12-3: a task's page (`src/pages/tasks/TaskRecord.tsx`)
 
-### 2.3 F11-3: Delete records opens on Everything
+`RecordHeader` with the hero band (`stackActions`: below 640 the three buttons take a row each),
+`RecordBanner` (now also `ok` and `mute`, and without a body for a finished task), `Panel`, `FactGrid`.
+The steps are the handover's numbered rows. The About link is offered only to a reader who may open
+that record's page; a gone record is named, never linked. A refused read answers: `tasks.not_shared`
+→ "This task is not shared with you" in a panel titled Task; `tasks.not_found` → "That task is not
+available" with the API's "This task no longer exists.", without Try again.
 
-`src/pages/admin/DeleteRecords.tsx`, with its words in `src/format/recordDeletion.ts`:
+### 2.6 F12-4 and F12-5: the dialogs (`src/pages/tasks/TaskDialogs.tsx`)
 
-- **The default.** Without `show` in the address the page shows Everything: the tabs count Everything,
-  the Show filter reads "Everything", and there is nothing to clear. "Out of use" is
-  `?show=out-of-use`; there Clear filters appears and leads back to Everything. An address from before,
-  `?show=all`, still opens on Everything.
-- **The empty list under Out of use.** Its title is "Nothing out of use here". Its body is how many
-  records Everything holds, from the server's counts of that filter, worded as the filter counts
-  them:
-  - "7 active customers are under Everything.";
-  - "2 planned or active rental assignments …";
-  - "1 open driver authorization is …";
-  - "open interruptions", "active vehicles", "active drivers".
+- **New task and Edit task** (720 wide): the shared `Dialog`, `Field`, `invalidProps` and the one
+  mutation hook every dialog submits through. About offers the kinds whose list the reader may read,
+  then that kind's own list (the first 100, inactive ones marked); an edit keeps the task's record
+  offered even beyond the first 100 or once deleted ("deleted record"), so an unchanged reference is
+  kept (round 10, decision 1). A step's Person is `GET /api/tasks/people` with " (you)"; a step's
+  person no longer offered stays shown on that step.
+- **What is sent** is built by `createRequest` and `updateRequest`, which the tests read: the form as
+  it is (a blank title goes blank; a step without a person goes with the empty identifier, so the API
+  answers "Every step needs a person." rather than a binding error); an edit's every step with its id
+  in the order shown; an instant the person did not touch as it was stored (T-009).
+- **Where a refusal lands:** fields under their field; `steps[i].title`, `steps[i].responsibleUserId`,
+  `steps[i].dueAtUtc` under that row's field, and `steps[i].id` on the row, found by where the row
+  stood when it was sent (`stepMessage`), so a row moved after a refusal keeps its message;
+  `steps` (more than 30) under the Steps section; the gone record under its select; `tasks.not_found`
+  as "The change was refused" with the API's sentence (`taskRefusal`); `tasks.closed` and
+  `tasks.creator_only` as the shared conflict and forbidden banners; `tasks.concurrency_conflict` as
+  the stale banner with Refresh, which reloads the task and re-seeds the dialog.
+- **Finish task** (500, ok tone): "Finish this task? It leaves everyone’s open list." or the warn note
+  naming the open steps and "Finish anyway?", and the two consequences. **Cancel task** (520, mute
+  tone): the optional Why, "Keep task" (the shared `Dialog` takes a `cancelLabel`), Cancel task.
+- **Mark done and Undo** (`src/pages/tasks/StepAction.tsx`): offered exactly as `canMarkDone` /
+  `canUndo` say; one request at a time through the app's submit gate; the answer or the refusal
+  refreshes every task query; a refusal's API sentence stays under its step, the button stays for a
+  retry.
 
-  With it, **Show everything** (in the empty state's button form, `EmptyState` gained an `action`)
-  switches the filter. If Everything holds none either: "There are no customers under Everything
-  either.", and no button. While the counts are still loading: "Everything lists the records still in
-  use.", with the button.
-- **Everything's own empty list** now says "Nothing to delete" / "There are no customers.". Before,
-  the page showed Out of use's sentence under Everything too, telling the reader to switch to the filter
-  they were on.
+### 2.7 Shared pieces extended (existing callers unaffected)
 
-### 2.4 Tests
+`EmptyState` (body optional), `RecordTabs` (`compact`), `RecordBanner` (body optional; `ok` and `mute`
+tones in `record.module.css`), `Dialog` (`cancelLabel`), `RecordHeader` (`stackActions`), `rowNav`
+(typed for any element, so the phone card opens its task as a row does).
 
-**27 new tests.** Existing tests were changed only where they assumed the old default filter, as the
-run's rules allow. No other existing test was deleted, skipped or weakened.
+### 2.8 Tests
+
+**81 new tests.** Existing tests were changed only where they asserted the old ungated Tasks page or
+its sample rows, as the run's rules allow, plus one catalogue extended. None was deleted, skipped or
+weakened.
 
 **The updated tests, each with its old and new expectation:**
 
 | File | Test | Before | Now |
 |---|---|---|---|
-| `src/pages/followup8.render.test.ts` | the helper `renderPage` | a bare address meant Out of use: default `show` OutOfUse, only that filter's counts in the cache | a bare address means Everything: default `show` Everything, both filters' counts in the cache |
-| `src/pages/followup8.render.test.ts` | "the bad-tone banner, the six kinds with their counts, and the Show filter" → "… open on Everything (Follow-up 11)" | at `/delete-records`: the tabs carry the Out of use counts; the page contains "Out of use" | at `/delete-records`: the tabs carry the Everything counts; the filter reads "Everything"; "Out of use" is offered as its option; no Clear filters |
-| `src/pages/followup8.render.test.ts` | "nothing out of use of a kind is the empty state; a search that finds nothing says so" | at `?kind=interruptions` (the old default): "Nothing to clean up", "No out-of-use records of this kind. Switch Show to Everything to see the rest." | at `?kind=interruptions&show=out-of-use`: "Nothing out of use here", "4 open interruptions are under Everything.", the Show everything button; the search half unchanged |
-| `src/pages/followup10.render.test.ts` | "reads the Delete records page, its rows with their Delete, and Recently deleted without audit links" | at `?kind=vehicles`, which was Out of use, the filter its captured lists were answered under | at `?kind=vehicles&show=out-of-use`: the same lists, the same assertions |
-
-"rental assignments: an Ended rental with its parts, and a Cancelled one with none" in the same file
-keeps its body; through the helper it now renders under Everything, with the same rows and assertions.
+| `src/app/routes.test.ts` | "the pages open to every signed-in persona need nothing" | `/tasks` among them, needing nothing | `/overview`, `/needs-attention`, `/insurance-cases`, `/profile`; Tasks needs `Tasks.Use` (new tests below) |
+| `src/app/routes.test.ts` | "a Viewer keeps the pages a Viewer reads and is refused the rest" | body unchanged; `/tasks` reachable because it needed nothing | body unchanged; `/tasks` reachable because the test's Viewer now holds `Tasks.Use`, as round 10's `GET /api/me` gives it. The persona `VIEWER` gained `Tasks.Use` (and with it the Fleet Manager and the Principal); `SYSTEM_ADMINISTRATOR` is built without it |
+| `src/app/routes.test.ts` | "a Record deleter with no other role reaches the ungated pages and Delete records, nothing else" | reachable: overview, needs-attention, **tasks**, insurance-cases, delete-records, profile | the same without `/tasks` |
+| `src/app/routes.test.ts` | "an account with no permission at all reaches only the ungated pages" | overview, needs-attention, **tasks**, insurance-cases, profile | the same without `/tasks` |
+| `src/pages/followup10.render.test.ts` | "sees the Overview’s restricted states, as for any missing permission" | contains "Open tasks" (the sample card) | does not contain "Open tasks" (the Record deleter alone does not hold `Tasks.Use`); contains "Unresolved insurance cases" |
+| `src/api/codes.test.ts` | "no entry names a code the backend does not have" (extended) | the backend catalogue of users, rentals, authorizations, interruptions, drivers, deletions, roles, email change | the same plus the 14 codes of round 10's `WorkTaskErrors.cs` |
 
 **The new tests:**
 
 | File | New | What they hold |
 |---|---|---|
-| `src/pages/followup11.dialogs.render.test.ts` | 17 | F11-1, a test per dialog file with a refusal the scratch API really gave, each marking exactly one control, the one under the API's message: the owner's vehicle refusal (NewAssignment); the refused driver on the chosen coverage; Edit's planned end, Cancel's note, Record interruption's end, Add authorized driver's driver (AssignmentDialogs); New customer's address (FleetDialogs); the Company's email (CompanyProfile); the transfer's target (SystemAdministrator); Grant role's Role and Activate's roles (UserDialogs); the delete dialog's tick; the account screen's email, same markup as before. The two notes that marked nothing, in Edit and Correct timeline. `revealFirstInvalid` run against the dialog's real markup after the owner's refusal: it finds the Vehicle select, centres it and focuses it; with nothing marked it moves nothing. A check read from the sources that no control sets `data-invalid` or `aria-invalid` by hand any more |
-| `src/pages/followup11.render.test.ts` | 10 | F11-2: the amber line under Vehicle, its words and link, the select not marked invalid by it, the list's answer it rests on; Create assignment enabled beside it; none for a Planned rental, a free vehicle or no vehicle; `vehicleInUse` on In use, Reserved, Available; the wording without a name or rental. F11-3: the owner's case, an active customer with a planned rental there at once, Ready, taking it; Out of use as a filter with Clear filters; its empty state with the count and the button; none either, and Everything's own empty list; `show=all`; each kind's words, one and many, unknown and zero |
+| `src/app/routes.test.ts` | 3 | Tasks and a task's page need `Tasks.Use` by any spelling; the three roles open them, the administrator, a Record deleter alone and nobody do not; the entry carries its count and is offered to a holder only; Insurance cases still offered to everyone |
+| `src/format/tasks.test.ts` | 13 | every word of §2.2, the Tallinn day around midnight UTC, one and many |
+| `src/api/taskRefusals.test.ts` | 5 | the API's own refusals read by the app: a step's fields with their index, the gone record under its select on both writes and nowhere else, not found as a refused change, closed, forbidden, stale; the mark refusals' sentences |
+| `src/pages/followup12.render.test.ts` | 26 | the list's three views as Dita, Toms and Signe (header model, strip counts, zone, search, filter, rows in the API's order, cells, Your step with the API's rights, Done without an action, chips and Closed, every empty state, no results, the Due filter from the address); a task's page as creator and as a step's person, after a mark, overdue and due today, no steps, finished, cancelled with and without a reason, a deleted record, no read permission, not shared, not found; the Overview's tile and card for Dita and Toms before and after his mark, and for the administrator (no tile, no card, every task query disabled); the sidebar count; one prefix invalidates every task query; the tone rules last in the stylesheet |
+| `src/pages/followup12.dialogs.render.test.ts` | 17 | New task's sections; About's lists per kind with inactive marked; a step row's Person with " (you)" and its buttons; the shape refusal on the title and the row; a step due after the task on that row only; the gone record and a kind without a record under the select; Edit opened on the task with the done step's line; a person no longer offered; the kept deleted record; the edit's refusals; not found; the stale banner; Finish with and without open steps; Finish refused; Cancel with Keep task, its Why refusal, Keep task enabled beside a stale record |
+| `src/pages/followup12.phone.render.test.ts` | 6 | the cards (no table, each opening its task, Steps with its bar, Due or Closed in its tone, No due date, the pager, the compact strip); Involving me's steps with 44px actions; "Your steps" for two; Finished's chip and Closed; the count in the phone's drawer, none at zero |
+| `src/pages/followup12.actions.test.ts` | 11 | what New task, Edit task and Cancel task send (blank title and no person as they are, times in UTC, ids in the order shown, a removed step absent, untouched instants as stored); a step's refusal found by the row sent; Mark done and Undo through their real hook and a stand-in transport: offered as the API says, the request path, every task query refreshed and nothing else, on success and on refusal; the one refresh prefix |
 
 **How they are built.**
 
-- The fixtures, `src/pages/followup11.support.ts`, are the joint check's own answers from the scratch
-  API (§4.1), written out as the DTOs. A member the API sends and `dto.ts` does not declare fails the
-  typecheck. All 29 were compared with the saved live answers at the end, and none differs.
-- A server render cannot submit, so the dialog tests replace the one hook every dialog submits through,
-  as Follow-up 10's did. The stand-in answers with the refusal a test names, turned into a failure by
-  the app's own `toFailure` under the dialog's own operation. That is what the real hook does, so the
-  real dialogs and the real mapping are what is tested.
-- A server render runs no effect, so the scroll-and-focus is tested through `revealFirstInvalid` on a
-  body that holds the dialog's real markup: its `querySelector` finds the first element carrying the
-  attribute the selector names, where the markup places it.
+- The fixtures, `src/pages/followup12.support.ts`, are the joint check's own answers from the scratch
+  API (§4.1), 70 of them, generated from its saved JSON and typed as the DTOs, so a member the API
+  sends and `dto.ts` does not declare fails the typecheck.
+- The seed's times follow the moment it was seeded, so each render test sets the clock to the moment
+  the answers were given (`CAPTURED_AT`), and "Overdue" or "Due today" read as they did then.
+- `src/pages/followup12.harness.ts` renders a page from a cache holding those answers, a refused read
+  included (not shared, not found), and hands back the cache so a test can read what the page asked
+  for and whether it was enabled.
+- A server render runs no effect, so the page header's model is caught as the page hands it over, and
+  the dialogs' one submit hook is replaced as in Follow-ups 10 and 11: it answers with the API's
+  refusal a test names, read by the dialog's own `refusal` and `toFailure` under its own op.
 
 ## 3. Not implemented or partial
 
-**Nothing of §11.** Every point is built and tested.
+**Nothing of §12.** Every point is built and tested.
 
 ### 3.1 The steps that need a password typed into the app
 
 The signed-in browser steps need the seed password typed into the sign-in page, which this run may not
-do. They are left for the owner's reviewer (§5). What they would show was covered here in three ways:
-
-- through the API, by script, as the same people (§4.1);
-- rendered from those answers by the real components (§4.2);
-- in a browser, on the real screens with those answers in the cache and the refusal answered by a stub
-  (§4.3).
+do. They are left for the owner's reviewer (§5). What they would show was covered in three ways: through
+the API as the same people (§4.1); rendered from those very answers by the real components (§4.2); and
+in a browser, on the real pages with a stand-in transport answering from those answers (§4.3).
 
 ## 4. Verification: the joint check
 
 Everything ran on the scratch stack only.
 
-- **The scratch stack**, as `RWRentApi-wiring/Context/round9_report.md` §7 describes it:
-  - `rwrent_check` dropped, created, migrated and seeded;
-  - the API on 5002 from the backend worktree's Release output, with
-    `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`;
-  - every command refusing to run unless its connection string names `rwrent_check`.
+- **The scratch stack**, as `RWRentApi-wiring/Context/round10_report.md` §7 describes it: nothing ran
+  on 5002 or 5174 at the start; `rwrent_check` did not exist. It was created, migrated (seven
+  migrations, `V9WorkTasks` last) and seeded by round 10's Release build (work tasks 8, work task
+  steps 11), and the API started on 5002 from `bin/Release` with
+  `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, trusting `http://localhost:5174`. Every
+  command sourced an environment script that refuses to run unless its connection string names
+  `rwrent_check`. The backend worktree was built with `-c Release` only, at `1fd603b`, clean.
+- **Guards.** The API client refuses any address but `localhost:5002`. The seed password came from
+  the owner for this session and was passed in each command's environment; it is in no file.
 
-  The database was seeded afresh before the final run of the joint check, with the API stopped while
-  it was reseeded. The backend worktree was only built and run.
-- **Guards.** The API client refuses any address but `localhost:5002`. The seed password came from the
-  owner for this session and was passed in each command's environment; it is in no file.
+### 4.1 Through the API — 44/44
 
-### 4.1 Through the API — 25/25
+`joint12.py`, in the run's scratchpad, as Dita Smite, Signe Priede, Toms Rudzitis, Karlis Zvaigzne and
+the administrator, making every request the Tasks pages make:
 
-`joint11.py`, in the run's scratchpad, as the seeded Fleet Manager Karlis Zvaigzne, the Principal Signe
-Priede and the administrator Arturs Veidenbaums:
+- **who uses tasks:** the four hold `Tasks.Use`; the administrator does not and is refused the counts
+  and the to-do list (403);
+- **the seed as the pages read it:** Dita 4/1/1 with 4 to do, Signe 2/1/2 with 2, Toms 0/3/0 with 2;
+  Toms's Involving me in the server's order by his own open step; a search that finds nothing; the
+  search on "204 jlm" finding the record's text; Due Overdue finding the parking fine; the people
+  Dita, Karlis, Signe, Toms;
+- **the rights, as each reader reads them:** Toms on Prepare 204 JLM may mark Car wash only and change
+  nothing; Dita, its creator, may change it, undo the done step and mark the rest; Karlis is refused
+  Order two spare key fobs (`403 tasks.not_shared`); an unknown task is `404 tasks.not_found`;
+- **a mark:** Toms marks Car wash (done by him, Undo offered), his count falls to 1 at once, marking it
+  again is `409 tasks.step_already_done`, he undoes it and his count is back to 2;
+- **a practice task created by Dita** about 119 MPR with steps for Toms and Signe: 201, hers to change;
+  her My tasks, their Involving me and to-do counts follow; Toms marking Signe's step is
+  `403 tasks.step_not_yours`; Dita marks Toms's step, and Toms undoing her mark is
+  `403 tasks.mark_not_yours`, so he reads it done by Dita with neither action;
+- **an edit** that renames and moves Toms's done step, gives Signe's to Karlis and adds a third: the
+  mark stays, positions 1 to 3, a blank description is none;
+- **the edit's refusals, each changing nothing:** a step due after the task (`400
+  tasks.step_due_after_task` on `Steps[1].DueAtUtc`), a changed record that does not exist
+  (`404 tasks.about_record_not_found`), Toms editing (`403 tasks.creator_only`);
+- **a lost race:** two marks of the same task at the same moment, one `409 tasks.concurrency_conflict`;
+- **finish** with steps open: Finished, those steps stay not done; a mark after it and a second finish
+  are `409 tasks.closed`; it is under Finished for Dita, Toms and Karlis;
+- **cancel:** the note kept trimmed; without a note, none;
+- **a record deleted since:** a practice vehicle, a task about it, the vehicle deleted by the
+  administrator on the deletions page: the task keeps the kind and the id, its label is none and
+  `aboutRecordExists` false; an edit that keeps the reference is accepted.
 
-- **the vehicle list:** it names who has 204 JLM, Anete Kalnina, and its current rental is her Active
-  one; 119 MPR is available and names no rental;
-- **the owner's refusal:** an Active rental on 204 JLM for Ilze Berzina, with a named driver, is
-  `409 rental_assignments.vehicle_already_active`, "The vehicle already has an active assignment."
-  Nothing is created;
-- **planning it instead**, as the warning says, is accepted: `201` Planned. It was cancelled again at
-  once, with a note;
-- **the coverage refusal:** an Active rental on 119 MPR naming the inactive driver Normunds Zarins is
-  `409 assignment_authorizations.driver_inactive`. Nothing is created;
-- **one field refusal per dialog file**, each changing nothing:
-
-  | Dialog | Refusal |
-  |---|---|
-  | Edit | a planned end before the planned start: `400` on `PlannedEndAtUtc` |
-  | Cancel of an Active rental without history | no note: `400 rental_assignments.correction_note_required` on `CancellationNote`; the rental stayed Active |
-  | Record interruption | end before start: `400` on `EndedAtUtc` |
-  | Add authorized driver | named, without a driver: `400` on `DriverId` |
-  | New customer | a blank address: `400` on `Address` |
-  | Edit Company profile | email "not-an-address": `400` on `Email`; the company kept its own |
-  | Transfer System Administrator | target "not-an-address": `400` on `TargetEmail` |
-  | Grant role | role 99: `400` on `Role` |
-  | Activate, Gatis Lapsa | no role: `400` on `Roles` |
-  | Delete | without the tick: `400 record_deletions.confirmation_required` on `Confirmed`; the customer stayed |
-
-- **Delete records:**
-  - Everything counts at least what Out of use counts, for every kind;
-  - the owner's case: Martins Ozols, active with one planned rental, is under Everything, Ready,
-    taking it, and not under Out of use;
-  - once the one inactive customer, Ventspils Marine Services, was deleted as a practice record, Out of
-    use holds no customer and Everything holds 7.
+The first run was 43/44: the one failure was the script's own expectation, which misspelled a seeded
+title. Corrected, the check ran again on a freshly seeded database: **44/44**.
 
 ### 4.2 The screens, rendered from those answers
 
-The fixtures of §2.4 are those answers, compared field by field with the saved ones at the end. So the
-27 new tests are the render half of the joint check. They feed the answers to the real new-rental
-dialog, the rental's own dialogs, the fleet, Company, System Administrator, user and delete dialogs, the
-account screen and the Delete records page.
+The fixtures of §2.8 are the first run's answers: the capture of the reads and the refusals
+(`capture12.py`, which changes nothing) and the joint check's writes. After the database was seeded
+afresh, both scripts ran again and every answer was compared with its fixture, member by member, once
+the instants (which follow the moment of seeding) and the generated identifiers were set aside: **all
+70 identical but one**, the practice task's finish, whose open steps depend on which of the two
+simultaneous marks won the race, which differs from run to run by nature.
 
 ### 4.3 In a browser
 
 - **The app on 5174**, started from this worktree with
-  `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`, and visited in a
-  fresh headless browser context with no cookies and no profile:
-  - Delete records and Rental assignments sent the signed-out visitor to Sign in;
-  - the only API requests went to 5002 (`GET /api/me` → 401);
-  - no sign-in was made.
-- **A preview on 5175, outside the worktree**, rendered the real new-rental dialog and Delete records
-  page with the captured answers in the cache. Its stub transport answers the dialog's one write with
-  the captured refusal; nothing could leave the page. I looked at it:
-  - at 1280 × 640: the amber line under Vehicle with its link.
-  - The owner's case: body scrolled to the bottom (738), Create assignment → one request, then the body
-    back at the top, focus on the Vehicle select (`aria-invalid="true"`), the API's sentence under the
-    amber line.
-  - The same at 375 wide: from 927 back to 0, the Vehicle select focused, no sideways scroll.
-  - Delete records at `?kind=customers&show=out-of-use`: "Nothing out of use here", "7 active customers
-    are under Everything.", and Show everything, which switched to `?kind=customers` with Everything's
-    seven customers, Martins Ozols Ready.
-  - Also at 375 wide, and the warning in the light theme (`#7A5A0A` on white).
-  - The console showed no errors and no unexpected request.
+  `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`, visited signed out
+  in the app's built-in browser (no sign-in was made): `/tasks` sent the visitor to Sign in, and the only
+  API request went to 5002 (`GET /api/me` → 401).
+- **A preview on 5175, outside the repositories.** The real app from this worktree with a stand-in
+  transport that answers from the fixtures of §4.2 as the chosen person (Dita, Signe, Toms, Karlis, the
+  administrator); it sends nothing anywhere. Looked at:
+  - at **1512**: My tasks, Involving me and the task's page with their columns (Task / Steps 170 /
+    People 240 / Due 170; Involving me 150 / 290 / 200 / 170) and the 112px green bar; Mark done on a
+    step, then Done with Undo; a refused mark's sentence under its step; Edit task (720), a step moved
+    down keeping its "Done · …" line; the stale banner with Refresh and Save disabled; Finish task with
+    its warn note, then the ok banner and the page read-only; the Overview's tile ("4 to do") and card;
+  - at **834**: the folded band (107 / 206 / 121, People under Steps), the hero on two rows;
+  - at **402**: the strip without icons, all three tabs fitting; the cards with 44px buttons; a tapped
+    card opening its task; New task as the bottom sheet (radius 18 18 0 0), the refusal on the title
+    and the step row, the title focused; the task's page with one fact per row and the three buttons
+    one per row;
+  - the **light theme**: a cancelled task's mute banner and the Involving me list;
+  - the **administrator**: no Tasks entry, `/tasks` "Not available to you", no Open tasks on the
+    Overview, and no tasks request in the stand-in's log;
+  - After Create: the new task's page opens, its breadcrumb leading to My tasks;
+  - no sideways scrolling at any width; no error or warning in the console.
 
-  The preview was stopped, and the launch entries added for it to the workspace's launch file, outside
-  the repositories, were removed again.
+  **Two look defects were found there and fixed**, neither visible to a server render:
+  1. "Overdue" was drawn in the Due cell's grey: the cell's own colour came later in the stylesheet at
+     the same specificity. The tone rules are now the stylesheet's last, and a test reads the file to
+     keep them there (§2.8).
+  2. At 834 the Your step cell (206px, the handover's) cut the due line beside the button ("Due 25
+     Sep, 14:0"). In the folded band the action now moves under the step's text.
 
-### 4.4 The planted breakages — 42 planted, 40 caught by the suite, 2 in the browser
+  The preview was stopped, and the two launch entries added for it and for 5174 to the workspace's
+  launch file, outside the repositories, were removed again.
+
+### 4.4 The planted breakages — 66 planted, 66 caught
 
 Each breakage was written into a **copy** of the worktree outside it, never into the worktree, so the
 owner's app on 5173 could not hot-reload one even for a moment. The whole suite ran on each, and the
 file was restored byte for byte.
 
-| | Breakage | Caught by (among others) |
-|---|---|---|
-| A1 | `invalidProps` no longer sets `aria-invalid` | 16 tests, every dialog file's |
-| A2 | the Vehicle select back to `data-invalid` alone | the owner's refusal, the scroll test, the source check |
-| A3 | the dialog looks for `data-invalid` | the selector test |
-| A4 | the dialog scrolls but does not focus | the scroll test |
-| A5 | the dialog focuses but does not scroll | the scroll test |
-| A6 | it scrolls the field to the top, not the middle | the scroll test |
-| A7 | the dialog's effect no longer calls the scroll | **not by the suite** (below) |
-| A8 | the rental dialogs' dates back to `data-invalid` alone | Edit's planned end, Record interruption's end, the source check |
-| A9 | Cancel's note back to `data-invalid` alone | the Cancel test, the source check |
-| A10 | Add authorized driver's driver marks nothing | its test |
-| A11 | the notes of Edit and Correct timeline mark nothing | their test |
-| A12 | the fleet addresses back to `data-invalid` alone | New customer's test, the source check |
-| A13 | the Company's email back | its test, the source check |
-| A14 | the transfer's target back | its test, the source check |
-| A15 | Grant role's Role marks nothing | its test |
-| A16 | Activate's roles mark nothing | its test |
-| A17 | the tick card ignores its error | the delete dialog test |
-| A18 | the delete dialog does not pass the tick's refusal | the delete dialog test |
-| A19 | the chosen coverage marks nothing | the coverage test |
-| A20 | the account screen's email back | the account test, the source check |
-| A21 | sign-in sets its marks by hand again | the source check |
-| W1 | the warning also for a Planned rental | the Planned case, `vehicleInUse` |
-| W2 | the warning also for a Reserved vehicle | `vehicleInUse` |
-| W3 | the warning without its link | the warning test, the enabled-submit test |
-| W4 | the warning names nobody | the same two |
-| W5 | the warning blocks the submit | the enabled-submit test |
-| W6 | the warning drawn as an error | the warning test |
-| W7 | the field never draws its warning | three tests |
-| W8 | the warning reads another vehicle | the same two |
-| D1 | the page opens on Out of use again | 5 tests, among them the updated frame test |
-| D2 | Everything counts as a filter to clear | the frame test, the owner's case, the filter test |
-| D3 | the empty state counts from Out of use's totals | the empty-state tests |
-| D4 | Show everything switches to Out of use | **not by the suite** (below) |
-| D5 | no button | the empty-state tests |
-| D6 | Everything's own empty list reads as Out of use's | its test |
-| D7 | the Show options swap their labels | 4 tests |
-| D8 | a customer is not called active | the empty-state test, the words test |
-| D9 | one record "are" | the words test |
-| D10 | rentals called "active" only | the words test |
-| D11 | an unknown count read as none | the words test |
-| D12 | the empty state's button not drawn | the empty-state tests |
-| D13 | the address's Out of use is ignored | 5 tests, among them the updated Follow-up 10 test |
+| | Breakage | | Breakage |
+|---|---|---|---|
+| A1 | the edit forgets the record's refusal | L10 | no-results reads as an empty view |
+| A2 | a 404 never lands under a field | L11 | the search longer than the API takes |
+| A3 | a 404 read with the create's table whatever the op | L12 | one step's label for several |
+| A4 | the gone record becomes a banner | L13 | New task offered on the wrong empty view |
+| A5 | a refused mark reads the title, not the sentence | L14 | Overdue asks for no due date |
+| A6 | `Tasks.Use` not among the permissions | L15 | a row forgets its view |
+| R1 | the list open to everyone again | L16 | Finished shows Due, not Closed |
+| R2 | a task's page open to everyone | L17 | the tone rules lost |
+| R3 | no count on the entry | P1 | actions for the creator of a closed task |
+| R4 | the entry counts My tasks | P2 | " (you)" after everyone |
+| R5 | the counts asked for without `Tasks.Use` | P3 | the banners' tones swapped |
+| O1 | the tile without `Tasks.Use` | P4 | no words for no reason |
+| O2 | the tile reads My tasks | P5 | a gone record still linked |
+| O3 | the card in reverse order | P6 | linked without the record's read |
+| O4 | no "from" on the card | P7 | not shared reads as not available |
+| O5 | a row opens the list, not its task | P8 | retry offered on a task that is gone |
+| O6 | the to-do list asked for without `Tasks.Use` | P9 | the creator's order called yours |
+| L1 | Involving me reads another view | P10 | the hero loses Overdue and Due today |
+| L2 | the rows re-ordered by the app | P11 | a gone record reads as nothing |
+| L3 | every step offers its action | P12 | the breadcrumb forgets the view |
+| L4 | the two rights swapped | D1 | the edit sends new steps (marks lost) |
+| L5 | never "from" | D2 | a step without a person sent as text |
+| L6 | three names before the rest | D3 | an untouched step date rounded |
+| L7 | the bar filled wrong | D4 | a refusal placed by position, not by the row sent |
+| L8 | the Due cell loses its tone | D5 | inactive records not marked |
+| L9 | the Due filter is not a filter to clear | D6 | the kept record not offered |
+| D7 | a person no longer offered dropped | D8 | finishing without naming the open steps |
+| D9 | Cancel task closes with "Cancel" | D10 | an empty Why sent as text |
+| D11 | no " (you)" among the people | D12 | a step title marks itself by hand |
+| D13 | About offers two kinds | F1 | a write refreshes the counts only |
+| F2 | a refused mark leaves the stale state | F3 | Undo sends a mark |
+| F4 | the counts outside the prefix | U1 | the strip not compact |
+| U2 | an empty paragraph in a bodiless banner | U3 | the ghost button's label fixed |
 
-**A7 and D4** are what a live page does: an effect that runs after a render, and where a click leads.
-The suite renders on the server, where neither happens. Both were planted in the copy and looked at in
-the same preview, built from the copy:
-
-- with A7, the body stayed at the bottom (738 → 761) and the focus stayed off Vehicle: the owner's
-  bug, back;
-- with D4, Show everything left the page on Out of use with its empty list.
-
-Each was restored and the clean copy behaved as in §4.3. Holding them in the suite would need a DOM in
-the tests, a new development dependency, which this run did not add (§8.5).
-
-Every one of the 27 new tests and of the updated tests fails against at least one breakage. D13 was
-added after the first run showed that nothing failed the updated Follow-up 10 test. A test that only
-checked the captured answers against each other became the first lines of the warning test (§7.5).
+Two tests were strengthened after a first look at what they held, before the run: the Overview's tile
+is also read for Toms (whose My tasks is 0 and to-do 2, where Dita's are both 4), and a card with two
+of the reader's steps holds "Your steps". The request builders, the step message and the refresh were
+made functions the tests call (§2.6), because a server render cannot submit a dialog.
 
 ### 4.5 The test suite, and each commit
 
-- Typecheck green, `npm test` 387/387 (360 before), `npm run build` green.
+- Typecheck green, `npm test` 468/468 (387 before), `npm run build` green.
 - Each commit alone, in a clean copy outside the worktree (`git archive`, `node_modules` linked): the
-  whole project typechecks with 0 errors and the full suite passes at every one of the four, with 360
-  tests through the third and 387 at the fourth.
+  whole project typechecks with 0 errors and the full suite passes at every one of the six, with 387
+  tests through the fourth, 390 at the fifth and 468 at the sixth.
 
 ### 4.6 The owner's side, untouched
 
 - 5001 and 5173 were never opened, called or signed into, and run on the processes they had.
-- `rwrent_v1`'s read-only fingerprint (the row counts of eleven tables and the migrations, and the
-  latest write in each) is identical at the start and at the end.
+- `rwrent_v1`'s read-only fingerprint (every table's row count and a hash of its rows) is identical at
+  the start and at the end; it still has six migrations and no task table.
 - The backend worktree was only built in Release and run; its Debug output, which 5001 runs from, was
-  not touched.
+  not touched (`bin/Debug` still dated 2026-09-22).
 
 ### 4.7 End state
 
 - The scratch API runs on 5002 **for the reviewer**, over `rwrent_check`, domain `rwrent.example`,
-  seeded this morning. Beyond the seed:
-  - one Planned rental of 204 JLM for Ilze Berzina, planned for 22 November, cancelled at once with the
-    note "Follow-up 11 check: planned only to show it is allowed.";
-  - the inactive customer Ventspils Marine Services deleted as a practice record, taking its cancelled
-    rental of 660 BYH. It heads Recently deleted, and Out of use holds no customer.
+  **seeded afresh after every check of this run**: it holds the seed, with the prototype's eight tasks,
+  and nothing since but the sign-ins of one last read of the counts (Dita 4/1/1 with 4 to do, Signe
+  2/1/2 with 2, Toms 0/3/0 with 2, the administrator refused).
 - My Vite on 5174 is stopped; the reviewer starts one as §5.0 says.
-- The main checkouts are untouched. The worktree is clean, on `followup-11`, and pushed.
+- The main checkouts are untouched. The worktree is clean, on `feature/backend-wiring`, and pushed.
 
 ## 5. For the owner's reviewer: the steps with the seed password
 
@@ -346,119 +382,104 @@ checked the captured answers against each other became the first lines of the wa
   `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`.
 - **Browser:** a browser profile of its own, because localhost cookies are shared across ports and a
   sign-in on 5174 must never meet the owner's session on 5173.
-- **The people**, all with the seed password:
-  - the Fleet Manager `karlis.zvaigzne@rwrent.example`;
-  - the Principal `signe.priede@rwrent.example`;
-  - the administrator `sysadmin@rwrent.example`.
-- **Afterwards:** nothing to undo. Every write these steps try is refused.
+- **The people**, all with the seed password: Dita `dita.smite@rwrent.example` (Fleet Manager), Signe
+  `signe.priede@rwrent.example` (Company Principal), Toms `toms.rudzitis@rwrent.example` (Viewer),
+  Karlis `karlis.zvaigzne@rwrent.example` (Fleet Manager), the administrator `sysadmin@rwrent.example`.
+- **Afterwards:** the steps write practice data to `rwrent_check` only; reseed it if a clean copy is
+  wanted.
 
 ### 5.1 The steps
 
-1. **The warning.** As Karlis: Rental assignments → New assignment.
-   - Customer Roberts Liepins, Vehicle 204 JLM, Initial status Active: an amber line under Vehicle
-     reads "This vehicle is in use by Anete Kalnina. End that rental first, or plan this one."
-   - Initial status Planned: the line goes. 119 MPR with Active: no line.
-2. **The refusal comes into view.** Back to 204 JLM and Active; an actual start; Select another driver →
-   add Janis Krumins.
-   - Scroll the dialog to the bottom and press **Create assignment**.
-   - The dialog scrolls back up to Vehicle, which is red and has the focus, with "The vehicle already
-     has an active assignment." under the amber line. Nothing is created.
-3. **The link.** Press "that rental": Anete Kalnina's rental of 204 JLM opens.
-4. **Another dialog.** On that rental, Record interruption:
-   - fill it in with a note and an Ended at before its Started at;
-   - scroll to the bottom and press **Record interruption**: the dialog scrolls to Ended at, red and
-     focused, with "EndedAtUtc must be later than StartedAtUtc.";
-   - or, as Signe, Company → Edit with the email "not-an-address" and Save changes.
-5. **Delete records opens on Everything.** As the administrator:
-   - Show reads Everything, and the tabs read 12, 6, 4, 10, 7, 7;
-   - Customers lists seven, Martins Ozols Ready with "Takes 1 rental assignment with it";
-   - there is no Clear filters.
-6. **Out of use.** Show → Out of use:
-   - the Customers tab reads 0, "Nothing out of use here", "7 active customers are under
-     Everything.";
-   - **Show everything** returns to Everything;
-   - under Out of use, Clear filters also returns to Everything, and the Rental assignments tab lists
-     its six out-of-use rentals.
-7. **Phone width** (≤ 402 px):
-   - the amber line wraps under Vehicle;
-   - the empty state and its button fit;
-   - nothing scrolls sideways.
+1. **The count.** As Dita: the sidebar's Tasks reads 4; the Overview's Open tasks tile reads 4 "to do",
+   and the card lists Reassign the parking fine (Overdue, red), Handover, Pick up the repair invoice
+   ("from Signe Priede") and Order two spare key fobs ("No due date").
+2. **The list.** Tasks: My tasks 4, Involving me 1, Finished 1; four rows, the fine first with its
+   Overdue date in red; "Times in Tallinn time." beside the tabs. Search `zzz`: "No results for these
+   filters" with Clear filters. Due → Overdue: the fine alone.
+3. **As a step's person.** As Toms: Tasks reads 2. Involving me: three rows, each "from" its creator;
+   Tell the driver the time is Overdue with Mark done; Collect the photos is Done with Undo. Mark done
+   on Car wash: the row shows Done and Undo, the count falls to 1 at once, and the Overview's card no
+   longer lists it. Undo: back to 2.
+4. **A task's page as a step's person.** Toms opens Prepare 204 JLM: no Edit, Finish or Cancel; "In the
+   order the creator set."; "Toms Rudzitis (you)" on Car wash, the only step with Mark done; the
+   breadcrumb leads back to Involving me.
+5. **New task.** As Dita, New task: Create with nothing typed → "Enter a title for the task." under
+   Title. Add a step and Create → the step's Title and Person say what they need. Fill it in: About
+   Vehicle offers every vehicle, "660 BYH · Fiat Tipo · inactive" among them; a task Due before a step's
+   Due → "A step cannot be due after the task." under that step. Create a valid one with a step for
+   Toms: its page opens, and Toms's count goes up by one.
+6. **Edit.** On Prepare 204 JLM, Edit: move Add to Bolt down; its "Done · Dita Smite, …" line moves
+   with it; Save changes; the step is still done.
+7. **Finish and cancel.** Finish task on Prepare 204 JLM: the warn note names the three open steps;
+   Finish: the green banner "Finished by Dita Smite on …", no actions, no Mark done. Cancel task on
+   another of her tasks with a Why: "Keep task" closes without a change; Cancel task shows the grey
+   banner with the Why. Both are under Finished.
+8. **Not shared.** As Karlis, open the address of Order two spare key fobs (copied from Dita's list):
+   "This task is not shared with you".
+9. **The administrator.** No Tasks entry; `/tasks` is "Not available to you"; no Open tasks tile or card.
+10. **Phone width** (≤ 402 px): the tabs without icons, all three fitting; cards with 44px Mark done;
+    New task as a bottom sheet; the task's page with one fact per row; nothing scrolls sideways.
 
 ## 6. Decisions needed
 
-None. Choices made where §11 left room, each reversible in a line:
+None. Choices made where §12 and the handover left room, each reversible in a line:
 
-1. **The link is on the words "that rental"**, so the sentence stays exactly §11's.
-2. **Only In use is warned about**, as §11 says. A Reserved vehicle (a planned rental's) is not, and a
-   Planned new rental is not. The overlap of two Planned rentals stays the API's refusal, now visible.
-3. **The warning and the API's refusal can both show**, amber above red, if the person submits
-   anyway.
-4. **The warning is a slot of the shared `Field`** (`warning`), amber, so another dialog can use it.
-5. **The Out of use empty state's words:**
-   - the title is "Nothing out of use here";
-   - each kind is named as the filter counts it: planned or active rentals, open authorizations and
-     interruptions, active vehicles, customers and drivers;
-   - zero and unknown each have a sentence of their own.
-6. **Everything's own empty list got words of its own**, "Nothing to delete" / "There are no
-   customers.", since the old sentence pointed to the filter already chosen.
-7. **The address:** `show=out-of-use` for the filter, nothing for Everything. The old `show=all` still
-   opens Everything. Everything comes first among the options.
-8. **Beyond the 46, six more places** that showed a refusal but marked nothing now mark it (§2.1).
-9. **A check read from the sources** keeps any control from setting `data-invalid` or `aria-invalid` by
-   hand again.
+1. **The finished and cancelled banners name the task's last changer** (`updatedByDisplayName`). A
+   closed task accepts no change, so its last change is its closing; the prototype named the creator,
+   who is the same person by the API's rule.
+2. **A step without a person is sent with the empty identifier,** so the API's own "Every step needs a
+   person." answers; an empty string would have been refused by the request's binding in technical
+   words.
+3. **A refused edit of a task that no longer exists** reads "The change was refused" with the API's
+   sentence, as a closed task's refusal does.
+4. **A step's refusal follows its row** if the rows are moved after it.
+5. **About offers the kinds whose list the reader may read** (a task's own kind always); the four roles
+   that use tasks read all four. The record's link needs that record's read permission too.
+6. **A change of view keeps the search and the Due filter** and starts at the first page; a task's page
+   carries its view in the address (`?tab=involving`) so the breadcrumb leads back to it.
+7. **The Overview's card lists the first 100 to-do items**, its count being the list's total; the tile
+   shows "—" while the count loads.
+8. **Mark done and Undo carry the step's title in their accessible name** ("Mark done: Car wash").
+9. **In the folded band the Your step action moves under the step's text** (§4.3, 2).
+10. **The dialog's step row** is the app's dialog card (`--surface-2` with the app's own fields), not the
+    prototype's inset card with its custom select, so the fields read as every other dialog's.
 
-## 7. Deviations
+## 7. Deviations: where the handover and the API differ, the API wins
 
-1. **Exports for the tests:**
-   - `CompanyForm` (`CompanyProfile.tsx`) and `Initiate` (`SystemAdministrator.tsx`) are named
-     exports;
-   - `NewAssignment` takes an optional `initial` (customer, vehicle, status, coverage) and exports
-     `Mode`, as `DeleteRecordDialog` already took `initial`.
-
-   None changes what the app does.
-2. **The browser preview on 5175**, outside the repositories, with a stub transport. Its launch entries
-   in the workspace's launch file were added for it and removed afterwards.
-3. **The scratch data changed** as §4.7 lists: one Planned rental made and cancelled, and one inactive
-   customer deleted as a practice record, to reach an empty Out of use.
-4. **The notes of Edit and Correct timeline** are tested with the live validation answer's envelope,
-   keyed to `Note`. No rule of the API refuses those notes today, so there is no live refusal to
-   capture; the test holds that the note marks itself when one comes.
-5. **27 new tests, not 28.** The breakage run showed that a test checking only that the captured
-   answers agree with each other could not fail on its own. Its lines became the start of the warning
-   test.
-6. **The account screens are not a dialog**, and their markup was already right; they are held by one
-   render test of the shared account form and by the source check.
+1. **The search takes 50 characters**, the API's limit (the prototype allowed 100).
+2. **The search reads the record's text, not the kind's word** (round 10, decision 4): "204 JLM" finds
+   the task, "vehicle" alone does not.
+3. **Dates are the app's own:** "04 Oct, 20:08" with the day in two digits, as everywhere in the app.
+4. **No toasts.** After Create the page opens; after a mark the row changes; after Finish or Cancel the
+   banner appears.
+5. **The stale banner's second line** is the app's shared "Refresh to load the current values, then try
+   again." (the prototype said "save again").
+6. **The dialogs judge nothing before sending.** The prototype checked the title, the steps and the due
+   dates itself; here each is the API's refusal, in the API's words, which are the prototype's.
 
 ## 8. Open risks
 
-1. **The owner's app already shows this.** 5173 runs from this worktree, which is now on
-   `followup-11`, so the owner sees Follow-up 11 before `main` is fast-forwarded. All of it works with
-   the round-9 API on 5001; nothing on the backend changed.
-2. **The warning reads the vehicle list as the dialog loaded it.** If someone else starts a rental of
-   that vehicle meanwhile, no warning shows, and the API's refusal, now brought into view, does the
-   job.
-3. **Two older limits, unchanged:**
-   - the new-rental dialog offers the first 100 vehicles;
-   - an empty list's pager reads "1 / 0".
-4. **The Out of use words follow the backend's filter** (`RecordDeletionRules`: cancelled or ended,
-   stopped, ended, inactive). If that meaning changes, one table in `src/format/recordDeletion.ts`
-   follows.
-5. **Two behaviours are held by the browser, not by the suite:** the dialog's effect calling the scroll
-   (A7) and where Show everything leads (D4). A DOM in the tests (jsdom or similar) would hold them
-   there; it is a new development dependency, not added in this run. Option: add one in a later
-   follow-up if the owner wants these in the suite.
+1. **The owner's app already runs this code.** 5173 hot-reloads from this worktree. With the round-9
+   API on 5001 it shows no Tasks at all, as intended, until the reviewer upgrades 5001 (backup, then
+   `V9WorkTasks`, then the round-10 build). After the upgrade, Tasks appears for every holder of
+   `Tasks.Use` at once, with no app release needed.
+2. **The count and the lists follow the reader's own writes at once**, and another person's at the
+   next read (a page opened, a write made); nothing polls.
+3. **Two simultaneous marks of one task** answer one of them with the concurrency refusal (round 10,
+   decision 3); the app shows its sentence under the step, and the button stays for a retry.
+4. **The About lists and the people list offer the first 100** records of a kind, as the new-rental
+   dialog does; an edit keeps its own record offered beyond them.
 
 ## 9. Commits
 
-On `followup-11`, from `main` at `ae067ac`:
+On `feature/backend-wiring`, from `b0c0308`:
 
 | Commit | Group | Files |
 |---|---|---|
-| `8fe6531` | every control marks a refused field the one shared way; the dialog's scroll and focus named | `src/ui/Field.tsx` (the comment), `src/ui/Dialog.tsx`, `src/ui/CheckCard.tsx`, `src/pages/fleet/NewAssignment.tsx` (the controls and the coverage), `src/pages/fleet/AssignmentDialogs.tsx`, `src/pages/fleet/FleetDialogs.tsx`, `src/pages/admin/CompanyProfile.tsx`, `src/pages/admin/SystemAdministrator.tsx`, `src/pages/admin/DeleteRecordDialog.tsx`, `src/pages/users/UserDialogs.tsx`, `src/pages/account/AuthLayout.tsx`, `src/pages/account/Register.tsx`, `src/pages/account/SignIn.tsx` |
-| `905aa2f` | the in-use warning under Vehicle | `src/ui/Field.tsx` (the warning slot), `src/ui/Field.module.css`, `src/pages/fleet/NewAssignment.tsx` (the warning and its starting state) |
-| `36cd9f3` | Delete records opens on Everything, with the tests that assumed the old default | `src/pages/admin/DeleteRecords.tsx`, `src/format/recordDeletion.ts`, `src/ui/EmptyState.tsx`, `src/pages/followup8.render.test.ts`, `src/pages/followup10.render.test.ts` |
-| `ed22493` | the tests, from the scratch stack's answers | `src/pages/followup11.support.ts` (new), `src/pages/followup11.render.test.ts` (new), `src/pages/followup11.dialogs.render.test.ts` (new) |
+| `8a73732` | the API layer knows tasks | `src/api/dto.ts`, `src/api/tasks.ts` (new), `src/api/queryKeys.ts`, `src/api/client.ts`, `src/api/index.ts`, `src/api/codes.ts`, `src/api/problem.ts`, `src/api/codes.test.ts` (extended), `src/permissions/permissions.ts` |
+| `ac3b89a` | the words of tasks | `src/format/tasks.ts` (new), `src/format/index.ts` |
+| `b669aad` | the shared pieces the pages need | `src/ui/EmptyState.tsx`, `src/ui/RecordTabs.tsx`, `src/ui/record.module.css`, `src/ui/Dialog.tsx`, `src/ui/RecordHeader.tsx`, `src/ui/RecordHeader.module.css`, `src/ui/rowNav.ts` |
+| `0c04526` | the Tasks pages and dialogs | `src/pages/tasks/` (new): `Tasks.tsx`, `TaskRecord.tsx`, `TaskDialogs.tsx`, `StepAction.tsx`, `taskAddress.ts`, `Tasks.module.css`, `TaskRecord.module.css`, `TaskDialogs.module.css` |
+| `a71ce3a` | Tasks takes its place in the app | `src/app/routes.tsx`, `src/app/AppShell.tsx`, `src/pages/overview/Overview.tsx`, `src/pages/overview/Overview.module.css`, `src/pages/overview/sample.ts`, `src/pages/simple/Placeholders.tsx`, `src/app/routes.test.ts`, `src/pages/followup10.render.test.ts` |
+| `c2e62e6` | the tests, from the scratch stack's answers | `src/pages/followup12.support.ts`, `src/pages/followup12.harness.ts`, `src/pages/followup12.render.test.ts`, `src/pages/followup12.dialogs.render.test.ts`, `src/pages/followup12.phone.render.test.ts`, `src/pages/followup12.actions.test.ts`, `src/format/tasks.test.ts`, `src/api/taskRefusals.test.ts` (all new) |
 | this one | the report | `Context/wiring_report.md` |
-
-The two files that carry both F11-1 and F11-2 were committed in two steps: their F11-1 version was put
-into the index for the first commit, without rewriting the worktree that 5173 reloads from.
