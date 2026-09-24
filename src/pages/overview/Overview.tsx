@@ -4,13 +4,18 @@ import { qk } from '@/api';
 import { listAssignments } from '@/api/rentalAssignments';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { getOverviewSummary } from '@/api/overview';
-import { AssignmentStatus, type SecurityAuditQuery } from '@/api/dto';
-import { ASSIGNMENT_STATUS_LABEL, LOCAL_TIME_NOTE, auditActorName, eventLabel, formatLocal } from '@/format';
+import { listToDo } from '@/api/tasks';
+import { AssignmentStatus, type SecurityAuditQuery, type WorkTaskToDoItemResponse } from '@/api/dto';
+import {
+  ASSIGNMENT_STATUS_LABEL, EMPTY, LOCAL_TIME_NOTE, aboutText, auditActorName, eventLabel, formatLocal,
+  fromLine, toDoWhen,
+} from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
+import { taskHref, useTaskCounts } from '@/pages/tasks/taskAddress';
 import { useOpenWork } from './useOpenWork';
 import { activityRows } from './activity';
-import { INSURANCE, SAMPLE_CHIP, TASKS, type SampleRow } from './sample';
+import { INSURANCE, SAMPLE_CHIP, type SampleRow } from './sample';
 import styles from './Overview.module.css';
 
 /**
@@ -20,6 +25,9 @@ import styles from './Overview.module.css';
 const ACTIVITY: SecurityAuditQuery = { PageNumber: 1, PageSize: 25 };
 
 const PICK = { PageSize: 100 } as const;
+
+/** The Open tasks card lists the reader's to-do items, earliest due first: the first hundred. */
+export const TO_DO = { PageNumber: 1, PageSize: 100 } as const;
 
 interface Metric {
   key: string;
@@ -38,6 +46,33 @@ const MIX: Array<{ status: AssignmentStatus; color: string; shape: string }> = [
   { status: AssignmentStatus.Ended, color: 'var(--mute)', shape: '1px' },
   { status: AssignmentStatus.Cancelled, color: 'var(--bad)', shape: '50% 50% 50% 0' },
 ];
+
+/**
+ * One to-do item on the Open tasks card (Follow-up 12, F12-6): the step's or the task's title, the
+ * record it is about and who gave it, and when it is due, toned while overdue or due today; the row
+ * opens its task.
+ */
+function ToDoRow({ item, readerId }: { item: WorkTaskToDoItemResponse; readerId: string | undefined }) {
+  const when = toDoWhen(item.dueAtUtc);
+  const sub = [aboutText(item), fromLine(item.createdByUserId, item.createdByDisplayName, readerId)]
+    .filter(Boolean)
+    .join(' · ') || (item.stepId ? item.taskTitle : '');
+  return (
+    <Link to={taskHref(item.taskId)} className={`${styles.row} ${styles.link}`}>
+      <span className={styles.tile} data-tone={when.tone ?? undefined}>
+        <span data-icon aria-hidden="true">{item.stepId ? 'checklist' : 'task_alt'}</span>
+      </span>
+      <span className={styles.rowText}>
+        <span className={styles.rowTitle}>{item.title}</span>
+        {sub ? <span className={styles.rowSub}>{sub}</span> : null}
+      </span>
+      <span className={styles.rowMeta}>
+        <span className={styles.when} data-tone={when.tone ?? undefined}>{when.text}</span>
+        <span data-icon aria-hidden="true" className={styles.chevron}>chevron_right</span>
+      </span>
+    </Link>
+  );
+}
 
 function SampleRows({ rows }: { rows: SampleRow[] }) {
   return (
@@ -59,8 +94,16 @@ function SampleRows({ rows }: { rows: SampleRow[] }) {
 }
 
 export function Overview() {
-  const { can } = useAccess();
+  const { can, me } = useAccess();
   const work = useOpenWork();
+  // Tasks only for a holder of Tasks.Use: without it neither the tile nor the card shows, and no
+  // tasks request is made.
+  const { allowed: usesTasks, counts: taskCounts } = useTaskCounts();
+  const toDo = useQuery({
+    queryKey: qk.tasks.toDo(TO_DO),
+    queryFn: () => listToDo(TO_DO),
+    enabled: usesTasks,
+  });
 
   const mayReadAssignments = can('RentalAssignments.Read');
   const mayReadAudit = can('SecurityAudit.ReadCompany');
@@ -84,7 +127,8 @@ export function Overview() {
   const totalAssignments = assignments.data?.totalCount ?? rows.length;
   const counts = summary.data;
 
-  // metricsModel(): the permitted counts in order, capped at four, then the two sample cards.
+  // metricsModel(): the permitted counts in order, capped at four, then Open tasks for a holder of
+  // Tasks.Use, then the sample insurance card.
   const metrics: Metric[] = [];
   if (counts?.activeAssignments != null) {
     metrics.push({
@@ -122,10 +166,12 @@ export function Overview() {
     });
   }
   const cards = metrics.slice(0, 4);
-  cards.push({
-    key: 'task', icon: 'checklist', color: 'var(--info)', label: 'Open tasks',
-    value: String(TASKS.length), unit: 'unfinished', to: '/tasks',
-  });
+  if (usesTasks) {
+    cards.push({
+      key: 'task', icon: 'checklist', color: 'var(--info)', label: 'Open tasks',
+      value: taskCounts ? String(taskCounts.toDo) : EMPTY, unit: 'to do', to: '/tasks',
+    });
+  }
   cards.push({
     key: 'ins', icon: 'policy', color: 'var(--warn)', label: 'Unresolved insurance cases',
     value: String(INSURANCE.length), unit: 'cases', to: '/insurance-cases',
@@ -228,16 +274,29 @@ export function Overview() {
             ))}
           </section>
 
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div className={styles.heading}>
-                <h2 className={styles.title}>Open tasks</h2>
-                <p className={styles.desc}>Work items linked to an assignment or a vehicle.</p>
+          {usesTasks ? (
+            <section className={styles.panel}>
+              <div className={styles.panelHead}>
+                <div className={styles.heading}>
+                  <h2 className={styles.title}>Open tasks</h2>
+                  <p className={styles.desc}>
+                    Your open steps and your own tasks, earliest due first. {LOCAL_TIME_NOTE}
+                  </p>
+                </div>
+                <span className={styles.count2}>
+                  {toDo.data ? `${toDo.data.totalCount} to do` : taskCounts ? `${taskCounts.toDo} to do` : ''}
+                </span>
               </div>
-              <span className={styles.count2}>{TASKS.length} open</span>
-            </div>
-            <SampleRows rows={TASKS} />
-          </section>
+              {toDo.data && toDo.data.items.length === 0 ? (
+                <div className={`${styles.empty} ${styles.emptyShort}`}>
+                  <span data-icon aria-hidden="true" className={styles.emptyIcon}>task_alt</span>
+                  <div className={styles.emptyTitle}>No open tasks</div>
+                </div>
+              ) : (toDo.data?.items ?? []).map((item) => (
+                <ToDoRow key={`${item.taskId}-${item.stepId ?? 'task'}`} item={item} readerId={me?.id} />
+              ))}
+            </section>
+          ) : null}
         </div>
 
         <div className={styles.column}>

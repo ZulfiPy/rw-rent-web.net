@@ -8,7 +8,9 @@ import { SecurityAudit } from '@/pages/audit/SecurityAudit';
 import { AuditEntry } from '@/pages/audit/AuditEntry';
 import { Overview } from '@/pages/overview/Overview';
 import { NeedsAttention } from '@/pages/overview/NeedsAttention';
-import { InsuranceCases, Tasks } from '@/pages/simple/Placeholders';
+import { InsuranceCases } from '@/pages/simple/Placeholders';
+import { Tasks } from '@/pages/tasks/Tasks';
+import { TaskRecord } from '@/pages/tasks/TaskRecord';
 import { Assignments } from '@/pages/fleet/Assignments';
 import { AssignmentRecord } from '@/pages/fleet/AssignmentRecord';
 import { Vehicles } from '@/pages/fleet/Vehicles';
@@ -28,7 +30,7 @@ export interface NavEntry {
   group: string;
   label: string;
   icon: string;
-  badge?: 'queue' | 'registrations';
+  badge?: 'queue' | 'registrations' | 'tasks';
 }
 
 export interface AppRoute {
@@ -86,11 +88,21 @@ export const ROUTES: readonly AppRoute[] = [
     element: <AssignmentRecord />,
     permission: 'RentalAssignments.Read',
   },
+  /*
+   * Tasks (Follow-up 12): the backend's round 10 gives `Tasks.Use` to the Viewer, the Fleet Manager
+   * and the Company Principal, never to the System Administrator or a Record deleter alone. The
+   * count on the entry is the reader's to-do count.
+   */
   {
     path: '/tasks',
     element: <Tasks />,
-    permission: null,
-    nav: { group: 'Operations', label: 'Tasks', icon: 'checklist' },
+    permission: 'Tasks.Use',
+    nav: { group: 'Operations', label: 'Tasks', icon: 'checklist', badge: 'tasks' },
+  },
+  {
+    path: '/tasks/:taskId',
+    element: <TaskRecord />,
+    permission: 'Tasks.Use',
   },
   {
     path: '/insurance-cases',
@@ -209,7 +221,7 @@ export interface NavItem {
   label: string;
   icon: string;
   permission: Permission | null;
-  badge?: 'queue' | 'registrations';
+  badge?: 'queue' | 'registrations' | 'tasks';
 }
 
 export const NAV_GROUPS: ReadonlyArray<{ label: string; items: readonly NavItem[] }> = (() => {

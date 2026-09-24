@@ -187,7 +187,10 @@ describe('a person who holds the Record deleter role alone', () => {
     expect(markup).not.toContain('Vehicles available');
     expect(markup).not.toContain('Registrations to review');
     expect(markup).not.toContain('Open interruptions');
-    expect(markup).toContain('Open tasks');
+    // Since Follow-up 12 Open tasks is the reader's to-do list, for a holder of Tasks.Use only; the
+    // Record deleter role alone does not hold it.
+    expect(markup).not.toContain('Open tasks');
+    expect(markup).toContain('Unresolved insurance cases');
     expect(markup).toContain('Your role does not include audit access.');
   });
 });

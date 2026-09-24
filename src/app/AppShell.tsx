@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAccess } from '@/permissions/usePermissions';
 import { primaryRoleLabel } from '@/format/labels';
 import { useOpenWork } from '@/pages/overview/useOpenWork';
+import { useTaskCounts } from '@/pages/tasks/taskAddress';
 import { Chip } from '@/ui/Chip';
 import { NAV_GROUPS, type NavItem } from './routes';
 import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
@@ -94,6 +95,8 @@ export function AppShell({ companyName }: { companyName: string }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const work = useOpenWork();
+  // Only for a holder of Tasks.Use: without it nothing is asked and the entry is not offered.
+  const tasks = useTaskCounts();
 
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search]);
 
@@ -106,6 +109,7 @@ export function AppShell({ companyName }: { companyName: string }) {
   const badge = (kind: NavItem['badge']) => {
     if (kind === 'queue') return work.items.length || undefined;
     if (kind === 'registrations') return work.pendingRegistrations || undefined;
+    if (kind === 'tasks') return tasks.counts?.toDo || undefined;
     return undefined;
   };
 

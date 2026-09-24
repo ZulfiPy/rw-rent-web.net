@@ -53,6 +53,8 @@ const mayOpen = (address: string, permissions: readonly string[]) => {
 const VIEWER = [
   'Company.Read', 'Users.ReadDirectory', 'Drivers.Read', 'Customers.Read', 'Vehicles.Read',
   'RentalAssignments.Read', 'DriverAuthorizations.Read', 'Interruptions.Read',
+  // Since the backend's round 10 (Follow-up 12): the Viewer's, and so the two roles above it.
+  'Tasks.Use',
 ];
 const FLEET_MANAGER = [
   ...VIEWER,
@@ -66,8 +68,9 @@ const COMPANY_PRINCIPAL = [
   'Roles.ReadHistory', 'Roles.ManageViewerFleetManager', 'Sessions.ManageOrdinaryCompanyUsers',
   'SecurityAudit.ReadCompany',
 ];
+/** Every permission but one: the administrator does not use tasks (the backend's round 10). */
 const SYSTEM_ADMINISTRATOR = [
-  ...COMPANY_PRINCIPAL,
+  ...COMPANY_PRINCIPAL.filter((permission) => permission !== 'Tasks.Use'),
   'Company.Create', 'Company.Delete', 'Users.ActivateCompanyPrincipal',
   'Users.SuspendRestoreCompanyPrincipal', 'Roles.ManageCompanyPrincipal', 'Sessions.ManageAnyUser',
   'SecurityAudit.ReadAll', 'SystemAdministration.Transfer', 'PrivilegedCorrections.Execute',
@@ -196,8 +199,9 @@ describe('the same destination, written differently', () => {
 
 describe('what each destination needs', () => {
   test('the pages open to every signed-in persona need nothing', () => {
+    // Tasks left this list in Follow-up 12: it needs Tasks.Use (below).
     for (const address of [
-      '/overview', '/needs-attention', '/tasks', '/insurance-cases', '/profile',
+      '/overview', '/needs-attention', '/insurance-cases', '/profile',
     ]) {
       expect(permissionFor(address), address).toBeNull();
       expect(mayOpen(address, []), address).toBe(true);
@@ -287,8 +291,9 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     const reachable = ROUTES
       .filter((route) => route.path !== '*' && mayOpen(route.path, RECORD_DELETER))
       .map((route) => route.path);
+    // Not Tasks since Follow-up 12: the Record deleter role holds Records.Delete alone.
     expect(reachable).toEqual([
-      '/overview', '/needs-attention', '/tasks', '/insurance-cases', '/delete-records', '/profile',
+      '/overview', '/needs-attention', '/insurance-cases', '/delete-records', '/profile',
     ]);
     const offered = NAV_GROUPS.flatMap((group) => group.items)
       .filter((item) => item.permission !== null && createCan(RECORD_DELETER)(item.permission))
@@ -300,8 +305,47 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     const reachable = ROUTES
       .filter((route) => route.path !== '*' && mayOpen(route.path, []))
       .map((route) => route.path);
+    // Not Tasks since Follow-up 12, which needs Tasks.Use.
     expect(reachable).toEqual([
-      '/overview', '/needs-attention', '/tasks', '/insurance-cases', '/profile',
+      '/overview', '/needs-attention', '/insurance-cases', '/profile',
     ]);
+  });
+});
+
+describe('Tasks needs Tasks.Use (Follow-up 12)', () => {
+  test('the list and a task’s page name it, by any spelling', () => {
+    for (const address of ['/tasks', '/Tasks', '/TASKS', '/%74asks', '/tasks/', '/tasks?tab=involving']) {
+      expect(land(address).path, address).toBe('/tasks');
+      expect(permissionFor(address), address).toBe('Tasks.Use');
+    }
+    for (const address of ['/tasks/a1d3f5b7-0001', '/Tasks/A1D3F5B7-0001', '/tasks/x?tab=finished']) {
+      expect(land(address).path, address).toBe('/tasks/:taskId');
+      expect(permissionFor(address), address).toBe('Tasks.Use');
+    }
+  });
+
+  test('the three roles that hold it open Tasks; the administrator and a Record deleter alone do not', () => {
+    for (const persona of [VIEWER, FLEET_MANAGER, COMPANY_PRINCIPAL]) {
+      expect(mayOpen('/tasks', persona)).toBe(true);
+      expect(mayOpen('/tasks/x', persona)).toBe(true);
+    }
+    for (const persona of [SYSTEM_ADMINISTRATOR, RECORD_DELETER, []]) {
+      expect(mayOpen('/tasks', persona)).toBe(false);
+      expect(mayOpen('/TASKS', persona)).toBe(false);
+      expect(mayOpen('/tasks/x', persona)).toBe(false);
+    }
+  });
+
+  test('the navigation offers Tasks with its count only to a holder', () => {
+    const entry = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.to === '/tasks');
+    expect(entry).toMatchObject({ label: 'Tasks', icon: 'checklist', permission: 'Tasks.Use', badge: 'tasks' });
+    const offered = (permissions: readonly string[]) => NAV_GROUPS.flatMap((group) => group.items)
+      .filter((item) => item.permission === null || createCan(permissions)(item.permission))
+      .map((item) => item.to);
+    expect(offered(VIEWER)).toContain('/tasks');
+    expect(offered(SYSTEM_ADMINISTRATOR)).not.toContain('/tasks');
+    expect(offered(RECORD_DELETER)).not.toContain('/tasks');
+    // Insurance cases is untouched: offered to everyone, as before.
+    expect(offered([])).toContain('/insurance-cases');
   });
 });
