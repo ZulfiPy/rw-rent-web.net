@@ -1,0 +1,70 @@
+/* A task's page (Follow-up 12): the hero's record link, the description and the numbered steps, from
+   the handover's values. The hero band, the banner and the panels are `src/ui`'s. */
+
+.dim { color: var(--fg-3); }
+
+/* What the task is about: the quiet dark link. */
+.aboutLink {
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 500;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-3);
+  overflow-wrap: anywhere;
+}
+.aboutLink:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
+
+.description {
+  margin: 0;
+  padding: 14px 17px 16px;
+  max-width: 80ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* The steps, in the creator's order. Below 640 a row wraps: the state and the action move under the
+   text. */
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 13px 17px;
+  border-bottom: 1px solid var(--line);
+}
+.step:last-child { border-bottom: none; }
+.num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.num[data-done='true'] { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); }
+.stepText { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.stepTitle { font-size: 13.5px; font-weight: 500; color: var(--fg); overflow-wrap: anywhere; }
+.stepMeta { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--fg-3); }
+.stepState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  margin-left: auto;
+  min-width: 0;
+}
+/* A refused mark's sentence takes a line of its own under the row. */
+.stepRefusalRow { flex: 1 1 100%; display: flex; justify-content: flex-end; }

@@ -1,0 +1,78 @@
+/* New task and Edit task (Follow-up 12), from the handover's values: the Task section's grid and the
+   step rows. The fields are the app's own (`Field`, `fieldStyles.control`); a step row is the
+   dialog's card, as the app's checkbox card is. */
+
+/* Task: Title and Description span both columns, then Due | About, then the record. One column below
+   1024. */
+.taskGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.span { grid-column: 1 / -1; display: flex; flex-direction: column; min-width: 0; }
+@media (max-width: 1023px) {
+  .taskGrid { grid-template-columns: 1fr; }
+}
+
+.steps { display: flex; flex-direction: column; gap: 10px; }
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+}
+/* A row the API refused something of: its frame in the bad tone, its fields marked by `invalidProps`. */
+.step[data-refused='true'] { border-color: var(--bad-line); }
+.stepNum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  margin-top: 26px;
+  border-radius: 7px;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-2);
+}
+/* Title across, then Person | Due; stacked on the sheet. */
+.stepFields { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 11px 12px; }
+.done { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ok); }
+.doneIcon { font-size: 15px; }
+.stepButtons { display: flex; flex-direction: column; gap: 4px; flex: none; margin-top: 26px; }
+.stepButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--fg-2);
+}
+.stepButton:hover:not(:disabled) { background: var(--surface-3); color: var(--fg); }
+.stepButton:disabled { opacity: .35; cursor: default; }
+.stepButtonIcon { font-size: 17px; }
+
+.stepsEmpty {
+  margin: 0;
+  padding: 12px 13px;
+  background: var(--inset);
+  border: 1px dashed var(--line-2);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+.addRow { display: flex; }
+.hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--fg-3); text-wrap: pretty; }
+
+/* The sheet: the fields stack, the row's buttons and Add step grow to a 44px touch target. */
+@media (max-width: 639px) {
+  .stepFields { grid-template-columns: 1fr; }
+  .stepButton { width: 44px; height: 44px; }
+  .addRow > button { min-height: 44px; }
+}

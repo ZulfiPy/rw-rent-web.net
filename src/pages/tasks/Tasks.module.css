@@ -1,0 +1,159 @@
+/* The Tasks list (Follow-up 12), from the handover's values (`Context/prototype/tasks/new-styles.css`,
+   HANDOVER.md e): the tab strip's row, each view's column set, the progress bar, the Your step cell,
+   the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
+   value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s. */
+
+/* The strip and, at the row's far end, the time zone. */
+.tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.zone { margin-left: auto; font-size: 12px; color: var(--fg-3); }
+
+/* The two column sets. Nothing folds from 1024 up; each holds its own min-width. */
+.table { min-width: 0; }
+.plain { min-width: 800px; }
+.involving { min-width: 1020px; }
+.cTask { width: auto; }
+.cSteps170 { width: 170px; }
+.cSteps150 { width: 150px; }
+.cYour { width: 290px; }
+.cPeople240 { width: 240px; }
+.cPeople200 { width: 200px; }
+.cDue { width: 170px; }
+
+/* The folded band (768–1023): fixed layout, every fixed width at 71%. On Involving me the People
+   column folds into a line under Steps (the shared `foldTablet` / `showTablet`). */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; }
+  .plain { min-width: 568px; }
+  .involving { min-width: 582px; }
+  .cSteps170 { width: 121px; }
+  .cSteps150 { width: 107px; }
+  .cYour { width: 206px; }
+  .cPeople240 { width: 170px; }
+  .cPeople200 { width: 142px; }
+  .cDue { width: 121px; }
+}
+
+/* A task's title wraps rather than widening the table. */
+.title { overflow-wrap: anywhere; }
+
+.due { font-size: 13px; color: var(--fg-2); white-space: nowrap; }
+
+/* Steps: "1 of 4 done" over a 4px bar. */
+.progress { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.progressText { font-size: 13px; color: var(--fg-2); white-space: nowrap; }
+.progressNone { font-size: 13px; color: var(--fg-3); white-space: nowrap; }
+.bar {
+  display: block;
+  width: 100%;
+  max-width: 112px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.barFill { display: block; height: 100%; border-radius: 2px; background: var(--ok); }
+
+/* Your step: each of the reader's steps, its due, Done, and its action. */
+.yourSteps { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.yourStep { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.yourStepLine { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* In the folded band the cell is 206px: the action moves under the step's text rather than cutting
+   its due line. */
+@media (max-width: 1023px) {
+  .yourStepLine { flex-wrap: wrap; row-gap: 6px; }
+  .yourStepLine > .yourStepText { flex-basis: auto; }
+}
+.yourStepText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.yourStepTitle { font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
+.yourStepDue { font-size: 12px; color: var(--fg-3); white-space: nowrap; }
+.doneMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ok);
+  white-space: nowrap;
+}
+.doneMarkIcon { font-size: 15px; }
+
+/* Mark done and Undo: neutral, filled while the step is to do, clear once it is done. */
+.stepButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  padding: 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.stepButton[data-done='true'] { background: transparent; }
+.stepButton:hover:not(:disabled) { background: var(--surface-3); }
+.stepButton:disabled { opacity: .55; cursor: progress; }
+.stepButtonIcon { font-size: 15px; }
+/* On the phone card: the full width at a 44px touch target. */
+.stepButton[data-size='card'] { gap: 7px; min-height: 44px; padding: 0 14px; border-radius: 9px; font-size: 13px; }
+.stepButton[data-size='card'] .stepButtonIcon { font-size: 17px; }
+/* On the task's Steps panel. */
+.stepButton[data-size='panel'] { gap: 6px; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; }
+.stepButton[data-size='panel'] .stepButtonIcon { font-size: 16px; }
+@media (max-width: 639px) {
+  .stepButton[data-size='panel'] { min-height: 44px; }
+}
+.stepRefusal { text-wrap: pretty; }
+
+/* The phone card: tapping it opens the task; its own controls keep their clicks. */
+.cards { display: flex; flex-direction: column; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.card:hover { background: var(--surface-2); }
+.cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cardHeading { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.cardTitle {
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-3);
+  overflow-wrap: anywhere;
+}
+.cardTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
+.cardSub { font-size: 11.5px; color: var(--fg-3); }
+.cardFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.cardFact { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cardLabel { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-4); }
+.cardValue { font-size: 12.5px; color: var(--fg-2); }
+.cardValueDim { font-size: 12.5px; color: var(--fg-3); }
+.cardBar { max-width: 140px; margin-top: 2px; }
+.cardDue { font-size: 12.5px; font-weight: 500; color: var(--fg-2); }
+.cardDue.cardValueDim { color: var(--fg-3); }
+.cardSteps { display: flex; flex-direction: column; gap: 8px; }
+.cardStep {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.cardStepLine { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+
+/* Overdue and due today. Last in the file, so the tone wins over the plain colour of the line it
+   marks (the Due cell, a step's due, the card's due) at the same specificity. */
+.toneBad { color: var(--bad); font-weight: 500; }
+.toneWarn { color: var(--warn); font-weight: 500; }
