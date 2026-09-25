@@ -54,7 +54,8 @@ export type StepActionState = ReturnType<typeof useStepAction>;
 
 /**
  * The button: "Mark done" on a step still to do, "Undo" on a done one. `size` is where it stands:
- * a list row's cell, a phone card's step (44px, full width), or the task's Steps panel.
+ * a list row's cell (one width for both labels, Follow-up 14), a phone card's step (44px, full
+ * width), or the task's Steps panel. Nothing is drawn when the API offers no action.
  */
 export function StepButton({ action, size, title }: {
   action: StepActionState;
@@ -91,7 +92,10 @@ export function StepRefusal({ action }: { action: StepActionState }) {
   );
 }
 
-/** The quiet "Done" beside a done step in a list row or a phone card. */
+/**
+ * "✓ Done" in a list row or on a phone card: the line under a done step's title, in place of its
+ * due line (Follow-up 14), so a done step reads the same on every screen.
+ */
 export function DoneMark() {
   return (
     <span className={styles.doneMark}>

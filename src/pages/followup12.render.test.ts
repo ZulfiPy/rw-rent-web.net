@@ -117,8 +117,9 @@ describe('the Tasks list (F12-2)', () => {
     expect(prepare).toContain('Dita Smite, Signe Priede +1');
     expect(prepare).toMatch(/class="_due_[^"]*"><span class="_keep_[^"]*">28 Sep,<\/span> <span class="_keep_[^"]*">10:54<\/span><\/span>/);
     expect(prepare).not.toContain('from ');
-    // Her own two steps: Add to Bolt done by her, with Undo; Handover to do, with Mark done.
-    expect(prepare).toMatch(/Add to Bolt<\/span><span class="_yourStepDue_[^"]*">No due date<.*check<\/span>Done<\/span>.*<span>Undo<\/span>/);
+    // Her own two steps: Add to Bolt done by her, with Undo; Handover to do, with Mark done. Since
+    // Follow-up 14 "✓ Done" is the line under a done step's title, in place of its due line.
+    expect(prepare).toMatch(/Add to Bolt<\/span><span class="_doneMark_[^"]*"><span[^>]*>check<\/span>Done<\/span><\/span>.*<span>Undo<\/span>/);
     expect(prepare).toMatch(/Handover<\/span><span class="_yourStepDue_[^"]*">Due 28 Sep, 10:54<.*aria-label="Mark done: Handover"/);
 
     // Someone else's task in her My tasks: "from" its creator and her step with its action.

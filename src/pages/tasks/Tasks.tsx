@@ -43,6 +43,10 @@ import styles from './Tasks.module.css';
  * columns and cards (Follow-up 13): the reader's own steps with their actions, a dim dash where the
  * reader has none, and "from" on a task someone else created. Finished keeps its own columns.
  *
+ * Follow-up 14 set how a step reads at each screen size: the title, under it the due line or
+ * "✓ Done", and the button's place, a column of one width at the right from 1024 up and a line under
+ * the text in the folded band; a phone card's step reads the same. A due date is never cut.
+ *
  * The server decides. Which tasks a view holds, their order, what the search and the filter find,
  * and whether the reader may mark or undo a step all come from the API; this page words them. The
  * view, the search, the filter and the page live in the address; a change of view keeps the search
@@ -81,19 +85,34 @@ function Progress({ task, people }: { task: WorkTaskListItemResponse; people?: s
   );
 }
 
-/** One of the reader's own steps in the Your step cell: its title and due, Done, and the action. */
-function YourStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse }) {
-  const action = useStepAction(taskId, step);
+/**
+ * A step's title and, under it, its due line, or "✓ Done" in its place once the step is done
+ * (Follow-up 14). A list row and a phone card share it.
+ */
+function StepText({ step }: { step: WorkTaskStepResponse }) {
   // My tasks and Involving me hold open tasks only; the step's own state decides its tone.
   const due = stepDue(step, true);
   return (
+    <span className={styles.yourStepText}>
+      <span className={styles.yourStepTitle}>{step.title}</span>
+      {step.doneAtUtc
+        ? <DoneMark />
+        : <span className={`${styles.yourStepDue} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>}
+    </span>
+  );
+}
+
+/**
+ * One of the reader's own steps in the Your step cell (Follow-up 14): its text, then the button's
+ * place, which stays empty when the API offers no action. From 1024 up the place is a column of one
+ * width at the right, level with the title; in the folded band it is a line under the text.
+ */
+function YourStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse }) {
+  const action = useStepAction(taskId, step);
+  return (
     <span className={styles.yourStep}>
-      <span className={styles.yourStepLine}>
-        <span className={styles.yourStepText}>
-          <span className={styles.yourStepTitle}>{step.title}</span>
-          <span className={`${styles.yourStepDue} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>
-        </span>
-        {step.doneAtUtc ? <DoneMark /> : null}
+      <StepText step={step} />
+      <span className={styles.yourStepAction}>
         <StepButton action={action} size="cell" title={step.title} />
       </span>
       <StepRefusal action={action} />
@@ -138,18 +157,12 @@ function ClosedCell({ task }: { task: WorkTaskListItemResponse }) {
 
 /* the phone card ---------------------------------------------------------------------------------- */
 
+/** A step on a phone card: its title, its due line or "✓ Done", and the full-width button. */
 function CardStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse }) {
   const action = useStepAction(taskId, step);
-  const due = stepDue(step, true);
   return (
     <div className={styles.cardStep}>
-      <div className={styles.cardStepLine}>
-        <span className={styles.yourStepText}>
-          <span className={styles.yourStepTitle}>{step.title}</span>
-          <span className={`${styles.yourStepDue} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>
-        </span>
-        {step.doneAtUtc ? <DoneMark /> : null}
-      </div>
+      <StepText step={step} />
       <StepButton action={action} size="card" title={step.title} />
       <StepRefusal action={action} />
     </div>

@@ -1,7 +1,9 @@
 /* The Tasks list (Follow-up 12), from the handover's values (`Context/prototype/tasks/new-styles.css`,
    HANDOVER.md e): the tab strip's row, each view's column set, the progress bar, the Your step cell,
    the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
-   value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s. */
+   value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s.
+   Follow-up 14 set the Your step cell's order per screen size, the uncut due dates and the phone
+   card's "✓ Done" line. */
 
 /* The strip and, at the row's far end, the time zone. */
 .tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -42,7 +44,6 @@
 .due { font-size: 13px; color: var(--fg-2); }
 .keep { white-space: nowrap; }
 
-
 /* Steps: "1 of 4 done" over a 4px bar. */
 .progress { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .progressText { font-size: 13px; color: var(--fg-2); white-space: nowrap; }
@@ -58,30 +59,48 @@
 }
 .barFill { display: block; height: 100%; border-radius: 2px; background: var(--ok); }
 
-/* Your step: each of the reader's steps, its due, Done, and its action. */
-.yourSteps { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
-.yourStep { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.yourStepLine { display: flex; align-items: center; gap: 10px; min-width: 0; }
-/* In the folded band the cell is 206px: the action moves under the step's text rather than cutting
-   its due line. */
-@media (max-width: 1023px) {
-  .yourStepLine { flex-wrap: wrap; row-gap: 6px; }
-  .yourStepLine > .yourStepText { flex-basis: auto; }
+/* Your step (Follow-up 14): every step is its title, the line under it (its due, or "✓ Done" in the
+   done colour), and the place of its button. From 1024 up the place is a column of one width at the
+   right of the cell, lined up from step to step and row to row, its button level with the title's
+   first line (the 30px button against the 20px line: 5px); the title takes the rest of the width
+   after a fixed 12px gap. The place stays when the API offers no action, so nothing else moves. */
+.yourSteps { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.yourStep {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--your-step-button);
+  align-items: start;
+  column-gap: 12px;
+  row-gap: 6px;
+  min-width: 0;
+  --your-step-button: 104px;
 }
-.yourStepText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.yourStepTitle { font-size: 13px; color: var(--fg); overflow-wrap: anywhere; }
-.yourStepDue { font-size: 12px; color: var(--fg-3); white-space: nowrap; }
+.yourStep > .yourStepText { grid-column: 1; padding-top: 5px; }
+.yourStepAction { grid-column: 2; grid-row: 1; display: flex; min-width: 0; }
+.yourStep > .stepRefusal { grid-column: 1 / -1; }
+/* The folded band (768–1023): the same pieces under one another, the button on a line of its own
+   under the text, at its one width and lined up with the text on the left; a step without an action
+   ends at its text, so the space between one step and the next stays the same. */
+@media (max-width: 1023px) {
+  .yourSteps { gap: 12px; }
+  .yourStep { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
+  .yourStep > .yourStepText { padding-top: 0; }
+  .yourStepAction { grid-column: 1; grid-row: 2; width: var(--your-step-button); }
+  .yourStepAction:empty { display: none; }
+}
+.yourStepText { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.yourStepTitle { font-size: 13px; line-height: 20px; color: var(--fg); overflow-wrap: anywhere; }
+.yourStepDue { font-size: 12px; line-height: 18px; color: var(--fg-3); }
 .doneMark {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
-  flex: none;
   font-size: 12px;
+  line-height: 18px;
   font-weight: 500;
   color: var(--ok);
   white-space: nowrap;
 }
-.doneMarkIcon { font-size: 15px; }
+.doneMarkIcon { font-size: 15px; line-height: 18px; }
 
 /* Mark done and Undo: neutral, filled while the step is to do, clear once it is done. */
 .stepButton {
@@ -100,6 +119,8 @@
   white-space: nowrap;
 }
 .stepButton[data-done='true'] { background: transparent; }
+/* In a list row: one width for Mark done and Undo, the width of its place (Follow-up 14). */
+.stepButton[data-size='cell'] { width: 100%; height: 30px; }
 .stepButton:hover:not(:disabled) { background: var(--surface-3); }
 .stepButton:disabled { opacity: .55; cursor: progress; }
 .stepButtonIcon { font-size: 15px; }
@@ -147,6 +168,7 @@
 .cardDue { font-size: 12.5px; font-weight: 500; color: var(--fg-2); }
 .cardDue.cardValueDim { color: var(--fg-3); }
 .cardSteps { display: flex; flex-direction: column; gap: 8px; }
+/* A step on the card: its title, its due line or "✓ Done", and the full-width button. */
 .cardStep {
   display: flex;
   flex-direction: column;
@@ -156,7 +178,6 @@
   border: 1px solid var(--line);
   border-radius: 10px;
 }
-.cardStepLine { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 
 /* Overdue and due today. Last in the file, so the tone wins over the plain colour of the line it
    marks (the Due cell, a step's due, the card's due) at the same specificity. */
