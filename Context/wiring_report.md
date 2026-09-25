@@ -1,378 +1,238 @@
-# Frontend Wiring — Follow-up 12, Tasks in the app
+# Frontend Wiring — Follow-up 13, My tasks holds everything a person is part of
 
-> Follow-up 12 (`Context/wiring_followups.md` §12): the app's half of Tasks, the backend's half being
-> round 10 (`RWRentApi-wiring/Context/round10_report.md`, §5 the contract), verified and in `main`.
-> Frontend only, on `feature/backend-wiring` in this worktree
+> Follow-up 13 (`Context/wiring_followups.md` §13): the app's half of the owner's My tasks decision,
+> the backend's half being round 11 (`RWRentApi-wiring/Context/round11_report.md`, §5 the contract: no
+> operation, shape, code or enum changed; My tasks and its count hold new members), verified and in
+> `main`. Frontend only, on `feature/backend-wiring` in this worktree
 > (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main` after
-> verification. Written 2026-09-24. It replaces Follow-up 11's report, which git history keeps.
+> verification. Written 2026-09-25. It replaces Follow-up 12's report, which git history keeps.
 >
 > **The owner's side was never touched.** This run never opened 5173, never signed in anywhere,
-> never called 5001 and never wrote to `rwrent_v1`; its read-only fingerprint is the same at the end
-> as at the start. The backend worktree was only built (in Release) and run, never changed.
+> never called 5001, never read or wrote `rwrent_v1` and never read Mailpit. The backend worktree was
+> only built (in Release) and run, never changed.
 >
-> - The owner's app on 5173 hot-reloads from this worktree, so it shows this run's code. Its API on
->   5001 still serves round 9, whose `GET /api/me` holds no `Tasks.Use`: the owner sees no Tasks
->   entry, no Open tasks tile or card, and the app asks nothing about tasks, as §12 says it must be
->   until the reviewer upgrades 5001. Insurance cases is unchanged.
+> - The owner's app on 5173 hot-reloads from this worktree, so it showed this run's code as it was
+>   written; its API on 5001 already serves round 11, so the owner's My tasks now shows others' tasks
+>   in the new layout.
 > - Every live check used a scratch stack built for this run: `rwrent_check`, created, migrated and
->   seeded by round 10's Release build (the prototype's eight tasks), behind the API on 5002.
+>   seeded by round 11's Release build, behind the API on 5002.
 > - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, on
 >   5174 and 5002.**
 
 ## 1. Summary
 
-- **F12-1.** `/tasks` and `/tasks/:taskId` need `Tasks.Use`, which joins the app's permissions. The
-  sample Tasks page and its sample rows are gone. Insurance cases stays exactly as it was, "Under
-  development", in the navigation, on its page and on the Overview.
-- **F12-2, the list.** The header "Tasks" with New task; the strip My tasks / Involving me / Finished
-  with the server's counts and "Times in Tallinn time."; the search and the Due filter; each view's
-  columns in the order the API gives; the reader's own steps with Mark done or Undo on Involving me;
-  paging; the empty states and the no-results state; the phone cards. The view, the search, the
-  filter and the page are in the address.
-- **F12-3, a task's page.** The breadcrumb back to the view it came from; the hero with the status,
-  Created by, Due (Overdue or Due today in their tones), About (the record as a link, or
-  "Vehicle · deleted record") and Progress; Edit, Finish task and Cancel task only when the API says
-  `canChange`; the finished and cancelled banners; Description; Steps, each with " (you)", its due,
-  its state and the action the API allows; Record; the "not shared with you" and not-found states.
-- **F12-4, New task and Edit task,** one dialog: the Task section and the Steps section with Add step,
-  move up, move down and remove. An edit sends every step with its id in the order shown, so a done
-  step keeps its mark. Every refusal lands where it belongs: a field's under the field, a step's under
-  that step's row, a record that is gone under the record's select, a lost race as the stale banner
-  with Refresh, the rest in the banner. After Create the new task's page opens.
-- **F12-5.** Finish task names the steps still open, in the warn tone; Cancel task has its optional
-  Why and "Keep task". Mark done and Undo are single actions; a refusal shows the API's sentence under
-  its step.
-- **F12-6 and F12-7.** The count on Tasks (sidebar and phone drawer) is the to-do count; the Overview's
-  Open tasks tile reads it and its card lists the to-do items. Without `Tasks.Use` none of this shows
-  and nothing is asked. Every write refreshes the task, the three views, the counts and the to-do list,
-  so the count and the Overview follow a mark at once.
-- **The app judges nothing.** Who may mark, undo or change is read from `canMarkDone`, `canUndo`,
-  `canChange` and `viewerIsCreator`; an empty title, a step without a person, a step due after the
-  task are the API's refusals, never the app's own checks.
+- **F13-1, the table.** My tasks takes Involving me's layout and widths: Task (with "from" its creator
+  when someone else created it), Steps, **Your step** (the reader's own steps, each with Mark done or
+  Undo exactly as the API's `canMarkDone` and `canUndo` say, Done when the step is done, and a dim
+  dash when the reader has no step in the task), People, Due. On the tablet it folds as Involving me
+  does: People go under Steps.
+- **F13-2, the phone.** A My tasks card shows the reader's own steps with their 44px buttons, as an
+  Involving me card does; a card without a step of the reader's shows none.
+- **F13-3, nothing else.** The tab's count still reads `myTasks` (the server now counts the new
+  members); the words, the empty states, the navigation's count, the Overview, the task's page and the
+  dialogs are unchanged. Finished keeps its own columns.
+- **The app judges nothing.** Which tasks My tasks holds, their order, which steps are the reader's and
+  which action each offers all come from the API; a step the task's creator marked reads Done with no
+  action for its person because the API says so.
 
 | | |
 |---|---|
-| Commits | `8a73732`, `ac3b89a`, `b669aad`, `0c04526`, `a71ce3a`, `c2e62e6` (`Wiring 33`) and this report's (`Wiring 34`), on `feature/backend-wiring` (§9) |
-| Tests | 387 → **468**, all green: 81 new; 5 existing tests updated as the run's rules allow, 1 extended (§2.8) |
+| Commits | `6753df8`, `fa2b6a0`, `049f210` (`Wiring 35`) and this report's (`Wiring 36`), on `feature/backend-wiring` (§9) |
+| Tests | 468 → **480**, all green: 12 new; 5 existing tests moved to round 11's answers as the run's rules allow (§2.4) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
-| Each commit alone | 0 type errors and the full suite green at every one of the six (§4.5) |
-| Planted breakages | **66 planted, 66 caught** by the suite (§4.4) |
-| Joint check | **44/44** through the API, on a freshly seeded database; the 70 fixtures compared with a second fresh run (§4.1, §4.2) |
-| In a browser | the real pages at 1512, 834 and 402, dark and light, in a preview outside the repositories; two look defects found there and fixed (§4.3) |
-| The owner's database | unchanged: same fingerprint before and after |
+| Each commit alone | 0 type errors and the full suite green at each of the three (§4.6) |
+| Planted breakages | **12 planted, 12 caught** by the suite (§4.5) |
+| Joint check | **37/37** through the API on a freshly seeded database; the 18 recorded answers identical in a second fresh recording (§4.2, §4.3) |
+| In a browser | the app on 5174 signed out; the real pages at 1512, 834 and 402 in a preview outside the repositories (§4.4) |
 
 ## 2. Implemented
 
-### 2.1 The API layer
+### 2.1 F13-1: the table (`src/pages/tasks/Tasks.tsx`, `Tasks.module.css`, `taskAddress.ts`)
 
-- `src/api/dto.ts`: the round-10 contract as the OpenAPI document serves it, members and optionality
-  from its `required` arrays: the four enums (`WorkTaskStatus`, `WorkTaskAboutKind`, `WorkTaskView`,
-  `WorkTaskDueFilter`), `WorkTaskResponse`, `WorkTaskStepResponse`, `WorkTaskListItemResponse`,
-  `WorkTaskToDoItemResponse`, `WorkTaskCountsResponse`, `WorkTaskPersonResponse`, the requests, and
-  the two queries. `WorkTaskQuery` has no sort field: the API refuses one.
-- `src/api/tasks.ts`: the eleven operations. `src/api/queryKeys.ts`: `qk.tasks`, one prefix for the
-  task, the views, the counts, the to-do list and the people.
-- `src/api/codes.ts`: `tasks.about_record_not_found` names `aboutRecordId` for `task-create` and
-  `task-edit`. It is a 404, so `src/api/problem.ts` now reads a 404 whose code the op's table maps as
-  a field refusal too; any other 404 is read as before.
-- `src/permissions/permissions.ts`: `Tasks.Use`.
+- **Which views carry the reader's steps** is a property of each view in `TASK_TABS`, `yourSteps`:
+  true for My tasks and Involving me, false for Finished. The list and the phone card read it; nothing
+  asks for a view by name any more to decide the layout.
+- **The columns** of the open views: Task (auto), Steps 150, Your step 290, People 200, Due 170; the
+  table's minimum width 1020. The class that sets it is now `withSteps` (it was `involving`).
+- **Your step** lists `yourSteps` as the API gives it, in its order, each with its title, its due line
+  (Overdue and Due today in their tones while the step is to do), Done when it is done, and the action
+  the API allows; a row whose `yourSteps` is empty (one's own task with no step of one's own) shows a
+  dim dash.
+- **"from"** stands under a task someone else created, as before, now also in My tasks.
+- **The folded band (768–1023)** is Involving me's: Steps 107, Your step 206, Due 121, People folded
+  into a line under Steps, the action moving under the step's text.
 
-### 2.2 The words (`src/format/tasks.ts`)
+### 2.2 F13-2: the phone card
 
-From the handover's copy deck: "Vehicle · 204 JLM" (the app adds the kind's word to the API's
-`aboutLabel`), "Vehicle · deleted record" when `aboutRecordExists` is false; "Overdue · 23 Sep",
-"Due today · 17:00", "27 Sep, 12:00", a step's "Due 26 Sep, 16:00" and "No due date", with Tallinn's
-day deciding what "today" is; "1 of 4 done", "1 of 4 steps done", "No steps"; "Signe Priede, Toms
-Rudzitis +1"; "from Dita Smite"; "Done · Dita Smite, 23 Sep, 14:10"; " (you)"; the finish warning
-"2 steps are not done: Car wash (Toms Rudzitis), Handover (Dita Smite)."; the banners "Finished by …
-on …" and "Cancelled by … on …" with the reason or "No reason given."; the About lists' options
-("204 JLM · Hyundai Kona Electric", " · inactive", "552 KLM · Nordwind Logistics · Active").
+The card's "Your step" or "Your steps" section, with a card-sized Mark done or Undo per step
+(`data-size="card"`, 44px), is drawn for the open views; tapping the button marks the step and does not
+open the task, as on Involving me.
 
-### 2.3 F12-1 and F12-6: the routes, the count, the Overview
+### 2.3 F13-3: what stays
 
-- `src/app/routes.tsx`: both routes need `Tasks.Use`; the navigation entry carries the count `tasks`.
-  The router's guard and the navigation filter already hide a gated page from a reader without its
-  permission, so the System Administrator and a Record deleter alone see no Tasks entry.
-- `src/app/AppShell.tsx`: the count is `toDo` of `GET /api/tasks/counts`, drawn as the other counts
-  (sidebar expanded and the phone drawer), none when zero.
-- `src/pages/tasks/taskAddress.ts` holds `useTaskCounts`, enabled only with `Tasks.Use`.
-- `src/pages/overview/Overview.tsx`: the Open tasks tile ("to do", opening Tasks) and card (the to-do
-  list's first 100, earliest due first, each row a link to its task with the tile's tone for overdue
-  or due today, "No open tasks" when empty) show only for a holder; the Insurance tile and card are
-  untouched. `src/pages/overview/sample.ts` keeps only the insurance rows;
-  `src/pages/simple/Placeholders.tsx` only Insurance cases.
+`TASKS_DESCRIPTION`, the empty states ("No open tasks" with New task on My tasks), the no-results
+state, the strip and its counts (`myTasks`, `involvingMe`, `finished`), the navigation's count and the
+Overview's tile and card (the to-do count), the task's page, the dialogs, and every request the page
+makes are unchanged. Insurance cases is untouched.
 
-### 2.4 F12-2: the list (`src/pages/tasks/Tasks.tsx`)
+### 2.4 Tests
 
-Built with the app's list vocabulary as Delete records was: `PageHeader` with New task, `RecordTabs`
-(compact: below 640 the tabs drop their icons and tighten to `8px 11px`, so all three fit), the
-toolbar's `SearchInput` and `SelectFilter`, the shared table with its row navigation, `Pagination`,
-`EmptyState`. The column sets and widths are the handover's: My tasks and Finished Task / Steps 170 /
-People 240 / Due or Closed 170 (min 800), Involving me Task / Steps 150 / Your step 290 / People 200 /
-Due 170 (min 1020); at 768–1023 fixed layout at 71% and, on Involving me, People folds into a line
-under Steps. Below 768 each task is a card that opens its task when tapped, with Steps and its bar,
-Due or Closed, and on Involving me the reader's steps, each with a 44px Mark done or Undo.
+**The answers.** `src/pages/followup13.support.ts` holds round 11's answers as the scratch API gave
+them on 2026-09-25 (§4.3): the four people's counts and My tasks, Dita's and Toms's Involving me, Toms's
+My tasks filtered on Overdue, his to-do list, and two marks with what followed (Toms marks Car wash;
+Dita, the creator of "Book a service", marks Toms's "Tell the driver the time"). Its clock is
+`R11_CAPTURED_AT`. Follow-up 12's `followup12.support.ts` is unchanged: it stays round 10's answers for
+everything round 11 did not change; its `myTasks` numbers and its My tasks lists are round 10's and no
+assertion reads them any more.
 
-### 2.5 F12-3: a task's page (`src/pages/tasks/TaskRecord.tsx`)
+**The tests whose expectation this run changes on purpose** (each now reads round 11's answers, at
+their moment):
 
-`RecordHeader` with the hero band (`stackActions`: below 640 the three buttons take a row each),
-`RecordBanner` (now also `ok` and `mute`, and without a body for a finished task), `Panel`, `FactGrid`.
-The steps are the handover's numbered rows. The About link is offered only to a reader who may open
-that record's page; a gone record is named, never linked. A refused read answers: `tasks.not_shared`
-→ "This task is not shared with you" in a panel titled Task; `tasks.not_found` → "That task is not
-available" with the API's "This task no longer exists.", without Try again.
-
-### 2.6 F12-4 and F12-5: the dialogs (`src/pages/tasks/TaskDialogs.tsx`)
-
-- **New task and Edit task** (720 wide): the shared `Dialog`, `Field`, `invalidProps` and the one
-  mutation hook every dialog submits through. About offers the kinds whose list the reader may read,
-  then that kind's own list (the first 100, inactive ones marked); an edit keeps the task's record
-  offered even beyond the first 100 or once deleted ("deleted record"), so an unchanged reference is
-  kept (round 10, decision 1). A step's Person is `GET /api/tasks/people` with " (you)"; a step's
-  person no longer offered stays shown on that step.
-- **What is sent** is built by `createRequest` and `updateRequest`, which the tests read: the form as
-  it is (a blank title goes blank; a step without a person goes with the empty identifier, so the API
-  answers "Every step needs a person." rather than a binding error); an edit's every step with its id
-  in the order shown; an instant the person did not touch as it was stored (T-009).
-- **Where a refusal lands:** fields under their field; `steps[i].title`, `steps[i].responsibleUserId`,
-  `steps[i].dueAtUtc` under that row's field, and `steps[i].id` on the row, found by where the row
-  stood when it was sent (`stepMessage`), so a row moved after a refusal keeps its message;
-  `steps` (more than 30) under the Steps section; the gone record under its select; `tasks.not_found`
-  as "The change was refused" with the API's sentence (`taskRefusal`); `tasks.closed` and
-  `tasks.creator_only` as the shared conflict and forbidden banners; `tasks.concurrency_conflict` as
-  the stale banner with Refresh, which reloads the task and re-seeds the dialog.
-- **Finish task** (500, ok tone): "Finish this task? It leaves everyone’s open list." or the warn note
-  naming the open steps and "Finish anyway?", and the two consequences. **Cancel task** (520, mute
-  tone): the optional Why, "Keep task" (the shared `Dialog` takes a `cancelLabel`), Cancel task.
-- **Mark done and Undo** (`src/pages/tasks/StepAction.tsx`): offered exactly as `canMarkDone` /
-  `canUndo` say; one request at a time through the app's submit gate; the answer or the refusal
-  refreshes every task query; a refusal's API sentence stays under its step, the button stays for a
-  retry.
-
-### 2.7 Shared pieces extended (existing callers unaffected)
-
-`EmptyState` (body optional), `RecordTabs` (`compact`), `RecordBanner` (body optional; `ok` and `mute`
-tones in `record.module.css`), `Dialog` (`cancelLabel`), `RecordHeader` (`stackActions`), `rowNav`
-(typed for any element, so the phone card opens its task as a row does).
-
-### 2.8 Tests
-
-**81 new tests.** Existing tests were changed only where they asserted the old ungated Tasks page or
-its sample rows, as the run's rules allow, plus one catalogue extended. None was deleted, skipped or
-weakened.
-
-**The updated tests, each with its old and new expectation:**
-
-| File | Test | Before | Now |
-|---|---|---|---|
-| `src/app/routes.test.ts` | "the pages open to every signed-in persona need nothing" | `/tasks` among them, needing nothing | `/overview`, `/needs-attention`, `/insurance-cases`, `/profile`; Tasks needs `Tasks.Use` (new tests below) |
-| `src/app/routes.test.ts` | "a Viewer keeps the pages a Viewer reads and is refused the rest" | body unchanged; `/tasks` reachable because it needed nothing | body unchanged; `/tasks` reachable because the test's Viewer now holds `Tasks.Use`, as round 10's `GET /api/me` gives it. The persona `VIEWER` gained `Tasks.Use` (and with it the Fleet Manager and the Principal); `SYSTEM_ADMINISTRATOR` is built without it |
-| `src/app/routes.test.ts` | "a Record deleter with no other role reaches the ungated pages and Delete records, nothing else" | reachable: overview, needs-attention, **tasks**, insurance-cases, delete-records, profile | the same without `/tasks` |
-| `src/app/routes.test.ts` | "an account with no permission at all reaches only the ungated pages" | overview, needs-attention, **tasks**, insurance-cases, profile | the same without `/tasks` |
-| `src/pages/followup10.render.test.ts` | "sees the Overview’s restricted states, as for any missing permission" | contains "Open tasks" (the sample card) | does not contain "Open tasks" (the Record deleter alone does not hold `Tasks.Use`); contains "Unresolved insurance cases" |
-| `src/api/codes.test.ts` | "no entry names a code the backend does not have" (extended) | the backend catalogue of users, rentals, authorizations, interruptions, drivers, deletions, roles, email change | the same plus the 14 codes of round 10's `WorkTaskErrors.cs` |
-
-**The new tests:**
-
-| File | New | What they hold |
+| Test | Before | Now |
 |---|---|---|
-| `src/app/routes.test.ts` | 3 | Tasks and a task's page need `Tasks.Use` by any spelling; the three roles open them, the administrator, a Record deleter alone and nobody do not; the entry carries its count and is offered to a holder only; Insurance cases still offered to everyone |
-| `src/format/tasks.test.ts` | 13 | every word of §2.2, the Tallinn day around midnight UTC, one and many |
-| `src/api/taskRefusals.test.ts` | 5 | the API's own refusals read by the app: a step's fields with their index, the gone record under its select on both writes and nowhere else, not found as a refused change, closed, forbidden, stale; the mark refusals' sentences |
-| `src/pages/followup12.render.test.ts` | 26 | the list's three views as Dita, Toms and Signe (header model, strip counts, zone, search, filter, rows in the API's order, cells, Your step with the API's rights, Done without an action, chips and Closed, every empty state, no results, the Due filter from the address); a task's page as creator and as a step's person, after a mark, overdue and due today, no steps, finished, cancelled with and without a reason, a deleted record, no read permission, not shared, not found; the Overview's tile and card for Dita and Toms before and after his mark, and for the administrator (no tile, no card, every task query disabled); the sidebar count; one prefix invalidates every task query; the tone rules last in the stylesheet |
-| `src/pages/followup12.dialogs.render.test.ts` | 17 | New task's sections; About's lists per kind with inactive marked; a step row's Person with " (you)" and its buttons; the shape refusal on the title and the row; a step due after the task on that row only; the gone record and a kind without a record under the select; Edit opened on the task with the done step's line; a person no longer offered; the kept deleted record; the edit's refusals; not found; the stale banner; Finish with and without open steps; Finish refused; Cancel with Keep task, its Why refusal, Keep task enabled beside a stale record |
-| `src/pages/followup12.phone.render.test.ts` | 6 | the cards (no table, each opening its task, Steps with its bar, Due or Closed in its tone, No due date, the pager, the compact strip); Involving me's steps with 44px actions; "Your steps" for two; Finished's chip and Closed; the count in the phone's drawer, none at zero |
-| `src/pages/followup12.actions.test.ts` | 11 | what New task, Edit task and Cancel task send (blank title and no person as they are, times in UTC, ids in the order shown, a removed step absent, untouched instants as stored); a step's refusal found by the row sent; Mark done and Undo through their real hook and a stand-in transport: offered as the API says, the request path, every task query refreshed and nothing else, on success and on refusal; the one refresh prefix |
+| `followup12.render` › the Tasks list › the header, the strip with the server’s counts, … | Dita's counts `{ myTasks: 4, involvingMe: 1, finished: 1, toDo: 4 }`; My tasks 4 in the strip; "4 tasks" | `{ myTasks: 5, involvingMe: 1, finished: 1, toDo: 4 }`; My tasks 5; "5 tasks" |
+| `followup12.render` › the Tasks list › My tasks: the API’s rows … (renamed "… progress, your step, people and due") | round 10's four rows; the columns Task, Steps, People, Due and **no** Your step; the dates of round 10's recording | round 11's five rows, Signe's windscreen case third with "from Signe Priede" and Dita's step "Pick up the repair invoice" with Mark done; the columns Task, Steps, **Your step**, People, Due; Prepare 204 JLM with Add to Bolt Done and Undo, Handover with Mark done; the key fobs with three dim dashes (Your step, People, Due); the dates of round 11's recording |
+| `followup12.render` › the Tasks list › each view’s empty list … | My tasks and Involving me rendered from Toms's recorded My tasks, empty in round 10 (`view1Toms`) | the same two empty states rendered from an empty list of the test's own (`EMPTY_PAGE`); Finished still from Toms's recorded Finished, which is still empty |
+| `followup12.render` › the Overview’s Open tasks › the count follows a mark: Toms’s card … | round 10's counts and to-do lists; "Toms has no task of his own": `countsToms.myTasks` is 0 | round 11's; `r11CountsToms.myTasks` is 3 while the tile reads 2 to do, which proves the tile is the to-do count more plainly; after his mark 1 to do and no Car wash, as before |
+| `followup12.phone.render` › the task cards on a phone › no table; each card … (renamed "… due and the reader’s steps") | round 10's four cards; Prepare 204 JLM's card **without** "Your step" | round 11's five cards; Prepare 204 JLM's card with "Your steps", two steps, Undo and Mark done at card size; the windscreen card "from Signe Priede" with "Your step" and Mark done; the fine's card without a step section |
 
-**How they are built.**
+No other test changed, and none was deleted, skipped or weakened.
 
-- The fixtures, `src/pages/followup12.support.ts`, are the joint check's own answers from the scratch
-  API (§4.1), 70 of them, generated from its saved JSON and typed as the DTOs, so a member the API
-  sends and `dto.ts` does not declare fails the typecheck.
-- The seed's times follow the moment it was seeded, so each render test sets the clock to the moment
-  the answers were given (`CAPTURED_AT`), and "Overdue" or "Due today" read as they did then.
-- `src/pages/followup12.harness.ts` renders a page from a cache holding those answers, a refused read
-  included (not shared, not found), and hands back the cache so a test can read what the page asked
-  for and whether it was enabled.
-- A server render runs no effect, so the page header's model is caught as the page hands it over, and
-  the dialogs' one submit hook is replaced as in Follow-ups 10 and 11: it answers with the API's
-  refusal a test names, read by the dialog's own `refusal` and `toFailure` under its own op.
+**The new tests** (12):
+
+| File | Cases | What they hold |
+|---|---|---|
+| `followup13.render.test.ts` | 9 | the two open views carry the reader's steps and Finished does not; **Toms**, who created nothing: the strip's 3, the five columns, the rows in the server's order and the same tasks as his Involving me, "from" on each, Tell the driver Overdue in red with Mark done, Car wash with Mark done, Collect the photos Done with Undo, People under Steps; **Signe**: her agreement due today in amber with a dim dash for Your step, Dita's task "from Dita Smite" with her step and Mark done, her own case with her done step and Undo; the table's `withSteps` width, Your step's column and People folding on the tablet; after Toms's own mark Done with Undo, after Dita's mark of his step Done with **no** action and the task moved last as the server orders it; with every flag false no action at all, Done where done; the Due filter's answer with "from"; Karlis's recorded empty My tasks as the empty state with New task; the count on Tasks still the to-do count (2) while My tasks holds 3 |
+| `followup13.phone.render.test.ts` | 3 | Toms's three cards, each "from" its creator with his step's 44px action; a step marked by the task's creator shows Done on the card with no button; Signe's own task without her step has no step section, her step in Dita's task has one |
 
 ## 3. Not implemented or partial
 
-**Nothing of §12.** Every point is built and tested.
+**Nothing of Follow-up 13.** F13-1 to F13-3 are built and tested.
 
 ### 3.1 The steps that need a password typed into the app
 
-The signed-in browser steps need the seed password typed into the sign-in page, which this run may not
-do. They are left for the owner's reviewer (§5). What they would show was covered in three ways: through
-the API as the same people (§4.1); rendered from those very answers by the real components (§4.2); and
-in a browser, on the real pages with a stand-in transport answering from those answers (§4.3).
+This run may not type a password into the app, so the signed-in steps in a real browser are the
+reviewer's, on 5174 and 5002 (§5). Everything they look at was also checked here through the API as
+the same people (§4.2), and in the real pages from those answers (§4.4).
 
 ## 4. Verification: the joint check
 
-Everything ran on the scratch stack only.
+### 4.1 The scratch stack
 
-- **The scratch stack**, as `RWRentApi-wiring/Context/round10_report.md` §7 describes it: nothing ran
-  on 5002 or 5174 at the start; `rwrent_check` did not exist. It was created, migrated (seven
-  migrations, `V9WorkTasks` last) and seeded by round 10's Release build (work tasks 8, work task
-  steps 11), and the API started on 5002 from `bin/Release` with
-  `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, trusting `http://localhost:5174`. Every
-  command sourced an environment script that refuses to run unless its connection string names
-  `rwrent_check`. The backend worktree was built with `-c Release` only, at `1fd603b`, clean.
-- **Guards.** The API client refuses any address but `localhost:5002`. The seed password came from
-  the owner for this session and was passed in each command's environment; it is in no file.
+As `RWRentApi-wiring/Context/round11_report.md` §7 describes it: nothing ran on 5002 or 5174 at the
+start and `rwrent_check` did not exist. It was created, migrated (seven migrations, `V9WorkTasks` last)
+and seeded by round 11's Release build of the backend worktree at `5b7a4c7`, clean (work tasks 8, work
+task steps 11), and the API started on 5002 from `bin/Release` with
+`ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, trusting `http://localhost:5174`. Every command
+sourced an environment script that refuses to run unless its connection string names `rwrent_check`.
+The API client refuses any address but `localhost:5002`. The seed password came from the owner for this
+session and was passed in each command's environment; it is in no file.
 
-### 4.1 Through the API — 44/44
+### 4.2 Through the API — 37/37
 
-`joint12.py`, in the run's scratchpad, as Dita Smite, Signe Priede, Toms Rudzitis, Karlis Zvaigzne and
-the administrator, making every request the Tasks pages make:
+`joint13.py`, in the run's scratchpad, as Dita Smite, Signe Priede, Toms Rudzitis, Karlis Zvaigzne and
+the administrator, making the requests the My tasks page makes (`View=1&PageNumber=1&PageSize=20`, the
+counts, the filters, the marks):
 
 - **who uses tasks:** the four hold `Tasks.Use`; the administrator does not and is refused the counts
-  and the to-do list (403);
-- **the seed as the pages read it:** Dita 4/1/1 with 4 to do, Signe 2/1/2 with 2, Toms 0/3/0 with 2;
-  Toms's Involving me in the server's order by his own open step; a search that finds nothing; the
-  search on "204 jlm" finding the record's text; Due Overdue finding the parking fine; the people
-  Dita, Karlis, Signe, Toms;
-- **the rights, as each reader reads them:** Toms on Prepare 204 JLM may mark Car wash only and change
-  nothing; Dita, its creator, may change it, undo the done step and mark the rest; Karlis is refused
-  Order two spare key fobs (`403 tasks.not_shared`); an unknown task is `404 tasks.not_found`;
-- **a mark:** Toms marks Car wash (done by him, Undo offered), his count falls to 1 at once, marking it
-  again is `409 tasks.step_already_done`, he undoes it and his count is back to 2;
-- **a practice task created by Dita** about 119 MPR with steps for Toms and Signe: 201, hers to change;
-  her My tasks, their Involving me and to-do counts follow; Toms marking Signe's step is
-  `403 tasks.step_not_yours`; Dita marks Toms's step, and Toms undoing her mark is
-  `403 tasks.mark_not_yours`, so he reads it done by Dita with neither action;
-- **an edit** that renames and moves Toms's done step, gives Signe's to Karlis and adds a third: the
-  mark stays, positions 1 to 3, a blank description is none;
-- **the edit's refusals, each changing nothing:** a step due after the task (`400
-  tasks.step_due_after_task` on `Steps[1].DueAtUtc`), a changed record that does not exist
-  (`404 tasks.about_record_not_found`), Toms editing (`403 tasks.creator_only`);
-- **a lost race:** two marks of the same task at the same moment, one `409 tasks.concurrency_conflict`;
-- **finish** with steps open: Finished, those steps stay not done; a mark after it and a second finish
-  are `409 tasks.closed`; it is under Finished for Dita, Toms and Karlis;
-- **cancel:** the note kept trimmed; without a note, none;
-- **a record deleted since:** a practice vehicle, a task about it, the vehicle deleted by the
-  administrator on the deletions page: the task keeps the kind and the id, its label is none and
-  `aboutRecordExists` false; an edit that keeps the reference is accepted.
+  and My tasks (403), so the app asks nothing;
+- **My tasks as each reads it:** Toms 3/3/0 with 2 to do, Dita 5/1/1 with 4, Signe 3/1/2 with 2,
+  Karlis nothing; each list in the server's order, its total the strip's count; the tasks of others in
+  it exactly Involving me's, each with its creator's name and the reader's steps; every step in Your
+  step the reader's own, with `canMarkDone` and `canUndo`; Dita's parking fine and key fobs without a
+  step of hers (the dim dash); Prepare 204 JLM with Add to Bolt done and Undo, Handover with Mark done;
+- **the filters on the mixed list:** Toms's Overdue is Book a service, by his overdue step; his search
+  "204 jlm" finds the two tasks about 204 JLM; Dita's No due date is her key fobs and her service
+  booking;
+- **a mark from a My tasks row:** Toms marks Car wash: the answer has it done by him with Undo; the task
+  stays in My tasks, the to-do count falls to 1 while My tasks stays 3; Undo brings both back;
+- **the creator's mark:** Dita marks Toms's Tell the driver the time; Toms reads it done by her with
+  neither Mark done nor Undo, the task moves last in his My tasks, and his undo is refused
+  `403 tasks.mark_not_yours`, the sentence the row would show;
+- **nothing else changed:** Finished is Dita's one, Signe's two, Toms none; Toms's to-do list is Car wash
+  alone after Dita's mark.
 
-The first run was 43/44: the one failure was the script's own expectation, which misspelled a seeded
-title. Corrected, the check ran again on a freshly seeded database: **44/44**.
+All 37 passed on the first run, on a freshly seeded database.
 
-### 4.2 The screens, rendered from those answers
+### 4.3 The recorded answers
 
-The fixtures of §2.8 are the first run's answers: the capture of the reads and the refusals
-(`capture12.py`, which changes nothing) and the joint check's writes. After the database was seeded
-afresh, both scripts ran again and every answer was compared with its fixture, member by member, once
-the instants (which follow the moment of seeding) and the generated identifiers were set aside: **all
-70 identical but one**, the practice task's finish, whose open steps depend on which of the two
-simultaneous marks won the race, which differs from run to run by nature.
+`capture13.py` recorded the 18 answers of §2.4 on a freshly seeded database; after another fresh seed it
+recorded them again, and `compare13.py` compared them member by member once the instants (which follow
+the moment of seeding) and the concurrency tokens were set aside: **18 of 18 identical.**
 
-### 4.3 In a browser
+### 4.4 In a browser
 
 - **The app on 5174**, started from this worktree with
   `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`, visited signed out
-  in the app's built-in browser (no sign-in was made): `/tasks` sent the visitor to Sign in, and the only
-  API request went to 5002 (`GET /api/me` → 401).
-- **A preview on 5175, outside the repositories.** The real app from this worktree with a stand-in
-  transport that answers from the fixtures of §4.2 as the chosen person (Dita, Signe, Toms, Karlis, the
-  administrator); it sends nothing anywhere. Looked at:
-  - at **1512**: My tasks, Involving me and the task's page with their columns (Task / Steps 170 /
-    People 240 / Due 170; Involving me 150 / 290 / 200 / 170) and the 112px green bar; Mark done on a
-    step, then Done with Undo; a refused mark's sentence under its step; Edit task (720), a step moved
-    down keeping its "Done · …" line; the stale banner with Refresh and Save disabled; Finish task with
-    its warn note, then the ok banner and the page read-only; the Overview's tile ("4 to do") and card;
-  - at **834**: the folded band (107 / 206 / 121, People under Steps), the hero on two rows;
-  - at **402**: the strip without icons, all three tabs fitting; the cards with 44px buttons; a tapped
-    card opening its task; New task as the bottom sheet (radius 18 18 0 0), the refusal on the title
-    and the step row, the title focused; the task's page with one fact per row and the three buttons
-    one per row;
-  - the **light theme**: a cancelled task's mute banner and the Involving me list;
-  - the **administrator**: no Tasks entry, `/tasks` "Not available to you", no Open tasks on the
-    Overview, and no tasks request in the stand-in's log;
-  - After Create: the new task's page opens, its breadcrumb leading to My tasks;
-  - no sideways scrolling at any width; no error or warning in the console.
+  in the app's built-in browser, no sign-in made: `/tasks` sent the visitor to Sign in, no cookie was
+  set, and the only API request went to 5002 (`GET /api/me` → 401). It was stopped afterwards.
+- **A preview on 5175, outside the repositories**: the real app from this worktree with a stand-in
+  transport that answers from the recorded answers as the chosen person and sends nothing anywhere.
+  Looked at:
+  - at **1512**: Dita's My tasks with its five rows and the five columns, Signe's case "from Signe
+    Priede" with Mark done, the dim dashes; Mark done on her step in Signe's case turned it into Done
+    with Undo; as Toms, Mark done on Car wash turned it into Done with Undo, its progress to 2 of 4 and
+    the count on Tasks from 2 to 1; Signe's Involving me and Finished as before (Finished: Task, Steps,
+    People, Closed);
+  - at **834**: the folded band: Steps 107, Your step 206, Due 121, People under Steps, nothing
+    scrolling sideways;
+  - at **402**: the cards, Dita's "Your steps" with full-width 44px Undo and Mark done, the windscreen
+    card "from Signe Priede"; tapping Mark done on Handover marked it without leaving the list and moved
+    the count from 4 to 3; nothing scrolling sideways;
+  - no error in the console.
 
-  **Two look defects were found there and fixed**, neither visible to a server render:
-  1. "Overdue" was drawn in the Due cell's grey: the cell's own colour came later in the stylesheet at
-     the same specificity. The tone rules are now the stylesheet's last, and a test reads the file to
-     keep them there (§2.8).
-  2. At 834 the Your step cell (206px, the handover's) cut the due line beside the button ("Due 25
-     Sep, 14:0"). In the folded band the action now moves under the step's text.
+  **One look defect was seen there, and it is not new** (§8.1): at 834 an overdue task's Due reads
+  "Overdue · 24 S…": the text needs about 7 pixels more than the 121px Due column (the handover's
+  width) gives it. The column is the same for all three views and has been since Follow-up 12, so
+  Follow-up 12's My tasks and Involving me cut it the same way; §13 asks for nothing else to change, so
+  it is left as it is and proposed for the next batch.
 
-  The preview was stopped, and the two launch entries added for it and for 5174 to the workspace's
-  launch file, outside the repositories, were removed again.
+  The preview's stand-in first handed back the same objects it changed in place, so after a mark the
+  row's progress and the count did not move while the step did; the stand-in now answers with fresh
+  copies, as a real API does, and they followed. It was the stand-in's fault, not the app's: the app
+  had asked again for the counts and the list after the mark. The preview was stopped, and the two
+  launch entries added for it and for 5174 to the workspace's launch file, outside the repositories,
+  were removed again.
 
-### 4.4 The planted breakages — 66 planted, 66 caught
+### 4.5 The planted breakages — 12 planted, 12 caught
 
 Each breakage was written into a **copy** of the worktree outside it, never into the worktree, so the
 owner's app on 5173 could not hot-reload one even for a moment. The whole suite ran on each, and the
-file was restored byte for byte.
+file was restored byte for byte; the restored copy passes.
 
-| | Breakage | | Breakage |
-|---|---|---|---|
-| A1 | the edit forgets the record's refusal | L10 | no-results reads as an empty view |
-| A2 | a 404 never lands under a field | L11 | the search longer than the API takes |
-| A3 | a 404 read with the create's table whatever the op | L12 | one step's label for several |
-| A4 | the gone record becomes a banner | L13 | New task offered on the wrong empty view |
-| A5 | a refused mark reads the title, not the sentence | L14 | Overdue asks for no due date |
-| A6 | `Tasks.Use` not among the permissions | L15 | a row forgets its view |
-| R1 | the list open to everyone again | L16 | Finished shows Due, not Closed |
-| R2 | a task's page open to everyone | L17 | the tone rules lost |
-| R3 | no count on the entry | P1 | actions for the creator of a closed task |
-| R4 | the entry counts My tasks | P2 | " (you)" after everyone |
-| R5 | the counts asked for without `Tasks.Use` | P3 | the banners' tones swapped |
-| O1 | the tile without `Tasks.Use` | P4 | no words for no reason |
-| O2 | the tile reads My tasks | P5 | a gone record still linked |
-| O3 | the card in reverse order | P6 | linked without the record's read |
-| O4 | no "from" on the card | P7 | not shared reads as not available |
-| O5 | a row opens the list, not its task | P8 | retry offered on a task that is gone |
-| O6 | the to-do list asked for without `Tasks.Use` | P9 | the creator's order called yours |
-| L1 | Involving me reads another view | P10 | the hero loses Overdue and Due today |
-| L2 | the rows re-ordered by the app | P11 | a gone record reads as nothing |
-| L3 | every step offers its action | P12 | the breadcrumb forgets the view |
-| L4 | the two rights swapped | D1 | the edit sends new steps (marks lost) |
-| L5 | never "from" | D2 | a step without a person sent as text |
-| L6 | three names before the rest | D3 | an untouched step date rounded |
-| L7 | the bar filled wrong | D4 | a refusal placed by position, not by the row sent |
-| L8 | the Due cell loses its tone | D5 | inactive records not marked |
-| L9 | the Due filter is not a filter to clear | D6 | the kept record not offered |
-| D7 | a person no longer offered dropped | D8 | finishing without naming the open steps |
-| D9 | Cancel task closes with "Cancel" | D10 | an empty Why sent as text |
-| D11 | no " (you)" among the people | D12 | a step title marks itself by hand |
-| D13 | About offers two kinds | F1 | a write refreshes the counts only |
-| F2 | a refused mark leaves the stale state | F3 | Undo sends a mark |
-| F4 | the counts outside the prefix | U1 | the strip not compact |
-| U2 | an empty paragraph in a bodiless banner | U3 | the ghost button's label fixed |
+| | Breakage | Caught by |
+|---|---|---|
+| B1 | My tasks keeps round 10's columns, without Your step | 11 tests |
+| B2 | Finished takes the open views' columns | the views' flags test |
+| B3 | a row without the reader's step leaves Your step empty, no dim dash | Dita's rows, Signe's rows |
+| B4 | a My tasks card shows no steps, as in round 10 | the four My tasks phone tests |
+| B5 | People do not fold on the tablet in My tasks | the width-and-folding test |
+| B6 | the people line under Steps only on Involving me | Toms's rows, the width-and-folding test |
+| B7 | My tasks keeps the narrow table | the width-and-folding test |
+| B8 | an action drawn whatever the API says | 7 tests, among them "nothing offered, nothing drawn" and the creator's-mark tests |
+| B9 | no "from" in My tasks | Dita's, Toms's and Signe's rows, the Due filter test, Finished |
+| B10 | the app hides the reader's done steps, judging for itself | 7 tests |
+| B11 | the My tasks tab shows Involving me's count | the strip test, Signe's rows |
+| B12 | a My tasks card shows only the steps still to do | 5 phone tests |
 
-Two tests were strengthened after a first look at what they held, before the run: the Overview's tile
-is also read for Toms (whose My tasks is 0 and to-do 2, where Dita's are both 4), and a card with two
-of the reader's steps holds "Your steps". The request builders, the step message and the refresh were
-made functions the tests call (§2.6), because a server render cannot submit a dialog.
+### 4.6 The test suite, and each commit
 
-### 4.5 The test suite, and each commit
+- `npm run typecheck`: 0 errors. `npx vitest run`: **480 tests, 43 files, all green.** `npm run build`:
+  green (the chunk-size warning predates this run).
+- **Each commit alone**, from a clean copy outside the worktree (`git archive`): typecheck 0 errors and
+  the whole suite green at `6753df8` (468), `fa2b6a0` (468) and `049f210` (480).
 
-- Typecheck green, `npm test` 468/468 (387 before), `npm run build` green.
-- Each commit alone, in a clean copy outside the worktree (`git archive`, `node_modules` linked): the
-  whole project typechecks with 0 errors and the full suite passes at every one of the six, with 387
-  tests through the fourth, 390 at the fifth and 468 at the sixth.
+### 4.7 The owner's side, untouched
 
-### 4.6 The owner's side, untouched
+The owner's API on 5001 (pid 7505, restarted by the reviewer on round 11) and the app on 5173 (pid
+24831) ran on their own processes throughout; this run sent them nothing. `rwrent_v1` was not read,
+as the run's rules require, so no fingerprint was taken this time. Mailpit was not read.
 
-- 5001 and 5173 were never opened, called or signed into, and run on the processes they had.
-- `rwrent_v1`'s read-only fingerprint (every table's row count and a hash of its rows) is identical at
-  the start and at the end; it still has six migrations and no task table.
-- The backend worktree was only built in Release and run; its Debug output, which 5001 runs from, was
-  not touched (`bin/Debug` still dated 2026-09-22).
+### 4.8 End state
 
-### 4.7 End state
-
-- The scratch API runs on 5002 **for the reviewer**, over `rwrent_check`, domain `rwrent.example`,
-  **seeded afresh after every check of this run**: it holds the seed, with the prototype's eight tasks,
-  and nothing since but the sign-ins of one last read of the counts (Dita 4/1/1 with 4 to do, Signe
-  2/1/2 with 2, Toms 0/3/0 with 2, the administrator refused).
-- My Vite on 5174 is stopped; the reviewer starts one as §5.0 says.
-- The main checkouts are untouched. The worktree is clean, on `feature/backend-wiring`, and pushed.
+- The scratch API runs on **5002** (pid 12830) over `rwrent_check`, **freshly seeded** after the checks,
+  for the reviewer. Nothing runs on 5174 or 5175.
+- The workspace's launch file is as it was.
 
 ## 5. For the owner's reviewer: the steps with the seed password
 
@@ -384,102 +244,69 @@ made functions the tests call (§2.6), because a server render cannot submit a d
   sign-in on 5174 must never meet the owner's session on 5173.
 - **The people**, all with the seed password: Dita `dita.smite@rwrent.example` (Fleet Manager), Signe
   `signe.priede@rwrent.example` (Company Principal), Toms `toms.rudzitis@rwrent.example` (Viewer),
-  Karlis `karlis.zvaigzne@rwrent.example` (Fleet Manager), the administrator `sysadmin@rwrent.example`.
+  Karlis `karlis.zvaigzne@rwrent.example` (Fleet Manager).
+- **Dates** follow the moment the database was seeded, so they differ from the ones in this report.
 - **Afterwards:** the steps write practice data to `rwrent_check` only; reseed it if a clean copy is
   wanted.
 
 ### 5.1 The steps
 
-1. **The count.** As Dita: the sidebar's Tasks reads 4; the Overview's Open tasks tile reads 4 "to do",
-   and the card lists Reassign the parking fine (Overdue, red), Handover, Pick up the repair invoice
-   ("from Signe Priede") and Order two spare key fobs ("No due date").
-2. **The list.** Tasks: My tasks 4, Involving me 1, Finished 1; four rows, the fine first with its
-   Overdue date in red; "Times in Tallinn time." beside the tabs. Search `zzz`: "No results for these
-   filters" with Clear filters. Due → Overdue: the fine alone.
-3. **As a step's person.** As Toms: Tasks reads 2. Involving me: three rows, each "from" its creator;
-   Tell the driver the time is Overdue with Mark done; Collect the photos is Done with Undo. Mark done
-   on Car wash: the row shows Done and Undo, the count falls to 1 at once, and the Overview's card no
-   longer lists it. Undo: back to 2.
-4. **A task's page as a step's person.** Toms opens Prepare 204 JLM: no Edit, Finish or Cancel; "In the
-   order the creator set."; "Toms Rudzitis (you)" on Car wash, the only step with Mark done; the
-   breadcrumb leads back to Involving me.
-5. **New task.** As Dita, New task: Create with nothing typed → "Enter a title for the task." under
-   Title. Add a step and Create → the step's Title and Person say what they need. Fill it in: About
-   Vehicle offers every vehicle, "660 BYH · Fiat Tipo · inactive" among them; a task Due before a step's
-   Due → "A step cannot be due after the task." under that step. Create a valid one with a step for
-   Toms: its page opens, and Toms's count goes up by one.
-6. **Edit.** On Prepare 204 JLM, Edit: move Add to Bolt down; its "Done · Dita Smite, …" line moves
-   with it; Save changes; the step is still done.
-7. **Finish and cancel.** Finish task on Prepare 204 JLM: the warn note names the three open steps;
-   Finish: the green banner "Finished by Dita Smite on …", no actions, no Mark done. Cancel task on
-   another of her tasks with a Why: "Keep task" closes without a change; Cancel task shows the grey
-   banner with the Why. Both are under Finished.
-8. **Not shared.** As Karlis, open the address of Order two spare key fobs (copied from Dita's list):
-   "This task is not shared with you".
-9. **The administrator.** No Tasks entry; `/tasks` is "Not available to you"; no Open tasks tile or card.
-10. **Phone width** (≤ 402 px): the tabs without icons, all three fitting; cards with 44px Mark done;
-    New task as a bottom sheet; the task's page with one fact per row; nothing scrolls sideways.
+1. **Toms, who created nothing.** Tasks opens on My tasks with 3, Involving me 3; the count on Tasks
+   reads 2. Three rows, each "from" its creator: Book a service (his Tell the driver the time Overdue in
+   red, Mark done), Prepare 204 JLM (Car wash, Mark done), the windscreen case (Collect the photos Done,
+   Undo).
+2. **A mark from My tasks.** Mark done on Car wash: the row shows Done and Undo, its progress goes up by
+   one, the count on Tasks falls to 1, and Involving me shows the same. Undo: back to 2.
+3. **Dita, with tasks of her own.** My tasks 5: the parking fine first (Overdue, red; a dim dash in Your
+   step), Prepare 204 JLM (Add to Bolt Done with Undo, Handover with Mark done), Signe's windscreen case
+   "from Signe Priede" with Pick up the repair invoice and Mark done, the key fobs (three dim dashes),
+   Book a service (Book the service appointment Done with Undo).
+4. **The creator's mark.** As Dita, open Book a service and mark Toms's Tell the driver the time done.
+   As Toms: in My tasks that step reads Done with neither Mark done nor Undo, and the task is now last.
+5. **Signe.** My tasks 3: Prepare the rental agreement (Due today in amber, a dim dash in Your step),
+   Dita's Prepare 204 JLM "from Dita Smite" with Apply for the taxi licence and Mark done, her own
+   windscreen case with Send the claim to the insurer Done and Undo.
+6. **Karlis.** My tasks empty: "No open tasks" with New task.
+7. **Tablet width** (about 834 px): My tasks folds as Involving me does, People under Steps, nothing
+   scrolling sideways. (An overdue Due is cut to "Overdue · 24 S…", as it was before, §8.1.)
+8. **Phone width** (about 402 px): Toms's My tasks cards each with "from", "Your step" and a 44px button;
+   the button marks the step without opening the task; a tap elsewhere on the card opens the task.
+9. **Unchanged:** Finished (Task, Steps, People, Closed), Involving me, the Overview's Open tasks tile
+   (Toms: 2 to do, not 3), the task's page and the dialogs.
 
 ## 6. Decisions needed
 
-None. Choices made where §12 and the handover left room, each reversible in a line:
+None. Choices made where §13 left room, each reversible in a line:
 
-1. **The finished and cancelled banners name the task's last changer** (`updatedByDisplayName`). A
-   closed task accepts no change, so its last change is its closing; the prototype named the creator,
-   who is the same person by the API's rule.
-2. **A step without a person is sent with the empty identifier,** so the API's own "Every step needs a
-   person." answers; an empty string would have been refused by the request's binding in technical
-   words.
-3. **A refused edit of a task that no longer exists** reads "The change was refused" with the API's
-   sentence, as a closed task's refusal does.
-4. **A step's refusal follows its row** if the rows are moved after it.
-5. **About offers the kinds whose list the reader may read** (a task's own kind always); the four roles
-   that use tasks read all four. The record's link needs that record's read permission too.
-6. **A change of view keeps the search and the Due filter** and starts at the first page; a task's page
-   carries its view in the address (`?tab=involving`) so the breadcrumb leads back to it.
-7. **The Overview's card lists the first 100 to-do items**, its count being the list's total; the tile
-   shows "—" while the count loads.
-8. **Mark done and Undo carry the step's title in their accessible name** ("Mark done: Car wash").
-9. **In the folded band the Your step action moves under the step's text** (§4.3, 2).
-10. **The dialog's step row** is the app's dialog card (`--surface-2` with the app's own fields), not the
-    prototype's inset card with its custom select, so the fields read as every other dialog's.
+1. **A property of the view, not its name.** `TASK_TABS` says which views carry the reader's steps
+   (`yourSteps`), and the list and the card read it, so My tasks and Involving me cannot drift apart.
+2. **Round 11's answers in a file of their own.** Re-recording Follow-up 12's fixtures would have moved
+   every date its tests read, and those tests assert nothing round 11 changed; so round 11's answers sit
+   in `followup13.support.ts` with their own clock, and only the tests that pinned round 10's My tasks
+   moved to them. Where a test used a recorded answer as an empty list, it has an empty list of its own.
+3. **The Due column at 834 left as it is** (§4.4, §8.1): not part of §13, and a width the handover set.
 
-## 7. Deviations: where the handover and the API differ, the API wins
+## 7. Deviations
 
-1. **The search takes 50 characters**, the API's limit (the prototype allowed 100).
-2. **The search reads the record's text, not the kind's word** (round 10, decision 4): "204 JLM" finds
-   the task, "vehicle" alone does not.
-3. **Dates are the app's own:** "04 Oct, 20:08" with the day in two digits, as everywhere in the app.
-4. **No toasts.** After Create the page opens; after a mark the row changes; after Finish or Cancel the
-   banner appears.
-5. **The stale banner's second line** is the app's shared "Refresh to load the current values, then try
-   again." (the prototype said "save again").
-6. **The dialogs judge nothing before sending.** The prototype checked the title, the steps and the due
-   dates itself; here each is the API's refusal, in the API's words, which are the prototype's.
+None: the API and §13 agree, and nothing of the handover was needed beyond Involving me's layout,
+which the app already had.
 
 ## 8. Open risks
 
-1. **The owner's app already runs this code.** 5173 hot-reloads from this worktree. With the round-9
-   API on 5001 it shows no Tasks at all, as intended, until the reviewer upgrades 5001 (backup, then
-   `V9WorkTasks`, then the round-10 build). After the upgrade, Tasks appears for every holder of
-   `Tasks.Use` at once, with no app release needed.
-2. **The count and the lists follow the reader's own writes at once**, and another person's at the
-   next read (a page opened, a write made); nothing polls.
-3. **Two simultaneous marks of one task** answer one of them with the concurrency refusal (round 10,
-   decision 3); the app shows its sentence under the step, and the button stays for a retry.
-4. **The About lists and the people list offer the first 100** records of a kind, as the new-rental
-   dialog does; an edit keeps its own record offered beyond them.
+1. **An overdue Due is cut at the tablet width**, "Overdue · 24 S…" in the 121px Due column, in all
+   three views, since Follow-up 12. A proposal for the next batch: let the Due column take 128px in
+   the folded band (Task, the only flexible column, gives the 7px), or let the date wrap under
+   "Overdue". The app side only.
+2. **Follow-up 12's fixtures keep round 10's My tasks numbers** for the tests of things round 11 did
+   not change (the Overview's and the sidebar's to-do counts, Involving me, Finished, the task's page).
+   They are recorded answers of an earlier server; a test that starts to read their My tasks members
+   would read round 10's.
 
 ## 9. Commits
 
-On `feature/backend-wiring`, from `b0c0308`:
-
 | Commit | Group | Files |
 |---|---|---|
-| `8a73732` | the API layer knows tasks | `src/api/dto.ts`, `src/api/tasks.ts` (new), `src/api/queryKeys.ts`, `src/api/client.ts`, `src/api/index.ts`, `src/api/codes.ts`, `src/api/problem.ts`, `src/api/codes.test.ts` (extended), `src/permissions/permissions.ts` |
-| `ac3b89a` | the words of tasks | `src/format/tasks.ts` (new), `src/format/index.ts` |
-| `b669aad` | the shared pieces the pages need | `src/ui/EmptyState.tsx`, `src/ui/RecordTabs.tsx`, `src/ui/record.module.css`, `src/ui/Dialog.tsx`, `src/ui/RecordHeader.tsx`, `src/ui/RecordHeader.module.css`, `src/ui/rowNav.ts` |
-| `0c04526` | the Tasks pages and dialogs | `src/pages/tasks/` (new): `Tasks.tsx`, `TaskRecord.tsx`, `TaskDialogs.tsx`, `StepAction.tsx`, `taskAddress.ts`, `Tasks.module.css`, `TaskRecord.module.css`, `TaskDialogs.module.css` |
-| `a71ce3a` | Tasks takes its place in the app | `src/app/routes.tsx`, `src/app/AppShell.tsx`, `src/pages/overview/Overview.tsx`, `src/pages/overview/Overview.module.css`, `src/pages/overview/sample.ts`, `src/pages/simple/Placeholders.tsx`, `src/app/routes.test.ts`, `src/pages/followup10.render.test.ts` |
-| `c2e62e6` | the tests, from the scratch stack's answers | `src/pages/followup12.support.ts`, `src/pages/followup12.harness.ts`, `src/pages/followup12.render.test.ts`, `src/pages/followup12.dialogs.render.test.ts`, `src/pages/followup12.phone.render.test.ts`, `src/pages/followup12.actions.test.ts`, `src/format/tasks.test.ts`, `src/api/taskRefusals.test.ts` (all new) |
+| `6753df8` | round 11's answers for My tasks, recorded from the practice API | `src/pages/followup13.support.ts` (new) |
+| `fa2b6a0` | My tasks takes Involving me's columns and phone cards; the tests that pinned round 10's My tasks read round 11's answers | `src/pages/tasks/Tasks.tsx`, `src/pages/tasks/Tasks.module.css`, `src/pages/tasks/taskAddress.ts`, `src/pages/followup12.render.test.ts`, `src/pages/followup12.phone.render.test.ts` |
+| `049f210` | new tests for My tasks as round 11 fills it | `src/pages/followup13.render.test.ts` (new), `src/pages/followup13.phone.render.test.ts` (new) |
 | this one | the report | `Context/wiring_report.md` |
