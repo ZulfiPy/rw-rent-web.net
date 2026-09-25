@@ -594,12 +594,26 @@ has no step, "from" on another person's task); nothing else changed. The same da
 
 ## 14. Follow-up 14 — the owner's look at Tasks on the practice copy
 
-> **Status: OWNER-CONFIRMED, AUTHORIZED 2026-09-25.** The owner went through Tasks on the practice copy
-> (5174, the sample data) screen size by screen size: the desktop, the iPad Pro 11 upright and
-> sideways, the iPhone 16 Pro. Frontend only; the backend and its contract do not change. The tiers:
-> desktop from 1024 px (the sideways iPad Pro 11 is desktop), the folded tablet band 768–1023 (the
-> upright iPad Pro 11, 834 px), the phone below 768 (the iPhone 16 Pro, 402 px). Nothing else changes:
-> the task's page, the dialogs, the Overview, the words, Insurance cases.
+> **Status: IMPLEMENTED 2026-09-25, verified the same day** (app `a87c322`…`fb59065` Wiring 37 in four
+> grouped commits and `3831b1b` Wiring 38, on `feature/backend-wiring`, pushed and level with GitHub,
+> then fast-forwarded into `main`; report `Context/wiring_report.md`). Frontend only. Typecheck, 495
+> tests and the build are green. The reviewer measured the real app in a headless browser on the
+> scratch stack, freshly seeded, 25 checks: at 1512 and 1194 px Dita's four buttons at one x, 104 px
+> wide, each level with its title's first line to 0 px, 12 px after the text, "✓ Done" the line under
+> the title; Mark done on Handover turning its line to Done and its button to Undo at the same place;
+> Toms, after Dita marked his step, reading "✓ Done" with an empty place in the buttons' column; at 834
+> px every button under its text, starting where the text starts, 104 px, 12 px between steps,
+> "Overdue ·" over "24 Sep", nothing cut, and Toms's creator-marked step ending at "Done"; at 402 px
+> "✓ Done" under the title at the text's left, the 44 px full-width buttons unchanged, the two-line
+> title's underline in two pieces under its words; nothing scrolling sideways anywhere; no request to
+> 5001 or 5173. **Open, the owner's decision** (report §6.1): on the desktop a step's title has 146 px
+> beside its button, so four seeded step titles take two lines ("Book the service appointment"); a Your
+> step column about 34 px wider, taken from Task, would keep them on one line.
+
+The owner went through Tasks on the practice copy (5174, the sample data) screen size by screen size:
+the desktop, the iPad Pro 11 upright and sideways, the iPhone 16 Pro. The tiers: desktop from 1024 px
+(the sideways iPad Pro 11 is desktop), the folded tablet band 768–1023 (the upright iPad Pro 11, 834
+px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
 
 - **F14-1. Desktop and the sideways iPad: the buttons in Your step look placed at random** (the owner:
   "such a feeling that they are positioned by their vibe or mood"). Why: each step is one line of its
