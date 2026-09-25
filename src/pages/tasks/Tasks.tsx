@@ -39,6 +39,10 @@ import styles from './Tasks.module.css';
  * server's counts; the search and the Due filter; each view's columns, in the order the API gives
  * them; the phone cards; paging.
  *
+ * Since round 11 My tasks holds every open task the reader is part of, so it shares Involving me's
+ * columns and cards (Follow-up 13): the reader's own steps with their actions, a dim dash where the
+ * reader has none, and "from" on a task someone else created. Finished keeps its own columns.
+ *
  * The server decides. Which tasks a view holds, their order, what the search and the filter find,
  * and whether the reader may mark or undo a step all come from the API; this page words them. The
  * view, the search, the filter and the page live in the address; a change of view keeps the search
@@ -61,7 +65,7 @@ const EMPTY: Record<TaskTab, { icon: string; title: string; body?: string }> = {
 
 const TONE_CLASS = { bad: styles.toneBad, warn: styles.toneWarn } as const;
 
-/** The progress line and its bar; on Involving me's folded band the people come under it. */
+/** The progress line and its bar; on the folded band of the open views the people come under it. */
 function Progress({ task, people }: { task: WorkTaskListItemResponse; people?: string }) {
   const none = task.stepCount === 0;
   return (
@@ -80,7 +84,7 @@ function Progress({ task, people }: { task: WorkTaskListItemResponse; people?: s
 /** One of the reader's own steps in the Your step cell: its title and due, Done, and the action. */
 function YourStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse }) {
   const action = useStepAction(taskId, step);
-  // Involving me holds open tasks only; the step's own state decides its tone.
+  // My tasks and Involving me hold open tasks only; the step's own state decides its tone.
   const due = stepDue(step, true);
   return (
     <span className={styles.yourStep}>
@@ -143,7 +147,7 @@ function TaskCard({ task, tab, readerId }: { task: WorkTaskListItemResponse; tab
   const from = fromLine(task.createdByUserId, task.createdByDisplayName, readerId);
   const due = task.dueAtUtc ? dueInfo(task.dueAtUtc) : null;
   const none = task.stepCount === 0;
-  const steps = tab.id === 'involving' ? task.yourSteps : [];
+  const steps = tab.yourSteps ? task.yourSteps : [];
 
   return (
     <div {...rowNav(href)} className={styles.card}>
@@ -258,7 +262,7 @@ export function Tasks() {
   const page = tasks.data;
   const rows = page?.items ?? [];
   const filtered = !!search || !!due;
-  const involving = tab.id === 'involving';
+  const withSteps = tab.yourSteps;
   const finishedView = tab.id === 'finished';
   const empty = EMPTY[tab.id];
   const clear = () => patch({ search: '', due: '' });
@@ -320,13 +324,13 @@ export function Tasks() {
           </div>
         ) : (
           <div className={table.scroll}>
-            <table className={`${table.table} ${styles.table} ${involving ? styles.involving : styles.plain}`}>
+            <table className={`${table.table} ${styles.table} ${withSteps ? styles.withSteps : styles.plain}`}>
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.cTask}`}>Task</th>
-                  <th scope="col" className={`${table.th} ${involving ? styles.cSteps150 : styles.cSteps170}`}>Steps</th>
-                  {involving ? <th scope="col" className={`${table.th} ${styles.cYour}`}>Your step</th> : null}
-                  <th scope="col" className={`${table.th} ${involving ? `${styles.cPeople200} ${table.foldTablet}` : styles.cPeople240}`}>People</th>
+                  <th scope="col" className={`${table.th} ${withSteps ? styles.cSteps150 : styles.cSteps170}`}>Steps</th>
+                  {withSteps ? <th scope="col" className={`${table.th} ${styles.cYour}`}>Your step</th> : null}
+                  <th scope="col" className={`${table.th} ${withSteps ? `${styles.cPeople200} ${table.foldTablet}` : styles.cPeople240}`}>People</th>
                   <th scope="col" className={`${table.th} ${styles.cDue}`}>{finishedView ? 'Closed' : 'Due'}</th>
                 </tr>
               </thead>
@@ -346,16 +350,21 @@ export function Tasks() {
                         </span>
                       </td>
                       <td className={table.td}>
-                        <Progress task={task} people={involving && task.people.length ? people : undefined} />
+                        <Progress task={task} people={withSteps && task.people.length ? people : undefined} />
                       </td>
-                      {involving ? (
+                      {withSteps ? (
                         <td className={table.td}>
-                          <span className={styles.yourSteps}>
-                            {task.yourSteps.map((step) => <YourStep key={step.id} taskId={task.id} step={step} />)}
-                          </span>
+                          {task.yourSteps.length ? (
+                            <span className={styles.yourSteps}>
+                              {task.yourSteps.map((step) => <YourStep key={step.id} taskId={task.id} step={step} />)}
+                            </span>
+                          ) : (
+                            // One's own task without a step of one's own (My tasks).
+                            <span className={table.dim}>—</span>
+                          )}
                         </td>
                       ) : null}
-                      <td className={`${table.td} ${table.wrap} ${task.people.length ? '' : table.dim} ${involving ? table.foldTablet : ''}`}>
+                      <td className={`${table.td} ${table.wrap} ${task.people.length ? '' : table.dim} ${withSteps ? table.foldTablet : ''}`}>
                         {people}
                       </td>
                       <td className={table.td}>

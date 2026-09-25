@@ -8,6 +8,7 @@ import { around, clearTaskRenders, count, renderAs } from './followup12.harness'
 import {
   CAPTURED_AT, countsDita, countsToms, meDita, meSigne, meToms, view1Dita, view2Toms, view3Signe,
 } from './followup12.support';
+import { R11_CAPTURED_AT, r11CountsDita, r11MyTasksDita } from './followup13.support';
 
 /**
  * Tasks below 768 pixels (Follow-up 12, handover e at 402): each task is a card that opens it when
@@ -44,21 +45,30 @@ const card = (markup: string, title: string) => {
 };
 
 describe('the task cards on a phone', () => {
-  test('no table; each card opens its task, with its record, progress and due', () => {
+  test('no table; each card opens its task, with its record, progress, due and the reader’s steps', () => {
+    // Follow-up 13: round 11's My tasks, whose cards carry the reader's own steps as Involving me's do.
+    vi.setSystemTime(new Date(R11_CAPTURED_AT));
     const { markup } = renderAs(h(Tasks), {
       at: '/tasks', route: '/tasks', me: meDita,
-      data: [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), view1Dita], [qk.tasks.counts, countsDita]],
+      data: [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), r11MyTasksDita], [qk.tasks.counts, r11CountsDita]],
     });
     expect(markup).not.toContain('<table');
-    expect(count(markup, '<div class="_card_')).toBe(view1Dita.items.length);
+    expect(count(markup, '<div class="_card_')).toBe(r11MyTasksDita.items.length);
     const prepare = card(markup, 'Prepare 204 JLM for a rental');
-    expect(prepare).toContain(`href="/tasks/${view1Dita.items[1]!.id}"`);
+    expect(prepare).toContain(`href="/tasks/${r11MyTasksDita.items[1]!.id}"`);
     expect(prepare).toContain('Vehicle · 204 JLM');
     expect(prepare).toMatch(/>Steps<\/span><span[^>]*>1 of 4 done<\/span><span aria-hidden="true" class="[^"]*_cardBar_/);
-    expect(prepare).toMatch(/>Due<\/span><span class="_cardDue_[^"]*">27 Sep, 16:08</);
-    expect(prepare).not.toContain('Your step');
+    expect(prepare).toMatch(/>Due<\/span><span class="_cardDue_[^"]*">28 Sep, 10:54</);
+    expect(prepare).toContain('>Your steps<');
+    expect(count(prepare, '<div class="_cardStep_')).toBe(2);
+    expect(prepare).toMatch(/Add to Bolt.*data-size="card" data-done="true"[^>]*>.*Undo<\/span><\/button>.*Handover.*data-size="card"[^>]*>.*Mark done<\/span><\/button>/);
+    const claim = card(markup, 'Handle the windscreen insurance case of 204 JLM');
+    expect(claim).toContain('from Signe Priede');
+    expect(claim).toContain('>Your step<');
+    expect(claim).toMatch(/Pick up the repair invoice.*data-size="card"[^>]*>.*Mark done<\/span><\/button>/);
     const fine = card(markup, 'Reassign the parking fine to the driver');
-    expect(fine).toMatch(/_cardDue_[^"]* [^"]*_toneBad_[^"]*">Overdue · 23 Sep</);
+    expect(fine).toMatch(/_cardDue_[^"]* [^"]*_toneBad_[^"]*">Overdue · 24 Sep</);
+    expect(fine).not.toContain('Your step');
     expect(fine).toMatch(/_cardValueDim_[^"]*">No steps</);
     const fobs = card(markup, 'Order two spare key fobs');
     expect(fobs).toContain('No due date');

@@ -12,11 +12,15 @@ import { TaskRecord } from './tasks/TaskRecord';
 import { Tasks } from './tasks/Tasks';
 import { around, clearTaskRenders, count, renderAs } from './followup12.harness';
 import {
+  R11_CAPTURED_AT, r11CountsDita, r11CountsToms, r11CountsTomsAfterMark, r11MyTasksDita, r11ToDoToms,
+  r11ToDoTomsAfterMark,
+} from './followup13.support';
+import {
   CAPTURED_AT, cancelBlank, countsDita, countsSigne, countsToms, countsTomsAfterMark, markCarWashToms,
   meAdmin, meDita, meSigne, meToms, notFoundDita, notSharedKarlis, meKarlis, taskAboutDeleted,
   taskAgreementSigne, taskFineDita, taskFobsDita, taskPrepareDita, taskPrepareToms, taskRegisterDita,
-  taskVentspilsSigne, todoDita, todoToms, todoTomsAfterMark, view1Dita, view1DitaOverdue,
-  view1DitaSearchZzz, view1Toms, view2Toms, view2TomsAfterMark, view3Signe, view3Toms,
+  taskVentspilsSigne, todoDita, view1DitaOverdue, view1DitaSearchZzz, view2Toms, view2TomsAfterMark,
+  view3Signe, view3Toms,
 } from './followup12.support';
 
 /**
@@ -48,6 +52,12 @@ const LIST = (view: WorkTaskQuery['View'], extra: Partial<WorkTaskQuery> = {}): 
 
 const markupOf = (node: ReactNode) => renderToStaticMarkup(h('div', null, node));
 
+/** A list with nothing in it, of the test's own (Follow-up 13: the recorded ones are no longer empty). */
+const EMPTY_PAGE = { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 };
+
+/** Round 11's answers were given a day later than round 10's: read them at their own moment. */
+const atRound11 = () => vi.setSystemTime(new Date(R11_CAPTURED_AT));
+
 /** Whether a query the page built is enabled: the option the page passed, as the cache keeps it. */
 const enabled = (query: { options: unknown }) => (query.options as { enabled?: unknown }).enabled;
 
@@ -58,12 +68,14 @@ const list = (at: string, me: typeof meDita, data: Array<[readonly unknown[], un
 
 describe('the Tasks list (F12-2)', () => {
   test('the header, the strip with the server’s counts, the zone, the search and the Due filter', () => {
-    const { markup } = list('/tasks', meDita, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), view1Dita], [qk.tasks.counts, countsDita]]);
+    // Follow-up 13: round 11's answers, where My tasks also holds Signe's task with Dita's step.
+    atRound11();
+    const { markup } = list('/tasks', meDita, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), r11MyTasksDita], [qk.tasks.counts, r11CountsDita]]);
     expect(header.last?.title).toBe('Tasks');
     expect(header.last?.description).toBe('Your tasks, and the steps others have given you. Only a task’s creator changes or finishes it.');
     expect(markupOf(header.last?.actions)).toMatch(/<button[^>]*data-tone="primary"[^>]*>.*New task<\/button>/);
-    expect(countsDita).toEqual({ myTasks: 4, involvingMe: 1, finished: 1, toDo: 4 });
-    expect(markup).toMatch(/aria-selected="true"[^>]*>.*person<\/span>My tasks<span[^>]*>4<\/span>/);
+    expect(r11CountsDita).toEqual({ myTasks: 5, involvingMe: 1, finished: 1, toDo: 4 });
+    expect(markup).toMatch(/aria-selected="true"[^>]*>.*person<\/span>My tasks<span[^>]*>5<\/span>/);
     expect(markup).toMatch(/Involving me<span[^>]*>1<\/span>/);
     expect(markup).toMatch(/Finished<span[^>]*>1<\/span>/);
     expect(markup).toContain('data-compact="true"');
@@ -74,24 +86,27 @@ describe('the Tasks list (F12-2)', () => {
       expect(markup).toContain(`>${option}</option>`);
     }
     expect(markup).not.toContain('Clear filters');
-    expect(markup).toContain('>4 tasks<');
+    expect(markup).toContain('>5 tasks<');
   });
 
-  test('My tasks: the API’s rows in its order, each with its record, progress, people and due', () => {
-    const { markup } = list('/tasks', meDita, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), view1Dita], [qk.tasks.counts, countsDita]]);
-    const titles = view1Dita.items.map((task) => task.title);
+  test('My tasks: the API’s rows in its order, each with its record, progress, your step, people and due', () => {
+    // Follow-up 13: round 11's My tasks, Dita's four tasks and Signe's with her step, in Involving
+    // me's layout.
+    atRound11();
+    const { markup } = list('/tasks', meDita, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), r11MyTasksDita], [qk.tasks.counts, r11CountsDita]]);
+    const titles = r11MyTasksDita.items.map((task) => task.title);
     const at = titles.map((title) => markup.indexOf(`>${title}</a>`));
     expect(at.every((index) => index > -1)).toBe(true);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
-    // The columns of My tasks; no Your step.
-    expect(markup).toMatch(/>Task<\/th>.*>Steps<\/th>.*>People<\/th>.*>Due<\/th>/);
-    expect(markup).not.toContain('>Your step</th>');
+    // The columns of the open views, Your step among them.
+    expect(markup).toMatch(/>Task<\/th>.*>Steps<\/th>.*>Your step<\/th>.*>People<\/th>.*>Due<\/th>/);
 
     const fine = around(markup, 'Reassign the parking fine to the driver', 'tr');
     expect(fine).toContain('Rental assignment · 552 KLM · Nordwind Logistics');
     expect(fine).toContain('No steps');
-    expect(fine).toMatch(/class="_due_[^"]* _toneBad_[^"]*">Overdue · 23 Sep</);
+    expect(fine).toMatch(/class="_due_[^"]* _toneBad_[^"]*">Overdue · 24 Sep</);
     expect(fine).not.toContain('from ');
+    expect(fine).not.toContain('Mark done');
 
     const prepare = around(markup, 'Prepare 204 JLM for a rental', 'tr');
     expect(prepare).toContain(`href="/tasks/${taskPrepareDita.id}"`);
@@ -99,10 +114,24 @@ describe('the Tasks list (F12-2)', () => {
     expect(prepare).toContain('1 of 4 done');
     expect(prepare).toContain('style="width:25%"');
     expect(prepare).toContain('Dita Smite, Signe Priede +1');
-    expect(prepare).toMatch(/class="_due_[^"]*">27 Sep, 16:08</);
+    expect(prepare).toMatch(/class="_due_[^"]*">28 Sep, 10:54</);
+    expect(prepare).not.toContain('from ');
+    // Her own two steps: Add to Bolt done by her, with Undo; Handover to do, with Mark done.
+    expect(prepare).toMatch(/Add to Bolt<\/span><span class="_yourStepDue_[^"]*">No due date<.*check<\/span>Done<\/span>.*<span>Undo<\/span>/);
+    expect(prepare).toMatch(/Handover<\/span><span class="_yourStepDue_[^"]*">Due 28 Sep, 10:54<.*aria-label="Mark done: Handover"/);
 
+    // Someone else's task in her My tasks: "from" its creator and her step with its action.
+    const claim = around(markup, 'Handle the windscreen insurance case of 204 JLM', 'tr');
+    expect(claim).toContain('from Signe Priede');
+    expect(claim).toContain(`href="/tasks/${r11MyTasksDita.items[2]!.id}"`);
+    expect(claim).toMatch(/Pick up the repair invoice<\/span><span class="_yourStepDue_[^"]*">No due date</);
+    expect(claim).toMatch(/aria-label="Mark done: Pick up the repair invoice"[^>]*>.*check<\/span><span>Mark done<\/span>/);
+    expect(claim).toMatch(/class="_due_[^"]*">05 Oct, 14:54</);
+
+    // Her own task without steps: a dim dash for Your step, People and Due.
     const fobs = around(markup, 'Order two spare key fobs', 'tr');
     expect(fobs).not.toContain(' · ');
+    expect(count(fobs, '_dim_')).toBe(3);
     expect(fobs).toMatch(/_dim_[^"]*">—<\/td>/);
     expect(fobs).toMatch(/_dim_[^"]*">—<\/span>/);
   });
@@ -160,15 +189,17 @@ describe('the Tasks list (F12-2)', () => {
   });
 
   test('each view’s empty list, in the prototype’s words; My tasks offers New task', () => {
-    const mine = list('/tasks', meToms, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), view1Toms], [qk.tasks.counts, countsToms]]).markup;
-    expect(view1Toms.items).toEqual([]);
+    // Follow-up 13: Toms's recorded My tasks is no longer empty, so the empty views are lists of
+    // the test's own.
+    const mine = list('/tasks', meToms, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), EMPTY_PAGE], [qk.tasks.counts, countsToms]]).markup;
+    expect(EMPTY_PAGE.items).toEqual([]);
     expect(mine).toContain('No open tasks');
     expect(mine).toContain('Press New task to write down what must not be forgotten.');
     expect(mine).toMatch(/<button[^>]*>.*add<\/span>New task<\/button>/);
     const finished = list('/tasks?tab=finished', meToms, [[qk.tasks.list(LIST(WorkTaskView.Finished)), view3Toms]]).markup;
     expect(finished).toContain('Nothing finished yet');
     expect(finished).not.toContain('New task</button>');
-    const involving = list('/tasks?tab=involving', meToms, [[qk.tasks.list(LIST(WorkTaskView.InvolvingMe)), view1Toms]]).markup;
+    const involving = list('/tasks?tab=involving', meToms, [[qk.tasks.list(LIST(WorkTaskView.InvolvingMe)), EMPTY_PAGE]]).markup;
     expect(involving).toContain('Nobody is waiting on you');
     expect(involving).toContain('When someone gives you a step in their task, it appears here.');
   });
@@ -360,14 +391,16 @@ describe('the Overview’s Open tasks (F12-6)', () => {
   });
 
   test('the count follows a mark: Toms’s card before and after he marked Car wash', () => {
-    const before = overview(meToms, [[qk.tasks.counts, countsToms], [qk.tasks.toDo(TO_DO), todoToms]]).markup;
-    // The tile is the to-do count, not the size of a view: Toms has no task of his own.
-    expect(countsToms.myTasks).toBe(0);
+    // Follow-up 13: round 11's answers, where Toms's My tasks holds the three tasks with his steps.
+    atRound11();
+    const before = overview(meToms, [[qk.tasks.counts, r11CountsToms], [qk.tasks.toDo(TO_DO), r11ToDoToms]]).markup;
+    // The tile is the to-do count, not the size of a view: My tasks holds three, two are to do.
+    expect(r11CountsToms.myTasks).toBe(3);
     expect(before).toMatch(/Open tasks<\/span><\/span><span[^>]*><span[^>]*>2<\/span><span[^>]*>to do<\/span>/);
     expect(before).toContain('>2 to do<');
     expect(before).toContain('>Car wash<');
     expect(before).toContain('Vehicle · 444 WKS · from Dita Smite');
-    const after = overview(meToms, [[qk.tasks.counts, countsTomsAfterMark], [qk.tasks.toDo(TO_DO), todoTomsAfterMark]]).markup;
+    const after = overview(meToms, [[qk.tasks.counts, r11CountsTomsAfterMark], [qk.tasks.toDo(TO_DO), r11ToDoTomsAfterMark]]).markup;
     expect(after).toMatch(/Open tasks<\/span><\/span><span[^>]*><span[^>]*>1<\/span>/);
     expect(after).toContain('>1 to do<');
     expect(after).not.toContain('>Car wash<');

@@ -21,13 +21,19 @@ export interface TaskTabSpec {
   label: string;
   icon: string;
   count: keyof WorkTaskCountsResponse;
+  /**
+   * Whether the view's rows carry the reader's own steps with Mark done and Undo: the two views of
+   * open tasks. Since round 11 My tasks also holds tasks someone else created in which the reader has
+   * a step (Follow-up 13), so it takes Involving me's layout; Finished has no actions.
+   */
+  yourSteps: boolean;
 }
 
 /** The three views in the strip's order, with the prototype's icons. */
 export const TASK_TABS: readonly TaskTabSpec[] = [
-  { id: 'mine', view: WorkTaskView.MyTasks, label: 'My tasks', icon: 'person', count: 'myTasks' },
-  { id: 'involving', view: WorkTaskView.InvolvingMe, label: 'Involving me', icon: 'group', count: 'involvingMe' },
-  { id: 'finished', view: WorkTaskView.Finished, label: 'Finished', icon: 'inventory_2', count: 'finished' },
+  { id: 'mine', view: WorkTaskView.MyTasks, label: 'My tasks', icon: 'person', count: 'myTasks', yourSteps: true },
+  { id: 'involving', view: WorkTaskView.InvolvingMe, label: 'Involving me', icon: 'group', count: 'involvingMe', yourSteps: true },
+  { id: 'finished', view: WorkTaskView.Finished, label: 'Finished', icon: 'inventory_2', count: 'finished', yourSteps: false },
 ];
 
 /** The view an address names; My tasks when it names none or one that does not exist. */
