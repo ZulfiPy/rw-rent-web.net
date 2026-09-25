@@ -154,6 +154,10 @@ findings (§11) are the first work after the merge.
    same day: the right to delete is given in a dialog of its own, not in the Grant role dialog, and
    it gets no prototype: it is described in a specification and judged in the app. Order: first the
    page for the administrator (§8 below), checked by the owner, then the giving of the right.
+9. **An overdue due date is cut at the tablet width** (found in Follow-up 13's run, 2026-09-25; so
+   since Follow-up 12): between 768 and 1023 px the Due column (121 px, the handover's width) shows
+   "Overdue · 24 S…" in all three views. The agent's proposal: 128 px for Due in that band, taken from
+   Task, or the date wrapping under "Overdue". App only; for the next batch.
 
 ## 5. Testing — where it stands (2026-09-17)
 
@@ -562,32 +566,26 @@ cases unchanged, "Under development", for a brainstorm of its own.
 
 ## 13. Follow-up 13 — My tasks holds everything a person is part of
 
-> **Status: AUTHORIZED 2026-09-25.** Backend round 11 is built, verified and in the backend's main
-> (`4229418`; its report `Context/round11_report.md`, §5 the contract, §7 the scratch stack), and the
-> owner's API on 5001 serves it: the owner's My tasks already holds others' tasks, in the layout of
-> one's own until this follow-up is built.
+> **Status: IMPLEMENTED 2026-09-25, verified the same day** (app `6753df8`…`049f210` Wiring 35 in
+> three grouped commits and `fee1220` Wiring 36, on `feature/backend-wiring`, pushed and level with
+> GitHub, then fast-forwarded into `main`; report `Context/wiring_report.md`). The app's half; the
+> backend's half is round 11 (backend `main` `5b7a4c7`, served on 5001 since the same morning). Its
+> specification was removed from here as implemented; the report and the code carry it. Typecheck,
+> 480 tests and the build are green. The reviewer drove the app in a headless browser on the scratch
+> stack, freshly seeded, as Toms, Dita, Signe and Karlis: Toms, who created nothing, lands on My tasks
+> 3 (Involving me 3, the count on Tasks 2) with the five columns, each row "from" its creator and his
+> own step with Mark done, or Done with Undo; Mark done on Car wash from the list moves its progress
+> and the count to 1, Involving me shows the same, Undo brings both back; the Overview tile still reads
+> "2 to do"; Dita's five rows with dim dashes where she has no step, Signe's windscreen case "from Signe
+> Priede" with Dita's step; Dita marks Toms's step on the task's page and Toms then reads it Done with
+> no action and the task last; Signe's three rows; Karlis's "No open tasks" with New task; Finished
+> keeps Task, Steps, People, Closed; at 834 People folds under Steps with nothing scrolling sideways;
+> at 402 three cards, each "from" its creator with "Your step" and a 44px button that marks without
+> opening the task. No request went to 5001 or 5173.
 
-**What the owner found**, using Tasks on real data: they made a task with a step for a colleague and
-signed in as that colleague. Tasks opened on My tasks with 0, because My tasks held only the tasks a
-person created (TASK-010); the step sat one tab further, under Involving me. People who keep their
-work in their heads and write no tasks of their own open Tasks, see nothing and leave. **The owner
-decided: My tasks shows both, the tasks one created and the tasks in which one has a step; no fourth
-tab** (the reviewer's proposal, against a first tab "My&Me tasks"). Round 11 changes the server's My
-tasks and its count; the app shows the new rows properly.
-
-- **F13-1.** My tasks now also holds tasks someone else created. Its table takes Involving me's layout
-  and widths: Task (with "from" its creator when someone else created it, as today), Steps, Your
-  step (the reader's own steps with Mark done or Undo exactly as `canMarkDone` and `canUndo` say, and
-  a dim dash when the reader has none), People, Due; folded on the tablet as Involving me is.
-- **F13-2.** On the phone, a My tasks card shows the reader's own steps with their buttons, as an
-  Involving me card does.
-- **F13-3.** Nothing else changes: the tab's count still reads `myTasks` (the server now counts the
-  new members), the words (My tasks' empty state and the page's description stay true), the
-  navigation's count, the Overview, the task's page and the dialogs.
-- **Tests.** The render tests built from the practice API's real answers get My tasks with others'
-  tasks in it; a test whose expectation changes on purpose is updated and named in the report with
-  its old and new expectation.
-
-**Found the same day, backend only:** a completed password reset left a lockout in place, so the new
-password was refused as "The email or password is invalid." for up to 15 minutes. Round 11 B; the app
-needs no change.
+**What it is** (kept for the next reader): the owner found, on real data, that someone with only a
+step in another person's task opened Tasks on an empty My tasks; the owner decided that My tasks shows
+both, the tasks one created and the tasks with one's step, with no fourth tab. My tasks now uses
+Involving me's columns and phone cards (Your step with Mark done or Undo, a dim dash where the reader
+has no step, "from" on another person's task); nothing else changed. The same day's password finding
+(a completed reset left a lockout in place) was backend only, round 11.
