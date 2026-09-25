@@ -560,27 +560,32 @@ the app's own components, wired to round 10's eleven operations; everything gate
 count on Tasks and the Overview's Open tasks tile and card read the to-do count and list; Insurance
 cases unchanged, "Under development", for a brainstorm of its own.
 
-## 13. Follow-up 13 — Tasks opens on everything a person is part of
+## 13. Follow-up 13 — My tasks holds everything a person is part of
 
-> **Status: PROPOSED 2026-09-25, waiting for the owner's answer below.** Needs a small backend round
-> first (the server's My tasks list and its count), then the app. No database change.
+> **Status: OWNER-CONFIRMED 2026-09-25; to be built after backend round 11 is verified** (its
+> specification is the backend's `Context/round11_spec_and_plan.md`). Nothing runs before that.
 
 **What the owner found**, using Tasks on real data: they made a task with a step for a colleague and
-signed in as that colleague. Tasks opened on My tasks with 0, because My tasks holds only the tasks a
-person created (TASK-010); the colleague's step sat one tab further, under Involving me. The count on
-Tasks and the Overview's Open tasks do show the step (TASK-011), but people who keep their work in
-their heads and will not write tasks of their own open Tasks, see nothing and leave. The owner wants
-one list with both, and to keep Involving me. **The owner's proposal:** a new first tab, "My&Me
-tasks", holding the tasks one created and those involving one.
+signed in as that colleague. Tasks opened on My tasks with 0, because My tasks held only the tasks a
+person created (TASK-010); the step sat one tab further, under Involving me. People who keep their
+work in their heads and write no tasks of their own open Tasks, see nothing and leave. **The owner
+decided: My tasks shows both, the tasks one created and the tasks in which one has a step; no fourth
+tab** (the reviewer's proposal, against a first tab "My&Me tasks"). Round 11 changes the server's My
+tasks and its count; the app shows the new rows properly.
 
-**The reviewer's proposal:** My tasks itself holds both, the open tasks a person created and the open
-tasks in which they have a step, each once; Tasks still opens on it; Involving me and Finished stay as
-they are, so the three tabs stay. A row someone else created says whom it is from; a row with the
-reader's own steps shows them with Mark done or Undo, as Involving me does. Each task is ordered by the
-same date as in its narrower list (its own due date for one's own task; for someone else's, one's
-earliest due step not yet done). Why: people read "My tasks" as "what is on my plate", which is why
-the colleague saw nothing, and a fourth tab crowds the phone. What goes is a list of only the tasks
-one created; for the owner, who creates nearly all of them, My tasks stays nearly the same.
+- **F13-1.** My tasks now also holds tasks someone else created. Its table takes Involving me's layout
+  and widths: Task (with "from" its creator when someone else created it, as today), Steps, Your
+  step (the reader's own steps with Mark done or Undo exactly as `canMarkDone` and `canUndo` say, and
+  a dim dash when the reader has none), People, Due; folded on the tablet as Involving me is.
+- **F13-2.** On the phone, a My tasks card shows the reader's own steps with their buttons, as an
+  Involving me card does.
+- **F13-3.** Nothing else changes: the tab's count still reads `myTasks` (the server now counts the
+  new members), the words (My tasks' empty state and the page's description stay true), the
+  navigation's count, the Overview, the task's page and the dialogs.
+- **Tests.** The render tests built from the practice API's real answers get My tasks with others'
+  tasks in it; a test whose expectation changes on purpose is updated and named in the report with
+  its old and new expectation.
 
-**Open question to the owner:** shall My tasks show both instead of a fourth tab being added? The
-reviewer recommends yes; if no, "My&Me tasks" becomes the first tab and the one Tasks opens on.
+**Found the same day, backend only:** a completed password reset left a lockout in place, so the new
+password was refused as "The email or password is invalid." for up to 15 minutes. Round 11 B; the app
+needs no change.
