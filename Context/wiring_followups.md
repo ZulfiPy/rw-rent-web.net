@@ -562,8 +562,10 @@ cases unchanged, "Under development", for a brainstorm of its own.
 
 ## 13. Follow-up 13 — My tasks holds everything a person is part of
 
-> **Status: OWNER-CONFIRMED 2026-09-25; to be built after backend round 11 is verified** (its
-> specification is the backend's `Context/round11_spec_and_plan.md`). Nothing runs before that.
+> **Status: AUTHORIZED 2026-09-25.** Backend round 11 is built, verified and in the backend's main
+> (`4229418`; its report `Context/round11_report.md`, §5 the contract, §7 the scratch stack), and the
+> owner's API on 5001 serves it: the owner's My tasks already holds others' tasks, in the layout of
+> one's own until this follow-up is built.
 
 **What the owner found**, using Tasks on real data: they made a task with a step for a colleague and
 signed in as that colleague. Tasks opened on My tasks with 0, because My tasks held only the tasks a
