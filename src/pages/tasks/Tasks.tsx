@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
@@ -101,11 +101,28 @@ function YourStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse
   );
 }
 
+/**
+ * A date that may take two lines (Follow-up 14): it breaks only after "·" or ",", so
+ * "Overdue · 24 Sep" becomes "Overdue ·" over "24 Sep" and is never cut.
+ */
+function DueWords({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(?<=[·,]) /).map((piece, index) => (
+        <Fragment key={index}>
+          {index ? ' ' : null}
+          <span className={styles.keep}>{piece}</span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 /** The Due cell: the task's own date, toned while it is overdue or due today; a dim dash without one. */
 function DueCell({ task }: { task: WorkTaskListItemResponse }) {
   if (!task.dueAtUtc) return <span className={table.dim}>—</span>;
   const due = dueInfo(task.dueAtUtc);
-  return <span className={`${styles.due} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>;
+  return <span className={`${styles.due} ${due.tone ? TONE_CLASS[due.tone] : ''}`}><DueWords text={due.text} /></span>;
 }
 
 /** A closed task's chip, with the time it was closed under it. */

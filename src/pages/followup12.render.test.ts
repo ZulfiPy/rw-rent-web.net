@@ -104,7 +104,8 @@ describe('the Tasks list (F12-2)', () => {
     const fine = around(markup, 'Reassign the parking fine to the driver', 'tr');
     expect(fine).toContain('Rental assignment · 552 KLM · Nordwind Logistics');
     expect(fine).toContain('No steps');
-    expect(fine).toMatch(/class="_due_[^"]* _toneBad_[^"]*">Overdue · 24 Sep</);
+    // Follow-up 14: the Due cell's date may take two lines, broken only after "·" or ",".
+    expect(fine).toMatch(/class="_due_[^"]* _toneBad_[^"]*"><span class="_keep_[^"]*">Overdue ·<\/span> <span class="_keep_[^"]*">24 Sep<\/span><\/span>/);
     expect(fine).not.toContain('from ');
     expect(fine).not.toContain('Mark done');
 
@@ -114,7 +115,7 @@ describe('the Tasks list (F12-2)', () => {
     expect(prepare).toContain('1 of 4 done');
     expect(prepare).toContain('style="width:25%"');
     expect(prepare).toContain('Dita Smite, Signe Priede +1');
-    expect(prepare).toMatch(/class="_due_[^"]*">28 Sep, 10:54</);
+    expect(prepare).toMatch(/class="_due_[^"]*"><span class="_keep_[^"]*">28 Sep,<\/span> <span class="_keep_[^"]*">10:54<\/span><\/span>/);
     expect(prepare).not.toContain('from ');
     // Her own two steps: Add to Bolt done by her, with Undo; Handover to do, with Mark done.
     expect(prepare).toMatch(/Add to Bolt<\/span><span class="_yourStepDue_[^"]*">No due date<.*check<\/span>Done<\/span>.*<span>Undo<\/span>/);
@@ -126,7 +127,7 @@ describe('the Tasks list (F12-2)', () => {
     expect(claim).toContain(`href="/tasks/${r11MyTasksDita.items[2]!.id}"`);
     expect(claim).toMatch(/Pick up the repair invoice<\/span><span class="_yourStepDue_[^"]*">No due date</);
     expect(claim).toMatch(/aria-label="Mark done: Pick up the repair invoice"[^>]*>.*check<\/span><span>Mark done<\/span>/);
-    expect(claim).toMatch(/class="_due_[^"]*">05 Oct, 14:54</);
+    expect(claim).toMatch(/class="_due_[^"]*"><span class="_keep_[^"]*">05 Oct,<\/span> <span class="_keep_[^"]*">14:54<\/span><\/span>/);
 
     // Her own task without steps: a dim dash for Your step, People and Due.
     const fobs = around(markup, 'Order two spare key fobs', 'tr');

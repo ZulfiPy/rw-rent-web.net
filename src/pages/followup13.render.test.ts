@@ -83,7 +83,8 @@ describe('My tasks takes the open views’ layout (F13-1)', () => {
     const agreement = around(markup, 'Prepare the rental agreement for Martins Ozols', 'tr');
     expect(agreement).not.toContain('from ');
     expect(agreement).toContain('Customer · Martins Ozols');
-    expect(agreement).toMatch(/class="_due_[^"]* _toneWarn_[^"]*">Due today · 15:54</);
+    // Follow-up 14: the Due cell's date may take two lines, broken only after "·" or ",".
+    expect(agreement).toMatch(/class="_due_[^"]* _toneWarn_[^"]*"><span class="_keep_[^"]*">Due today ·<\/span> <span class="_keep_[^"]*">15:54<\/span><\/span>/);
     // Task, Steps, Your step (a dim dash), People (a dim dash), Due.
     expect(agreement).toMatch(/No steps<\/span><\/span><\/td><td class="[^"]*"><span class="[^"]*_dim_[^"]*">—<\/span><\/td>/);
 

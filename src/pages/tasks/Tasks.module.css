@@ -37,7 +37,11 @@
 /* A task's title wraps rather than widening the table. */
 .title { overflow-wrap: anywhere; }
 
-.due { font-size: 13px; color: var(--fg-2); white-space: nowrap; }
+/* A due date is never cut (Follow-up 14): when it does not fit, it takes a second line, breaking only
+   between the pieces `DueWords` keeps whole ("Overdue ·" over "24 Sep"). */
+.due { font-size: 13px; color: var(--fg-2); }
+.keep { white-space: nowrap; }
+
 
 /* Steps: "1 of 4 done" over a 4px bar. */
 .progress { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
