@@ -183,7 +183,10 @@ function TaskCard({ task, tab, readerId }: { task: WorkTaskListItemResponse; tab
     <div {...rowNav(href)} className={styles.card}>
       <div className={styles.cardHead}>
         <span className={styles.cardHeading}>
-          <Link to={href} className={styles.cardTitle}>{task.title}</Link>
+          {/* The title's own line, so its underline follows the words on every line (Follow-up 14). */}
+          <span className={styles.cardTitleLine}>
+            <Link to={href} className={styles.cardTitle}>{task.title}</Link>
+          </span>
           {about ? <span className={styles.cardSub}>{about}</span> : null}
           {from ? <span className={styles.cardSub}>{from}</span> : null}
         </span>

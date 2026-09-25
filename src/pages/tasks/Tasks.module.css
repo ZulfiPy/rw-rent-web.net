@@ -3,7 +3,7 @@
    the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
    value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s.
    Follow-up 14 set the Your step cell's order per screen size, the uncut due dates and the phone
-   card's "✓ Done" line. */
+   card's "✓ Done" line and title underline. */
 
 /* The strip and, at the row's far end, the time zone. */
 .tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -148,14 +148,15 @@
 .card:hover { background: var(--surface-2); }
 .cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .cardHeading { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+/* The title is inline inside a line of its own, so its underline follows the words on every line of a
+   long title rather than running under the whole box (Follow-up 14). */
+.cardTitleLine { max-width: 100%; padding-bottom: 1px; font-size: 14px; line-height: 21px; overflow-wrap: anywhere; }
 .cardTitle {
-  max-width: 100%;
-  font-size: 14px;
+  padding-bottom: 1px;
   font-weight: 600;
   color: var(--fg);
   text-decoration: none;
   border-bottom: 1px solid var(--line-3);
-  overflow-wrap: anywhere;
 }
 .cardTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
 .cardSub { font-size: 11.5px; color: var(--fg-3); }
