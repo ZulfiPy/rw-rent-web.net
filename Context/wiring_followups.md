@@ -154,10 +154,12 @@ findings (§11) are the first work after the merge.
    same day: the right to delete is given in a dialog of its own, not in the Grant role dialog, and
    it gets no prototype: it is described in a specification and judged in the app. Order: first the
    page for the administrator (§8 below), checked by the owner, then the giving of the right.
-9. **An overdue due date is cut at the tablet width** (found in Follow-up 13's run, 2026-09-25; so
-   since Follow-up 12): between 768 and 1023 px the Due column (121 px, the handover's width) shows
-   "Overdue · 24 S…" in all three views. The agent's proposal: 128 px for Due in that band, taken from
-   Task, or the date wrapping under "Overdue". App only; for the next batch.
+9. ~~An overdue due date is cut at the tablet width~~ — taken into Follow-up 14 (F14-2), 2026-09-25.
+10. **On a phone the top of every page stays pinned** (the reviewer's finding, 2026-09-25, from the
+   owner's iPhone 16 Pro screenshots of Tasks): the title, its description and the main button stay at
+   the top while the content scrolls under them, about a quarter of the screen; every page is built so
+   (the shell scrolls only the content). A proposal: on a phone the top of the page scrolls away with
+   the content. App-wide; not part of Follow-up 14 unless the owner adds it.
 
 ## 5. Testing — where it stands (2026-09-17)
 
@@ -589,3 +591,45 @@ both, the tasks one created and the tasks with one's step, with no fourth tab. M
 Involving me's columns and phone cards (Your step with Mark done or Undo, a dim dash where the reader
 has no step, "from" on another person's task); nothing else changed. The same day's password finding
 (a completed reset left a lockout in place) was backend only, round 11.
+
+## 14. Follow-up 14 — the owner's look at Tasks on the practice copy
+
+> **Status: OWNER-CONFIRMED, AUTHORIZED 2026-09-25.** The owner went through Tasks on the practice copy
+> (5174, the sample data) screen size by screen size: the desktop, the iPad Pro 11 upright and
+> sideways, the iPhone 16 Pro. Frontend only; the backend and its contract do not change. The tiers:
+> desktop from 1024 px (the sideways iPad Pro 11 is desktop), the folded tablet band 768–1023 (the
+> upright iPad Pro 11, 834 px), the phone below 768 (the iPhone 16 Pro, 402 px). Nothing else changes:
+> the task's page, the dialogs, the Overview, the words, Insurance cases.
+
+- **F14-1. Desktop and the sideways iPad: the buttons in Your step look placed at random** (the owner:
+  "such a feeling that they are positioned by their vibe or mood"). Why: each step is one line of its
+  text, then "✓ Done" when it is done, then the button, all centred against each other. So a button's
+  left edge moves with its label ("Undo" is narrower than "Mark done") and with the "✓ Done" before it;
+  its height moves with the text beside it (a title on one line or two, with a due line); and the title
+  gets only what the button leaves ("Book the service appointment" wraps, "Pick up the repair invoice"
+  runs up to its button). **Wanted:** every button the same width, in one column at the right of Your
+  step, lined up from step to step and row to row, level with its step's title rather than centred;
+  "✓ Done" no longer a loose label beside the button but the line under the title, in the done colour,
+  in place of the due line; the title takes the rest of the width, with a fixed gap before the button;
+  where the API offers no action, the button's place stays empty, so nothing else moves. In My tasks
+  and Involving me alike.
+- **F14-2. Tablet band: an overdue date is cut** ("Overdue · 24 S…" in the 121px Due column; §4 item
+  9). **Wanted:** a due date is never cut, in any view and at any width: when it does not fit, it goes
+  on to a second line.
+- **F14-3. Upright iPad (the tablet band): the same problem in Your step, in another form.** The
+  button stands beside the step's text when the title is short ("Add to Bolt") and drops under it when
+  the title is longer ("Handover", "Pick up the repair invoice"); "✓ Done" stays up at the right of the
+  title while its Undo drops below ("Add to Bolt"), or drops together with it ("Book the service
+  appointment"). **Wanted:** in this band every step reads the same way: its title; under it the due
+  line, or "✓ Done" in the done colour; under that its button, always, the same width for Mark done and
+  Undo, lined up with the text on the left; the same space between one step and the next.
+- **F14-4. Sideways iPad: no change of its own.** The owner finds it the calmest of the sizes; it shows
+  the desktop layout, so it takes F14-1 (the owner confirmed, 2026-09-25) and nothing else.
+- **F14-5. Phone: "✓ Done" under the title** (the reviewer's proposal, kept by the owner). The step
+  boxes are even already (title, due line, a full-width button), so the buttons do not change; "✓ Done"
+  moves from the box's top-right corner to the line under the title, in place of the due line, so a
+  done step reads the same on every screen.
+- **F14-6. Phone: a task title's underline** (the reviewer's finding, kept by the owner): under a title
+  on one line it is as long as the words, under a title on two lines it runs across the whole card
+  ("Handle the windscreen insurance case of 204 JLM"), because it is a line under the title's box.
+  **Wanted:** the underline follows the words on every line.
