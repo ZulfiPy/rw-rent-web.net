@@ -687,7 +687,7 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
   F14-6); a Finished card's chip where their status chips stand. The Your step boxes stay exactly as
   they are.
 
-## 16. Follow-up 16 — Tasks follows the other lists' layout: the time-zone note
+## 16. Follow-up 16 — Tasks follows the other lists' layout: the time-zone note and the tab bar on the phone
 
 > **Status: AUTHORIZED 2026-09-26.** The owner asked that Tasks follow "absolutely the same design
 > pattern and positioning pattern as the vehicle section or any other section", and that the reviewer
@@ -709,4 +709,21 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
   strip, at any width; the strip stands alone in its row, as on Delete records. The list shows its
   times as Vehicles and Rental assignments show theirs. The task's own page keeps its note in its panel
   description. Nothing else changes.
+- **F16-2. On the phone, the Tasks tab bar as wide as the list** (the owner, 2026-09-26, from the phone:
+  the tabs "look good but they aren't the same width as the width of the list … it has to be absolutely
+  the same width in order to look proportional"). Measured at 402 px: the app draws a tab bar on four
+  pages, Tasks, a rental assignment's own page, the Profile page and Delete records (the lists of
+  Vehicles, Customers, Drivers and Rental assignments have none), from one shared piece
+  (`src/ui/record.module.css`) that is only as wide as its tabs. The other three have more tabs than
+  the phone's width holds, so their bars already fill it (370 of 370) and scroll sideways; only Tasks'
+  three tabs leave its bar short (326 of 370). On the tablet and the desktop all four bars are only as
+  wide as their tabs, Tasks' included, so there they already agree. **Wanted:** on the phone the Tasks
+  tab bar is exactly as wide as the list under it, edge to edge, like the other three; its three tabs
+  share the width evenly, each label and count on one line (the reviewer's preview showed "Involving
+  me" breaking onto two lines when the width is split in plain thirds: that must not happen). Nothing
+  changes on the tablet and the desktop, and nothing on the other three pages.
+- **Decided, no change: the tab bar keeps scrolling away with the list** (the owner, 2026-09-26: "we
+  don't need to leave the tabs unscrollable … they can hide away when we scroll enough down … I don't
+  want to make a lot of changes"). On the phone only the page's top block (the menu button, the title,
+  its description and New task) stays on screen, on every page, as today (§4 item 10 stays open).
 
