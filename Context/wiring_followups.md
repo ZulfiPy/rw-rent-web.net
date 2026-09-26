@@ -687,3 +687,26 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
   F14-6); a Finished card's chip where their status chips stand. The Your step boxes stay exactly as
   they are.
 
+## 16. Follow-up 16 — Tasks follows the other lists' layout: the time-zone note
+
+> **Status: AUTHORIZED 2026-09-26.** The owner asked that Tasks follow "absolutely the same design
+> pattern and positioning pattern as the vehicle section or any other section", and that the reviewer
+> first check what is really there. The reviewer measured Tasks against Vehicles, Rental assignments,
+> Drivers and Customers on the practice copy at 1512, 1194, 834 and 402 px. **The same everywhere:** the
+> page header (title, description, the main button's place), the filter bar (search, filters, the
+> count), the list panel, the table's header and row spacing, the pager, the phone cards (since
+> Follow-up 15), and on the phone the pinned top of the page (the title, its description and the main
+> button stay while the list scrolls), which Vehicles and every other page have in exactly the same
+> way (§4 item 10, app-wide). **Tasks' own, and kept:** the tab strip between the header and the list,
+> the app's one component for tabs, in the place Delete records, the only other list with tabs, puts
+> it. **The one difference:** "Times in Tallinn time." stands alone at the far end of the tab strip and
+> on the phone drops to a line of its own between the tabs and the list. No other list shows it so:
+> Vehicles and Rental assignments show times with no note, and where the app does name the zone it is
+> in a description (Security audit's page, Delete records' "Recently deleted" panel, the task's own
+> page).
+
+- **F16-1. The note leaves the Tasks list.** "Times in Tallinn time." is no longer drawn beside the tab
+  strip, at any width; the strip stands alone in its row, as on Delete records. The list shows its
+  times as Vehicles and Rental assignments show theirs. The task's own page keeps its note in its panel
+  description. Nothing else changes.
+
