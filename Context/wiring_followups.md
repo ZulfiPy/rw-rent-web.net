@@ -650,10 +650,20 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
 
 ## 15. Follow-up 15 — the Tasks list's widths on the desktop, and its phone cards like the others
 
-> **Status: OWNER-CONFIRMED, AUTHORIZED 2026-09-26.** From the owner's second look at Tasks on the
-> practice copy after Follow-up 14, with more practice tasks (long and short titles, an overdue step, a
-> step its creator marked). Frontend only; the backend, its contract and the title's limit (TASK-001,
-> 200 characters) do not change. The tablet band and the task's page are not part of it.
+> **Status: IMPLEMENTED 2026-09-26, verified the same day** (app `bf653b3`…`f3f4528` Wiring 39 in four
+> grouped commits and `0cff440` Wiring 40, on `feature/backend-wiring`, pushed and level with GitHub,
+> then fast-forwarded into `main`; report `Context/wiring_report.md`). From the owner's second look at
+> Tasks on the practice copy after Follow-up 14, with more practice tasks. Frontend only; the backend,
+> its contract and the title's limit (TASK-001, 200 characters) did not change. Typecheck, 509 tests and
+> the build are green. The reviewer measured the real app in a headless browser on the scratch stack
+> with the agent's practice tasks, 15 checks: Task and Your step 550/550 px at 1920, 346/346 at 1512,
+> 242/330 at 1194; "Book the service appointment" and "Pick up the repair invoice" on one line at all
+> three; nothing scrolling sideways at those widths; on the phone the task card with the Vehicles card's
+> padding, gap and title type, Due flush right and right-aligned exactly as Fuel, Steps where Body
+> stands, the title without a line; Signe's Finished and Cancelled chips at the top right; no request to
+> 5001 or 5173. **Left as they were** (report §6): where the list's frame is under 1020 px (1024 px, and
+> 1280–1319 px with the menu open) the table scrolls sideways inside its panel as before, Task at
+> 170 px; at 1194 px and below a step title over about 30 characters takes two lines.
 
 - **F15-1. Desktop (from 1024 px, the sideways iPad included): Your step wider, Task narrower** (the
   owner: "make the Your step column wider"; "I really don't get why the task column takes so much space
