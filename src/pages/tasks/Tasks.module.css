@@ -3,7 +3,8 @@
    the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
    value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s.
    Follow-up 14 set the Your step cell's order per screen size, the uncut due dates and the phone
-   card's "✓ Done" line and title underline. */
+   card's "✓ Done" line and title underline. Follow-up 15 shares the desktop's spare width between Task
+   and Your step. */
 
 /* The strip and, at the row's far end, the time zone. */
 .tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -13,11 +14,21 @@
    Finished's. Nothing folds from 1024 up; each holds its own min-width. */
 .table { min-width: 0; }
 .plain { min-width: 800px; }
-.withSteps { min-width: 1020px; }
+/* Follow-up 15: in the open views Task and Your step share what Steps, People and Due leave, half each,
+   and Your step never takes less than 330px, the width a step title of about 30 characters needs on one
+   line beside its button. The half is measured on the list's frame (`tableFrame`), whatever the rail
+   leaves it. The table keeps its floor of 1020px, so it scrolls nowhere it did not before; where the
+   frame is that narrow, Task takes what Your step's 330 leaves, down to 170px. */
+.withSteps {
+  min-width: 1020px;
+  --fixed-columns: 520px;
+  --your-step-min: 330px;
+}
+.tableFrame { container-type: inline-size; }
 .cTask { width: auto; }
 .cSteps170 { width: 170px; }
 .cSteps150 { width: 150px; }
-.cYour { width: 290px; }
+.cYour { width: max(var(--your-step-min), (100cqw - var(--fixed-columns)) / 2); }
 .cPeople240 { width: 240px; }
 .cPeople200 { width: 200px; }
 .cDue { width: 170px; }

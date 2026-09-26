@@ -47,6 +47,8 @@ import styles from './Tasks.module.css';
  * "✓ Done", and the button's place, a column of one width at the right from 1024 up and a line under
  * the text in the folded band; a phone card's step reads the same. A due date is never cut.
  *
+ * Follow-up 15: from 1024 up Task and Your step share the width the other columns leave.
+ *
  * The server decides. Which tasks a view holds, their order, what the search and the filter find,
  * and whether the reader may mark or undo a step all come from the API; this page words them. The
  * view, the search, the filter and the page live in the address; a change of view keeps the search
@@ -356,7 +358,7 @@ export function Tasks() {
             {rows.map((task) => <TaskCard key={task.id} task={task} tab={tab} readerId={me?.id} />)}
           </div>
         ) : (
-          <div className={table.scroll}>
+          <div className={`${table.scroll} ${styles.tableFrame}`}>
             <table className={`${table.table} ${styles.table} ${withSteps ? styles.withSteps : styles.plain}`}>
               <thead>
                 <tr>
