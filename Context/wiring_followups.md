@@ -689,7 +689,15 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
 
 ## 16. Follow-up 16 — Tasks follows the other lists' layout: the time-zone note and the tab bar on the phone
 
-> **Status: AUTHORIZED 2026-09-26.** The owner asked that Tasks follow "absolutely the same design
+> **Status: IMPLEMENTED 2026-09-26, verified the same day** (app `fd9e22c`…`b7bf09d` Wiring 41 in three
+> grouped commits and `b118178` Wiring 42, on `feature/backend-wiring`, pushed and level with GitHub,
+> then fast-forwarded into `main`; report `Context/wiring_report.md`). Typecheck, 516 tests and the
+> build are green. The reviewer measured the real app on the scratch stack, 18 checks: at 402 px the
+> Tasks tab bar from the list's left edge to its right (370 of 370) in all three views, every label on
+> one line (38 px tabs), nothing scrolling, no note; at 834 and 1512 px the bar as wide as its tabs
+> (413), no note; a task's own page still saying "Times in Tallinn time." at every width; the Profile
+> page, a rental assignment's own page and Delete records with their bars as before; no request to
+> 5001 or 5173. The owner asked that Tasks follow "absolutely the same design
 > pattern and positioning pattern as the vehicle section or any other section", and that the reviewer
 > first check what is really there. The reviewer measured Tasks against Vehicles, Rental assignments,
 > Drivers and Customers on the practice copy at 1512, 1194, 834 and 402 px. **The same everywhere:** the
