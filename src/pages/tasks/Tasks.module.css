@@ -1,14 +1,10 @@
 /* The Tasks list (Follow-up 12), from the handover's values (`Context/prototype/tasks/new-styles.css`,
-   HANDOVER.md e): the tab strip's row, each view's column set, the progress bar, the Your step cell,
+   HANDOVER.md e): each view's column set, the progress bar, the Your step cell,
    the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
    value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s.
    Follow-up 14 set the Your step cell's order per screen size, the uncut due dates and the phone
    card's "✓ Done" line. Follow-up 15 shares the desktop's spare width between Task and Your step, and
    builds the phone card from the other lists' card (`src/ui/cards.module.css`). */
-
-/* The strip and, at the row's far end, the time zone. */
-.tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
-.zone { margin-left: auto; font-size: 12px; color: var(--fg-3); }
 
 /* The two column sets: the open views' (My tasks and Involving me, with Your step; Follow-up 13) and
    Finished's. Nothing folds from 1024 up; each holds its own min-width. */

@@ -67,7 +67,7 @@ const list = (at: string, me: typeof meDita, data: Array<[readonly unknown[], un
   renderAs(h(Tasks), { at, route: '/tasks', me, data });
 
 describe('the Tasks list (F12-2)', () => {
-  test('the header, the strip with the server’s counts, the zone, the search and the Due filter', () => {
+  test('the header, the strip with the server’s counts and no note of the zone, the search and the Due filter', () => {
     // Follow-up 13: round 11's answers, where My tasks also holds Signe's task with Dita's step.
     atRound11();
     const { markup } = list('/tasks', meDita, [[qk.tasks.list(LIST(WorkTaskView.MyTasks)), r11MyTasksDita], [qk.tasks.counts, r11CountsDita]]);
@@ -79,7 +79,8 @@ describe('the Tasks list (F12-2)', () => {
     expect(markup).toMatch(/Involving me<span[^>]*>1<\/span>/);
     expect(markup).toMatch(/Finished<span[^>]*>1<\/span>/);
     expect(markup).toContain('data-compact="true"');
-    expect(markup).toContain('Times in Tallinn time.');
+    // Follow-up 16: the list shows its times as the other lists do, with no note of the zone.
+    expect(markup).not.toContain('Times in Tallinn time.');
     expect(markup).toContain('placeholder="Task, step or record"');
     expect(markup).toContain('maxLength="50"');
     for (const option of ['Any due date', 'Overdue', 'Due in the next 7 days', 'No due date']) {

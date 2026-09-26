@@ -8,8 +8,7 @@ import {
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
-  LOCAL_TIME_NOTE, aboutText, dueInfo, formatLocal, fromLine, peopleText, progressText, progressWidth,
-  stepDue, taskCount,
+  aboutText, dueInfo, formatLocal, fromLine, peopleText, progressText, progressWidth, stepDue, taskCount,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -50,6 +49,9 @@ import styles from './Tasks.module.css';
  *
  * Follow-up 15: from 1024 up Task and Your step share the width the other columns leave, and the
  * phone card is the other lists' card.
+ *
+ * Follow-up 16: the tab strip stands alone in its row with no note of the time zone, and on the phone
+ * it spans the list under it (the shared strip's compact form).
  *
  * The server decides. Which tasks a view holds, their order, what the search and the filter find,
  * and whether the reader may mark or undo a step all come from the API; this page words them. The
@@ -311,15 +313,14 @@ export function Tasks() {
     <div className={shell.page}>
       {header}
 
-      <div className={styles.tabsRow}>
-        <RecordTabs
-          compact
-          tabs={TASK_TABS.map((t) => ({ id: t.id, label: t.label, icon: t.icon, count: counts?.[t.count] }))}
-          active={tab.id}
-          onSelect={(next) => patch({ tab: next === 'mine' ? '' : next })}
-        />
-        <span className={styles.zone}>{LOCAL_TIME_NOTE}</span>
-      </div>
+      {/* The strip stands alone in its row, as on Delete records; the list shows its times as the other
+          lists do, with no note of the zone (Follow-up 16). */}
+      <RecordTabs
+        compact
+        tabs={TASK_TABS.map((t) => ({ id: t.id, label: t.label, icon: t.icon, count: counts?.[t.count] }))}
+        active={tab.id}
+        onSelect={(next) => patch({ tab: next === 'mine' ? '' : next })}
+      />
 
       <section className={list.panel}>
         <div className={filters.toolbar}>
