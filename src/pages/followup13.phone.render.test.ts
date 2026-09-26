@@ -73,7 +73,8 @@ describe('My tasks cards on a phone (F13-2)', () => {
     const agreement = card(markup, 'Prepare the rental agreement for Martins Ozols');
     expect(agreement).not.toContain('Your step');
     expect(agreement).not.toContain('from ');
-    expect(agreement).toMatch(/_cardDue_[^"]* [^"]*_toneWarn_[^"]*">Due today · 15:54</);
+    // Follow-up 15: the due date is the other lists' fact value, in its tone.
+    expect(agreement).toMatch(/_factValue_[^"]* [^"]*_toneWarn_[^"]*">Due today · 15:54</);
     const prepare = card(markup, 'Prepare 204 JLM for a rental');
     expect(prepare).toContain('from Dita Smite');
     expect(prepare).toMatch(/>Your step<.*Apply for the taxi licence.*data-size="card"[^>]*>.*Mark done<\/span><\/button>/);

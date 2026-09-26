@@ -473,7 +473,10 @@ describe('the tones win over a line’s own colour (read from the stylesheet)', 
       .replace(/\/\*[\s\S]*?\*\//g, '').trim();
     const rules = css.split('}').map((rule) => rule.trim()).filter(Boolean);
     expect(rules.slice(-2).map((rule) => rule.split('{')[0]!.trim())).toEqual(['.toneBad', '.toneWarn']);
-    for (const plain of ['.due', '.yourStepDue', '.cardDue']) expect(css).toContain(`${plain} {`);
+    for (const plain of ['.due', '.yourStepDue']) expect(css).toContain(`${plain} {`);
+    // Follow-up 15: the phone card's value is the other lists' (`cards.module.css`), whose stylesheet may
+    // load after this one; there the tones win by the facts' scope, two classes against one.
+    for (const tone of ['.cardFacts .toneBad', '.cardFacts .toneWarn']) expect(css).toContain(`${tone} {`);
   });
 });
 

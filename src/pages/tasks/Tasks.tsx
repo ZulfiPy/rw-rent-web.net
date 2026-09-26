@@ -20,6 +20,7 @@ import { ClearFilters, SearchInput, SelectFilter } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { RecordTabs, recordStyles as shell } from '@/ui/RecordTabs';
+import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
 import { useRowNav } from '@/ui/rowNav';
@@ -47,7 +48,8 @@ import styles from './Tasks.module.css';
  * "✓ Done", and the button's place, a column of one width at the right from 1024 up and a line under
  * the text in the folded band; a phone card's step reads the same. A due date is never cut.
  *
- * Follow-up 15: from 1024 up Task and Your step share the width the other columns leave.
+ * Follow-up 15: from 1024 up Task and Your step share the width the other columns leave, and the
+ * phone card is the other lists' card.
  *
  * The server decides. Which tasks a view holds, their order, what the search and the filter find,
  * and whether the reader may mark or undo a step all come from the API; this page words them. The
@@ -171,6 +173,12 @@ function CardStep({ taskId, step }: { taskId: string; step: WorkTaskStepResponse
   );
 }
 
+/**
+ * A task on the phone (Follow-up 15): the other lists' card. Its head holds the title, what the task is
+ * about and who gave it, and a Finished card's chip where their status chips stand; its facts are
+ * Steps with the progress bar on the left and Due, or Closed, flush right; then the reader's step
+ * boxes. Tapping the card opens the task; its own controls keep their clicks.
+ */
 function TaskCard({ task, tab, readerId }: { task: WorkTaskListItemResponse; tab: TaskTabSpec; readerId: string | undefined }) {
   const rowNav = useRowNav();
   const href = taskHref(task.id, tab.id);
@@ -182,15 +190,12 @@ function TaskCard({ task, tab, readerId }: { task: WorkTaskListItemResponse; tab
   const steps = tab.yourSteps ? task.yourSteps : [];
 
   return (
-    <div {...rowNav(href)} className={styles.card}>
-      <div className={styles.cardHead}>
-        <span className={styles.cardHeading}>
-          {/* The title's own line, so its underline follows the words on every line (Follow-up 14). */}
-          <span className={styles.cardTitleLine}>
-            <Link to={href} className={styles.cardTitle}>{task.title}</Link>
-          </span>
-          {about ? <span className={styles.cardSub}>{about}</span> : null}
-          {from ? <span className={styles.cardSub}>{from}</span> : null}
+    <div {...rowNav(href)} className={`${cards.card} ${cards.cardLink} ${styles.cardOpens}`}>
+      <div className={cards.head}>
+        <span className={cards.heading}>
+          <Link to={href} className={`${cards.title} ${styles.cardTitle}`}>{task.title}</Link>
+          {about ? <span className={cards.sub}>{about}</span> : null}
+          {from ? <span className={cards.sub}>{from}</span> : null}
         </span>
         {finishedView ? (
           task.status === WorkTaskStatus.Finished
@@ -198,24 +203,24 @@ function TaskCard({ task, tab, readerId }: { task: WorkTaskListItemResponse; tab
             : <Chip tone="mute" dot="1px">Cancelled</Chip>
         ) : null}
       </div>
-      <div className={styles.cardFacts}>
-        <span className={styles.cardFact}>
-          <span className={styles.cardLabel}>Steps</span>
-          <span className={none ? styles.cardValueDim : styles.cardValue}>{progressText(task.doneStepCount, task.stepCount)}</span>
+      <div className={`${cards.facts} ${styles.cardFacts}`}>
+        <span className={cards.fact}>
+          <span className={cards.factLabel}>Steps</span>
+          <span className={`${cards.factValue} ${none ? styles.cardValueDim : ''}`}>{progressText(task.doneStepCount, task.stepCount)}</span>
           {none ? null : (
             <span aria-hidden="true" className={`${styles.bar} ${styles.cardBar}`}>
               <span className={styles.barFill} style={{ width: progressWidth(task.doneStepCount, task.stepCount) }} />
             </span>
           )}
         </span>
-        <span className={styles.cardFact}>
-          <span className={styles.cardLabel}>{finishedView ? 'Closed' : 'Due'}</span>
+        <span className={`${cards.fact} ${cards.cardFactEnd}`}>
+          <span className={cards.factLabel}>{finishedView ? 'Closed' : 'Due'}</span>
           {finishedView ? (
-            <span className={styles.cardDue}>{formatLocal(task.closedAtUtc)}</span>
+            <span className={cards.factValue}>{formatLocal(task.closedAtUtc)}</span>
           ) : due ? (
-            <span className={`${styles.cardDue} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>
+            <span className={`${cards.factValue} ${due.tone ? TONE_CLASS[due.tone] : ''}`}>{due.text}</span>
           ) : (
-            <span className={`${styles.cardDue} ${styles.cardValueDim}`}>No due date</span>
+            <span className={`${cards.factValue} ${styles.cardValueDim}`}>No due date</span>
           )}
         </span>
       </div>
@@ -354,7 +359,7 @@ export function Tasks() {
             />
           )
         ) : phone ? (
-          <div className={styles.cards}>
+          <div className={cards.cards}>
             {rows.map((task) => <TaskCard key={task.id} task={task} tab={tab} readerId={me?.id} />)}
           </div>
         ) : (

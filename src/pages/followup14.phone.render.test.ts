@@ -108,25 +108,23 @@ describe('a done step on a phone card (F14-5)', () => {
   });
 });
 
-describe('a task title’s underline on a phone card (F14-6)', () => {
-  test('the title is a link inside a line of its own, so the underline runs under its words on every line', () => {
+/*
+ * F14-6 gave the card title a line under its words. Follow-up 15 (F15-2) replaced it: the title is drawn
+ * as the other lists' cards draw theirs, with no line under it. These two tests now hold that.
+ */
+describe('a task title on a phone card (F14-6, replaced by F15-2)', () => {
+  test('the title is the card title link of the other lists, in the card head, with no line of its own', () => {
     const markup = cards(meDita, r11MyTasksDita);
     for (const task of r11MyTasksDita.items) {
-      expect(markup, task.title).toMatch(new RegExp(`<span class="_cardTitleLine_[^"]*"><a class="_cardTitle_[^"]*" href="/tasks/${task.id}"[^>]*>${task.title}</a></span>`));
+      expect(markup, task.title).toMatch(new RegExp(`<span class="_heading_[^"]*"><a class="_title_[^"]* _cardTitle_[^"]*" href="/tasks/${task.id}"[^>]*>${task.title}</a>`));
     }
-    // The owner's two-line title is drawn the same way.
-    expect(markup).toContain('>Handle the windscreen insurance case of 204 JLM</a></span>');
+    expect(markup).not.toContain('_cardTitleLine_');
   });
 
-  test('the underline belongs to the words: the link stays inline, and the line carries the size', () => {
+  test('no line under the title: the task card only lets a long title wrap anywhere', () => {
     const title = declared(rules, '.cardTitle');
-    expect(title['border-bottom']).toBe('1px solid var(--line-3)');
-    // An inline link draws its underline under each line of words; a box would draw one under the box.
-    expect(title.display).toBeUndefined();
-    expect(title['max-width']).toBeUndefined();
-    expect(title.width).toBeUndefined();
-    expect(declared(rules, '.cardTitleLine')).toMatchObject({ 'font-size': '14px', 'overflow-wrap': 'anywhere' });
-    expect(declared(rules, '.cardTitleLine').display).toBeUndefined();
-    expect(declared(rules, '.cardTitle:hover')['border-bottom-color']).toBe('currentColor');
+    expect(title).toEqual({ 'overflow-wrap': 'anywhere' });
+    expect(declared(rules, '.cardTitleLine')).toEqual({});
+    expect(declared(rules, '.cardTitle:hover')).toEqual({});
   });
 });

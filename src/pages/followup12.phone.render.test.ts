@@ -58,7 +58,8 @@ describe('the task cards on a phone', () => {
     expect(prepare).toContain(`href="/tasks/${r11MyTasksDita.items[1]!.id}"`);
     expect(prepare).toContain('Vehicle · 204 JLM');
     expect(prepare).toMatch(/>Steps<\/span><span[^>]*>1 of 4 done<\/span><span aria-hidden="true" class="[^"]*_cardBar_/);
-    expect(prepare).toMatch(/>Due<\/span><span class="_cardDue_[^"]*">28 Sep, 10:54</);
+    // Follow-up 15: the card's facts are the other lists' (`cards.module.css`), Due in the right column.
+    expect(prepare).toMatch(/_cardFactEnd_[^"]*"><span class="_factLabel_[^"]*">Due<\/span><span class="_factValue_[^"]*">28 Sep, 10:54</);
     expect(prepare).toContain('>Your steps<');
     expect(count(prepare, '<div class="_cardStep_')).toBe(2);
     expect(prepare).toMatch(/Add to Bolt.*data-size="card" data-done="true"[^>]*>.*Undo<\/span><\/button>.*Handover.*data-size="card"[^>]*>.*Mark done<\/span><\/button>/);
@@ -67,7 +68,7 @@ describe('the task cards on a phone', () => {
     expect(claim).toContain('>Your step<');
     expect(claim).toMatch(/Pick up the repair invoice.*data-size="card"[^>]*>.*Mark done<\/span><\/button>/);
     const fine = card(markup, 'Reassign the parking fine to the driver');
-    expect(fine).toMatch(/_cardDue_[^"]* [^"]*_toneBad_[^"]*">Overdue · 24 Sep</);
+    expect(fine).toMatch(/_factValue_[^"]* [^"]*_toneBad_[^"]*">Overdue · 24 Sep</);
     expect(fine).not.toContain('Your step');
     expect(fine).toMatch(/_cardValueDim_[^"]*">No steps</);
     const fobs = card(markup, 'Order two spare key fobs');
@@ -114,7 +115,7 @@ describe('the task cards on a phone', () => {
     });
     const register = card(markup, 'Register 119 MPR in Bolt');
     expect(register).toMatch(/data-tone="ok"[^>]*>.*Finished<\/span>/);
-    expect(register).toMatch(/>Closed<\/span><span class="_cardDue_[^"]*">22 Sep, 20:10</);
+    expect(register).toMatch(/_cardFactEnd_[^"]*"><span class="_factLabel_[^"]*">Closed<\/span><span class="_factValue_[^"]*">22 Sep, 20:10</);
     expect(register).toContain('from Dita Smite');
     expect(card(markup, 'Prepare an agreement for Ventspils Marine Services')).toMatch(/data-tone="mute"[^>]*>.*Cancelled<\/span>/);
   });

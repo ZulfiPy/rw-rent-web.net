@@ -3,8 +3,8 @@
    the phone task card, and the step's Mark done / Undo button that the task's page shares. Every
    value is a design token the app already uses; the list, table and tab vocabularies are `src/ui`'s.
    Follow-up 14 set the Your step cell's order per screen size, the uncut due dates and the phone
-   card's "✓ Done" line and title underline. Follow-up 15 shares the desktop's spare width between Task
-   and Your step. */
+   card's "✓ Done" line. Follow-up 15 shares the desktop's spare width between Task and Your step, and
+   builds the phone card from the other lists' card (`src/ui/cards.module.css`). */
 
 /* The strip and, at the row's far end, the time zone. */
 .tabsRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -146,39 +146,19 @@
 }
 .stepRefusal { text-wrap: pretty; }
 
-/* The phone card: tapping it opens the task; its own controls keep their clicks. */
-.cards { display: flex; flex-direction: column; }
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
-  cursor: pointer;
-}
-.card:hover { background: var(--surface-2); }
-.cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.cardHeading { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-/* The title is inline inside a line of its own, so its underline follows the words on every line of a
-   long title rather than running under the whole box (Follow-up 14). */
-.cardTitleLine { max-width: 100%; padding-bottom: 1px; font-size: 14px; line-height: 21px; overflow-wrap: anywhere; }
-.cardTitle {
-  padding-bottom: 1px;
-  font-weight: 600;
-  color: var(--fg);
-  text-decoration: none;
-  border-bottom: 1px solid var(--line-3);
-}
-.cardTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
-.cardSub { font-size: 11.5px; color: var(--fg-3); }
-.cardFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
-.cardFact { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* The phone card (Follow-up 15) is the other lists' card (`src/ui/cards.module.css`): its head with the
+   title and a Finished card's chip, and its facts in two columns, Steps on the left and Due flush right.
+   What is the task card's own: the whole card opens the task, a title of up to 200 characters wraps
+   anywhere rather than widening the card, the words of an empty value are dim, and a due date's tone
+   wins over the facts' value colour whichever stylesheet loads first. */
+.cardOpens { cursor: pointer; }
+.cardTitle { overflow-wrap: anywhere; }
+.cardFacts .cardValueDim { color: var(--fg-3); }
+.cardFacts .toneBad { color: var(--bad); }
+.cardFacts .toneWarn { color: var(--warn); }
+/* "Your step" or "Your steps" over the reader's step boxes, as a fact's label. */
 .cardLabel { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-4); }
-.cardValue { font-size: 12.5px; color: var(--fg-2); }
-.cardValueDim { font-size: 12.5px; color: var(--fg-3); }
 .cardBar { max-width: 140px; margin-top: 2px; }
-.cardDue { font-size: 12.5px; font-weight: 500; color: var(--fg-2); }
-.cardDue.cardValueDim { color: var(--fg-3); }
 .cardSteps { display: flex; flex-direction: column; gap: 8px; }
 /* A step on the card: its title, its due line or "✓ Done", and the full-width button. */
 .cardStep {
@@ -192,6 +172,6 @@
 }
 
 /* Overdue and due today. Last in the file, so the tone wins over the plain colour of the line it
-   marks (the Due cell, a step's due, the card's due) at the same specificity. */
+   marks (the Due cell, a step's due) at the same specificity; on the card, `.cardFacts` above. */
 .toneBad { color: var(--bad); font-weight: 500; }
 .toneWarn { color: var(--warn); font-weight: 500; }
