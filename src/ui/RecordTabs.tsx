@@ -22,7 +22,8 @@ export function RecordTabs<T extends string>({ tabs, active, onSelect, compact }
   onSelect: (next: T) => void;
   /**
    * A short strip that fits the phone whole (Follow-up 12, Tasks): below 640 its tabs drop their
-   * icons and tighten, so nothing scrolls.
+   * icons and tighten, so nothing scrolls; below 768 it spans the width it stands in, its tabs sharing
+   * what is left over (Follow-up 16).
    */
   compact?: boolean;
 }) {

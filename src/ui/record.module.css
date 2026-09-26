@@ -62,6 +62,14 @@
   .tabs[data-compact='true'] .tab { padding: 8px 11px; }
   .tabs[data-compact='true'] .tabIcon { display: none; }
 }
+/* On the phone a compact strip spans the list under it, edge to edge, as the longer strips of the
+   other pages fill the width (Follow-up 16). Each tab keeps its label and count on one line and never
+   shrinks below them; the width left over is shared evenly between the tabs, their labels centred.
+   From 768 up the strip stays as wide as its tabs. */
+@media (max-width: 767px) {
+  .tabs[data-compact='true'] { width: 100%; }
+  .tabs[data-compact='true'] .tab { flex: 1 0 auto; justify-content: center; white-space: nowrap; }
+}
 
 /* On the phone tier the strip is wider than the screen. It still scrolls, but the scrollbar is not
    part of the control, and the clipped edge fades out so the tab under it reads as more. The fade
