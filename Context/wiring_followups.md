@@ -647,3 +647,33 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
   on one line it is as long as the words, under a title on two lines it runs across the whole card
   ("Handle the windscreen insurance case of 204 JLM"), because it is a line under the title's box.
   **Wanted:** the underline follows the words on every line.
+
+## 15. Follow-up 15 — the Tasks list's widths on the desktop, and its phone cards like the others
+
+> **Status: OWNER-CONFIRMED, AUTHORIZED 2026-09-26.** From the owner's second look at Tasks on the
+> practice copy after Follow-up 14, with more practice tasks (long and short titles, an overdue step, a
+> step its creator marked). Frontend only; the backend, its contract and the title's limit (TASK-001,
+> 200 characters) do not change. The tablet band and the task's page are not part of it.
+
+- **F15-1. Desktop (from 1024 px, the sideways iPad included): Your step wider, Task narrower** (the
+  owner: "make the Your step column wider"; "I really don't get why the task column takes so much space
+  on the left": a title should be meaningful, and whoever wants to write an essay has the description).
+  Today Task takes all the spare width and Your step keeps 290 px, so a step's title has 146 px beside
+  its button and "Book the service appointment" takes two lines, while a long task title stretches
+  across. **Wanted:** the spare width is shared between Task and Your step instead of going to Task
+  alone; Your step is never narrower than a step title of about 30 characters needs on one line beside
+  its button (about 330 px), so "Book the service appointment" and "Pick up the repair invoice" fit on
+  one line at 1512 px; a long task title wraps inside its column, nothing cut; at 1194 px nothing
+  scrolls sideways. F14-1's button column (one width, level with the title) stays as it is.
+- **F15-2. Phone: a task's card follows the pattern of the other lists' cards** (the owner: on the
+  Vehicles list "the body, VIN and fuel columns and their values are correctly positioned on the right
+  and left, so they look organized inside the card", and the task cards do not follow it). The other
+  lists' cards (Vehicles, Drivers and the rest) are drawn from `src/ui/cards.module.css`: facts in two
+  columns, the right column's label and value flush with the card's right edge (FUEL, LICENCE NUMBER),
+  the title in bold without a line under it. The task card has its own styles: Due starts in the
+  middle of the card, and the title carries a permanent line. **Wanted:** the task card built from the
+  same pattern: Steps with its progress bar on the left, Due flush right with its label and value
+  right-aligned, the title drawn as those cards draw theirs (this replaces Follow-up 14's underline,
+  F14-6); a Finished card's chip where their status chips stand. The Your step boxes stay exactly as
+  they are.
+
