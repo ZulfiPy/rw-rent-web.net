@@ -1,296 +1,285 @@
-# Frontend Wiring — Follow-up 14, Tasks at every screen size
+# Frontend Wiring — Follow-up 15, the Tasks list's widths and its phone cards
 
-> Follow-up 14 (`Context/wiring_followups.md` §14): the owner's look at Tasks on the practice copy, screen
-> size by screen size (the desktop, the iPad Pro 11 upright and sideways, the iPhone 16 Pro), and the six
-> details it asked for. Frontend only; the backend and its contract did not change. On
-> `feature/backend-wiring` in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer
-> fast-forwards `main` after verification. Written 2026-09-25. It replaces Follow-up 13's report, which
-> git history keeps.
+> Follow-up 15 (`Context/wiring_followups.md` §15): the owner's second look at Tasks on the practice copy,
+> with more practice tasks. On the desktop Your step gets wider and Task narrower; on the phone a task's
+> card follows the other lists' cards. Frontend only; the backend, its contract and the title's limit
+> (TASK-001, 200 characters) did not change. On `feature/backend-wiring` in this worktree
+> (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main` after verification.
+> Written 2026-09-26. It replaces Follow-up 14's report, which git history keeps.
 >
 > **The owner's side was never touched.** This run never opened 5173, never signed in anywhere, never
 > called 5001, never read or wrote `rwrent_v1` and never read Mailpit. The backend worktree was only
 > built (in Release) and run, never changed.
 >
 > - The owner's app on 5173 hot-reloads from this worktree, so it showed this run's code as it was
->   written. For a few seconds during the writing it would have shown an error on Tasks, had Tasks been
->   open there (§8.1).
+>   written. Every change to the two Tasks files was made in a copy outside the worktree, typechecked and
+>   tested there, and copied in as a whole file, so the owner's app never loaded a half-written file.
 > - Every live check used a scratch stack built for this run: `rwrent_check`, created, migrated and
->   seeded by round 11's Release build, behind the API on 5002.
+>   seeded by round 11's Release build, behind the API on 5002, with practice tasks added through its API.
 > - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, one
 >   list per screen size, on 5174 and 5002.**
 
 ## 1. Summary
 
-The tiers, as §14 names them: the desktop from 1024 px (the sideways iPad Pro 11, 1194 px, is desktop),
-the folded tablet band 768–1023 px (the upright iPad Pro 11, 834 px), the phone below 768 px (the
-iPhone 16 Pro, 402 px).
-
-- **F14-1, Your step on the desktop and the sideways iPad.** Every step is its title, the line under it
-  (its due, or "✓ Done" in the done colour once the step is done, in place of the due line), and the
-  place of its button. The place is one column of one width (104 px) at the right of Your step, so
-  Mark done and Undo are the same width and stand at the same place from step to step and row to row.
-  Each button is level with its step's title: its middle is the middle of the title's first line,
-  whether the title takes one line or two. The title takes the rest of the width after a fixed 12 px
-  gap. Where the API offers no action, the place stays, empty, so nothing else moves. My tasks and
-  Involving me draw it with the same component.
-- **F14-2, a due date is never cut.** The Due cell's date keeps "24 Sep" and "10:54" whole and may break
-  only after "·" or ",": at 834 px "Overdue · 24 Sep" now reads "Overdue ·" over "24 Sep". No due line
-  anywhere in the list is held on one line any more, in any view and at any width; Finished's Closed
-  time already wrapped and still does.
-- **F14-3, Your step on the upright iPad.** Every step reads the same way: its title; under it the due
-  line or "✓ Done"; under that its button, always, at the same 104 px for Mark done and Undo, lined up
-  with the text on the left; 12 px between one step and the next. A step without an action ends at its
-  text.
-- **F14-4, the sideways iPad.** No rule of its own: it takes the desktop's layout and F14-1, and nothing
-  else.
-- **F14-5, the phone's "✓ Done".** It moved from the step box's top-right corner to the line under the
-  title, in place of the due line. The boxes and their full-width 44 px buttons did not change.
-- **F14-6, the phone's title underline.** It now follows the words on every line: under a two-line
-  title ("Handle the windscreen insurance case of 204 JLM") it runs under each line's words, no longer
-  across the whole card.
-- **The app judges nothing.** Which button a step shows, if any, still comes from the API's
-  `canMarkDone` and `canUndo`; the layout only gives each answer its place.
+- **F15-1, the desktop and the sideways iPad.** In My tasks and Involving me, Task and Your step now
+  share what Steps (150 px), People (200 px) and Due (170 px) leave, half each, and Your step never
+  gets less than 330 px. At 1512 px each takes 346 px, so "Book the service appointment" and "Pick up
+  the repair invoice" stand on one line beside their buttons; at 1920 px each takes 550 px; at 1194 px
+  Your step keeps 330 px and Task takes 232 px, and nothing scrolls sideways. A long task title wraps
+  inside Task, nothing cut. Follow-up 14's button column (one width, level with the title) is as it
+  was. The table's minimum width is as it was (1020 px), so it scrolls sideways nowhere it did not
+  before.
+- **F15-2, the phone.** A task's card is now the other lists' card (`src/ui/cards.module.css`), as the
+  Vehicles and Drivers cards are: the title in bold without a line under it (this replaces Follow-up
+  14's underline), what the task is about and who gave it in grey under it, a Finished card's chip at
+  the top right where their status chips stand, and the facts in two columns: Steps with its progress
+  bar on the left, Due (or Closed) flush with the card's right edge, label and value right-aligned.
+  The reader's step boxes are exactly as they were. Tapping the card still opens the task.
+- **Nothing else changed:** the tablet band (768–1023), the task's page, the dialogs, the Overview, the
+  words, Finished's columns, Insurance cases. The server still decides everything.
 
 | | |
 |---|---|
-| Commits | `a87c322`, `c0629bb`, `fd41c52`, `fb59065` (`Wiring 37`) and this report's (`Wiring 38`), on `feature/backend-wiring` (§9) |
-| Tests | 480 → **495**, all green: 15 new; 2 existing tests updated on purpose, 5 expectations in all (§2.7) |
+| Commits | `bf653b3`, `9f4eed5`, `e011a42`, `f3f4528` (`Wiring 39`) and this report's (`Wiring 40`), on `feature/backend-wiring` (§9) |
+| Tests | 495 → **509**, all green: 14 new; 6 existing tests updated on purpose (§2.4) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
 | Each commit alone | 0 type errors and the full suite green at each of the four (§4.6) |
-| Planted breakages | **30 planted, 30 caught** by the suite (§4.5) |
-| Joint check | **36/36** through the API on a freshly seeded database; the 18 recorded answers the tests render identical to a fresh recording (§4.2, §4.3) |
-| In a browser | the real pages at 1512, 1194, 834 and 402 px, and at the band's edges 1024, 1023 and 768, in the dark and the light theme; the app on 5174 signed out (§4.4) |
+| Planted breakages | **20 planted, 20 caught** by the suite (§4.5) |
+| Joint check | **22/22** through the API with the practice tasks; the recorded answers identical to a fresh recording, 6/6 (§4.2, §4.3) |
+| In a browser | the real pages at 1920, 1512, 1366, 1280, 1194 and 1024 px and at 402 px beside a Vehicles card, light and dark; the tablet band unchanged at 834; the app on 5174 signed out (§4.4) |
 
 ## 2. Implemented
 
-### 2.1 F14-1 and F14-4: Your step from 1024 px up (`src/pages/tasks/Tasks.tsx`, `Tasks.module.css`, `StepAction.tsx`)
+### 2.1 F15-1: the widths from 1024 px up (`src/pages/tasks/Tasks.module.css`, `Tasks.tsx`)
 
-- **One piece for a step's text.** `StepText` draws the title and, under it, the due line or, once the
-  step is done, "✓ Done" (`DoneMark`) in its place. A list row and a phone card share it, so a done step
-  reads the same on every screen.
-- **The step in Your step.** `YourStep` draws, in this order: the text, the button's place
-  (`yourStepAction`), and a refused mark's sentence under both. The place is drawn for every step; it
-  holds Mark done, Undo or nothing, as the API's flags say.
-- **Its layout.** `.yourStep` is a grid of two columns: the text (`minmax(0, 1fr)`) and the place
-  (`--your-step-button: 104px`, the width "Mark done" needs, 102 px, and two to spare), with a fixed
-  12 px gap. The list's button (`data-size="cell"`) takes its place's width and a height of 30 px. The
-  title's line is 20 px and the text starts 5 px lower, so the button's middle is the middle of the
-  title's first line; measured in the browser, the difference is 0.00 px on every step.
-- **Nothing moves.** The place keeps its column when it holds nothing (a step its creator marked), and
-  the due line and "✓ Done" are one line of the same height (18 px), so a mark changes only the line's
-  words and the button's label.
-- **The sideways iPad.** The list's stylesheet has no rule between 1024 and 1279 px, and the Tasks table
-  does not take the wide-fold utilities, so 1194 px draws exactly what 1512 px draws.
+- **The rule.** `.cYour { width: max(var(--your-step-min), (100cqw - var(--fixed-columns)) / 2) }` on the
+  open views' table (`.withSteps`), with `--fixed-columns: 520px` (Steps 150, People 200, Due 170) and
+  `--your-step-min: 330px`. Task keeps `width: auto` and so takes the rest: the other half, or what
+  Your step's 330 px leaves when the frame is narrower than 1180 px.
+- **Measured on the list's own frame.** `100cqw` is the width of the list's scroll frame, which now
+  carries `container-type: inline-size` (`tableFrame`). The rail takes 64 px from 1024 to 1279 px,
+  246 px from 1280, and a person may also open or fold it by hand, so the screen's width would not say
+  how much room the table has; the frame does. The app already sizes by its container elsewhere
+  (Security audit, User directory, the record panels).
+- **Why 330 px.** The cell's pads (28 px), Follow-up 14's button place (104 px) and its gap (12 px)
+  leave 186 px for the step's title, which holds "Book the service appointment" (179 px in the list's
+  type), the longest seeded title of that length.
+- **The floor.** The table's minimum width stays 1020 px, so where the frame is narrower (1024 px, and
+  1280 to 1319 px with the rail open) the table scrolls inside its panel exactly as before, by the same
+  amount; there Your step keeps its 330 px and Task takes 170 px.
+- **A long title** wraps inside Task as before (`overflow-wrap: anywhere` on the title), never cut.
+- **The tablet band** keeps its own fixed widths (Your step 206 px), which override the rule below
+  1024 px; Finished's table (`.plain`) has no Your step and is unchanged.
 
-### 2.2 F14-3: Your step in the folded band
+### 2.2 F15-2: the phone card (`Tasks.tsx`, `Tasks.module.css`)
 
-In `@media (max-width: 1023px)` the step's grid has one column: the text, then the place on a line of
-its own 8 px under it, at the same 104 px, starting where the text starts. The text loses its 5 px lead
-there. Steps stand 12 px apart. A place with nothing in it is not drawn in this band (`:empty`), so a
-step without an action ends at its text and the space to the next step stays 12 px. The old rule that
-let the button stand beside a short title and drop under a long one (`flex-wrap` on the step's line) is
-gone.
+- **Built from the shared card.** `cards.card` with `cards.cardLink` (the hover of a card that opens a
+  record), `cards.head` with `cards.heading`, `cards.title` for the title link, `cards.sub` for what
+  the task is about and "from" its creator, the chip after the heading, `cards.facts` with a left
+  `cards.fact` (Steps, its value and the progress bar) and a right `cards.fact cards.cardFactEnd` (Due
+  or Closed). The card's own `card`, `cardHead`, `cardHeading`, `cardTitleLine`, `cardSub`,
+  `cardFacts` grid, `cardFact`, `cardValue` and `cardDue` rules are gone.
+- **What stays the task card's own**, because the shared card has no word for it: `cardOpens` (the
+  pointer, since the whole card opens the task), `cardTitle` (only `overflow-wrap: anywhere`, so a
+  title of up to 200 characters wraps anywhere instead of widening the card), `cardValueDim` (the grey
+  of "No steps" and "No due date"), and the tones of Overdue and Due today on the card's value, written
+  as `.cardFacts .toneBad` and `.cardFacts .toneWarn` so that they beat the shared value's colour
+  whichever stylesheet the browser loads first.
+- **The step boxes** (`cardSteps`, `cardStep`, their 44 px buttons) and the "Your step(s)" label are
+  untouched.
 
-### 2.3 F14-2: a due date is never cut
+### 2.3 What stays
 
-- **The Due cell.** `DueWords` splits the date only after "·" or "," and keeps each piece whole
-  (`.keep`), with a real space between the pieces: "Overdue ·" and "24 Sep", "Due today ·" and "15:54",
-  "28 Sep," and "10:54". The cell itself (`.due`) is no longer held on one line, so in the folded
-  band's 121 px column the date takes a second line where it used to be cut. The words are unchanged.
-- **The other due lines.** A step's due line (`.yourStepDue`) is no longer held on one line either; at
-  every width the columns hold their widths, so it never needs a second line, and its markup did not
-  change. The phone card's due (`.cardDue`) was never held on one line.
-- **Finished.** Its Closed time sits under its chip in the table's sub line, which wraps; nothing about
-  it changed.
+The tablet band, the task's page, the dialogs, the Overview, the words, Finished's columns, Insurance
+cases, the title's limit of 200 characters (the dialog's field and the server's rule), and every
+decision the server makes.
 
-### 2.4 F14-5: the phone card's "✓ Done"
-
-`CardStep` draws `StepText` and then the button: title, due line or "✓ Done", button. The row that put
-"Done" in the box's top-right corner (`cardStepLine`) is gone. The button is unchanged: 44 px high, the
-box's full width, drawn only when the API offers it.
-
-### 2.5 F14-6: the phone card's title underline
-
-The title link sits inline inside a line of its own (`cardTitleLine`), so its bottom border is drawn
-under the words of each line, not under the box. The line carries the size (14 px on a 21 px line) and
-a 1 px pad, so a one-line title looks and spaces as before.
-
-### 2.6 What stays
-
-The task's page (its Steps panel keeps its own buttons at their own widths and its "Done · name, time"
-chip), the dialogs, the Overview, the words, Finished's columns, the tab counts, and Insurance cases are
-unchanged. `canMarkDone` and `canUndo` alone decide the button.
-
-### 2.7 Tests
+### 2.4 Tests
 
 **The tests whose expectation this run changes on purpose:**
 
 | Test | Before | Now |
 |---|---|---|
-| `followup12.render` › the Tasks list (F12-2) › My tasks: the API’s rows … your step, people and due | the Due cell held its date as one piece: `Overdue · 24 Sep`, `28 Sep, 10:54`, `05 Oct, 14:54` | the same words in kept pieces with a space between: `Overdue ·` + `24 Sep`, `28 Sep,` + `10:54`, `05 Oct,` + `14:54` (the Due column that cut its date) |
-| the same test | Add to Bolt: its due line "No due date", then "Done" beside the button, then Undo | Add to Bolt: "✓ Done" as the line right under the title, no due line, then Undo (the Done label beside the button) |
-| `followup13.render` › My tasks takes the open views’ layout (F13-1) › Signe, … her own without a step of hers reads a dim dash | the Due cell held `Due today · 15:54` as one piece | `Due today ·` + `15:54` in kept pieces (the Due column that cut its date) |
+| `followup12.phone.render` › the task cards on a phone › no table; each card opens its task … | Due's value in the card's own `cardDue` class: `>Due</span><span class="_cardDue_…">28 Sep, 10:54`; the overdue fine as `_cardDue_ … _toneBad_` | Due in the shared right-hand fact: `_cardFactEnd_` › `_factLabel_` "Due" › `_factValue_` "28 Sep, 10:54"; the overdue fine as `_factValue_ … _toneBad_` (the task card's own styles) |
+| `followup12.phone.render` › the task cards on a phone › Finished: the chip beside the title … | Closed's value in `cardDue` | Closed in the shared right-hand fact, `_factLabel_` "Closed" › `_factValue_` "22 Sep, 20:10" (the task card's own styles) |
+| `followup13.phone.render` › My tasks cards on a phone (F13-2) › Signe … | the agreement's Due as `_cardDue_ … _toneWarn_` | as `_factValue_ … _toneWarn_` (the task card's own styles) |
+| `followup12.render` › the tones win over a line’s own colour (read from the stylesheet) | the stylesheet holds a `.cardDue {` rule before the tones | it holds `.cardFacts .toneBad {` and `.cardFacts .toneWarn {`, the card's tones by scope; `.due` and `.yourStepDue` and the last two rules as before (the task card's own styles) |
+| `followup14.phone.render` › a task title on a phone card (F14-6) › the title is a link inside a line of its own … | every title link inside `_cardTitleLine_` | every title link is `_title_ _cardTitle_` right inside the head's `_heading_`; no `_cardTitleLine_` (the card title's line from Follow-up 14) |
+| `followup14.phone.render` › the same describe › the underline belongs to the words … | `.cardTitle` with `border-bottom: 1px solid var(--line-3)` and a hover colour; `.cardTitleLine` at 14 px | `.cardTitle` is only `overflow-wrap: anywhere`; no `.cardTitleLine` and no `.cardTitle:hover` rule (the card title's line from Follow-up 14) |
 
-No other test changed, and none was deleted, skipped or weakened. The other tests that read "Done"
-before "Undo" in a row still pass as they were, since the text still comes before the button.
+The describe of the last two is renamed "a task title on a phone card (F14-6, replaced by F15-2)". No
+other test changed, and none was deleted, skipped or weakened.
 
-**The new tests** (15), rendered from round 11's recorded answers (`followup13.support.ts`) at their
-moment; what each screen size does with the markup is read from the stylesheet through a small reader
-that only tests use (`src/pages/followup14.stylesheet.ts`), since a server render has no layout:
+**The new tests** (14), rendered from the scratch API's answers with the practice tasks in them
+(`src/pages/followup15.support.ts`, §4.3); the widths each frame gives are worked out from the
+stylesheet's own values through Follow-up 14's stylesheet reader, since a server render has no layout:
 
 | File | Cases | What they hold |
 |---|---|---|
-| `followup14.render.test.ts` | 10 | **F14-1:** in Dita's, Signe's and Toms's My tasks and in Toms's and Dita's Involving me, every step is title, then its line (the due exactly as `stepDue` words it, or "✓ Done"), then the button's place, and the place holds exactly the action the flags allow, at cell size; "✓ Done" replaces the due line of a done step that has a date (Car wash, Tell the driver the time) and every Done sits right under a title; the place is drawn and empty where no action is offered, also with every flag false; the stylesheet's two-column grid, the 104 px place, the 12 px gap, the top alignment, the button's full width and 30 px, no width of its own for Undo, the lead that puts the button's middle on the title's first line, the refusal across the step. **F14-4:** the only media queries are 1023 px and the task page's 639 px, and the table takes no wide-fold class. **F14-3:** in the band one column, the place in row 2 at 104 px on the left, no lead, no `flex-wrap` left in any step rule, 12 px between steps, an empty place not drawn, the due line and Done of one height. **F14-2:** every task due in Dita's, Signe's and Toms's My tasks drawn in kept pieces that join to `dueInfo`'s words, each but the last ending in "·" or ","; no due line held on one line; the band's Due column still 121 px; Finished's Closed time in the wrapping sub line |
-| `followup14.phone.render.test.ts` | 5 | **F14-5:** every step box in Dita's and Toms's My tasks and Toms's Involving me is title, then due or "✓ Done", then the button the flags allow at card size, or none; the corner row is gone; the creator's mark: Done, no button, no due; the card button's 44 px and full width unchanged. **F14-6:** every card title is the link inside its own line; the link has its border and no display, width or max-width of its own, so its underline follows its words |
+| `followup15.render.test.ts` | 8 | **F15-1:** the width rule, its two values, and 520 px being exactly Steps, People and Due; Task `auto`; the frame a container; at every frame the browser measured Your step at least 330 px, equal to Task from 1180 px of frame, 330 below it (1920: 550 and 550; 1512: 346 and 346; 1194: 330 and 232); at 1512 the title's room of at least 179 px beside the button, and 186 px at the floor; the floor 1020 px, no sideways scroll at 1920, 1512 (menu open or folded), 1366 and 1194, and at 1280 and 1024 the scroll as before with Task at 170; the list drawn in its frame, the 171-character title in the wrapping title class, never the one-line cut; Toms's practice steps (11, 81 and 72 characters), the overdue one in red and the one Dita marked with an empty place. **Unchanged:** the band's 206 px, 582 px floor and fixed layout; Finished's columns without Your step |
+| `followup15.phone.render.test.ts` | 6 | **F15-2:** every card of Dita's and Toms's My tasks is the shared card that opens its task, with the shared head, the bold title link and the grey sub lines, and none of the old card classes; Steps with its bar on the left and Due flush right in the shared facts; the dim "No steps" and the red Overdue; the same skeleton as a Vehicles card rendered beside it (card, head, heading, title, sub; facts with a left and a flush-right fact); a Finished and a Cancelled card with their chips where status chips stand and Closed flush right; the step boxes as they were (the long overdue step, the one Dita marked); the task card's own styles only those the shared card has no word for |
 
 ## 3. Not implemented or partial
 
-**Nothing of Follow-up 14.** F14-1 to F14-6 are built and tested.
+**Nothing of Follow-up 15.** F15-1 and F15-2 are built and tested.
 
 ### 3.1 The steps that need a password typed into the app
 
 This run may not type a password into the app, so the signed-in steps in a real browser are the
-reviewer's, on 5174 and 5002 (§5). What they look at was also checked here through the API as the same
-people (§4.2), and in the real pages drawn from those answers (§4.4).
+reviewer's, on 5174 and 5002 (§5). What they look at was checked here through the API as the same
+people (§4.2) and in the real pages drawn from those answers (§4.4).
 
 ## 4. Verification: the joint check
 
-### 4.1 The scratch stack
+### 4.1 The scratch stack and the practice tasks
 
 As `RWRentApi-wiring/Context/round11_report.md` §7 describes it: nothing ran on 5002 or 5174 at the
 start and `rwrent_check` did not exist. It was created, migrated and seeded by round 11's Release build
-of the backend worktree at `1b51206` (round 11's code; clean, level with GitHub; work tasks 8, work
-task steps 11), and the API started on 5002 from `bin/Release` with
-`ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, trusting `http://localhost:5174`. Every command
-sourced an environment script that refuses to run unless its connection string names `rwrent_check`.
-The API client refuses any address but `localhost:5002`. The seed password was the one the owner gave
-for this session, passed in each command's environment only; it is in no file. The database was seeded
-three times: for the recording (§4.3), for the joint check (§4.2), and at the end for the reviewer.
+of the backend worktree at `1b51206` (clean; work tasks 8, work task steps 11), and the API started on
+5002 from `bin/Release` with `ApiSecurity__RecordDeleterEmailDomain=rwrent.example`, trusting
+`http://localhost:5174`. Every command sourced an environment script that refuses to run unless its
+connection string names `rwrent_check`; the API client refuses any address but `localhost:5002`; the
+seed password was the one the owner gave for this session, passed in each command's environment only.
 
-### 4.2 Through the API — 36/36
+**The practice tasks**, added through the API as Dita after each seeding, as the owner's reviewer did:
 
-As Dita, Signe, Toms, Karlis and the administrator, on a fresh seed:
+- "Collect the winter tyres for 204 JLM and 552 KLM from the Mustamäe storage, check the tread depth on
+  every tyre and book the fitting at the workshop before the first frost" (171 characters), about
+  vehicle 204 JLM, due in six days, with four steps: Toms's "Add to Bolt" (11 characters, due in two
+  days); Toms's "Ask the storage for the tyre hotel receipt and photograph each tyre's tread depth"
+  (81 characters, due a day ago, so overdue); Dita's own "Book the fitting at the workshop" (32);
+  Toms's "Tell both drivers when the fitting is booked and where to bring the cars" (72), which Dita, the
+  task's creator, then marked done.
+- "Renew the parking permit", due in nine days, with Toms's "Pay the permit fee in the city portal"
+  (37 characters).
+
+The database was seeded three times: for the recording, for the comparison and the joint check, and at
+the end for the reviewer, each time with the practice tasks added.
+
+### 4.2 Through the API — 22/22
+
+As Dita, Signe, Toms, Karlis and the administrator:
 
 - **Access, as before** (5): the four people hold `Tasks.Use`; the administrator is refused My tasks.
-- **Every step the layout draws** (17): in both open views, for each of the four people, every step in
-  `yourSteps` is the reader's own and carries its title, due, done time, `canMarkDone` and `canUndo`;
-  no step offers both actions, a done step never offers Mark done and a step to do never offers Undo,
-  so a button's place never needs two buttons; the seed holds both a step to do with Mark done and a
-  done step with Undo.
-- **The owner's examples are real answers** (2): Dita's Prepare 204 JLM holds Add to Bolt done with
-  Undo over Handover with Mark done; Add to Bolt, Handover, Pick up the repair invoice and Book the
-  service appointment are all in the answers.
-- **The Due column's forms** (2): the seed holds an overdue task (the parking fine), one due today (the
-  rental agreement) and later dates, and tasks without a date come as null (the dim dash).
-- **Marks move the forms as the layout shows them** (8): Toms's Car wash is to do with a date and Mark
-  done; his mark answers it done by him with Undo; My tasks and Involving me both read it done with
-  Undo, its date still in the answer but no longer shown; his Undo brings back its due line and Mark
-  done. Dita, the task's creator, marks his Tell the driver the time: he reads it done by her with
-  nothing in the button's place, and the server refuses him an Undo there (403
-  `tasks.mark_not_yours`); Dita's own row for that task still shows only her own step.
-- **The phone and Finished** (2): every step in the open views has one of the three forms the card
-  draws; Finished's rows carry their closed time and no step actions.
+- **The practice tasks as their people read them** (9): the long title comes whole, 171 characters, to
+  its creator and to Toms; the server puts it first in Toms's My tasks, by his overdue step; his Your
+  step holds 11, 81 and 72 characters in the creator's order; Add to Bolt to do and due later with Mark
+  done; the 81-character step overdue with Mark done; the step Dita marked done by her with no action
+  of his, and the server refuses him an Undo there (403 `tasks.mark_not_yours`); Dita's Your step in
+  her own task is only her own step; the short task's permit-fee step with Mark done.
+- **What the phone card draws** (5): every open task carries its title, what it is about, its creator,
+  its progress and its due or none; the Due fact meets an overdue date, a later one and none; Signe's
+  Finished holds a Finished and a Cancelled task, each with its closed time; the strip's counts with
+  the practice tasks (Dita 7 in My tasks, Toms 5 and 5 to do); Karlis reads none of them.
+- **The title's limit is the server's, unchanged** (3): a title of 201 characters is refused (400) with
+  the error on the title; one of exactly 200 is taken whole; that task was cancelled again.
 
-### 4.3 The recorded answers — 18/18
+### 4.3 The recorded answers — 6/6
 
-The 18 answers the tests render (`src/pages/followup13.support.ts`, recorded in Follow-up 13) were
-recorded again on a fresh seed today with the same requests and marks, and compared with instants and
-concurrency tokens set aside: **18/18 identical**. The tests render what the API gives today.
+`src/pages/followup15.support.ts` holds Dita's and Toms's counts, My tasks and Involving me with the
+practice tasks in them, recorded on 2026-09-26. On a second fresh seed with the practice tasks made
+again, the same six answers were recorded again and compared with instants, tokens and ids set aside
+(the practice tasks get new ids each time; each id was replaced by the order it first appears in):
+**6/6 identical**.
 
 ### 4.4 In a browser
 
 **The real pages.** The app's own code from this worktree, served on 5175 from a folder outside both
-repositories with a stand-in transport that answers from the 18 recorded answers (and round 10's
-recorded task pages) and sends no request anywhere; a mark or an undo changes the stand-in's lists as
-the server would. Personas Dita, Signe, Toms, and Toms after Dita's mark of his step. Measured with a
-script (positions, widths, cut cells, sideways scroll) and looked at in screenshots:
+repositories with a stand-in transport that answers from the recorded answers (and, for the phone
+comparison, the Vehicles and Drivers lists recorded from the scratch API) and sends no request anywhere.
+Each width was loaded fresh: the browser pane's simulated resize does not tell the app's screen-size
+listener, so after a resize the rail kept its former state until a reload. Measured with a script and
+looked at in screenshots, dark and light.
 
-- **1512 px, the desktop** (dark and light). Dita's My tasks: all four buttons at one x, 104 px wide,
-  each level with its title to 0.00 px, 12 px before each; Undo as wide as Mark done. "Pick up the
-  repair invoice" and "Book the service appointment" take two lines (the title has 146 px, §6.1), their
-  buttons level with the first line. Steps 44 px tall on one-line titles, 64 px on two; 10 px between
-  steps. Due dates on one line, nothing cut, no sideways scroll. **Mark done on Handover:** its line
-  turned from its due to "✓ Done" and its button to Undo, at the same top, height, x and width; while
-  it worked, "Working…" kept the 104 px; the count on Tasks went 4 → 3 and the progress 1 → 2 of 4.
-- **1194 px, the sideways iPad** (dark). The desktop's layout, unchanged: Dita's buttons all at one x,
-  104 px, level to 0.00 px; Toms's Involving me the same. Nothing cut, no sideways scroll at the page or
-  in the table.
-- **1024 px**, the desktop's lowest width: the same layout; the table, whose minimum is 1020 px, scrolls
-  sideways inside its panel by 108 px, as it did before this run (§8.2).
-- **1023 and 768 px**, the band's edges: every step 77 px tall, title, its line, then its button 8 px
-  under the text, starting where the text starts, 104 px; 12 px between steps; "Overdue · 24 Sep" on two
-  lines; nothing cut, no sideways scroll.
-- **834 px, the upright iPad** (dark and light). As at 1023: Dita's four steps identical in form;
-  "Overdue ·" over "24 Sep" in the Due column. Toms after Dita's mark: "Tell the driver the time", "✓
-  Done", and the step ends there, no empty space. Signe's Finished: Task, Steps, People, Closed, nothing
-  cut.
-- **402 px, the iPhone 16 Pro** (dark and light). Cards: every step box is title, its line right under
-  it ("✓ Done" or the due), then the button at the box's full inner width (300 px) and 44 px. The
-  windscreen case's title takes two lines and its underline runs 276 px under the first line's words
-  and 60 px under "204 JLM"; each one-line title's underline is as long as its words. No sideways
-  scroll.
-- **The task's page** at 1512 px: unchanged, its buttons at their own widths (Undo 79 px, Mark done
-  110 px) beside the "Done · name, time" chip.
-- **Console:** no error on fresh loads of My tasks, Involving me, Finished and the creator-marked case.
-  Three errors from the moments of writing are described in §8.1.
+**The widths on the desktop**, Dita's My tasks, the frame being the width the list gets:
+
+| Screen | Rail | Frame | Task before → now | Your step before → now | Sideways scroll |
+|---|---|---|---|---|---|
+| 1920 | open | 1620 | 810 → **550** | 290 → **550** | none |
+| 1512 | open | 1212 | 402 → **346** | 290 → **346** | none |
+| 1512 | folded by hand | 1394 | 584 → **437** | 290 → **437** | none |
+| 1366 | open | 1056 | 246 → **206** | 290 → **330** | none |
+| 1280 | open | 970 | 210 → **170** | 290 → **330** | 50 px inside the panel, as before |
+| 1194 (sideways iPad) | folded | 1082 | 272 → **232** | 290 → **330** | none |
+| 1024 | folded | 912 | 210 → **170** | 290 → **330** | 108 px inside the panel, as before |
+
+The "now" values are measured. The "before" values follow from the old widths (Your step 290 px, Task
+the rest, the same floor); at 1512 the old state was also measured before the change, in Toms's list:
+Task 392 and Your step 290 in a frame of 1202 px, the frame being 10 px narrower when the page shows a
+scrollbar (now 341 and 341 there).
+
+- **Step titles.** At 1920 and 1512 every step title of Dita's is on one line beside its button,
+  "Book the service appointment", "Pick up the repair invoice" and "Book the fitting at the workshop"
+  included. At 1194 and below, where Your step has 330 px, titles of about 30 characters fit and "Book
+  the fitting at the workshop" (32) takes two lines. Toms's 81-character step takes three lines at
+  1512 (four before), the 72-character one three.
+- **The long title** wraps in Task: 4 lines at 1512, 3 at 1920, 7 at 1194, nothing cut.
+- **Buttons** stand in one column at one x in every row at every width, as Follow-up 14 made them.
+- **The tablet band** at 834: Task 366, Steps 107, Your step 206, Due 121, People under Steps, fixed
+  layout, no scroll: as before.
+- **Finished** at 1512: Task 632, Steps 170, People 240, Closed 170: as before.
+
+**The phone at 402, beside a Vehicles card** (dark and light). Both cards are 358 px wide in the panel,
+with 14 px and 16 px of padding and 9 px between their parts; both titles are 14 px in weight 600 with
+no line under them. The left facts (Body, VIN; Steps) start 16 px in from the card's edge; the right
+facts (Fuel, In use; Due, Closed) end flush with the card's right padding, 0 px, label and value
+right-aligned. The task card's Steps shows its bar under "1 of 4 done"; Dita's parking fine reads "No
+steps" in the dim grey and "Overdue · 25 Sep" in red, weight 500. Signe's Finished cards carry their
+Finished and Cancelled chips at the top right, as Vehicles carries Available, In use and Reserved, and
+"Closed" flush right. The 171-character title wraps across the card; its three step boxes are as they
+were, the overdue one in red and the one Dita marked with "✓ Done" and no button. No sideways scroll.
+
+**Console:** no error from the app on any of these pages; the only errors were the browser pane's own
+start-up messages.
 
 **The app on 5174**, signed out, in the browser pane (not the owner's browser): `/tasks` went to Sign in;
-its only API request went to 5002 (`/api/me`, 401), none to 5001.
+its only API request went to 5002 (`/api/me`), none to 5001.
 
-### 4.5 The planted breakages — 30 planted, 30 caught
+### 4.5 The planted breakages — 20 planted, 20 caught
 
-Each replaced one exact piece of code or style in a copy of the worktree outside it (so the owner's app
-never showed one), the full suite ran, and the piece was written back; the restored copy passes.
+Each replaced one exact piece in a copy of the worktree outside it, the full suite ran, and the piece
+was written back; the restored copy passes.
 
 | # | Breakage | Caught by |
 |---|---|---|
-| C1 | Done stands beside the button again, the due line back | 4 tests |
-| C2 | a done step keeps its due line, Done under it | 6 (list and phone) |
-| C3 | the button's place drawn only when an action is offered | 2 |
-| C4 | the button before the step's text | 9 |
-| C5 | each button as wide as its label | 1 |
-| C6 | the button column sized by its content | 1 |
-| C7 | the button centred against the step's text | 1 |
-| C8 | the button no longer level with the title | 1 |
-| C9 | no fixed gap before the button | 1 |
-| C10 | the button's place after the text in the same column | 1 |
-| C11 | Involving me's rows lose the button's place | 3 |
-| C12 | an action drawn whatever the API says | 10 |
-| C13 | the band keeps the button beside the text | 1 |
-| C14 | the band's button as wide as its label | 1 |
-| C15 | the band's button at the right, not under the text | 1 |
-| C16 | an empty place keeps its space in the band | 1 |
-| C17 | the old wrapping line comes back | 1 |
-| C18 | the step's text keeps its desktop lead in the band | 1 |
-| C19 | uneven space between steps in the band | 1 |
-| C20 | a rule of its own for the sideways iPad | 1 |
-| C21 | the Due cell on one line again | 1 |
-| C22 | the Due cell breaks at every space, inside a date too | 3 |
-| C23 | the Due cell without kept pieces | 3 |
-| C24 | a piece of the date no longer kept whole | 1 |
-| C25 | a step's due line held on one line | 1 |
-| C26 | the phone card's Done back in the corner | 2 |
-| C27 | the phone's button below a touch target | 1 |
-| C28 | the phone's button no longer the box's full width | 1 |
-| C29 | the title link a box again, its underline under the box | 1 |
-| C30 | the title link drawn as an inline box | 1 |
+| D1 | Your step back to a fixed 290 px | 1 test |
+| D2 | Your step's floor lowered to 290 px | 3 |
+| D3 | Your step takes a third of the spare width, not half | 1 |
+| D4 | the fixed columns counted without People | 3 |
+| D5 | the frame is no container, the half measured on the screen | 1 |
+| D6 | the list drawn outside its frame | 1 |
+| D7 | the table's floor raised, so it scrolls where it did not | 1 |
+| D8 | Task given a fixed width of its own | 1 |
+| D9 | the folded band takes the desktop's width | 1 |
+| D10 | a long task title cut to one line | 1 |
+| D11 | Finished's Steps column changed | 1 |
+| E1 | the card is not the shared card | 12 |
+| E2 | Due in the left column again, not flush right | 5 |
+| E3 | the title carries a line again | 2 |
+| E4 | the title not drawn as the other cards draw theirs | 3 |
+| E5 | what the task is about without the shared sub line | 1 |
+| E6 | an overdue date on the card may lose its red to the shared value colour | 2 |
+| E7 | the facts not in the shared two-column grid | 3 |
+| E8 | "No steps" not dim | 2 |
+| E9 | the step boxes changed | 1 |
 
 ### 4.6 The test suite, and each commit
 
-Final state: typecheck 0 errors, **495/495** tests in 45 files, build green. Each commit alone, from
-`git archive` into a folder of its own: `a87c322` 480, `c0629bb` 480, `fd41c52` 480, `fb59065` 495, all
+Final state: typecheck 0 errors, **509/509** tests in 47 files, build green. Each commit alone, from
+`git archive` into a folder of its own: `bf653b3` 495, `9f4eed5` 495, `e011a42` 495, `f3f4528` 509, all
 green with 0 type errors.
 
 ### 4.7 The owner's side, untouched
 
 The owner's API on 5001 (pid 7505) and the app on 5173 (pid 24831) ran on their own processes
-throughout; this run sent them nothing. `rwrent_v1` was not read, as the run's rules require, so no
-fingerprint was taken. Mailpit was not read. The backend worktree is clean at `1b51206`.
+throughout; this run sent them nothing. `rwrent_v1` was not read, as the run's rules require. Mailpit
+was not read. The backend worktree is clean at `1b51206`.
 
 ### 4.8 End state
 
-- The scratch API runs on **5002** (pid 28259) over `rwrent_check`, **freshly seeded** at 09:23 Tallinn
-  time after the checks, for the reviewer. Nothing runs on 5174 or 5175.
+- The scratch API runs on **5002** (pid 75389) over `rwrent_check`, **freshly seeded** at 06:47 Tallinn
+  time on 2026-09-26 **with the practice tasks** of §4.1, for the reviewer. Nothing runs on 5174 or
+  5175.
 - The workspace's launch file is as it was.
 
 ## 5. For the owner's reviewer: the steps with the seed password
@@ -300,110 +289,94 @@ fingerprint was taken. Mailpit was not read. The backend worktree is clean at `1
 - **Where:** the app on **5174** against the API on **5002** only. Start it from this worktree:
   `VITE_API_BASE_URL=http://localhost:5002 npm run dev -- --port 5174 --strictPort`.
 - **Browser:** a browser profile of its own, because localhost cookies are shared across ports and a
-  sign-in on 5174 must never meet the owner's session on 5173. The four widths: a desktop window about
-  1512 px wide, then 1194 px (the sideways iPad), 834 px (the upright iPad) and 402 px (the iPhone 16
-  Pro), or the devices themselves pointed at the Mac.
+  sign-in on 5174 must never meet the owner's session on 5173. After changing the window's width,
+  reload the page, so the menu rail takes the state of the new width.
 - **The people**, all with the seed password: Dita `dita.smite@rwrent.example` (Fleet Manager), Signe
   `signe.priede@rwrent.example` (Company Principal), Toms `toms.rudzitis@rwrent.example` (Viewer).
-- **Dates** follow the moment the database was seeded, so they differ from this report's; what matters
-  is their form ("Overdue · …", "Due today · …", a date). Late in the evening the rental agreement's
-  "Due today" turns into "Overdue".
-- **Afterwards:** the steps write practice data to `rwrent_check` only; reseed it if a clean copy is
-  wanted. Step D5 changes Toms's view for the later lists, so keep the order.
-- **In every list, light and dark:** the theme switch is in the menu; look once in each.
+- **The practice tasks** are already there (§4.1): the winter tyres task with its long title, and
+  "Renew the parking permit". Dates follow the moment they were made.
+- **Afterwards:** the steps write nothing unless a button is pressed; reseed and rerun the practice
+  script's steps if a clean copy is wanted.
+- **Light and dark:** the theme switch is in the menu; look once in each.
 
-### 5.1 The desktop, about 1512 px
+### 5.1 The desktop, about 1512 px, menu open
 
-1. **D1, Dita, My tasks.** Your step: Prepare 204 JLM shows Add to Bolt with "✓ Done" under its title
-   and Undo at the right, then Handover with its due under it and Mark done; the windscreen case shows
-   Pick up the repair invoice, "No due date", Mark done; Book a service shows Book the service
-   appointment, "✓ Done", Undo. All four buttons stand in one column, the same width, each level with
-   its title's first line; a two-line title keeps its button level with the first line.
-2. **D2, a mark.** Mark done on Handover: its due line becomes "✓ Done", its button Undo in the same
-   place; nothing else in the row moves; the count on Tasks falls by one. Undo: back.
-3. **D3, Involving me** (Dita): the windscreen case in the same form.
-4. **D4, Toms, My tasks.** Tell the driver the time (Overdue in red, Mark done), Car wash (its due, Mark
-   done), Collect the photos ("✓ Done", Undo): one column, one width.
-5. **D5, the creator's mark.** As Dita, open Book a service for 444 WKS and mark Toms's Tell the driver
-   the time done on the task's page. As Toms, reload My tasks: that step reads "✓ Done" with an empty
-   place at the right; the other rows' buttons stay where they were.
-6. **D6, unchanged:** the task's page (its own buttons and the "Done · name, time" chip), Finished's
-   columns as Signe (Task, Steps, People, Closed).
+1. **D1, Toms, My tasks.** Task and Your step are about equally wide. The winter tyres task is first;
+   its title wraps in Task over about four lines, nothing cut. Its Your step: "Add to Bolt" with Mark
+   done; the long step ("Ask the storage …") with "Overdue" in red and Mark done; "Tell both drivers …"
+   with "✓ Done" and no button. All buttons in one column.
+2. **D2, Dita, My tasks.** Every step title on one line beside its button, among them "Book the service
+   appointment", "Pick up the repair invoice" and "Book the fitting at the workshop".
+3. **D3, the menu folded.** Press "Collapse menu": Task and Your step both grow, still equal. Open it
+   again.
+4. **D4, a wider screen** (about 1920 px, if at hand): both about 550 px.
+5. **D5, unchanged:** Signe's Finished (Task, Steps, People, Closed) and a task's own page.
 
 ### 5.2 The sideways iPad, 1194 px
 
-1. **S1:** as Dita and as Toms, My tasks and Involving me look exactly as at 1512 px: the buttons in one
-   column at one width, level with the titles, Done under the titles.
-2. **S2:** no list scrolls sideways at this width.
+1. **S1, Dita.** Nothing scrolls sideways. Your step is about 330 px and Task about 230 px; "Book the
+   service appointment" and "Pick up the repair invoice" on one line; the winter tyres title wraps over
+   about seven lines inside Task.
+2. **S2, Toms.** The same; the buttons in one column.
 
-### 5.3 The upright iPad, 834 px
+### 5.3 The desktop's lowest width, 1024 px
 
-1. **T1, Dita, My tasks.** The parking fine's Due reads "Overdue ·" over its date on two lines, nothing
-   cut. Every step in Your step reads its title, its due or "✓ Done", then its button under them, the
-   same width for Mark done and Undo, lined up with the text on the left, the same space between steps;
-   People sit under Steps.
-2. **T2, a mark.** Mark done on Handover: its line becomes "✓ Done", its button Undo, at the same place.
-3. **T3, Toms after D5.** Tell the driver the time reads "✓ Done" and ends there, with no button and no
-   empty space; Car wash and Collect the photos keep their buttons under their text.
-4. **T4, Finished** as Signe: its four columns, nothing cut.
+1. **L1.** The table scrolls sideways inside its panel, as it did before this run; Your step keeps
+   about 330 px.
 
 ### 5.4 The iPhone 16 Pro, 402 px
 
-1. **P1, Dita, My tasks cards.** Prepare 204 JLM's box for Add to Bolt: title, "✓ Done" under it, Undo
-   across the box; Handover: title, its due, Mark done across the box.
-2. **P2, the underline.** "Handle the windscreen insurance case of 204 JLM" takes two lines; the
-   underline runs under the words of each line, not across the card.
-3. **P3, a mark.** Mark done in a box marks the step without opening the task; its line becomes "✓ Done".
-4. **P4, Toms after D5.** Tell the driver the time: title, "✓ Done", no button.
+1. **P1, a Vehicles card first.** Open Vehicles and look at a card: the plate in bold, Body on the
+   left, Fuel flush right.
+2. **P2, Dita, Tasks.** The task cards look the same: the title in bold with no line under it, what it
+   is about and "from" in grey, Steps with its bar on the left, Due flush right with its label and
+   value right-aligned. The parking fine: "No steps" in grey, "Overdue · …" in red.
+3. **P3, Toms, the winter tyres card.** The title wraps across the card; the three step boxes are as
+   before: Add to Bolt and the long overdue step with Mark done, "Tell both drivers …" with "✓ Done"
+   and no button.
+4. **P4, Signe, Finished.** Each card's Finished or Cancelled chip at the top right; "Closed" flush right.
+5. **P5, taps.** Tapping a card opens its task; Mark done in a box marks the step without opening it.
 
 ## 6. Decisions needed
 
-1. **The title's width in Your step on the desktop.** The column keeps its 290 px (the handover's value;
-   §14 did not ask to change it), so after the 104 px place and the 12 px gap the title has 146 px at
-   every desktop width. Four seeded step titles need more and take two lines, always the same way, with
-   the button level with the first line: Book the service appointment (179 px), Send the claim to the
-   insurer (173), Pick up the repair invoice (150) and Apply for the taxi licence (148). Before this run
-   "Pick up the repair invoice" fitted on one line only by running up to its button. If the owner wants
-   those on one line: a Your step column of about 324 px, the 34 px taken from Task, the only flexible
-   column (402 → 368 px at 1512). The app side only; one value in `Tasks.module.css`.
+1. **Task at the narrowest desktop frames.** Where the frame is under 1020 px (1024 px, and 1280 to
+   1319 px with the menu open) the table scrolls sideways inside its panel, as before, and Task now
+   has 170 px there (210 before), since Your step keeps its 330. If the owner wants no scroll at those
+   widths: fold People under Steps, as the tablet band does, while the frame is under about 1180 px.
+   The app side only.
+2. **Step titles over about 30 characters** take two lines where Your step is at its 330 px (1194 px and
+   below; for example "Book the fitting at the workshop", 32 characters). A larger floor would take
+   the width from Task, which at 1194 px has 232 px.
 
-Choices made where §14 left room, each reversible in a line:
+Choices made where §15 left room, each reversible in a line:
 
-1. **The folded band drops an empty place.** From 1024 px up the empty place keeps its column, as F14-1
-   asks, so nothing moves sideways. In the band, where the place is a line under the text, an empty
-   one would read as extra space between two steps, which F14-3 asks to keep the same; so a step
-   without an action ends at its text there (`.yourStepAction:empty`).
-2. **Where a date may break.** Only after "·" or ",", so a date's day and month, and its time, stay
-   together; a short date that fits keeps one line.
-3. **A done step shows no date in the list.** "✓ Done" takes the due line's place, as §14 asks; the date
-   is still on the task's page.
+1. **Half each.** "Shared between Task and Your step" is read as equal halves of what the fixed columns leave.
+2. **Measured on the list's frame**, not the screen, because the menu rail's width changes with the
+   screen and by hand.
+3. **The table's floor unchanged** (1020 px), so nothing scrolls where it did not before; the first try
+   raised it to 1060 px, which made 1366 px scroll by 4 px and 1280 px by 90, and was taken back.
+4. **The whole card still opens the task**, with the shared card's hover (`cardLink`), as Follow-up 12
+   made it.
 
 ## 7. Deviations
 
-None: §14 and the API agree, and nothing of the handover needed changing beyond the Your step cell's
-order and the lines named above.
+None: §15 and the API agree.
 
 ## 8. Open risks
 
-1. **A few seconds of an error while writing.** The Due cell's new piece was saved a few seconds before
-   the line that imports `Fragment`; in those seconds the preview logged "Fragment is not defined" three
-   times. The owner's app on 5173 reloads from the same files, so had Tasks been open there it would
-   have shown the same error until the next save; a reload or a later save cleared it. Nothing of it is
-   in any commit; every commit passes on its own (§4.6).
-2. **The desktop's lowest width.** At 1024 px the open views' table, whose minimum is 1020 px, scrolls
-   sideways inside its panel by 108 px when the menu is collapsed to its icons. This predates this run
-   (Follow-up 12 set the minimum, Follow-up 13 gave My tasks the same one) and is not a screen size the
-   owner uses; the sideways iPad at 1194 px has room. Not changed.
-3. **Layout in a real device's browser.** The positions were measured in the browser pane's Chromium;
-   Safari on the iPad may measure text a pixel differently, which could move where a long title wraps,
-   never where a button stands. §5.2 and §5.3 are the check on the devices.
+1. **Older browsers.** The width rule uses container units, which Safari has had since version 16 and
+   Chrome since 105; in an older browser the rule is dropped and Task and Your step size by their
+   content, as a table without widths does. The owner's devices are newer.
+2. **The measurements** were taken in the browser pane's Chromium; Safari on the iPad may measure text a
+   pixel differently, which could move where a title wraps, never a column's width. §5.2 is the check
+   on the device.
 
 ## 9. Commits
 
 | Commit | Group | Files |
 |---|---|---|
-| `a87c322` | a due date is never cut: it takes a second line, breaking only after "·" or ","; the tests that pinned the one-piece Due cell | `src/pages/tasks/Tasks.tsx`, `src/pages/tasks/Tasks.module.css`, `src/pages/followup12.render.test.ts`, `src/pages/followup13.render.test.ts` |
-| `c0629bb` | Your step reads the same at every screen size, and the phone card's "✓ Done" moves under the title; the test that pinned Done beside the button | `src/pages/tasks/Tasks.tsx`, `src/pages/tasks/Tasks.module.css`, `src/pages/tasks/StepAction.tsx`, `src/pages/followup12.render.test.ts` |
-| `fd41c52` | the phone card's title underline follows its words on every line | `src/pages/tasks/Tasks.tsx`, `src/pages/tasks/Tasks.module.css` |
-| `fb59065` | new tests for the six changes at their screen sizes, and the stylesheet reader they use | `src/pages/followup14.stylesheet.ts` (new), `src/pages/followup14.render.test.ts` (new), `src/pages/followup14.phone.render.test.ts` (new) |
+| `bf653b3` | the practice API's answers with the practice tasks, recorded for the tests | `src/pages/followup15.support.ts` (new) |
+| `9f4eed5` | on the desktop Task and Your step share the spare width, Your step never under 330 px | `src/pages/tasks/Tasks.module.css`, `src/pages/tasks/Tasks.tsx` |
+| `e011a42` | the phone card drawn like the Vehicles and Drivers cards; the tests that pinned the old card | `src/pages/tasks/Tasks.tsx`, `src/pages/tasks/Tasks.module.css`, `src/pages/followup12.phone.render.test.ts`, `src/pages/followup12.render.test.ts`, `src/pages/followup13.phone.render.test.ts`, `src/pages/followup14.phone.render.test.ts` |
+| `f3f4528` | new tests for both items | `src/pages/followup15.render.test.ts` (new), `src/pages/followup15.phone.render.test.ts` (new) |
 | this one | the report | `Context/wiring_report.md` |
