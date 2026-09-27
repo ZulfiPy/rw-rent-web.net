@@ -735,3 +735,155 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
   want to make a lot of changes"). On the phone only the page's top block (the menu button, the title,
   its description and New task) stays on screen, on every page, as today (§4 item 10 stays open).
 
+
+## 17. Follow-up 17 — Insurance cases in the app
+
+> **Status: AUTHORISED 2026-09-27; the reviewer sends the Follow-up 17 prompt to the implementation
+> agent at the owner's request.** The app's half of Insurance cases. The backend's half is round 12
+> (`RWRentApi-wiring/Context/round12_spec_and_plan.md` for the rules; its report
+> `Context/round12_report.md`, §5 "Contract deltas"), verified and in `main`. Frontend only.
+> **Branch: `feature/backend-wiring` in this worktree** (the owner's rule: the implementation agent
+> works only on the wiring branches, never on `main`); the reviewer fast-forwards `main` after
+> verification. **The owner's real data is in `rwrent_v1` behind the API on 5001 (still round 11: no
+> insurance cases, and `GET /api/me` grants neither insurance permission) and the app on 5173, which
+> runs from this worktree with hot reload.** The agent never opens 5173, never signs in there, never
+> calls 5001, never writes to `rwrent_v1`. Its checks run on a scratch stack: the reviewer's copy runs
+> now on 5002 over a `rwrent_check` holding the reviewer's probe records; the agent stops it, recreates
+> `rwrent_check` fresh, migrates and seeds it with round 12's Release build (the prototype's seven
+> cases), and runs the API on 5002 and Vite on 5174 as `RWRentApi-wiring/Context/round12_report.md` §7
+> describes, in a browser profile of its own. Tests for each item; typecheck, tests and build green; no
+> new runtime dependency. Report: `Context/wiring_report.md` rewritten. Commits: several grouped
+> commits, `Wiring 43: …`, the report last as `Wiring 44: …`, **each group committed as soon as it is
+> green**, pushed with an ordinary push at the end and checked with `git ls-remote`. This document is
+> not edited by the agent.
+
+**The source.** The approved prototype and its handover in `Context/prototype/`: `RW-Rent.dc.html`
+(with `support.js` beside it), `insurance/HANDOVER.md` (a: how to see every state; b and c: the
+pieces reused and added; d: the behaviour; e: the layout values per tier; f: the copy deck; g: what it
+invented and built differently), `insurance/new-styles.css` and `insurance/mock-data.json`. The look,
+the layout and the words come from there, built with the app's own components as Tasks was. The rules
+come from the API, and the app never re-implements one: who may change a case is `canChange`; who may
+correct an event or a note is its `canCorrect`; who the case waits for and since when, when it was
+closed, its rental and the other cases of its accident are read from the answers. Where the handover
+and the API differ, the API wins and the report says where. The owner approved the prototype as a
+whole ("the overall picture is fine") and lists what to fix after trying the app; this follow-up
+builds what the prototype shows, with these differences of the API:
+
+- `InsuranceCaseParty` Nobody is 5, not 0; no enum of the section has a 0.
+- The two writes with photos, registering a case and adding an event, are `multipart/form-data`: the
+  request's fields and the files `photos`. Every other write is JSON.
+- A photo is JPEG, PNG or WebP by its content, at most 10 MB, at most 20 in one request; a request
+  over 100 MB is refused with 413.
+- Photos are added only with the registration or with an event; Edit event only removes them
+  (`removePhotoIds`).
+- Handled by names a side (`Ours` or `Theirs`), and only a side whose insurer is filled in; "Not known
+  yet" is none.
+- The API's limits: what is damaged and the place 200 characters, a description 4000, an insurer 100,
+  a claim number 50, an event's title 200, a note 4000.
+- The prototype's refusal "Another case already carries this claim number with the same insurer" is
+  not a rule of the API: claim numbers are not unique.
+
+- **F17-1. The section replaces the placeholder.** `/insurance-cases` (the list) and
+  `/insurance-cases/:caseId` (one case), both requiring `InsuranceCases.Read`, which joins the app's
+  permissions with `InsuranceCases.Manage`. The placeholder and its sample rows go: `InsuranceCases`
+  in `src/pages/simple/Placeholders.tsx`, `INSURANCE` and `INSURANCE_NOTICE` (and `SAMPLE_CHIP` if
+  nothing else uses it) in `src/pages/overview/sample.ts`, and the "Insurance cases" panel of the
+  driver's page (`src/pages/fleet/DriverRecord.tsx`), as the prototype removed it. Without
+  `InsuranceCases.Read` (the Record deleter, and every user of an API that does not grant it yet,
+  which is the owner's 5001 until the reviewer upgrades it) there is no Insurance cases entry, card or
+  tile, and no insurance request is made.
+- **F17-2. The list page** (handover d, e and f): the header "Insurance cases" with its description
+  and **Register case**, only with `InsuranceCases.Manage`; the tab strip Open, Waiting for us and
+  Closed with the counts of `GET /api/insurance-cases/counts`; the search and the filters each tab
+  offers (Type on every tab; Status on Open and Waiting for us; Waiting for on Open); the columns of
+  handover e and f (Case with its type and Happened or Found; Status; Waiting for with how long;
+  Handled by with the claim number, "Not decided yet" or "Not reported"; Last event with when; on
+  Closed, At fault and Closed instead); the order the API gives; paging; the empty states and the
+  no-results state; the phone cards in the shared card pattern (`src/ui/cards.module.css`, as Vehicles
+  and Tasks draw theirs); the tab strip as the other pages draw it, as wide as the list on the phone.
+  The tab, the search, the filters and the page live in the address.
+- **F17-3. The case's page** (handover d, e and f, and g where it says built differently): the
+  breadcrumb back to the tab it came from; the title "{plate} · {what is damaged}" with the type; the
+  status and the facts Waiting for (since when, and for how long), Happened or Found (the time and the
+  place, with handover f's "(where it was found)" or "(where it happened)" when only one of them is
+  the finding's), Driver (a link, or "Not known"), Rental (the rental's customer as a link to the
+  rental, "Rental from … to …", or "Not rented then"), Handled by and At fault; the actions, only with
+  `canChange`, where the app's other record pages put theirs: Add event, Add note, Edit case, and on a
+  usual case whose accident has no casco case yet, Casco case for this accident. The panels of handover
+  e, in two columns from 1024 px and one below: Timeline (oldest first; its first entry the case
+  itself, with the photos it was registered with; each event with its time, how long after the
+  previous entry, title, description, photos, the chips of the changes it made, who added it and, with
+  `canCorrect`, Edit; the description "What happened, oldest first. Times in Tallinn time."), Notes
+  (newest first; Add note in its header with `canChange`; Edit with `canCorrect`; its empty state),
+  Insurance, Photos (every photo, grouped by its entry), Same accident (when there are other cases),
+  Description (when there is one) and Record (created and last changed, and by whom). The large photo
+  view: the entry and its date, the file name, who added it, the size and "n of m"; ‹ › and the arrow
+  keys move through every photo of the case; Esc, × or a click outside close it; full-bleed on the
+  phone. A picture is shown from `GET /api/insurance-cases/{caseId}/photos/{photoId}`, which carries
+  its own cache headers; one that cannot load shows a quiet placeholder with its file name. The
+  not-found state for `404 insurance_cases.not_found`.
+- **F17-4. Register case and Edit case**, one dialog (handover f): The damage; When and where (each
+  with its tick, "We don't know when" and "We don't know where", the label then reading Found and
+  Where it was found); Driver; Insurance (our insurer and its claim number, the other party's insurer
+  and its claim number, and Handled by offering only the insurers filled in; the insurer fields
+  suggest the names of `GET /api/insurance-cases/insurers`); Where it stands (Register only: Status
+  and Waiting for, Happened and Us preset); Photos (Register only); Decision (Edit only: At fault);
+  Same accident (from `GET /api/insurance-cases/accident-choices`, with `ForCaseId` on Edit). The cars
+  offered are the active ones; on Edit an inactive car or driver already on the case is still shown.
+  **The driver is filled in from `GET /api/insurance-cases/driver-suggestion`** each time the car or
+  the time changes, in both dialogs; opening Edit keeps the stored driver. OneDriver fills it in;
+  SeveralDrivers leaves it empty with "Choose who drove" and those drivers first, marked as on the
+  rental then; BusinessCustomerDrivers, NoDriverNamed and NotRented leave it empty; each with handover
+  f's hint naming the rental; any active driver can still be chosen, or none. Casco case for this
+  accident opens Register case filled in as handover d says (the car, what is damaged, the
+  description, the time and the place with their ticks, the driver, and our insurer with Handled by
+  ours when there is one; type Casco; the accident's first case as Same accident). After Register the
+  new case's page opens.
+- **F17-5. Add event, Edit event, Add note, Edit note** (handover f): Add event with When (now, to the
+  minute), Title, Description, Photos, and Where it stands with Status now and Waiting for now preset
+  to the case's values; Edit event with When, Title, Description and the event's photos each with
+  Remove, no new photos, and what the event changed shown read-only; the note dialogs with Text; the
+  footnotes of handover f. Adding an event and editing the case send the case's `concurrencyToken`.
+- **F17-6. Photos in the dialogs.** Add photos opens the device's picker (`accept="image/*"`, several
+  at once); each chosen photo shows as a tile with its name, size and Remove; at most 20 in one
+  dialog. Before sending, the app makes each photo smaller in the browser, with no new dependency: a
+  picture whose longer side is over 2560 px, or which is over 3 MB, is redrawn at most 2560 px on its
+  longer side and sent as JPEG at quality 0.85; a smaller JPEG, PNG or WebP goes as it is. A file that
+  is not a picture, or a picture this browser cannot open (a HEIC photo on a computer that cannot read
+  it), is refused under its tile before anything is sent, in words that say so. The API stays the
+  judge, and its refusals land under the tile they name.
+- **F17-7. Refusals land where they belong.** Field errors under their fields, as the app's problem
+  mapping does; added to `src/api/codes.ts` for these writes: `insurance_cases.time_in_future`,
+  `event_before_case`, `case_after_first_event` and `change_out_of_order` under the dialog's time;
+  `handler_without_insurer` under Handled by; `vehicle_not_available` under Car;
+  `driver_not_available` under Driver; `accident_case_not_available` under Same accident;
+  `photo_not_a_picture` and `photo_too_large` under the tile `Photos[i]` names; `photo_not_in_event`
+  under the photo `RemovePhotoIds[i]` names. `not_your_event` and `not_your_note` in the dialog's
+  refusal banner; `insurance_cases.concurrency_conflict` with the existing stale-record banner and its
+  Refresh; a 413 in the refusal banner, saying the photos are too large together and to add fewer at a
+  time. The app has no toasts: where the prototype shows one, the change itself is what the person
+  sees.
+- **F17-8. The count and the Overview**, with `InsuranceCases.Read` only: the navigation's count on
+  Insurance cases is `waitingForUs` of the counts (the sidebar and the phone drawer, as the other
+  counts); the Overview's tile "Insurance cases waiting for us" reads it and opens the Waiting for us
+  tab; the Overview's card "Insurance cases waiting for us" lists the first cases of that tab with
+  handover f's rows and empty state, each row opening its case. The sample tile and card go.
+- **F17-9. The Delete records page learns round 12** (round 12 §9; its report §5): block reason 8,
+  "One of its insurance cases is open. Close it first; then the vehicle can be deleted with its
+  cases." and its plural, with its blocking records of kind 7 (`RecordKind.InsuranceCase`) each
+  linking to its case; a vehicle's "what goes along" counts its insurance cases, and a driver's the
+  cases whose driver would be cleared; the answer after a deletion names the cases that went and the
+  cases whose driver was cleared, as it names rentals and customer links. `RecordKind.InsuranceCase`
+  is never offered as a kind to delete.
+- **F17-10. Freshness.** Every write refreshes what it changes (the case, the three views, the counts,
+  the Overview's card and tile, and on the deletions page its candidates), so the count and the
+  Overview follow an event at once.
+- Times are local ("19 Sep, 09:41"); the list has no time-zone note; people by their display name;
+  the three tiers of handover e, light and dark, with no sideways scrolling; red only for what
+  destroys.
+
+**After it.** The reviewer checks it and fast-forwards `main`. The owner tries the section on the
+practice copy with the seven sample cases and lists what to fix, screen by screen; those fixes are the
+next follow-ups. When the owner says so, the reviewer takes a copy of `rwrent_v1`, applies
+`V10InsuranceCases`, restarts the owner's API on the round-12 Debug build, and the owner uses
+Insurance cases on real data.
