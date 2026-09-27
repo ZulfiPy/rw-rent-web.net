@@ -93,13 +93,14 @@ const SHOW_OPTIONS: FilterOption[] = [
 const isBlocked = (d: RecordDeletionInfo) => d.state === RecordDeletionState.Blocked;
 
 /**
- * Where a record in the way opens. Since round 8 every one is a running rental; anything else the
- * API might name is shown as plain text.
+ * Where a record in the way opens: a running rental, or since round 12 a vehicle's open insurance case
+ * (kind 7, F17-9). Anything else the API might name is shown as plain text.
  */
 const blockerHref = (record: RecordDeletionBlockingRecordResponse): string | null =>
-  record.kind === RecordKind.RentalAssignment ? `/rental-assignments/${record.id}` : null;
+  record.kind === RecordKind.RentalAssignment ? `/rental-assignments/${record.id}`
+    : record.kind === RecordKind.InsuranceCase ? `/insurance-cases/${record.id}` : null;
 
-/** The records a block names, each one a quiet link to its rental. */
+/** The records a block names, each one a quiet link to its rental or its case. */
 function Blockers({ deletion }: { deletion: RecordDeletionInfo }) {
   const records = deletion.blocks.flatMap((block) => block.records);
   if (records.length === 0) return null;

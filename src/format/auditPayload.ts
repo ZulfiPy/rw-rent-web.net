@@ -131,6 +131,24 @@ export interface DeletedRental {
 /** A customer record whose link to a deleted driver was cleared; the customer stays. */
 export interface ClearedLink { customerId: string; displayName: string }
 
+/** One event of an insurance case that went with a deleted vehicle, with its photos' names (round 12). */
+export interface DeletedCaseEvent { facts: DeletedFact[]; photos: DeletedFact[][] }
+
+/**
+ * An insurance case that went with a deleted vehicle (round 12): its own members, the photos it was
+ * registered with, its events with theirs, and its notes. The copy keeps no picture.
+ */
+export interface DeletedCase {
+  recordLabel: string | null;
+  facts: DeletedFact[];
+  photos: DeletedFact[][];
+  events: DeletedCaseEvent[];
+  notes: DeletedFact[][];
+}
+
+/** A case of another car that lost its accident's link, or a case whose driver was cleared (round 12). */
+export interface ClearedCaseLink { caseId: string; label: string }
+
 /** What an audit entry of a deletion shows instead of "Recorded values". */
 export interface DeletedRecord {
   /** The record's identifying text as the page showed it; null when the copy does not carry one. */
@@ -146,14 +164,21 @@ export interface DeletedRecord {
   rentals: DeletedRental[];
   /** The customer records whose link to a deleted driver was cleared. */
   clearedLinks: ClearedLink[];
+  /** The insurance cases that went with a deleted vehicle (round 12). */
+  insuranceCases: DeletedCase[];
+  /** The cases of other cars whose accident's link to a deleted vehicle's case was cleared. */
+  clearedAccidentLinks: ClearedCaseLink[];
+  /** The insurance cases a deleted driver was cleared from; the cases stay. */
+  clearedCaseDrivers: ClearedCaseLink[];
 }
 
 /** Shown by the entry's own Record and Removed-with facts and its Reason panel, never among the facts. */
 const SHOWN_ELSEWHERE = new Set(['RecordLabel', 'DeletionReason', 'DeletionNote', 'DeletedWithRecordLabel']);
 
-/** The arrays a deletion's copy may carry (round 8); anything else falls back. */
+/** The arrays a deletion's copy may carry (round 8, and round 12's cases); anything else falls back. */
 const PART_LISTS = ['Authorizations', 'Interruptions'];
-const COPY_LISTS = [...PART_LISTS, 'RentalAssignments', 'ClearedCustomerLinks'];
+const CASE_LISTS = ['InsuranceCases', 'ClearedAccidentLinks', 'ClearedInsuranceCaseDrivers'];
+const COPY_LISTS = [...PART_LISTS, 'RentalAssignments', 'ClearedCustomerLinks', ...CASE_LISTS];
 
 /** Who created and who last changed the record, in the order a reader looks for them. */
 const WHO_AND_WHEN = ['CreatedAtUtc', 'CreatedByDisplayName', 'UpdatedAtUtc', 'UpdatedByDisplayName'];
@@ -235,6 +260,48 @@ function linksOf(value: unknown): ClearedLink[] | null {
 }
 
 /**
+ * The insurance cases that went with a vehicle (round 12): flat copies opening with their own label,
+ * each carrying its photos, its events (each with its photos) and its notes; null when anything else.
+ */
+function casesOf(value: unknown): DeletedCase[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const cases: DeletedCase[] = [];
+  for (const item of value) {
+    if (!isObject(item)) return null;
+    if (Object.keys(item).some((key) => Array.isArray(item[key]) && !['Photos', 'Events', 'Notes'].includes(key))) return null;
+    const facts = factsOf(item, SHOWN_ELSEWHERE);
+    const photos = partsOf(item['Photos']);
+    const notes = partsOf(item['Notes']);
+    const eventList = item['Events'] ?? [];
+    if (!facts || !photos || !notes || !Array.isArray(eventList)) return null;
+    const events: DeletedCaseEvent[] = [];
+    for (const event of eventList) {
+      if (!isObject(event)) return null;
+      if (Object.keys(event).some((key) => Array.isArray(event[key]) && key !== 'Photos')) return null;
+      const eventFacts = factsOf(event);
+      const eventPhotos = partsOf(event['Photos']);
+      if (!eventFacts || !eventPhotos) return null;
+      events.push({ facts: eventFacts, photos: eventPhotos });
+    }
+    cases.push({ recordLabel: labelOf(item), facts, photos, events, notes });
+  }
+  return cases;
+}
+
+/** The cases a deletion cleared a link or a driver of, or null when the list is anything else. */
+function caseLinksOf(value: unknown): ClearedCaseLink[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const links: ClearedCaseLink[] = [];
+  for (const link of value) {
+    if (!isObject(link) || typeof link['InsuranceCaseId'] !== 'string' || typeof link['InsuranceCaseLabel'] !== 'string') return null;
+    links.push({ caseId: link['InsuranceCaseId'], label: link['InsuranceCaseLabel'] });
+  }
+  return links;
+}
+
+/**
  * The copy of a deleted record, read from the entry's before-payload: the six `*.Deleted` events
  * (a rental's parts, round 8's rentals of a vehicle or a customer, a driver's authorizations and
  * cleared customer links), and round 8's flat copy of an authorization that went with its driver.
@@ -256,7 +323,11 @@ export function deletedRecord(eventType: string | null | undefined, beforeJson: 
   const interruptions = partsOf(body['Interruptions']);
   const rentals = rentalsOf(body['RentalAssignments']);
   const clearedLinks = linksOf(body['ClearedCustomerLinks']);
-  if (!facts || !authorizations || !interruptions || !rentals || !clearedLinks) return null;
+  const insuranceCases = casesOf(body['InsuranceCases']);
+  const clearedAccidentLinks = caseLinksOf(body['ClearedAccidentLinks']);
+  const clearedCaseDrivers = caseLinksOf(body['ClearedInsuranceCaseDrivers']);
+  if (!facts || !authorizations || !interruptions || !rentals || !clearedLinks
+    || !insuranceCases || !clearedAccidentLinks || !clearedCaseDrivers) return null;
 
   const removedWith = typeof body['DeletedWithRecordLabel'] === 'string' ? body['DeletedWithRecordLabel'] : null;
   if (removedWithDriver && !removedWith) return null;
@@ -269,5 +340,8 @@ export function deletedRecord(eventType: string | null | undefined, beforeJson: 
     interruptions,
     rentals,
     clearedLinks,
+    insuranceCases,
+    clearedAccidentLinks,
+    clearedCaseDrivers,
   };
 }

@@ -149,6 +149,48 @@ export function AuditEntry() {
               </FactGrid>
             </Panel>
           ) : null}
+          {/* Round 12 (Follow-up 17): a vehicle's insurance cases, and the cases a deletion touched. */}
+          {deleted.insuranceCases.length > 0 ? (
+            <Panel title="Deleted insurance cases" description="The cases that went with the vehicle, each with its photos, events and notes. No picture is kept.">
+              {deleted.insuranceCases.map((kase, index) => (
+                <div key={index} className={styles.group}>
+                  <p className={styles.groupTitle}>
+                    Insurance case {index + 1}{kase.recordLabel ? ` · ${kase.recordLabel}` : ''}
+                  </p>
+                  <FactGrid>{kase.facts.map(factOf)}</FactGrid>
+                  {partGroups(kase.photos, 'Photo', true)}
+                  {kase.events.map((event, at) => (
+                    <div key={`event-${at}`} className={styles.subGroup}>
+                      <p className={styles.subGroupTitle}>Event {at + 1}</p>
+                      <FactGrid>{event.facts.map(factOf)}</FactGrid>
+                      {event.photos.map((photo, n) => (
+                        <FactGrid key={`photo-${n}`}>{photo.map(factOf)}</FactGrid>
+                      ))}
+                    </div>
+                  ))}
+                  {partGroups(kase.notes, 'Note', true)}
+                </div>
+              ))}
+            </Panel>
+          ) : null}
+          {deleted.clearedAccidentLinks.length > 0 ? (
+            <Panel title="Cleared accident links" description="These cases of other cars named a deleted case as their accident’s; the links were cleared and the cases stay.">
+              <FactGrid>
+                {deleted.clearedAccidentLinks.map((link) => (
+                  <Fact key={link.caseId} label="Insurance case" span="full">{link.label}</Fact>
+                ))}
+              </FactGrid>
+            </Panel>
+          ) : null}
+          {deleted.clearedCaseDrivers.length > 0 ? (
+            <Panel title="Cleared case drivers" description="The driver was cleared from these insurance cases; the cases stay.">
+              <FactGrid>
+                {deleted.clearedCaseDrivers.map((link) => (
+                  <Fact key={link.caseId} label="Insurance case" span="full">{link.label}</Fact>
+                ))}
+              </FactGrid>
+            </Panel>
+          ) : null}
         </>
       ) : null}
 
