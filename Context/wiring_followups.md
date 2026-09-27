@@ -161,6 +161,11 @@ findings (§11) are the first work after the merge.
    (the shell scrolls only the content). A proposal: on a phone the top of the page scrolls away with
    the content. App-wide; not part of Follow-up 14 unless the owner adds it.
 
+- **Found in Follow-up 17 (it predates it): the Drivers search on Delete records** says "Name,
+  licence number or email", but neither that search nor the Drivers list finds a driver by licence
+  number; both find one by name and email. Either the backend searches the licence number too, or the
+  placeholder drops it. Not scheduled.
+
 ## 5. Testing — where it stands (2026-09-17)
 
 Run 1 (2026-09-16) found T-001…T-006. They were fixed by the backend's round 3 and by the app's
@@ -738,8 +743,27 @@ px), the phone below 768 (the iPhone 16 Pro, 402 px). What was asked:
 
 ## 17. Follow-up 17 — Insurance cases in the app
 
-> **Status: AUTHORISED 2026-09-27; the reviewer sends the Follow-up 17 prompt to the implementation
-> agent at the owner's request.** The app's half of Insurance cases. The backend's half is round 12
+> **Status: IMPLEMENTED 2026-09-27, verified the same day** (app `93d6d67`…`9d07090` Wiring 43 in
+> seven grouped commits and `54a30b7` Wiring 44, on `feature/backend-wiring`, pushed and level with
+> GitHub, then fast-forwarded into `main`; report `Context/wiring_report.md`). Typecheck clean, 627
+> tests and the build green on the pushed state. The reviewer drove the app signed in, in a headless
+> browser on the scratch stack (5174 over 5002), as Dita, Signe, Toms and the administrator: the
+> Overview's tile and card "Insurance cases waiting for us" and the sidebar's count 4; the three tabs
+> with the server's counts, the columns, the rows in the API's order, the Type filter, Closed with At
+> fault and Closed and no Status or Waiting for filter; 552 KLM's page with its hero, timeline, notes,
+> insurance and accident, **every picture loaded from the API with the session (12 of 12, the
+> Viewer's too)**, the photo view 1 of 6 to 2 of 6 and Esc; Register case filling the driver from the
+> rental (482 TKL four days back: "Choose who drove" with Janis Krumins and Kristine Vitola first; 770
+> HDV now: Ilze Berzina with her hint), a 4000 × 3000 picture sent as a 2560 × 1920 JPEG, a text file
+> named `.jpg` refused under its tile with Register case held, 201 and the new case's page with both
+> pictures; Add event with both chips and the count falling from 5 to 4 at once; the API's sentences
+> under When and under the empty fields; Edit event's Remove with Keep, then the photo gone; Edit only
+> on Signe's own event and note; Toms with no action anywhere; the administrator's Delete records
+> blocking 552 KLM in the API's words with each open case linked, Kristine Vitola's "Clears the driver
+> of 2 insurance cases", and a deleted car's audit entry showing its deleted case and the cleared
+> accident link; at 834 the folded list with every chip whole and the case page in one column; at 402
+> the cards, the strip edge to edge with the list, Register case as the bottom sheet and the photo view
+> full-bleed; no request to 5001 or 5173. The app's half of Insurance cases. The backend's half is round 12
 > (`RWRentApi-wiring/Context/round12_spec_and_plan.md` for the rules; its report
 > `Context/round12_report.md`, §5 "Contract deltas"), verified and in `main`. Frontend only.
 > **Branch: `feature/backend-wiring` in this worktree** (the owner's rule: the implementation agent
