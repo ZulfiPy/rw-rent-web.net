@@ -1,0 +1,1035 @@
+{
+  "_about": "Insurance cases seed from RW-Rent.dc.html (INS_SEED, lines 2063–2138), stored in the mock DB as db.insuranceCases. Property names are camelCase as in the prototype DB; the backend classes are InsuranceCase, InsuranceCaseEvent, InsuranceCaseNote and InsuranceCasePhoto. Keys starting with _ are explanations for fixtures and are not part of the record.",
+  "_clock": "Times are resolved at 24 Sep 2026 12:00 Tallinn time (UTC+03:00, 09:00Z). The prototype computes them from the moment it is opened: each seed time is a local Tallinn wall-clock time n days from today (see _relativeTimes), never later than 20 minutes before now; createdAtUtc of an event is 18 minutes after its happenedAtUtc, never later than 1 minute before now. Timestamps carry an explicit offset.",
+  "_photos": "Each photo is stored once, in its case’s photos. insuranceCaseEventId is null for the photos the case was registered with; otherwise the photo belongs to that event. entry names the timeline entry. No image files: the prototype draws placeholders from the file name.",
+  "_enums": {
+    "type": {
+      "1": "Usual",
+      "2": "Casco"
+    },
+    "status": {
+      "1": "Happened",
+      "2": "Reported",
+      "3": "Under review",
+      "4": "Repair",
+      "5": "Closed"
+    },
+    "waitingFor": {
+      "0": "Nobody",
+      "1": "Us",
+      "2": "The driver",
+      "3": "The insurer",
+      "4": "Someone else"
+    },
+    "handledBy": {
+      "1": "Ours",
+      "2": "Theirs"
+    },
+    "atFault": {
+      "1": "Our driver",
+      "2": "The other party",
+      "3": "Both",
+      "4": "Not found"
+    },
+    "_values": "Stored as the backend enum ids. PascalCase names: InsuranceCaseType Usual=1 Casco=2; InsuranceCaseStatus Happened=1 Reported=2 UnderReview=3 Repair=4 Closed=5; InsuranceCaseParty Nobody=0 Us=1 Driver=2 Insurer=3 SomeoneElse=4; InsurerSide Ours=1 Theirs=2; AtFaultParty OurDriver=1 OtherParty=2 Both=3 NotFound=4."
+  },
+  "_people": {
+    "u2": "Signe Priede (Company Principal)",
+    "u4": "Dita Smite (Fleet Manager)",
+    "u5": "Toms Rudzitis (Viewer)",
+    "u1": "Arturs Veidenbaums (System Administrator)"
+  },
+  "_cars": {
+    "v7": "552 KLM",
+    "v6": "204 JLM",
+    "v3": "770 HDV",
+    "v1": "482 TKL",
+    "v10": "400 NDP",
+    "v2": "119 MPR",
+    "v9": "444 WKS"
+  },
+  "_drivers": {
+    "d1": "Janis Krumins",
+    "d2": "Ilze Berzina",
+    "d4": "Kristine Vitola",
+    "d5": "Anete Kalnina",
+    "d7": "Laura Ozola",
+    "d8": "Maris Ozolins"
+  },
+  "_relativeTimes": {
+    "ic1": {
+      "happenedAtUtc": {
+        "day": -19,
+        "time": "08:35"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 90
+      }
+    },
+    "ic2": {
+      "happenedAtUtc": {
+        "day": -1,
+        "time": "13:25"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 70
+      }
+    },
+    "ic3": {
+      "happenedAtUtc": {
+        "day": -2,
+        "time": "08:40"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 35
+      }
+    },
+    "ic4": {
+      "happenedAtUtc": {
+        "day": -5,
+        "time": "17:50"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 40
+      }
+    },
+    "ic6": {
+      "happenedAtUtc": {
+        "day": -30,
+        "time": "12:15"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 120
+      }
+    },
+    "ic7": {
+      "happenedAtUtc": {
+        "day": -45,
+        "time": "16:00"
+      },
+      "createdAtUtc": {
+        "day": -44,
+        "time": "09:20"
+      }
+    },
+    "ic5": {
+      "happenedAtUtc": "same as ic4",
+      "createdAtUtc": {
+        "day": -4,
+        "time": "09:10"
+      }
+    },
+    "ice11": {
+      "happenedAtUtc": {
+        "day": -18,
+        "time": "11:20"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice12": {
+      "happenedAtUtc": {
+        "day": -15,
+        "time": "09:45"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice13": {
+      "happenedAtUtc": {
+        "day": -14,
+        "time": "10:30"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice14": {
+      "happenedAtUtc": {
+        "day": -12,
+        "time": "15:10"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice15": {
+      "happenedAtUtc": {
+        "day": -9,
+        "time": "09:05"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice16": {
+      "happenedAtUtc": {
+        "day": -7,
+        "time": "14:40"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice17": {
+      "happenedAtUtc": {
+        "day": -6,
+        "time": "10:15"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice21": {
+      "happenedAtUtc": {
+        "day": -1,
+        "time": "17:30"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice22": {
+      "happenedAtUtc": {
+        "day": 0,
+        "time": "08:50"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice41": {
+      "happenedAtUtc": {
+        "day": -5,
+        "time": "19:10"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice42": {
+      "happenedAtUtc": {
+        "day": -2,
+        "time": "10:40"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice43": {
+      "happenedAtUtc": {
+        "day": -1,
+        "time": "11:15"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice51": {
+      "happenedAtUtc": {
+        "day": -4,
+        "time": "09:30"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice52": {
+      "happenedAtUtc": {
+        "day": -1,
+        "time": "14:20"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice61": {
+      "happenedAtUtc": {
+        "day": -29,
+        "time": "10:00"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice62": {
+      "happenedAtUtc": {
+        "day": -20,
+        "time": "15:30"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice63": {
+      "happenedAtUtc": {
+        "day": -8,
+        "time": "13:00"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice71": {
+      "happenedAtUtc": {
+        "day": -43,
+        "time": "11:00"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "ice72": {
+      "happenedAtUtc": {
+        "day": -20,
+        "time": "14:00"
+      },
+      "createdAtUtc": {
+        "after": "happenedAtUtc",
+        "minutes": 18
+      }
+    },
+    "icn11": {
+      "createdAtUtc": {
+        "day": -8,
+        "time": "16:20"
+      }
+    },
+    "icn12": {
+      "createdAtUtc": {
+        "day": -2,
+        "time": "11:00"
+      }
+    },
+    "icn21": {
+      "createdAtUtc": {
+        "day": 0,
+        "time": "09:05"
+      }
+    },
+    "icn31": {
+      "createdAtUtc": {
+        "after": "ic3.happenedAtUtc",
+        "minutes": 40
+      }
+    },
+    "icn51": {
+      "createdAtUtc": {
+        "day": -4,
+        "time": "09:40"
+      }
+    }
+  },
+  "_expected": {
+    "open": 5,
+    "waitingForUs": 2,
+    "closed": 2,
+    "navigationCount": 2,
+    "openOrder": [
+      "ic3",
+      "ic5",
+      "ic1",
+      "ic4",
+      "ic2"
+    ],
+    "waitingForUsOrder": [
+      "ic3",
+      "ic5"
+    ],
+    "closedOrder": [
+      "ic6",
+      "ic7"
+    ],
+    "registerCaseDriver": {
+      "770 HDV now": "d2 Ilze Berzina",
+      "482 TKL four days ago": "choice: d1 Janis Krumins, d4 Kristine Vitola",
+      "552 KLM now": "empty, business customer’s own drivers",
+      "444 WKS now": "empty, not rented"
+    }
+  },
+  "insuranceCases": [
+    {
+      "driverId": null,
+      "description": "Hit from behind at a crossing while waiting at the red light.",
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": "Baltic Mutual",
+      "ourClaimNumber": "BM-26-04417",
+      "otherInsurer": "Meridian Insurance",
+      "otherClaimNumber": "MI-2026-118305",
+      "handledBy": 2,
+      "atFault": null,
+      "sameAccidentCaseId": null,
+      "photos": [
+        {
+          "id": "icp11",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_2041.jpg",
+          "sizeInBytes": 2841305,
+          "createdAtUtc": "2026-09-05T07:05:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        },
+        {
+          "id": "icp12",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_2042.jpg",
+          "sizeInBytes": 3017722,
+          "createdAtUtc": "2026-09-05T07:05:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        },
+        {
+          "id": "icp13",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_2043.jpg",
+          "sizeInBytes": 2690418,
+          "createdAtUtc": "2026-09-05T07:05:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        },
+        {
+          "id": "icp14",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_2044.jpg",
+          "sizeInBytes": 2958130,
+          "createdAtUtc": "2026-09-05T07:05:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        },
+        {
+          "id": "icp15",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": "ice16",
+          "fileName": "IMG_2107.jpg",
+          "sizeInBytes": 3322940,
+          "createdAtUtc": "2026-09-17T11:58:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Car shown at the BMW dealer, calculation sent"
+        },
+        {
+          "id": "icp16",
+          "insuranceCaseId": "ic1",
+          "insuranceCaseEventId": "ice16",
+          "fileName": "IMG_2108.jpg",
+          "sizeInBytes": 3104577,
+          "createdAtUtc": "2026-09-17T11:58:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Car shown at the BMW dealer, calculation sent"
+        }
+      ],
+      "events": [
+        {
+          "id": "ice11",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-06T08:20:00.000+00:00",
+          "title": "Both drivers reported it on LKF.ee",
+          "description": null,
+          "statusChangedTo": 2,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-06T08:38:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice12",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-09T06:45:00.000+00:00",
+          "title": "Meridian asked who drove and for photos of the damage",
+          "description": "By email from the Meridian claims handler: the name of the driver and clear photos of the rear.",
+          "statusChangedTo": null,
+          "waitingForChangedTo": 1,
+          "createdAtUtc": "2026-09-09T07:03:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice13",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-10T07:30:00.000+00:00",
+          "title": "Asked Nordwind for their driver’s account",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 2,
+          "createdAtUtc": "2026-09-10T07:48:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice14",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-12T12:10:00.000+00:00",
+          "title": "Nordwind sent the account, forwarded to Meridian",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-12T12:28:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice15",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-15T06:05:00.000+00:00",
+          "title": "Meridian asked for a repair calculation",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 1,
+          "createdAtUtc": "2026-09-15T06:23:00.000+00:00",
+          "createdByUserId": "u2"
+        },
+        {
+          "id": "ice16",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-17T11:40:00.000+00:00",
+          "title": "Car shown at the BMW dealer, calculation sent",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-17T11:58:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice17",
+          "insuranceCaseId": "ic1",
+          "happenedAtUtc": "2026-09-18T07:15:00.000+00:00",
+          "title": "Everything is sent, Meridian is deciding",
+          "description": null,
+          "statusChangedTo": 3,
+          "waitingForChangedTo": null,
+          "createdAtUtc": "2026-09-18T07:33:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [
+        {
+          "id": "icn11",
+          "insuranceCaseId": "ic1",
+          "text": "Under warranty until 2027, so the repair goes to the BMW dealer, not to Meridian’s list.",
+          "createdAtUtc": "2026-09-16T13:20:00.000+00:00",
+          "createdByUserId": "u2"
+        },
+        {
+          "id": "icn12",
+          "insuranceCaseId": "ic1",
+          "text": "Meridian’s handler is on leave until next Monday.",
+          "createdAtUtc": "2026-09-22T08:00:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-18T07:33:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic1",
+      "type": 1,
+      "vehicleId": "v7",
+      "damage": "Rear bumper and boot lid dented",
+      "happenedAtUtc": "2026-09-05T05:35:00.000+00:00",
+      "place": "Crossing of Pärnu mnt and Liivalaia, Tallinn",
+      "status": 3,
+      "waitingFor": 3,
+      "createdAtUtc": "2026-09-05T07:05:00.000+00:00",
+      "concurrencyToken": "t-ic1-01",
+      "_refs": {
+        "vehicle": "v7 552 KLM",
+        "driver": null,
+        "rental": {
+          "rentalAssignmentId": "a3",
+          "customer": "cu3 Nordwind Logistics",
+          "authorisation": "company-authorized drivers (z4)",
+          "driverFillIn": "empty: the customer’s own drivers"
+        },
+        "sameAccidentCase": null
+      }
+    },
+    {
+      "driverId": "d5",
+      "description": null,
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": "Baltic Mutual",
+      "ourClaimNumber": "BM-26-05233",
+      "otherInsurer": null,
+      "otherClaimNumber": null,
+      "handledBy": 1,
+      "atFault": null,
+      "sameAccidentCaseId": null,
+      "photos": [
+        {
+          "id": "icp21",
+          "insuranceCaseId": "ic2",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_5520.jpg",
+          "sizeInBytes": 2210934,
+          "createdAtUtc": "2026-09-23T11:35:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        },
+        {
+          "id": "icp22",
+          "insuranceCaseId": "ic2",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_5521.jpg",
+          "sizeInBytes": 2398117,
+          "createdAtUtc": "2026-09-23T11:35:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        }
+      ],
+      "events": [
+        {
+          "id": "ice21",
+          "insuranceCaseId": "ic2",
+          "happenedAtUtc": "2026-09-23T14:30:00.000+00:00",
+          "title": "Reported to Baltic Mutual under casco",
+          "description": null,
+          "statusChangedTo": 2,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-23T14:48:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice22",
+          "insuranceCaseId": "ic2",
+          "happenedAtUtc": "2026-09-24T05:50:00.000+00:00",
+          "title": "Approved; the glass workshop replaces it tomorrow",
+          "description": null,
+          "statusChangedTo": 4,
+          "waitingForChangedTo": 4,
+          "createdAtUtc": "2026-09-24T06:08:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [
+        {
+          "id": "icn21",
+          "insuranceCaseId": "ic2",
+          "text": "Deductible 500 euros, paid at the workshop.",
+          "createdAtUtc": "2026-09-24T06:05:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-24T06:08:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic2",
+      "type": 2,
+      "vehicleId": "v6",
+      "damage": "Windscreen cracked by a stone",
+      "happenedAtUtc": "2026-09-23T10:25:00.000+00:00",
+      "place": "Tallinn–Tartu road near Mäo",
+      "status": 4,
+      "waitingFor": 4,
+      "createdAtUtc": "2026-09-23T11:35:00.000+00:00",
+      "concurrencyToken": "t-ic2-01",
+      "_refs": {
+        "vehicle": "v6 204 JLM",
+        "driver": "d5 Anete Kalnina",
+        "rental": {
+          "rentalAssignmentId": "a6",
+          "customer": "cu6 Anete Kalnina",
+          "authorisation": "named driver d5 (z5)",
+          "driverFillIn": "one driver: d5 Anete Kalnina"
+        },
+        "sameAccidentCase": null
+      }
+    },
+    {
+      "driverId": "d2",
+      "description": null,
+      "timeIsWhenFound": true,
+      "placeIsWhereFound": true,
+      "ourInsurer": null,
+      "ourClaimNumber": null,
+      "otherInsurer": null,
+      "otherClaimNumber": null,
+      "handledBy": null,
+      "atFault": null,
+      "sameAccidentCaseId": null,
+      "photos": [
+        {
+          "id": "icp31",
+          "insuranceCaseId": "ic3",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_0311.jpg",
+          "sizeInBytes": 1984206,
+          "createdAtUtc": "2026-09-22T06:15:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Found (the case itself)"
+        },
+        {
+          "id": "icp32",
+          "insuranceCaseId": "ic3",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_0312.jpg",
+          "sizeInBytes": 2077413,
+          "createdAtUtc": "2026-09-22T06:15:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Found (the case itself)"
+        },
+        {
+          "id": "icp33",
+          "insuranceCaseId": "ic3",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_0313.jpg",
+          "sizeInBytes": 2150886,
+          "createdAtUtc": "2026-09-22T06:15:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Found (the case itself)"
+        }
+      ],
+      "events": [],
+      "notes": [
+        {
+          "id": "icn31",
+          "insuranceCaseId": "ic3",
+          "text": "Parked overnight on Mustamäe tee; no witnesses.",
+          "createdAtUtc": "2026-09-22T06:20:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "createdByUserId": "u4",
+      "updatedAtUtc": null,
+      "updatedByUserId": null,
+      "id": "ic3",
+      "type": 1,
+      "vehicleId": "v3",
+      "damage": "Long scratches on both left doors",
+      "happenedAtUtc": "2026-09-22T05:40:00.000+00:00",
+      "place": "Car wash, Pärnu mnt 139, Tallinn",
+      "status": 1,
+      "waitingFor": 1,
+      "createdAtUtc": "2026-09-22T06:15:00.000+00:00",
+      "concurrencyToken": "t-ic3-01",
+      "_refs": {
+        "vehicle": "v3 770 HDV",
+        "driver": "d2 Ilze Berzina",
+        "rental": {
+          "rentalAssignmentId": "a2",
+          "customer": "cu2 Ilze Berzina",
+          "authorisation": "named driver d2 (z3)",
+          "driverFillIn": "one driver: d2 Ilze Berzina"
+        },
+        "sameAccidentCase": null
+      }
+    },
+    {
+      "driverId": "d4",
+      "description": "Neither driver accepted the blame.",
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": "Baltic Mutual",
+      "ourClaimNumber": "BM-26-05120",
+      "otherInsurer": "Northgate Insurance",
+      "otherClaimNumber": "NG-771204",
+      "handledBy": 1,
+      "atFault": null,
+      "sameAccidentCaseId": null,
+      "photos": [],
+      "events": [
+        {
+          "id": "ice41",
+          "insuranceCaseId": "ic4",
+          "happenedAtUtc": "2026-09-19T16:10:00.000+00:00",
+          "title": "Reported to Baltic Mutual; the other driver reported to Northgate",
+          "description": null,
+          "statusChangedTo": 2,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-19T16:28:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice42",
+          "insuranceCaseId": "ic4",
+          "happenedAtUtc": "2026-09-22T07:40:00.000+00:00",
+          "title": "Baltic Mutual asked for a written account from our driver",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 1,
+          "createdAtUtc": "2026-09-22T07:58:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice43",
+          "insuranceCaseId": "ic4",
+          "happenedAtUtc": "2026-09-23T08:15:00.000+00:00",
+          "title": "Asked Kristine Vitola for the account",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 2,
+          "createdAtUtc": "2026-09-23T08:33:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-23T08:33:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic4",
+      "type": 1,
+      "vehicleId": "v1",
+      "damage": "Front bumper and right headlight",
+      "happenedAtUtc": "2026-09-19T14:50:00.000+00:00",
+      "place": "Crossing of Riia and Vanemuise, Tartu",
+      "status": 2,
+      "waitingFor": 2,
+      "createdAtUtc": "2026-09-19T15:30:00.000+00:00",
+      "concurrencyToken": "t-ic4-01",
+      "_refs": {
+        "vehicle": "v1 482 TKL",
+        "driver": "d4 Kristine Vitola",
+        "rental": {
+          "rentalAssignmentId": "a1",
+          "customer": "cu1 Baltic Freight Partners",
+          "authorisation": "named drivers d1 (z1) and d4 (z2) at that time",
+          "driverFillIn": "a choice between d1 Janis Krumins and d4 Kristine Vitola; d4 chosen"
+        },
+        "sameAccidentCase": null
+      }
+    },
+    {
+      "driverId": "d4",
+      "description": null,
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": "Baltic Mutual",
+      "ourClaimNumber": "BM-26-05161",
+      "otherInsurer": null,
+      "otherClaimNumber": null,
+      "handledBy": 1,
+      "atFault": null,
+      "sameAccidentCaseId": "ic4",
+      "photos": [],
+      "events": [
+        {
+          "id": "ice51",
+          "insuranceCaseId": "ic5",
+          "happenedAtUtc": "2026-09-20T06:30:00.000+00:00",
+          "title": "Registered under casco to repair the car now",
+          "description": null,
+          "statusChangedTo": 2,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-09-20T06:48:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice52",
+          "insuranceCaseId": "ic5",
+          "happenedAtUtc": "2026-09-23T11:20:00.000+00:00",
+          "title": "Baltic Mutual asked for the mileage and photos of the damage",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": 1,
+          "createdAtUtc": "2026-09-23T11:38:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [
+        {
+          "id": "icn51",
+          "insuranceCaseId": "ic5",
+          "text": "Deductible 500 euros.",
+          "createdAtUtc": "2026-09-20T06:40:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-23T11:38:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic5",
+      "type": 2,
+      "vehicleId": "v1",
+      "damage": "Front bumper and right headlight",
+      "happenedAtUtc": "2026-09-19T14:50:00.000+00:00",
+      "place": "Crossing of Riia and Vanemuise, Tartu",
+      "status": 2,
+      "waitingFor": 1,
+      "createdAtUtc": "2026-09-20T06:10:00.000+00:00",
+      "concurrencyToken": "t-ic5-01",
+      "_refs": {
+        "vehicle": "v1 482 TKL",
+        "driver": "d4 Kristine Vitola",
+        "rental": {
+          "rentalAssignmentId": "a1",
+          "customer": "cu1 Baltic Freight Partners",
+          "authorisation": "as ic4",
+          "driverFillIn": "as ic4; d4 chosen"
+        },
+        "sameAccidentCase": "ic4"
+      }
+    },
+    {
+      "driverId": "d7",
+      "description": null,
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": null,
+      "ourClaimNumber": null,
+      "otherInsurer": "Meridian Insurance",
+      "otherClaimNumber": "MI-2026-109877",
+      "handledBy": 2,
+      "atFault": 2,
+      "sameAccidentCaseId": null,
+      "photos": [
+        {
+          "id": "icp61",
+          "insuranceCaseId": "ic6",
+          "insuranceCaseEventId": null,
+          "fileName": "IMG_7730.jpg",
+          "sizeInBytes": 2533801,
+          "createdAtUtc": "2026-08-25T11:15:00.000+00:00",
+          "createdByUserId": "u4",
+          "entry": "Happened (the case itself)"
+        }
+      ],
+      "events": [
+        {
+          "id": "ice61",
+          "insuranceCaseId": "ic6",
+          "happenedAtUtc": "2026-08-26T07:00:00.000+00:00",
+          "title": "Both drivers reported it on LKF.ee",
+          "description": null,
+          "statusChangedTo": 2,
+          "waitingForChangedTo": 3,
+          "createdAtUtc": "2026-08-26T07:18:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice62",
+          "insuranceCaseId": "ic6",
+          "happenedAtUtc": "2026-09-04T12:30:00.000+00:00",
+          "title": "Meridian decided the van driver was at fault",
+          "description": null,
+          "statusChangedTo": 4,
+          "waitingForChangedTo": 4,
+          "createdAtUtc": "2026-09-04T12:48:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice63",
+          "insuranceCaseId": "ic6",
+          "happenedAtUtc": "2026-09-16T10:00:00.000+00:00",
+          "title": "Mirror replaced; Meridian paid the workshop",
+          "description": null,
+          "statusChangedTo": 5,
+          "waitingForChangedTo": 0,
+          "createdAtUtc": "2026-09-16T10:18:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-16T10:18:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic6",
+      "type": 1,
+      "vehicleId": "v10",
+      "damage": "Right mirror broken by a passing van",
+      "happenedAtUtc": "2026-08-25T09:15:00.000+00:00",
+      "place": "Narva mnt 7, Tallinn",
+      "status": 5,
+      "waitingFor": 0,
+      "createdAtUtc": "2026-08-25T11:15:00.000+00:00",
+      "concurrencyToken": "t-ic6-01",
+      "_refs": {
+        "vehicle": "v10 400 NDP",
+        "driver": "d7 Laura Ozola",
+        "rental": {
+          "rentalAssignmentId": "a7",
+          "customer": "cu8 Roberts Liepins (rental ended)",
+          "authorisation": "named driver d7 (z6) only; d8 (z7) starts 25 days ago",
+          "driverFillIn": "one driver: d7 Laura Ozola"
+        },
+        "sameAccidentCase": null
+      }
+    },
+    {
+      "driverId": null,
+      "description": null,
+      "timeIsWhenFound": false,
+      "placeIsWhereFound": false,
+      "ourInsurer": null,
+      "ourClaimNumber": null,
+      "otherInsurer": null,
+      "otherClaimNumber": null,
+      "handledBy": null,
+      "atFault": 4,
+      "sameAccidentCaseId": null,
+      "photos": [],
+      "events": [
+        {
+          "id": "ice71",
+          "insuranceCaseId": "ic7",
+          "happenedAtUtc": "2026-08-12T08:00:00.000+00:00",
+          "title": "Nobody saw it; not worth the casco deductible",
+          "description": null,
+          "statusChangedTo": null,
+          "waitingForChangedTo": null,
+          "createdAtUtc": "2026-08-12T08:18:00.000+00:00",
+          "createdByUserId": "u4"
+        },
+        {
+          "id": "ice72",
+          "insuranceCaseId": "ic7",
+          "happenedAtUtc": "2026-09-04T11:00:00.000+00:00",
+          "title": "Repaired at our cost",
+          "description": null,
+          "statusChangedTo": 5,
+          "waitingForChangedTo": 0,
+          "createdAtUtc": "2026-09-04T11:18:00.000+00:00",
+          "createdByUserId": "u4"
+        }
+      ],
+      "notes": [],
+      "createdByUserId": "u4",
+      "updatedAtUtc": "2026-09-04T11:18:00.000+00:00",
+      "updatedByUserId": "u4",
+      "id": "ic7",
+      "type": 1,
+      "vehicleId": "v2",
+      "damage": "Rear door dented in a car park, the other car left",
+      "happenedAtUtc": "2026-08-10T13:00:00.000+00:00",
+      "place": "Car park, Ülemiste Centre, Tallinn",
+      "status": 5,
+      "waitingFor": 0,
+      "createdAtUtc": "2026-08-11T06:20:00.000+00:00",
+      "concurrencyToken": "t-ic7-01",
+      "_refs": {
+        "vehicle": "v2 119 MPR",
+        "driver": null,
+        "rental": {
+          "rentalAssignmentId": "a8",
+          "customer": "cu1 Baltic Freight Partners (rental ended)",
+          "authorisation": "none recorded",
+          "driverFillIn": "empty: no driver named on the rental then"
+        },
+        "sameAccidentCase": null
+      }
+    }
+  ]
+}

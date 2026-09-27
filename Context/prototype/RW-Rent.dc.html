@@ -549,29 +549,29 @@ table{border-collapse:collapse}
               <section style="display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-1)">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line)">
                   <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
-                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                      <h2 style="margin:0;font-size:14px;font-weight:600;color:var(--fg)">Unresolved insurance cases</h2>
-                      <span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:var(--inset);border:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.02em;color:var(--fg-3);white-space:nowrap">Sample · module under development</span>
-                    </div>
-                    <p style="margin:0;font-size:12.5px;color:var(--fg-3)">Claims and policies with an action outstanding.</p>
+                    <h2 style="margin:0;font-size:14px;font-weight:600;color:var(--fg)">Insurance cases waiting for us</h2>
+                    <p style="margin:0;font-size:12.5px;color:var(--fg-3)">Open cases where the next move is ours, the longest waiting first.</p>
                   </div>
                   <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);white-space:nowrap">{{ insuranceCount }}</span>
                 </div>
                 <sc-if value="{{ insuranceEmpty }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;align-items:center;gap:9px;padding:38px 24px;text-align:center">
-                    <span data-icon style="font-size:26px;color:var(--ok)">verified_user</span>
-                    <div style="font-size:13.5px;font-weight:500">No open cases</div>
+                    <span data-icon style="font-size:26px;color:var(--ok)">task_alt</span>
+                    <div style="font-size:13.5px;font-weight:500">Nothing is waiting for you</div>
                   </div>
                 </sc-if>
-                <sc-for list="{{ insurance }}" as="c" hint-placeholder-count="3">
-                  <div style="display:flex;align-items:center;gap:13px;padding:13px 17px;border-bottom:1px solid var(--line);color:var(--fg)">
+                <sc-for list="{{ insurance }}" as="c" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ c.go }}" style="display:flex;align-items:center;gap:13px;padding:13px 17px;background:transparent;border:none;border-bottom:1px solid var(--line);text-align:left;color:var(--fg);width:100%" style-hover="background:var(--surface-2)">
                     <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border-radius:8px;background:{{ c.tintBg }};border:1px solid {{ c.tintBd }};color:{{ c.tint }}"><span data-icon style="font-size:17px">{{ c.icon }}</span></span>
                     <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
                       <span style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</span>
                       <span style="font-size:12.5px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.sub }}</span>
                     </span>
-                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);flex:none">{{ c.when }}</span>
-                  </div>
+                    <span style="display:flex;align-items:center;gap:10px;flex:none">
+                      <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3)">{{ c.when }}</span>
+                      <span data-icon style="font-size:17px;color:var(--fg-4)">chevron_right</span>
+                    </span>
+                  </button>
                 </sc-for>
               </section>
             </div>
@@ -677,6 +677,18 @@ table{border-collapse:collapse}
             </sc-for>
           </div>
           <span style="margin-left:auto;font-size:12px;color:var(--fg-3)">Times in Tallinn time.</span>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ pgCaseTabs }}" hint-placeholder-val="{{ false }}">
+        <div role="tablist" aria-label="Insurance case lists" style="display:flex;flex-wrap:nowrap;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:11px;width:{{ caseTabsW }};max-width:100%">
+          <sc-for list="{{ caseTabs }}" as="t" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="display:flex;align-items:center;justify-content:center;gap:{{ t.gap }};flex:{{ t.flex }};min-width:0;min-height:{{ t.h }};padding:{{ t.pad }};background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }};border-radius:8px;font-size:{{ t.size }};font-weight:{{ t.weight }}" style-hover="color:var(--fg)">
+              <span data-icon style="font-size:17px;display:{{ t.iconDisplay }}">{{ t.icon }}</span>
+              <span style="white-space:nowrap">{{ t.label }}</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3)">{{ t.count }}</span>
+            </button>
+          </sc-for>
         </div>
         </sc-if>
 
@@ -1014,6 +1026,31 @@ table{border-collapse:collapse}
             </div>
           </sc-if>
 
+          <sc-if value="{{ list.showCaseCards }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ list.caseCards }}" as="c" hint-placeholder-count="3">
+                <button type="button" onClick="{{ c.onClick }}" style="display:flex;flex-direction:column;gap:11px;padding:14px 16px;background:transparent;border:none;border-bottom:1px solid var(--line);text-align:left;color:var(--fg);width:100%" style-hover="background:var(--surface-2)">
+                  <span style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;width:100%">
+                    <span style="display:flex;flex:1 1 auto;flex-direction:column;gap:2px;min-width:0">
+                      <span style="font-size:14px;font-weight:600;color:var(--fg);overflow-wrap:anywhere">{{ c.title }}</span>
+                      <span style="font-size:11.5px;color:var(--fg-3)">{{ c.sub }}</span>
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;flex:none;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:{{ c.chipBg }};color:{{ c.chipFg }};border:1px solid {{ c.chipBd }};white-space:nowrap"><span aria-hidden="true" style="width:6px;height:6px;border-radius:{{ c.chipShape }};background:currentColor"></span>{{ c.chip }}</span>
+                  </span>
+                  <span style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;width:100%">
+                    <sc-for list="{{ c.facts }}" as="f" hint-placeholder-count="3">
+                      <span style="display:flex;flex-direction:column;gap:1px;min-width:0;grid-column:{{ f.span }};align-items:{{ f.alignItems }};text-align:{{ f.textAlign }}">
+                        <span style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-4)">{{ f.label }}</span>
+                        <span style="font-size:12.5px;font-weight:{{ f.weight }};color:{{ f.fg }};overflow-wrap:anywhere">{{ f.value }}</span>
+                        <sc-if value="{{ f.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-family:{{ f.subFont }};font-size:11.5px;color:var(--fg-3)">{{ f.sub }}</span></sc-if>
+                      </span>
+                    </sc-for>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ list.showPager }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)">
               <span style="font-size:12.5px;color:var(--fg-3)">{{ list.rangeLabel }}</span>
@@ -1096,6 +1133,141 @@ table{border-collapse:collapse}
                 <div style="font-size:13.5px;font-weight:600;color:var(--fg)">{{ detail.bannerTitle }}</div>
                 <sc-if value="{{ detail.bannerHasBody }}" hint-placeholder-val="{{ true }}"><p style="margin:3px 0 0;font-size:13px;color:var(--fg-2)">{{ detail.bannerBody }}</p></sc-if>
               </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ detail.hasCase }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:{{ detail.kase.cols }};gap:14px;align-items:start">
+              <sc-for list="{{ detail.kase.columns }}" as="col" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+                  <sc-for list="{{ col.panels }}" as="p" hint-placeholder-count="2">
+                    <section style="display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-1)">
+                      <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line)">
+                        <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px">
+                          <h2 style="margin:0;font-size:14px;font-weight:600;color:var(--fg)">{{ p.title }}</h2>
+                          <sc-if value="{{ p.hasDesc }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:12.5px;color:var(--fg-3)">{{ p.desc }}</p></sc-if>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:7px">
+                          <sc-for list="{{ p.actions }}" as="a" hint-placeholder-count="0">
+                            <button type="button" onClick="{{ a.go }}" aria-disabled="{{ a.ariaDisabled }}" title="{{ a.tip }}" style="display:flex;align-items:center;gap:7px;min-height:{{ a.h }};padding:7px 12px;background:{{ a.bg }};color:{{ a.fg }};border:1px solid {{ a.bd }};border-radius:8px;font-size:12.5px;font-weight:500;opacity:{{ a.opacity }};cursor:{{ a.cursor }}" style-hover="filter:brightness(1.08)"><span data-icon style="font-size:16px">{{ a.icon }}</span><span style="white-space:nowrap">{{ a.label }}</span></button>
+                          </sc-for>
+                        </div>
+                      </div>
+
+                      <sc-if value="{{ p.isTimeline }}" hint-placeholder-val="{{ false }}">
+                        <ol style="margin:0;padding:6px 0 8px;list-style:none;display:flex;flex-direction:column">
+                          <sc-for list="{{ p.entries }}" as="e" hint-placeholder-count="3">
+                            <li style="display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:12px;padding:0 17px">
+                              <span aria-hidden="true" style="position:relative;display:flex;justify-content:center">
+                                <span style="position:absolute;left:50%;top:{{ e.lineTop }};bottom:{{ e.lineBottom }};display:{{ e.lineDisplay }};width:1px;transform:translateX(-50%);background:var(--line-2)"></span>
+                                <span style="position:relative;width:9px;height:9px;margin-top:17px;border-radius:50%;background:{{ e.dotBg }};border:1px solid {{ e.dotBd }};box-shadow:0 0 0 4px var(--surface)"></span>
+                              </span>
+                              <div style="display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px 0 14px">
+                                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px">
+                                  <span style="font-family:var(--font-mono);font-size:12px;color:var(--fg-2)">{{ e.when }}</span>
+                                  <sc-if value="{{ e.hasGap }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--fg-3)">{{ e.gap }}</span></sc-if>
+                                </div>
+                                <span style="font-size:13.5px;font-weight:600;color:var(--fg);overflow-wrap:anywhere">{{ e.title }}</span>
+                                <sc-if value="{{ e.hasPlace }}" hint-placeholder-val="{{ false }}">
+                                  <span style="display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--fg-2)"><span data-icon style="font-size:15px;margin-top:2px;color:var(--fg-3);flex:none">location_on</span><span style="min-width:0;overflow-wrap:anywhere">{{ e.place }}</span></span>
+                                </sc-if>
+                                <sc-if value="{{ e.hasDesc }}" hint-placeholder-val="{{ false }}">
+                                  <p style="margin:0;max-width:72ch;font-size:13px;line-height:1.55;color:var(--fg-2);white-space:pre-line;overflow-wrap:anywhere">{{ e.desc }}</p>
+                                </sc-if>
+                                <sc-if value="{{ e.hasPhotos }}" hint-placeholder-val="{{ false }}">
+                                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">
+                                    <sc-for list="{{ e.photos }}" as="ph" hint-placeholder-count="2"><button type="button" onClick="{{ ph.open }}" aria-label="{{ ph.label }}" title="{{ ph.name }}" style="display:flex;align-items:center;justify-content:center;width:{{ ph.w }};height:{{ ph.h }};flex:none;padding:0;background:{{ ph.bg }};border:1px solid var(--line-2);border-radius:8px;color:var(--fg-4);cursor:zoom-in" style-hover="border-color:var(--line-3);color:var(--fg-3)"><span data-icon style="font-size:18px">image</span></button></sc-for>
+                                  </div>
+                                </sc-if>
+                                <sc-if value="{{ e.hasChanges }}" hint-placeholder-val="{{ false }}">
+                                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                                    <sc-for list="{{ e.changes }}" as="ch" hint-placeholder-count="1"><span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:var(--surface-2);border:1px solid var(--line-2);color:var(--fg-2);white-space:nowrap">{{ ch.text }}</span></sc-for>
+                                  </div>
+                                </sc-if>
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;font-size:12px;color:var(--fg-3)">
+                                  <span>{{ e.by }}</span>
+                                  <sc-if value="{{ e.canEdit }}" hint-placeholder-val="{{ false }}">
+                                    <button type="button" onClick="{{ e.edit }}" style="display:inline-flex;align-items:center;min-height:{{ e.editH }};padding:0;background:none;border:none;color:var(--fg-2);font-size:12px;font-weight:500;text-decoration:underline;text-underline-offset:2px" style-hover="color:var(--fg)">Edit</button>
+                                  </sc-if>
+                                </div>
+                              </div>
+                            </li>
+                          </sc-for>
+                        </ol>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isNotes }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column">
+                          <sc-for list="{{ p.notes }}" as="n" hint-placeholder-count="2">
+                            <div style="display:flex;flex-direction:column;gap:6px;padding:13px 17px;border-bottom:1px solid var(--line)">
+                              <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--fg);white-space:pre-line;overflow-wrap:anywhere">{{ n.text }}</p>
+                              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;font-size:12px;color:var(--fg-3)">
+                                <span>{{ n.by }}</span>
+                                <sc-if value="{{ n.canEdit }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" onClick="{{ n.edit }}" style="display:inline-flex;align-items:center;min-height:{{ n.editH }};padding:0;background:none;border:none;color:var(--fg-2);font-size:12px;font-weight:500;text-decoration:underline;text-underline-offset:2px" style-hover="color:var(--fg)">Edit</button>
+                                </sc-if>
+                              </div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isPhotos }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column;gap:16px;padding:14px 17px 17px">
+                          <sc-for list="{{ p.groups }}" as="g" hint-placeholder-count="2">
+                            <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+                              <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px">
+                                <span style="font-size:12.5px;font-weight:500;color:var(--fg);overflow-wrap:anywhere">{{ g.title }}</span>
+                                <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--fg-3)">{{ g.when }}</span>
+                              </div>
+                              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                                <sc-for list="{{ g.photos }}" as="ph" hint-placeholder-count="2"><button type="button" onClick="{{ ph.open }}" aria-label="{{ ph.label }}" title="{{ ph.name }}" style="display:flex;align-items:center;justify-content:center;width:{{ ph.w }};height:{{ ph.h }};flex:none;padding:0;background:{{ ph.bg }};border:1px solid var(--line-2);border-radius:8px;color:var(--fg-4);cursor:zoom-in" style-hover="border-color:var(--line-3);color:var(--fg-3)"><span data-icon style="font-size:18px">image</span></button></sc-for>
+                              </div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isFacts }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:grid;grid-template-columns:{{ p.factCols }};gap:1px;background:var(--line)">
+                          <sc-for list="{{ p.facts }}" as="f" hint-placeholder-count="4">
+                            <div style="display:flex;flex-direction:column;gap:4px;min-width:0;padding:13px 17px;background:var(--surface);grid-column:{{ f.span }}">
+                              <span style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-4);font-weight:600">{{ f.label }}</span>
+                              <span style="font-family:{{ f.font }};font-size:13.5px;color:{{ f.fg }};overflow-wrap:anywhere">{{ f.value }}</span>
+                              <sc-if value="{{ f.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;color:var(--fg-3)">{{ f.sub }}</span></sc-if>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isLinks }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column">
+                          <sc-for list="{{ p.links }}" as="l" hint-placeholder-count="1">
+                            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:13px 17px;border-bottom:1px solid var(--line)">
+                              <span style="flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:2px">
+                                <span style="display:flex;min-width:0"><a href="#" onClick="{{ l.go }}" style="max-width:100%;font-size:13.5px;font-weight:600;color:var(--fg);text-decoration:none;border-bottom:1px solid var(--line-3);overflow-wrap:anywhere;cursor:pointer" style-hover="border-bottom-color:currentColor">{{ l.title }}</a></span>
+                                <span style="font-size:12px;color:var(--fg-3)">{{ l.sub }}</span>
+                              </span>
+                              <span style="display:inline-flex;align-items:center;gap:6px;flex:none;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:500;background:{{ l.chipBg }};color:{{ l.chipFg }};border:1px solid {{ l.chipBd }};white-space:nowrap"><span aria-hidden="true" style="width:6px;height:6px;border-radius:{{ l.chipShape }};background:currentColor"></span>{{ l.chip }}</span>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isText }}" hint-placeholder-val="{{ false }}">
+                        <p style="margin:0;padding:14px 17px 16px;max-width:80ch;font-size:13.5px;line-height:1.6;color:var(--fg);white-space:pre-line;overflow-wrap:anywhere">{{ p.text }}</p>
+                      </sc-if>
+
+                      <sc-if value="{{ p.isEmpty }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:9px;padding:30px 22px;text-align:center">
+                          <span data-icon style="font-size:24px;color:var(--fg-4)">{{ p.emptyIcon }}</span>
+                          <div style="font-size:13.5px;font-weight:600">{{ p.emptyTitle }}</div>
+                        </div>
+                      </sc-if>
+                    </section>
+                  </sc-for>
+                </div>
+              </sc-for>
             </div>
           </sc-if>
 
@@ -1462,6 +1634,33 @@ table{border-collapse:collapse}
                 <p style="margin:0;font-size:12px;line-height:1.5;color:var(--fg-3);text-wrap:pretty">{{ sec.stepsHint }}</p>
               </div>
             </sc-if>
+            <sc-if value="{{ sec.hasPhotos }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-if value="{{ sec.photosAny }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:10px">
+                    <sc-for list="{{ sec.photos }}" as="ph" hint-placeholder-count="0">
+                      <div style="display:flex;flex-direction:column;gap:5px;width:104px;min-width:0">
+                        <span aria-hidden="true" style="display:flex;align-items:center;justify-content:center;width:104px;height:78px;background:{{ ph.bg }};border:1px solid var(--line-2);border-radius:8px;color:var(--fg-4)"><span data-icon style="font-size:20px">image</span></span>
+                        <span title="{{ ph.name }}" style="font-family:var(--font-mono);font-size:11px;color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ph.name }}</span>
+                        <span style="font-size:11px;color:var(--fg-3)">{{ ph.size }}</span>
+                        <sc-if value="{{ ph.canRemove }}" hint-placeholder-val="{{ false }}">
+                          <button type="button" onClick="{{ ph.remove }}" aria-label="Remove {{ ph.name }}" style="display:flex;align-items:center;justify-content:center;gap:5px;min-height:{{ sec.photoBtn }};padding:0 8px;background:transparent;border:1px solid var(--line-2);border-radius:7px;color:var(--fg-2);font-size:12px;font-weight:500" style-hover="background:var(--surface-3);color:var(--fg)"><span data-icon style="font-size:15px">close</span><span>Remove</span></button>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sec.canAddPhotos }}" hint-placeholder-val="{{ false }}">
+                  <label style="position:relative;display:flex;align-items:center;gap:7px;width:fit-content;min-height:{{ sec.addH }};padding:8px 13px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;color:var(--fg);font-size:13px;font-weight:500;cursor:pointer" style-hover="background:var(--surface-3)" style-focus-within="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)">
+                    <span data-icon style="font-size:16px">add_photo_alternate</span><span>Add photos</span>
+                    <input type="file" accept="image/*" multiple="multiple" onChange="{{ sec.onPickPhotos }}" aria-label="Add photos" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer" />
+                  </label>
+                </sc-if>
+                <sc-if value="{{ sec.hasPhotosHint }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;font-size:12px;line-height:1.5;color:var(--fg-3);text-wrap:pretty">{{ sec.photosHint }}</p>
+                </sc-if>
+              </div>
+            </sc-if>
             <div style="display:grid;grid-template-columns:{{ sec.cols }};gap:13px">
               <sc-for list="{{ sec.fields }}" as="f" hint-placeholder-count="2">
                 <label style="display:flex;flex-direction:column;gap:6px;grid-column:{{ f.span }}">
@@ -1471,7 +1670,7 @@ table{border-collapse:collapse}
                     <sc-if value="{{ f.optional }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:400;color:var(--fg-4)">· optional</span></sc-if>
                   </span>
                   <sc-if value="{{ f.isInput }}" hint-placeholder-val="{{ true }}">
-                    <input type="{{ f.type }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.placeholder }}" maxLength="{{ f.maxLength }}" aria-invalid="{{ f.invalid }}" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid {{ f.border }};border-radius:8px;color:var(--fg);font-family:{{ f.font }};font-size:13.5px;outline:none" style-focus="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)" />
+                    <input type="{{ f.type }}" list="{{ f.listId }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.placeholder }}" maxLength="{{ f.maxLength }}" aria-invalid="{{ f.invalid }}" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid {{ f.border }};border-radius:8px;color:var(--fg);font-family:{{ f.font }};font-size:13.5px;outline:none" style-focus="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)" />
                   </sc-if>
                   <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
                     <span style="position:relative;display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid {{ f.border }};border-radius:8px" style-focus-within="border-color:var(--focus);box-shadow:0 0 0 3px var(--ring)">
@@ -1512,6 +1711,9 @@ table{border-collapse:collapse}
             </sc-for>
           </div>
         </sc-for>
+        <datalist id="rw-insurers">
+          <sc-for list="{{ dialog.insurerNames }}" as="n" hint-placeholder-count="0"><option value="{{ n.v }}"></option></sc-for>
+        </datalist>
         <sc-if value="{{ dialog.hasConsequences }}" hint-placeholder-val="{{ false }}">
           <ul style="margin:0;padding:13px 15px;list-style:none;display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px">
             <sc-for list="{{ dialog.consequences }}" as="c" hint-placeholder-count="2">
@@ -1547,6 +1749,35 @@ table{border-collapse:collapse}
             <span style="white-space:nowrap">{{ a.label }}</span>
           </button>
         </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ photo.open }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:75;display:flex;align-items:center;justify-content:center;padding:{{ photo.pad }};background:rgba(0,0,0,.8);animation:rwIn .14s ease both">
+    <div onClick="{{ photo.close }}" style="position:absolute;inset:0"></div>
+    <div role="dialog" aria-modal="true" aria-label="{{ photo.name }}" style="position:relative;width:100%;max-width:980px;max-height:100%;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-2);border-radius:{{ photo.radius }};box-shadow:var(--sh-3);overflow:hidden;animation:rwUp .2s ease both">
+      <div style="flex:none;display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+          <span style="font-size:14px;font-weight:600;color:var(--fg);overflow-wrap:anywhere">{{ photo.entry }}</span>
+          <span style="font-size:12.5px;color:var(--fg-3);overflow-wrap:anywhere">{{ photo.when }}</span>
+        </div>
+        <button type="button" onClick="{{ photo.close }}" aria-label="Close photo" style="display:flex;align-items:center;justify-content:center;width:{{ photo.btn }};height:{{ photo.btn }};flex:none;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--fg-2)" style-hover="background:var(--surface-2);color:var(--fg)"><span data-icon style="font-size:19px">close</span></button>
+      </div>
+      <div style="position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:4 / 3;max-height:68vh;background:{{ photo.bg }};color:var(--fg-4)">
+        <span data-icon style="font-size:56px">image</span>
+        <sc-if value="{{ photo.hasPrev }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ photo.prev }}" aria-label="Previous photo" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:{{ photo.btn }};height:{{ photo.btn }};background:var(--surface);border:1px solid var(--line-2);border-radius:50%;color:var(--fg);box-shadow:var(--sh-2)" style-hover="background:var(--surface-2)"><span data-icon style="font-size:20px">chevron_left</span></button>
+        </sc-if>
+        <sc-if value="{{ photo.hasNext }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ photo.next }}" aria-label="Next photo" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:{{ photo.btn }};height:{{ photo.btn }};background:var(--surface);border:1px solid var(--line-2);border-radius:50%;color:var(--fg);box-shadow:var(--sh-2)" style-hover="background:var(--surface-2)"><span data-icon style="font-size:20px">chevron_right</span></button>
+        </sc-if>
+      </div>
+      <div style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:12px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--fg-3)">
+        <span style="font-family:var(--font-mono);color:var(--fg-2)">{{ photo.name }}</span>
+        <span>{{ photo.meta }}</span>
+        <span style="margin-left:auto;font-family:var(--font-mono)">{{ photo.counter }}</span>
       </div>
     </div>
   </div>
@@ -1700,7 +1931,13 @@ const FAIL_SIM = {
   'company-edit': { fields:{ registrationNumber:'That registration number belongs to another Company.' }, conflict:'The Company profile changed while you had this open.' },
   'transfer-initiate': { fields:{ targetEmail:'That account cannot receive the transfer.', currentPassword:'That is not your current password.' }, conflict:'A transfer is already pending. Cancel it before starting another.' },
   'task-create': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'The record this task is about was deleted moments ago. Choose another one or none.' },
-  'task-edit': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'The task was finished or cancelled while you had this open.' }
+  'task-edit': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'The task was finished or cancelled while you had this open.' },
+  'case-register': { fields:{ ourClaimNumber:'Another case already carries this claim number with the same insurer.' }, conflict:'The car was deactivated moments ago. Choose another car.' },
+  'case-edit': { fields:{ ourClaimNumber:'Another case already carries this claim number with the same insurer.' }, conflict:'The case was changed by someone else while you had this open.' },
+  'case-event-add': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'Someone else added an event to this case while you had this open. Refresh to see it first.' },
+  'case-event-edit': { fields:{ title:'The title must be at most 200 characters.' }, conflict:'Only the person who added this event can correct it.' },
+  'case-note-add': { fields:{ text:'The note must be at most 4000 characters.' }, conflict:'The case was changed by someone else while you had this open.' },
+  'case-note-edit': { fields:{ text:'The note must be at most 4000 characters.' }, conflict:'Only the person who wrote this note can correct it.' }
 };
 // Every event type the API can emit, in prefix groups. The Event type filter is driven by this
 // catalog rather than by the rows currently loaded, so the choices never depend on the page.
@@ -1822,6 +2059,83 @@ const TASK_ABOUT = [
   { id:'assignment', label:'Rental assignment', field:'rentalAssignmentId', noun:'rental assignment' }
 ];
 const TASK_STATUS = { 1:['Open','info','2px'], 2:['Finished','ok','50%'], 3:['Cancelled','mute','1px'] };
+// Insurance cases. Enum ids mirror the backend: InsuranceCaseType, InsuranceCaseStatus, InsuranceCaseParty, InsurerSide, AtFaultParty.
+const INS_TYPE = { 1:'Usual', 2:'Casco' };
+const INS_TYPE_SHAPE = { 1:'2px', 2:'50% 50% 50% 0' };
+const INS_STATUS = { 1:'Happened', 2:'Reported', 3:'Under review', 4:'Repair', 5:'Closed' };
+const INS_STATUS_TONE = { 1:['warn','50%'], 2:['info','2px'], 3:['info','50%'], 4:['ok','2px'], 5:['mute','1px'] };
+const INS_PARTY = { 0:'Nobody', 1:'Us', 2:'The driver', 3:'The insurer', 4:'Someone else' };
+const INS_PARTY_ORDER = [1, 2, 3, 4, 0];
+const INS_FAULT = { 1:'Our driver', 2:'The other party', 3:'Both', 4:'Not found' };
+// Seed times are local wall-clock times n days from today, never later than a few minutes ago.
+const pastAt = (n, h, m) => { const iso = dayAt(n, h, m); return Date.parse(iso) > now - 20 * 60e3 ? new Date(now - 20 * 60e3).toISOString() : iso; };
+const plusMin = (iso, m) => new Date(Math.min(Date.parse(iso) + m * 60e3, now - 60e3)).toISOString();
+// Every photo lives once, in its case's Photos; an event's photos are the ones carrying its InsuranceCaseEventId.
+const INS_SEED = (() => {
+  const PH = (id, cid, eid, name, size, atIso, by) => ({ id, insuranceCaseId:cid, insuranceCaseEventId: eid || null, fileName:name, sizeInBytes:size, createdAtUtc:atIso, createdByUserId: by || 'u4' });
+  const EV = (id, cid, atIso, title, o) => { const p = o || {}; return { id, insuranceCaseId:cid, happenedAtUtc:atIso, title, description: p.d || null,
+    statusChangedTo: p.s || null, waitingForChangedTo: p.w === undefined ? null : p.w, createdAtUtc: plusMin(atIso, p.late || 18), createdByUserId: p.by || 'u4' }; };
+  const NT = (id, cid, atIso, text, by) => ({ id, insuranceCaseId:cid, text, createdAtUtc:atIso, createdByUserId: by || 'u4' });
+  const C = o => ({ driverId:null, description:null, timeIsWhenFound:false, placeIsWhereFound:false, ourInsurer:null, ourClaimNumber:null, otherInsurer:null, otherClaimNumber:null,
+    handledBy:null, atFault:null, sameAccidentCaseId:null, photos:[], events:[], notes:[], createdByUserId:'u4', updatedAtUtc:null, updatedByUserId:null, ...o, concurrencyToken:'t-' + o.id + '-01' });
+  const last = evs => evs[evs.length - 1].createdAtUtc;
+
+  const h1 = pastAt(-19, 8, 35), c1 = plusMin(h1, 90);
+  const e1 = [ EV('ice11','ic1',pastAt(-18,11,20),'Both drivers reported it on LKF.ee',{ s:2, w:3 }),
+    EV('ice12','ic1',pastAt(-15,9,45),'Meridian asked who drove and for photos of the damage',{ w:1, d:'By email from the Meridian claims handler: the name of the driver and clear photos of the rear.' }),
+    EV('ice13','ic1',pastAt(-14,10,30),'Asked Nordwind for their driver\u2019s account',{ w:2 }),
+    EV('ice14','ic1',pastAt(-12,15,10),'Nordwind sent the account, forwarded to Meridian',{ w:3 }),
+    EV('ice15','ic1',pastAt(-9,9,5),'Meridian asked for a repair calculation',{ w:1, by:'u2' }),
+    EV('ice16','ic1',pastAt(-7,14,40),'Car shown at the BMW dealer, calculation sent',{ w:3 }),
+    EV('ice17','ic1',pastAt(-6,10,15),'Everything is sent, Meridian is deciding',{ s:3 }) ];
+  const ic1 = C({ id:'ic1', type:1, vehicleId:'v7', damage:'Rear bumper and boot lid dented', description:'Hit from behind at a crossing while waiting at the red light.',
+    happenedAtUtc:h1, place:'Crossing of P\u00e4rnu mnt and Liivalaia, Tallinn', ourInsurer:'Baltic Mutual', ourClaimNumber:'BM-26-04417', otherInsurer:'Meridian Insurance', otherClaimNumber:'MI-2026-118305',
+    handledBy:2, status:3, waitingFor:3, events:e1,
+    photos:[ PH('icp11','ic1',null,'IMG_2041.jpg',2841305,c1), PH('icp12','ic1',null,'IMG_2042.jpg',3017722,c1), PH('icp13','ic1',null,'IMG_2043.jpg',2690418,c1), PH('icp14','ic1',null,'IMG_2044.jpg',2958130,c1),
+      PH('icp15','ic1','ice16','IMG_2107.jpg',3322940,e1[5].createdAtUtc), PH('icp16','ic1','ice16','IMG_2108.jpg',3104577,e1[5].createdAtUtc) ],
+    notes:[ NT('icn11','ic1',pastAt(-8,16,20),'Under warranty until 2027, so the repair goes to the BMW dealer, not to Meridian\u2019s list.','u2'), NT('icn12','ic1',pastAt(-2,11,0),'Meridian\u2019s handler is on leave until next Monday.') ],
+    createdAtUtc:c1, updatedAtUtc:last(e1), updatedByUserId:'u4' });
+
+  const h2 = pastAt(-1,13,25), c2 = plusMin(h2, 70);
+  const e2 = [ EV('ice21','ic2',pastAt(-1,17,30),'Reported to Baltic Mutual under casco',{ s:2, w:3 }), EV('ice22','ic2',pastAt(0,8,50),'Approved; the glass workshop replaces it tomorrow',{ s:4, w:4 }) ];
+  const ic2 = C({ id:'ic2', type:2, vehicleId:'v6', driverId:'d5', damage:'Windscreen cracked by a stone', happenedAtUtc:h2, place:'Tallinn\u2013Tartu road near M\u00e4o',
+    ourInsurer:'Baltic Mutual', ourClaimNumber:'BM-26-05233', handledBy:1, status:4, waitingFor:4, events:e2,
+    photos:[ PH('icp21','ic2',null,'IMG_5520.jpg',2210934,c2), PH('icp22','ic2',null,'IMG_5521.jpg',2398117,c2) ],
+    notes:[ NT('icn21','ic2',pastAt(0,9,5),'Deductible 500 euros, paid at the workshop.') ], createdAtUtc:c2, updatedAtUtc:last(e2), updatedByUserId:'u4' });
+
+  const h3 = pastAt(-2,8,40), c3 = plusMin(h3, 35);
+  const ic3 = C({ id:'ic3', type:1, vehicleId:'v3', driverId:'d2', damage:'Long scratches on both left doors', happenedAtUtc:h3, timeIsWhenFound:true,
+    place:'Car wash, P\u00e4rnu mnt 139, Tallinn', placeIsWhereFound:true, status:1, waitingFor:1,
+    photos:[ PH('icp31','ic3',null,'IMG_0311.jpg',1984206,c3), PH('icp32','ic3',null,'IMG_0312.jpg',2077413,c3), PH('icp33','ic3',null,'IMG_0313.jpg',2150886,c3) ],
+    notes:[ NT('icn31','ic3',plusMin(h3, 40),'Parked overnight on Mustam\u00e4e tee; no witnesses.') ], createdAtUtc:c3 });
+
+  const h4 = pastAt(-5,17,50), c4 = plusMin(h4, 40), place4 = 'Crossing of Riia and Vanemuise, Tartu';
+  const e4 = [ EV('ice41','ic4',pastAt(-5,19,10),'Reported to Baltic Mutual; the other driver reported to Northgate',{ s:2, w:3 }),
+    EV('ice42','ic4',pastAt(-2,10,40),'Baltic Mutual asked for a written account from our driver',{ w:1 }),
+    EV('ice43','ic4',pastAt(-1,11,15),'Asked Kristine Vitola for the account',{ w:2 }) ];
+  const ic4 = C({ id:'ic4', type:1, vehicleId:'v1', driverId:'d4', damage:'Front bumper and right headlight', description:'Neither driver accepted the blame.',
+    happenedAtUtc:h4, place:place4, ourInsurer:'Baltic Mutual', ourClaimNumber:'BM-26-05120', otherInsurer:'Northgate Insurance', otherClaimNumber:'NG-771204',
+    handledBy:1, status:2, waitingFor:2, events:e4, createdAtUtc:c4, updatedAtUtc:last(e4), updatedByUserId:'u4' });
+
+  const c5 = pastAt(-4,9,10);
+  const e5 = [ EV('ice51','ic5',pastAt(-4,9,30),'Registered under casco to repair the car now',{ s:2, w:3 }), EV('ice52','ic5',pastAt(-1,14,20),'Baltic Mutual asked for the mileage and photos of the damage',{ w:1 }) ];
+  const ic5 = C({ id:'ic5', type:2, vehicleId:'v1', driverId:'d4', damage:'Front bumper and right headlight', happenedAtUtc:h4, place:place4,
+    ourInsurer:'Baltic Mutual', ourClaimNumber:'BM-26-05161', handledBy:1, status:2, waitingFor:1, sameAccidentCaseId:'ic4', events:e5,
+    notes:[ NT('icn51','ic5',pastAt(-4,9,40),'Deductible 500 euros.') ], createdAtUtc:c5, updatedAtUtc:last(e5), updatedByUserId:'u4' });
+
+  const h6 = pastAt(-30,12,15), c6 = plusMin(h6, 120);
+  const e6 = [ EV('ice61','ic6',pastAt(-29,10,0),'Both drivers reported it on LKF.ee',{ s:2, w:3 }), EV('ice62','ic6',pastAt(-20,15,30),'Meridian decided the van driver was at fault',{ s:4, w:4 }),
+    EV('ice63','ic6',pastAt(-8,13,0),'Mirror replaced; Meridian paid the workshop',{ s:5, w:0 }) ];
+  const ic6 = C({ id:'ic6', type:1, vehicleId:'v10', driverId:'d7', damage:'Right mirror broken by a passing van', happenedAtUtc:h6, place:'Narva mnt 7, Tallinn',
+    otherInsurer:'Meridian Insurance', otherClaimNumber:'MI-2026-109877', handledBy:2, atFault:2, status:5, waitingFor:0, events:e6,
+    photos:[ PH('icp61','ic6',null,'IMG_7730.jpg',2533801,c6) ], createdAtUtc:c6, updatedAtUtc:last(e6), updatedByUserId:'u4' });
+
+  const h7 = pastAt(-45,16,0), c7 = pastAt(-44,9,20);
+  const e7 = [ EV('ice71','ic7',pastAt(-43,11,0),'Nobody saw it; not worth the casco deductible'), EV('ice72','ic7',pastAt(-20,14,0),'Repaired at our cost',{ s:5, w:0 }) ];
+  const ic7 = C({ id:'ic7', type:1, vehicleId:'v2', damage:'Rear door dented in a car park, the other car left', happenedAtUtc:h7, place:'Car park, \u00dclemiste Centre, Tallinn',
+    atFault:4, status:5, waitingFor:0, events:e7, createdAtUtc:c7, updatedAtUtc:last(e7), updatedByUserId:'u4' });
+  return [ic1, ic2, ic3, ic4, ic5, ic6, ic7];
+})();
 
 const DB = {
   company: { id:'c1', name:'RW-Rent Fleet Services', registrationNumber:'40203881204', vatNumber:'LV40203881204', legalAddress:'Brivibas gatve 214, Riga, LV-1039', email:'operations@rwrent.example', phoneNumber:'+371 66 120 400', createdAtUtc: at(-24 * 300), updatedAtUtc: at(-18) },
@@ -1981,6 +2295,7 @@ const DB = {
       vehicleId:null, customerId:'cu5', driverId:null, rentalAssignmentId:null, cancellationNote:'The customer changed their mind.', steps:[],
       createdByUserId:'u2', createdAtUtc: dayAt(-6, 14, 0), updatedAtUtc: dayAt(-3, 10, 15), updatedByUserId:'u2' }
   ],
+  insuranceCases: INS_SEED,
   transfers: [
     { id:'tr1', currentAdministratorUserId:'u1', targetUserId:'u2', initiatedAtUtc:at(-6), expiresAtUtc:at(18), cancelledAtUtc:null, acceptedAtUtc:null, isRecovery:false }
   ]
@@ -2018,7 +2333,7 @@ class Component extends DCLogic {
     failMode: 'none', dialogFail: null,
     q: {}, form: {}, errors: {},
     f: { email:'signe.priede@rwrent.example', password:'Fleet-Ops-2026!', password2:'', first:'', last:'', phone:'' },
-    db: DB, seq: 1
+    db: DB, seq: 1, photoView: null
   };
 
   componentDidMount() {
@@ -2027,7 +2342,7 @@ class Component extends DCLogic {
       const n = localStorage.getItem('rwrent.nav2'); if (n === 'expanded' || n === 'collapsed') this.setState({ nav: n });
       const r = localStorage.getItem('rwrent.role'); if (r && ROLE_CHAIN[r]) this.setState({ role: r });
       const saved = localStorage.getItem('rwrent.db');
-      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-22') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
+      if (saved && localStorage.getItem('rwrent.dbv') === 'rwrent-23') { const parsed = JSON.parse(saved); if (parsed && parsed.assignments) this.setState({ db: parsed }); }
     } catch (e) {}
     try {
       const raw = (window.location.hash || '').replace(/^#/, '');
@@ -2035,6 +2350,8 @@ class Component extends DCLogic {
     } catch (e) {}
     this._rz = () => this.setState({ w: window.innerWidth });
     window.addEventListener('resize', this._rz);
+    this._kd = e => { if (!this.state.photoView) return; if (e.key === 'Escape') this.setState({ photoView: null }); else if (e.key === 'ArrowLeft') this.photoStep(-1); else if (e.key === 'ArrowRight') this.photoStep(1); };
+    window.addEventListener('keydown', this._kd);
     this.setState({ w: window.innerWidth });
     try { this.setState({ touch: window.matchMedia('(hover: none)').matches }); } catch (e) {}
     this.syncTheme();
@@ -2049,7 +2366,7 @@ class Component extends DCLogic {
     }
   }
   company() { return this.props.noCompany ? null : this.state.db.company; }
-  componentWillUnmount() { window.removeEventListener('resize', this._rz); }
+  componentWillUnmount() { window.removeEventListener('resize', this._rz); window.removeEventListener('keydown', this._kd); }
   syncTheme() { try { document.documentElement.dataset.theme = this.state.theme; } catch (e) {} }
   save(k, v) { try { localStorage.setItem('rwrent.' + k, v); } catch (e) {} }
 
@@ -2077,7 +2394,7 @@ class Component extends DCLogic {
   go(name, id, tab, from) {
     const prev = this.state.route, same = prev.name === name && prev.id === (id || null);
     this.setState({ route: { name, id: id || null, tab: tab || null, from: from || (same ? prev.from : null) },
-      drawer: null, mobileNav: false, actionNote: null });
+      drawer: null, mobileNav: false, actionNote: null, photoView: null });
   }
 
   fmt(iso, mode) {
@@ -2147,7 +2464,7 @@ class Component extends DCLogic {
       { label:'Operations', items:[
         { id:'assignments', label:'Rental assignments', icon:'assignment', perm:'RentalAssignments.Read' },
         { id:'tasks', label:'Tasks', icon:'checklist', perm:null, companyOnly:true, badge: this.tasksTodo().length },
-        { id:'insurance', label:'Insurance cases', icon:'shield', perm:null } ] },
+        { id:'insurance', label:'Insurance cases', icon:'shield', perm:null, badge: this.caseRows('us').length } ] },
       { label:'Fleet', items:[ { id:'vehicles', label:'Vehicles', icon:'directions_car', perm:'Vehicles.Read' } ] },
       { label:'Business relationships', items:[
         { id:'customers', label:'Customers', icon:'contacts', perm:'Customers.Read' },
@@ -2165,7 +2482,7 @@ class Component extends DCLogic {
     if (this.perms().length === 0) return [];
     return raw.map((g, gi) => {
       const items = g.items.filter(i => (!i.perm || this.can(i.perm)) && !(i.companyOnly && this.isSysAdmin())).map(i => {
-        const active = r === i.id || (r === 'task' && i.id === 'tasks') || (r === 'assignment' && i.id === 'assignments') || (r === 'vehicle' && i.id === 'vehicles') || (r === 'customer' && i.id === 'customers') || (r === 'driver' && i.id === 'drivers') || (r === 'user' && i.id === 'users');
+        const active = r === i.id || (r === 'task' && i.id === 'tasks') || (r === 'case' && i.id === 'insurance') || (r === 'assignment' && i.id === 'assignments') || (r === 'vehicle' && i.id === 'vehicles') || (r === 'customer' && i.id === 'customers') || (r === 'driver' && i.id === 'drivers') || (r === 'user' && i.id === 'users');
         return {
           ...i,
           go: () => this.go(i.id),
@@ -2294,7 +2611,7 @@ class Component extends DCLogic {
     }
     const cards = out.slice(0, 4);
     if (!this.isSysAdmin()) cards.push({ key:'task', label:'Open tasks', icon:'checklist', color:'var(--info)', value: String(this.tasksModel().length), unit:'to do', go: () => this.go('tasks') });
-    cards.push({ key:'ins', label:'Unresolved insurance cases', icon:'policy', color:'var(--warn)', value: String(this.insuranceModel().length), unit:'cases', go: () => {} });
+    cards.push({ key:'ins', label:'Insurance cases waiting for us', icon:'car_crash', color:'var(--warn)', value: String(this.insuranceModel().length), unit:'cases', go: () => this.go('insurance', null, 'us') });
     return cards;
   }
 
@@ -2314,14 +2631,120 @@ class Component extends DCLogic {
     });
   }
 
+  // ---- Insurance cases ------------------------------------------------------------------------
+  // A case is a company record, like a vehicle: every Company user reads it; the Viewer only reads.
+  canCase() { return this.can('Vehicles.Manage'); }
+  cases() { return this.state.db.insuranceCases || []; }
+  caseById(id) { return this.cases().find(c => c.id === id) || null; }
+  casePlate(c) { const v = this.state.db.vehicles.find(x => x.id === c.vehicleId); return v ? v.plateNumber : '\u2014'; }
+  caseTitle(c) { return this.casePlate(c) + ' \u00b7 ' + c.damage; }
+  caseEvents(c) { return (c.events || []).slice().sort((a, b) => Date.parse(a.happenedAtUtc) - Date.parse(b.happenedAtUtc)); }
+  caseLastEvent(c) { const e = this.caseEvents(c); return e.length ? e[e.length - 1] : null; }
+  // Who the case waits for is set at registration and afterwards only by an event, so it has waited since the last event that changed it.
+  caseWaitSince(c) { const e = this.caseEvents(c).filter(x => x.waitingForChangedTo !== null && x.waitingForChangedTo !== undefined); return e.length ? e[e.length - 1].happenedAtUtc : c.createdAtUtc; }
+  caseClosedAt(c) { if (c.status !== 5) return null; const e = this.caseEvents(c).filter(x => x.statusChangedTo === 5); return e.length ? e[e.length - 1].happenedAtUtc : (c.updatedAtUtc || c.createdAtUtc); }
+  dur(ms) { const m = Math.max(0, ms);
+    if (m < H) { const n = Math.max(1, Math.floor(m / 60e3)); return n + (n === 1 ? ' minute' : ' minutes'); }
+    if (m < D) { const n = Math.floor(m / H); return n + (n === 1 ? ' hour' : ' hours'); }
+    const n = Math.floor(m / D); return n + (n === 1 ? ' day' : ' days'); }
+  agoText(iso) { const a = new Date(iso), b = new Date();
+    const n = Math.round((new Date(b.getFullYear(), b.getMonth(), b.getDate()) - new Date(a.getFullYear(), a.getMonth(), a.getDate())) / D);
+    return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 30 ? n + ' days ago' : this.fmt(iso, 'dateShort'); }
+  laterText(prev, cur) { const ms = Date.parse(cur) - Date.parse(prev); return ms < 60e3 ? 'At the same time' : this.dur(ms) + ' later'; }
+  caseWaitText(c) { return INS_PARTY[c.waitingFor] + (c.waitingFor === 0 ? '' : ' \u00b7 ' + this.dur(Date.now() - Date.parse(this.caseWaitSince(c)))); }
+  caseHandled(c) {
+    if (c.handledBy === 1 && c.ourInsurer) return { text: c.ourInsurer, sub: c.ourClaimNumber || '', dim:false };
+    if (c.handledBy === 2 && c.otherInsurer) return { text: c.otherInsurer, sub: c.otherClaimNumber || '', dim:false };
+    if (c.ourInsurer || c.otherInsurer) return { text:'Not decided yet', sub:'', dim:true };
+    return { text:'Not reported', sub:'', dim:true };
+  }
+  caseTab() { const t = this.state.route.tab; return ['open','us','closed'].includes(t) ? t : 'open'; }
+  // Open and Waiting for us: the cases waiting for Us first, then the longest waiting. Closed: the most recently closed first.
+  caseRows(tab) {
+    const all = this.cases(), T = x => Date.parse(x);
+    const pick = tab === 'closed' ? all.filter(c => c.status === 5) : tab === 'us' ? all.filter(c => c.status !== 5 && c.waitingFor === 1) : all.filter(c => c.status !== 5);
+    return pick.slice().sort((a, b) => tab === 'closed' ? T(this.caseClosedAt(b)) - T(this.caseClosedAt(a))
+      : ((a.waitingFor === 1 ? 0 : 1) - (b.waitingFor === 1 ? 0 : 1)) || (T(this.caseWaitSince(a)) - T(this.caseWaitSince(b)))).map((c, i) => ({ ...c, _ord: i }));
+  }
+  caseTabs() {
+    const cur = this.caseTab(), phone = this.isPhone();
+    return [['open','Open','folder_open'], ['us','Waiting for us','pending_actions'], ['closed','Closed','inventory_2']].map(([id, label, icon]) => { const on = id === cur;
+      return { label, icon, count: String(this.caseRows(id).length), selected: on ? 'true' : 'false', weight: on ? 600 : 450,
+        bg: on ? 'var(--surface-3)' : 'transparent', fg: on ? 'var(--fg)' : 'var(--fg-2)', bd: on ? 'var(--line-2)' : 'transparent',
+        iconDisplay: phone ? 'none' : 'inline-block', pad: phone ? '0 8px' : '8px 13px', gap: phone ? '6px' : '8px', size: phone ? '13px' : '13.5px',
+        flex: phone ? '1 1 auto' : 'none', h: phone ? '44px' : 'auto', go: () => this.go('insurance', null, id) }; });
+  }
+  // The cases of one accident point to the first one registered.
+  caseGroup(c) { const root = c.sameAccidentCaseId || c.id; return this.cases().filter(x => x.id !== c.id && (x.id === root || x.sameAccidentCaseId === root)); }
+  // The rental of the car at that moment, and who was authorised to drive it then.
+  caseRental(vehicleId, iso) {
+    const db = this.state.db, v = db.vehicles.find(x => x.id === vehicleId);
+    if (!v || !iso) return null;
+    const t = Date.parse(iso); if (isNaN(t)) return null;
+    const a = db.assignments.find(x => x.vehicleId === vehicleId && (x.status === 1 || x.status === 2) && x.startedAtUtc && Date.parse(x.startedAtUtc) <= t && (!x.closedAtUtc || Date.parse(x.closedAtUtc) >= t));
+    if (!a) return { plate: v.plateNumber, asg:null, customer:null, mode:'none', drivers:[] };
+    const c = db.customers.find(x => x.id === a.customerId) || null;
+    const live = (db.authorizations[a.id] || []).filter(z => Date.parse(z.authorizedFromUtc) <= t && (!z.stoppedAtUtc || Date.parse(z.stoppedAtUtc) > t));
+    if (live.some(z => z.authorizationType === 2)) return { plate: v.plateNumber, asg:a, customer:c, mode:'company', drivers:[] };
+    const ds = live.map(z => db.drivers.find(d => d.id === z.driverId)).filter(Boolean);
+    return { plate: v.plateNumber, asg:a, customer:c, mode: ds.length === 1 ? 'one' : ds.length > 1 ? 'several' : 'nobody', drivers: ds };
+  }
+  caseDriverHint(info) {
+    if (!info) return 'Choose the car and the time, and the driver is filled in from its rental.';
+    const who = info.customer ? this.displayName(info.customer) : '';
+    if (info.mode === 'none') return info.plate + ' was not rented at that time, so there is no driver to fill in.';
+    if (info.mode === 'company') return info.plate + ' was on the rental for ' + who + ', driven by the customer\u2019s own drivers, so no driver is filled in.';
+    if (info.mode === 'nobody') return 'No driver was named on the rental of ' + info.plate + ' for ' + who + ' at that time.';
+    if (info.mode === 'several') { const n = info.drivers.map(d => d.firstName + ' ' + d.lastName);
+      return n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] + ' were ' + (n.length === 2 ? 'both' : 'all') + ' authorised on the rental of ' + info.plate + ' for ' + who + ' then. Choose who drove.'; }
+    return 'From the rental of ' + info.plate + ' for ' + who;
+  }
+  localIso(v) { if (!v) return null; const d = new Date(v); return isNaN(d.getTime()) ? null : d.toISOString(); }
+  // Choosing the car or the time fills the driver in again from that car's rental at that moment.
+  setCaseForm(k, v) {
+    this.setState(s => { const f = { ...s.form, [k]: v }, errors = { ...s.errors, [k]: undefined };
+      if (k === 'vehicleId' || k === 'happenedAtUtc') { const info = this.caseRental(f.vehicleId, this.localIso(f.happenedAtUtc)); f.driverId = info && info.mode === 'one' ? info.drivers[0].id : ''; }
+      if (k === 'ourInsurer' && !String(v).trim() && f.handledBy === '1') f.handledBy = '';
+      if (k === 'otherInsurer' && !String(v).trim() && f.handledBy === '2') f.handledBy = '';
+      return { form: f, errors }; });
+  }
+  pickPhotos(e) {
+    const all = Array.from((e && e.target && e.target.files) || []); if (e && e.target) e.target.value = '';
+    const files = all.filter(x => !x.type || x.type.indexOf('image/') === 0), stamp = Date.now();
+    if (files.length < all.length) this.toast('Photos only', 'Documents stay in the mailbox.', 'warn');
+    if (!files.length) return;
+    this.setState(s => ({ form: { ...s.form, photos: (s.form.photos || []).concat(files.map((x, i) => ({ key: 'np' + stamp + i, fileName: x.name, sizeInBytes: x.size, mine: true }))) } }));
+  }
+  removeFormPhoto(key) { this.setState(s => ({ form: { ...s.form, photos: (s.form.photos || []).filter(p => p.key !== key) } })); }
+  // Drawn placeholder: a horizon at a height derived from the file name, so each photo looks a little different.
+  photoBg(name) { let h = 0; String(name || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) % 997; });
+    const k = 40 + (h % 26);
+    return 'linear-gradient(180deg, var(--surface-3) 0%, var(--surface-2) ' + k + '%, var(--line-3) ' + k + '%, var(--line-3) ' + (k + 1) + '%, var(--inset) ' + (k + 1) + '%, var(--surface-3) 100%)'; }
+  sizeText(b) { return b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((b || 0) / 1024)) + ' KB'; }
+  casePhotoList(c) { const out = [], ph = c.photos || [];
+    ph.filter(p => !p.insuranceCaseEventId).forEach(p => out.push({ p, entry: c.timeIsWhenFound ? 'Found' : 'Happened', at: c.happenedAtUtc }));
+    this.caseEvents(c).forEach(e => ph.filter(p => p.insuranceCaseEventId === e.id).forEach(p => out.push({ p, entry: e.title, at: e.happenedAtUtc })));
+    return out; }
+  photoModel() {
+    const pv = this.state.photoView, c = pv ? this.caseById(pv.caseId) : null, list = c ? this.casePhotoList(c) : [], phone = this.isPhone(), nil = () => {};
+    const i = list.findIndex(x => x.p.id === (pv && pv.photoId));
+    if (!c || i < 0) return { open:false, name:'', entry:'', when:'', counter:'', meta:'', bg:'', hasPrev:false, hasNext:false, prev:nil, next:nil, close:nil, pad:'24px', radius:'16px', btn:'36px' };
+    const x = list[i];
+    return { open:true, name: x.p.fileName, entry: x.entry, when: this.caseTitle(c) + ' \u00b7 ' + this.fmt(x.at), counter: (i + 1) + ' of ' + list.length,
+      meta: 'Added by ' + this.userName(x.p.createdByUserId) + ', ' + this.fmt(x.p.createdAtUtc) + ' \u00b7 ' + this.sizeText(x.p.sizeInBytes),
+      bg: this.photoBg(x.p.fileName), hasPrev: i > 0, hasNext: i < list.length - 1, prev: () => this.photoStep(-1), next: () => this.photoStep(1),
+      close: () => this.setState({ photoView: null }), pad: phone ? '0' : '24px', radius: phone ? '0' : '16px', btn: phone ? '44px' : '36px' };
+  }
+  photoStep(dir) { const pv = this.state.photoView, c = pv && this.caseById(pv.caseId); if (!c) return;
+    const list = this.casePhotoList(c), j = list.findIndex(x => x.p.id === pv.photoId) + dir;
+    if (j >= 0 && j < list.length) this.setState({ photoView: { caseId: c.id, photoId: list[j].p.id } }); }
+
+  // The Overview card: the open cases waiting for Us, the longest waiting first.
   insuranceModel() {
-    const B = { tintBg:'var(--bad-soft)', tintBd:'var(--bad-line)', tint:'var(--bad)' };
     const W = { tintBg:'var(--warn-soft)', tintBd:'var(--warn-line)', tint:'var(--warn)' };
-    return [
-      { id:'i1', icon:'gavel', ...W, title:'Damage claim — 552 KLM', sub:'Rear bumper · awaiting adjuster visit', when:'3 d ago' },
-      { id:'i2', icon:'description', ...W, title:'Third-party claim — 204 JLM', sub:'Windscreen · documents missing', when:'1 d ago' },
-      { id:'i3', icon:'shield', ...B, title:'Policy lapsed — 400 NDP', sub:'Liability cover expired · vehicle still active', when:'5 h ago' }
-    ];
+    return this.caseRows('us').map(c => { const lv = this.caseLastEvent(c);
+      return { id: c.id, icon:'car_crash', ...W, title: this.caseTitle(c), sub: lv ? lv.title : 'No events yet',
+        when: 'Waiting for us \u00b7 ' + this.dur(Date.now() - Date.parse(this.caseWaitSince(c))), go: () => this.go('case', c.id, null, 'us') }; });
   }
 
   simpleModel() {
@@ -2336,10 +2759,6 @@ class Component extends DCLogic {
       heading:'Open queue', sub:'Registrations first, then open interruptions, then upcoming handovers.',
       count: n => n + ' item' + (n === 1 ? '' : 's'),
       emptyIcon:'task_alt', emptyTitle:'Nothing waiting' });
-    if (r === 'insurance') return wrap(this.insuranceModel(), {
-      heading:'Unresolved cases', sub:'Claims and policies with an action outstanding.',
-      count: n => n + ' case' + (n === 1 ? '' : 's'), emptyIcon:'verified_user', emptyTitle:'No open cases',
-      notice:'Insurance handling is still being built on the backend. The records below are sample data — filing claims and updating policies is not available yet.' });
     return { show:false, rows:[], heading:'', sub:'', count:'', isEmpty:true, emptyIcon:'', emptyTitle:'', hasNotice:false, notice:'' };
   }
 
@@ -2392,7 +2811,7 @@ class Component extends DCLogic {
       overview: { crumbs:[['Overview']], title:'Overview', desc:'Your fleet, rentals, and pending work at a glance.', actions:[] },
       attention: { crumbs:[['Needs attention']], title:'Needs attention', desc:'Every record with an open decision or an unclosed timeline, in one queue.', actions:[] },
       tasks: { crumbs:[['Tasks']], title:'Tasks', desc:'Your tasks, and the steps others have given you. Only a task\u2019s creator changes or finishes it.', actions: this.isSysAdmin() ? [] : [A('New task','add',() => this.openDialog('task-create'),'primary')] },
-      insurance: { crumbs:[['Insurance cases']], title:'Insurance cases', desc:'Claims and policy records tied to fleet vehicles.', actions:[] },
+      insurance: { crumbs:[['Insurance cases']], title:'Insurance cases', desc:'Damage to the company\u2019s cars and its insurance claims, from the day it is found until the case is closed.', actions: this.canCase() ? [A('Register case','add',() => this.openDialog('case-register'),'primary')] : [] },
       assignments: { crumbs:[['Rental assignments']], title:'Rental assignments', desc:'Every vehicle handover, its authorized drivers and its interruptions.', actions:[A('New assignment','add',() => this.openDialog('assignment-create'),'primary', this.req('RentalAssignments.Manage'), !this.can('RentalAssignments.Manage'))] },
       vehicles: { crumbs:[['Vehicles']], title:'Vehicles', desc:'', actions:[A('Add vehicle','add',() => this.openDialog('vehicle-create'),'primary', this.req('Vehicles.Manage'), !this.can('Vehicles.Manage'))] },
       customers: { crumbs:[['Customers']], title:'Customers', desc:'', actions:[A('Add customer','add',() => this.openDialog('customer-create'),'primary', this.req('Customers.Manage'), !this.can('Customers.Manage'))] },
@@ -2472,6 +2891,17 @@ class Component extends DCLogic {
       }
       m = { crumbs:[['Drivers','drivers'],[name]], title: name, desc:'', badges, code: d ? d.driverLicenseNumber : '', actions: acts };
     }
+    if (r === 'case') {
+      const c = this.caseById(this.state.route.id), from = ['open','us','closed'].includes(this.state.route.from) ? this.state.route.from : null;
+      const title = c ? this.caseTitle(c) : 'Insurance case', acts = [];
+      if (c && this.canCase()) {
+        acts.push(A('Add event', 'add', () => this.openDialog('case-event-add', { cid: c.id }), 'primary'));
+        acts.push(A('Add note', 'edit_note', () => this.openDialog('case-note-add', { cid: c.id })));
+        acts.push(A('Edit case', 'edit', () => this.openDialog('case-edit', { id: c.id })));
+        if (c.type === 1 && !this.caseGroup(c).some(x => x.type === 2)) acts.push(A('Casco case for this accident', 'add_link', () => this.openDialog('case-register', { fromId: c.id })));
+      }
+      m = { crumbs:[['Insurance cases', 'insurance', from], [title]], title, desc:'', badges: c ? [{ label: INS_TYPE[c.type], tone:'plain', shape: INS_TYPE_SHAPE[c.type] }] : [], actions: acts };
+    }
     if (r === 'task') {
       const t = (db.tasks || []).find(x => x.id === this.state.route.id);
       const ok = !!t && !this.isSysAdmin() && this.taskVisible(t, this.me().id);
@@ -2550,6 +2980,22 @@ class Component extends DCLogic {
       Object.assign(f, { title: tk.title || '', description: tk.description || '', dueAtUtc: this.toLocal(tk.dueAtUtc), aboutKind: ab ? ab.kind : '', aboutId: ab ? ab.id : '',
         steps: tk.steps.slice().sort((a, b) => a.position - b.position).map(s => ({ key: s.id, id: s.id, title: s.title, userId: s.responsibleUserId, due: this.toLocal(s.dueAtUtc), doneAtUtc: s.doneAtUtc, doneByUserId: s.doneByUserId })) }); }
     if (type === 'task-cancel') Object.assign(f, { cancellationNote:'' });
+    if (type === 'case-register') { const src = p.fromId ? this.caseById(p.fromId) : null;
+      Object.assign(f, { vehicleId:'', type:'1', damage:'', description:'', happenedAtUtc: this.toLocal(new Date().toISOString()), timeIsWhenFound:false, place:'', placeIsWhereFound:false,
+        driverId:'', ourInsurer:'', ourClaimNumber:'', otherInsurer:'', otherClaimNumber:'', handledBy:'', status:'1', waitingFor:'1', sameAccidentCaseId:'', photos:[] });
+      if (src) Object.assign(f, { vehicleId: src.vehicleId, type:'2', damage: src.damage, description: src.description || '', happenedAtUtc: this.toLocal(src.happenedAtUtc), timeIsWhenFound: !!src.timeIsWhenFound,
+        place: src.place, placeIsWhereFound: !!src.placeIsWhereFound, driverId: src.driverId || '', ourInsurer: src.ourInsurer || '', handledBy: src.ourInsurer ? '1' : '', sameAccidentCaseId: src.sameAccidentCaseId || src.id }); }
+    if (type === 'case-edit') { const c = this.caseById(p.id) || {};
+      Object.assign(f, { vehicleId: c.vehicleId || '', type: String(c.type || 1), damage: c.damage || '', description: c.description || '', happenedAtUtc: this.toLocal(c.happenedAtUtc), timeIsWhenFound: !!c.timeIsWhenFound,
+        place: c.place || '', placeIsWhereFound: !!c.placeIsWhereFound, driverId: c.driverId || '', ourInsurer: c.ourInsurer || '', ourClaimNumber: c.ourClaimNumber || '', otherInsurer: c.otherInsurer || '', otherClaimNumber: c.otherClaimNumber || '',
+        handledBy: c.handledBy ? String(c.handledBy) : '', atFault: c.atFault ? String(c.atFault) : '', sameAccidentCaseId: c.sameAccidentCaseId || '' }); }
+    if (type === 'case-event-add') { const c = this.caseById(p.cid) || {};
+      Object.assign(f, { happenedAtUtc: this.toLocal(new Date().toISOString()), title:'', description:'', photos:[], status: String(c.status || 1), waitingFor: String(c.waitingFor === undefined ? 1 : c.waitingFor) }); }
+    if (type === 'case-event-edit') { const c = this.caseById(p.cid) || { events:[], photos:[] }, ev = (c.events || []).find(x => x.id === p.id) || {};
+      Object.assign(f, { happenedAtUtc: this.toLocal(ev.happenedAtUtc), title: ev.title || '', description: ev.description || '',
+        photos: (c.photos || []).filter(x => x.insuranceCaseEventId === ev.id).map(x => ({ key: x.id, existingId: x.id, fileName: x.fileName, sizeInBytes: x.sizeInBytes, mine: x.createdByUserId === this.me().id })) }); }
+    if (type === 'case-note-add') Object.assign(f, { text:'' });
+    if (type === 'case-note-edit') { const c = this.caseById(p.cid) || { notes:[] }, n = (c.notes || []).find(x => x.id === p.id) || {}; Object.assign(f, { text: n.text || '' }); }
     this.setState({ dialog: { type, ...p }, form: f, errors: {}, dialogFail: null });
   }
   closeDialog() { this.setState({ dialog: null, errors: {}, dialogFail: null }); }
@@ -2557,7 +3003,7 @@ class Component extends DCLogic {
   fromLocal(v) { return v ? new Date(v).toISOString() : null; }
   setForm(k, v) { this.setState(s => ({ form: { ...s.form, [k]: v }, errors: { ...s.errors, [k]: undefined } })); }
   mutate(fn) { const db = JSON.parse(JSON.stringify(this.state.db)); fn(db); this.setState({ db }); this.saveDb(db); }
-  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-22'); } catch (e) {} }
+  saveDb(db) { try { localStorage.setItem('rwrent.db', JSON.stringify(db)); localStorage.setItem('rwrent.dbv', 'rwrent-23'); } catch (e) {} }
   openInts(db, aid) { return (db.interruptions[aid] || []).filter(i => !i.endedAtUtc); }
   availability(db, v) {
     if (!v.isActive) return { label:null, customer:null };
@@ -2611,7 +3057,7 @@ class Component extends DCLogic {
 
   dialogModel() {
     const dg = this.state.dialog, db = this.state.db, f = this.state.form, err = this.state.errors, narrow = this.isNarrow(), phoneSheet = this.isPhone();
-    if (!dg) return { open:false, sections:[], actions:[], consequences:[] };
+    if (!dg) return { open:false, sections:[], actions:[], consequences:[], insurerNames:[] };
     const t = dg.type;
     const F = (key, label, o) => {
       const p = o || {};
@@ -2624,7 +3070,7 @@ class Component extends DCLogic {
         display: (() => { const cur = f[key] === undefined || f[key] === null ? '' : String(f[key]); const hit = (p.options || []).find(o => o.value === cur); return hit ? hit.label : cur; })(),
         onChange: e => this.setForm(key, e.target.value), options: p.options || [],
         font: p.mono ? 'var(--font-mono)' : 'var(--font-sans)',
-        hasHint: !!p.hint, hint: p.hint || '', hintFont: 'var(--font-sans)', hasError: !!err[key], error: err[key] || '', invalid: err[key] ? 'true' : undefined,
+        hasHint: !!p.hint, hint: p.hint || '', listId: p.list || '', hintFont: 'var(--font-sans)', hasError: !!err[key], error: err[key] || '', invalid: err[key] ? 'true' : undefined,
         border: err[key] ? 'var(--bad-line)' : 'var(--line-2)' };
     };
     const CK = (key, label, hint, o) => { const p = o || {}; return { label, hint: hint || '', checked: !!f[key], disabled: !!p.locked, cursor: p.locked ? 'default' : 'pointer',
@@ -2634,6 +3080,7 @@ class Component extends DCLogic {
       hasNote: !!(extra && extra.note), note: (extra && extra.note) || '',
       hasChoices: false, choices: [], hasPicker: false, hasSteps: false, steps: [], noSteps: false, addStep: () => {}, stepsHint: '', stepsEmpty: '', stepCols: '1fr 1fr', stepBtn: '30px', addH: 'auto',
       picker: { label:'', display:'', options:[], value:'', onChange: () => {}, onAdd: () => {}, addDisabled: true, addOpacity: .45, hint:'', chosen:[], hasChosen:false, hasEmpty:false, emptyText:'' },
+      hasPhotos: false, photosAny: false, photos: [], canAddPhotos: false, onPickPhotos: () => {}, hasPhotosHint: false, photosHint: '', photoBtn: '28px',
       ...(extra || {}) });
     const A = (label, kind, go, icon, disabled) => ({ label, go: disabled ? (() => {}) : go, hasIcon: !!icon, icon: icon || '',
       disabled: !!disabled, opacity: disabled ? .55 : 1, cursor: disabled ? 'not-allowed' : 'pointer',
@@ -3115,6 +3562,76 @@ class Component extends DCLogic {
       sections:[SEC(null, '1fr', [F('cancellationNote', 'Why', { optional:true, kind:'textarea', rows:3, maxLength:1000, span:'1 / -1' })])],
       actions:[{ ...A('Keep task', 'ghost', () => this.closeDialog()), keep:true }, A('Cancel task', 'primary', () => this.submitTaskClose('cancel', dg.id))] };
 
+    // ---- Insurance case dialogs ----
+    const PHS = (label, add, hint) => { const list = Array.isArray(f.photos) ? f.photos : [];
+      return { ...SEC(label, '1fr', []), hasPhotos:true, photosAny: list.length > 0,
+        photos: list.map(ph => ({ name: ph.fileName, size: this.sizeText(ph.sizeInBytes), bg: this.photoBg(ph.fileName), canRemove: ph.mine !== false, remove: () => this.removeFormPhoto(ph.key) })),
+        canAddPhotos: !!add, onPickPhotos: e => this.pickPhotos(e), hasPhotosHint: !!hint, photosHint: hint || '', photoBtn: phoneSheet ? '44px' : '28px', addH: phoneSheet ? '44px' : 'auto' }; };
+    const stOpts = [1, 2, 3, 4, 5].map(k => ({ value: String(k), label: INS_STATUS[k] }));
+    const wOpts = INS_PARTY_ORDER.map(k => ({ value: String(k), label: INS_PARTY[k] }));
+    if (t === 'case-register' || t === 'case-edit') {
+      const reg = t === 'case-register', cur = reg ? null : this.caseById(dg.id), src = reg && dg.fromId ? this.caseById(dg.fromId) : null;
+      const CF = (key, label, o) => { const x = F(key, label, o); x.onChange = e => this.setCaseForm(key, e.target.value); return x; };
+      const vOpts = [{ value:'', label:'Choose a car' }].concat(db.vehicles.filter(v => v.isActive || v.id === f.vehicleId).map(v => ({ value: v.id, label: v.plateNumber + ' \u00b7 ' + v.make + ' ' + v.model })));
+      const found = !!f.timeIsWhenFound, foundP = !!f.placeIsWhereFound;
+      const info = this.caseRental(f.vehicleId, this.localIso(f.happenedAtUtc)), auth = info ? info.drivers.map(d => d.id) : [];
+      const dOpts = [{ value:'', label: info && info.mode === 'several' ? 'Choose who drove' : 'Not known' }]
+        .concat(db.drivers.filter(d => auth.indexOf(d.id) >= 0).map(d => ({ value: d.id, label: d.firstName + ' ' + d.lastName + ' \u00b7 on the rental then' })))
+        .concat(db.drivers.filter(d => auth.indexOf(d.id) < 0 && (d.isActive || d.id === f.driverId)).map(d => ({ value: d.id, label: d.firstName + ' ' + d.lastName })));
+      const our = String(f.ourInsurer || '').trim(), oth = String(f.otherInsurer || '').trim();
+      const hOpts = [{ value:'', label:'Not known yet' }];
+      if (our) hOpts.push({ value:'1', label:'Our insurer \u00b7 ' + our });
+      if (oth) hOpts.push({ value:'2', label:'The other party\u2019s insurer \u00b7 ' + oth });
+      const sameOpts = [{ value:'', label:'No other case' }].concat(this.cases().filter(x => !cur || (x.id !== cur.id && x.sameAccidentCaseId !== cur.id))
+        .map(x => ({ value: x.id, label: this.caseTitle(x) + ' \u00b7 ' + INS_TYPE[x.type] })));
+      const secs = [
+        SEC('The damage', '1fr 1fr', [CF('vehicleId', 'Car', { required:true, kind:'select', options: vOpts }),
+          F('type', 'Type', { required:true, kind:'select', options:[{ value:'1', label:'Usual' }, { value:'2', label:'Casco' }],
+            hint: f.type === '2' ? 'Our casco repairs the car now; the company pays the 500-euro deductible.' : 'The insurers decide who is at fault.' }),
+          F('damage', 'What is damaged', { required:true, maxLength:200, placeholder:'For example Rear bumper dented', span:'1 / -1' }),
+          F('description', 'Description', { optional:true, kind:'textarea', rows:3, maxLength:4000, placeholder:'What happened, in as many words as needed', span:'1 / -1' })]),
+        SEC('When and where', '1fr 1fr', [CF('happenedAtUtc', found ? 'Found' : 'Happened', { required:true, kind:'datetime' })], [CK('timeIsWhenFound', 'We don\u2019t know when', 'This is when it was found.')]),
+        SEC(null, '1fr', [F('place', foundP ? 'Where it was found' : 'Place', { required:true, maxLength:200, span:'1 / -1' })], [CK('placeIsWhereFound', 'We don\u2019t know where', 'This is where it was found.')]),
+        SEC('Driver', '1fr', [F('driverId', 'Driver', { optional:true, kind:'select', options: dOpts, hint: this.caseDriverHint(info), span:'1 / -1' })]),
+        SEC('Insurance', '1fr 1fr', [CF('ourInsurer', 'Our insurer', { optional:true, maxLength:100, list:'rw-insurers' }), F('ourClaimNumber', 'Claim number', { optional:true, maxLength:50, mono:true }),
+          CF('otherInsurer', 'The other party\u2019s insurer', { optional:true, maxLength:100, list:'rw-insurers' }), F('otherClaimNumber', 'Claim number', { optional:true, maxLength:50, mono:true }),
+          F('handledBy', 'Handled by', { optional:true, kind:'select', options: hOpts, span:'1 / -1', hint: our || oth ? 'The insurer that handles the case, once the two have agreed.' : 'Offers the insurers filled in above.' })])
+      ];
+      if (reg) {
+        secs.push(SEC('Where it stands', '1fr 1fr', [F('status', 'Status', { required:true, kind:'select', options: stOpts }), F('waitingFor', 'Waiting for', { required:true, kind:'select', options: wOpts })]));
+        secs.push(PHS('Photos', true, 'Optional, several at once. Photos only: documents stay in the mailbox.'));
+      } else {
+        secs.push(SEC('Decision', '1fr 1fr', [F('atFault', 'At fault', { optional:true, kind:'select', options:[{ value:'', label:'Not decided yet' }].concat([1, 2, 3, 4].map(k => ({ value: String(k), label: INS_FAULT[k] }))), hint:'Set it once the decision is known.' })]));
+      }
+      secs.push(SEC('Same accident', '1fr', [F('sameAccidentCaseId', 'Same accident as', { optional:true, kind:'select', options: sameOpts, span:'1 / -1' })]));
+      m = { title: reg ? 'Register case' : 'Edit case', desc: src ? 'Filled in from ' + this.caseTitle(src) + ', as its casco case.' : cur ? this.caseTitle(cur) : '', icon:'car_crash', tone:'accent', maxW:'720px',
+        sections: secs, footnote: reg ? 'After this, the status and who the case waits for change only through an event.' : 'Status and Waiting for change only through an event.',
+        actions:[cancel, A(reg ? 'Register case' : 'Save changes', 'primary', () => this.submitCase(t, dg.id))] };
+    }
+    if (t === 'case-event-add' || t === 'case-event-edit') {
+      const add = t === 'case-event-add', c = this.caseById(dg.cid), ev = !add && c ? (c.events || []).find(x => x.id === dg.id) : null;
+      const secs = [SEC('The event', '1fr 1fr', [F('happenedAtUtc', 'When', { required:true, kind:'datetime', hint:'The day it happened, even when you type it in later.' }),
+        F('title', 'Title', { required:true, maxLength:200, placeholder:'The insurer asked for the driver\u2019s licence', span:'1 / -1' }),
+        F('description', 'Description', { optional:true, kind:'textarea', rows:3, maxLength:4000, span:'1 / -1' })])];
+      if (add) {
+        secs.push(PHS('Photos', true, 'Optional. Photos only: documents stay in the mailbox.'));
+        secs.push(SEC('Where it stands', '1fr 1fr', [F('status', 'Status now', { required:true, kind:'select', options: stOpts }), F('waitingFor', 'Waiting for now', { required:true, kind:'select', options: wOpts })], [],
+          { note:'Preset to the case\u2019s current values. Most events change neither.' }));
+      } else {
+        if (c && (c.photos || []).some(x => x.insuranceCaseEventId === dg.id)) secs.push(PHS('Photos', false, 'You can remove a photo you added. New photos go with a new event.'));
+        const ch = ev ? [ev.statusChangedTo ? 'Status: ' + INS_STATUS[ev.statusChangedTo] : '', ev.waitingForChangedTo !== null && ev.waitingForChangedTo !== undefined ? 'Waiting for: ' + INS_PARTY[ev.waitingForChangedTo] : ''].filter(Boolean) : [];
+        secs.push(SEC('Where it stands', '1fr', [F('changeInfo', 'What this event changed', { kind:'static', staticValue: ch.length ? ch.join(' \u00b7 ') : 'Nothing: the status and who the case waited for stayed as they were.', span:'1 / -1' })]));
+      }
+      m = { title: add ? 'Add event' : 'Edit event', desc: c ? this.caseTitle(c) : '', icon:'event_note', tone:'accent', maxW:'640px', sections: secs,
+        footnote: add ? '' : 'Only you, who added this event, can correct it.',
+        actions:[cancel, A(add ? 'Add event' : 'Save changes', 'primary', () => this.submitCaseEvent(t, dg.cid, dg.id))] };
+    }
+    if (t === 'case-note-add' || t === 'case-note-edit') { const add = t === 'case-note-add', c = this.caseById(dg.cid);
+      m = { title: add ? 'Add note' : 'Edit note', desc: c ? this.caseTitle(c) : '', icon:'edit_note', tone:'accent', maxW:'560px',
+        sections:[SEC(null, '1fr', [F('text', 'Text', { required:true, kind:'textarea', rows:5, maxLength:4000, placeholder:'The driver says a witness saw the other car\u2019s plate', span:'1 / -1' })])],
+        footnote: add ? 'A note changes nothing on the case.' : 'Only you, who wrote this note, can correct it.',
+        actions:[cancel, A(add ? 'Add note' : 'Save changes', 'primary', () => this.submitCaseNote(t, dg.cid, dg.id))] }; }
+
     if (!m.title) m = { title:'Not available', desc:'', sections:[], actions:[cancel] };
     const tn = TONE[m.tone || 'accent'];
     const bn = m.banner ? TONE[m.banner.tone] : null;
@@ -3137,6 +3654,7 @@ class Component extends DCLogic {
       sections: (m.sections || []).filter(s => s.fields.length || s.checks.length || s.hasLabel || s.hasNote),
       hasConsequences: (m.consequences || []).length > 0, consequences: m.consequences || [],
       hasFootnote: !!m.footnote, footnote: m.footnote || '', actions: acts,
+      insurerNames: Array.from(new Set(this.cases().reduce((a, c) => a.concat([c.ourInsurer, c.otherInsurer]), []).filter(Boolean))).sort().map(v => ({ v })),
       footerDir: phoneSheet ? 'column' : 'row', footerAlign: phoneSheet ? 'stretch' : 'center',
       footerItemW: phoneSheet ? '100%' : 'auto', footerBtnJustify: phoneSheet ? 'center' : 'flex-start',
       footerNoteFlex: phoneSheet ? '0 0 auto' : '1 1 200px',
@@ -3649,6 +4167,81 @@ class Component extends DCLogic {
     this.done(kind === 'finish' ? 'Task finished' : 'Task cancelled', 'It moved to Finished.');
   }
 
+  submitCase(t, id) {
+    const f = this.state.form, me = this.me().id, reg = t === 'case-register', cur = reg ? null : this.caseById(id), errors = {};
+    const tr = x => String(x || '').trim() || null, when = this.localIso(f.happenedAtUtc);
+    if (!f.vehicleId) errors.vehicleId = 'Choose the car.';
+    if (!tr(f.damage)) errors.damage = 'Say what is damaged.';
+    if (!when) errors.happenedAtUtc = f.timeIsWhenFound ? 'Enter when the damage was found.' : 'Enter when it happened.';
+    else if (Date.parse(when) > Date.now()) errors.happenedAtUtc = 'The time cannot be in the future.';
+    else if (cur) { const first = this.caseEvents(cur)[0];
+      if (first && Date.parse(first.happenedAtUtc) < Date.parse(when)) errors.happenedAtUtc = 'An event cannot be before the case happened. Its first event is on ' + this.fmt(first.happenedAtUtc) + '.'; }
+    if (!tr(f.place)) errors.place = f.placeIsWhereFound ? 'Enter where the damage was found.' : 'Enter where it happened.';
+    if (Object.keys(errors).length) { this.setState({ errors, dialogFail:null }); return; }
+    if (!this.guard([], reg ? null : !cur ? 'This case no longer exists.' : null)) return;
+    const iso = new Date().toISOString(), stamp = Date.now(), our = tr(f.ourInsurer), oth = tr(f.otherInsurer);
+    const sa = f.sameAccidentCaseId ? this.caseById(f.sameAccidentCaseId) : null;
+    const rec = { type: +f.type || 1, vehicleId: f.vehicleId, driverId: f.driverId || null, damage: tr(f.damage), description: tr(f.description),
+      happenedAtUtc: when, timeIsWhenFound: !!f.timeIsWhenFound, place: tr(f.place), placeIsWhereFound: !!f.placeIsWhereFound,
+      ourInsurer: our, ourClaimNumber: tr(f.ourClaimNumber), otherInsurer: oth, otherClaimNumber: tr(f.otherClaimNumber),
+      handledBy: f.handledBy === '1' && our ? 1 : f.handledBy === '2' && oth ? 2 : null,
+      sameAccidentCaseId: sa ? (sa.sameAccidentCaseId || sa.id) : null };
+    if (cur) {
+      this.mutate(db => Object.assign(db.insuranceCases.find(x => x.id === cur.id), rec, { atFault: f.atFault ? +f.atFault : null, updatedAtUtc: iso, updatedByUserId: me }));
+      this.done('Case saved'); return;
+    }
+    const cid = 'ic' + stamp;
+    const photos = (f.photos || []).map((p, i) => ({ id: 'icp' + stamp + i, insuranceCaseId: cid, insuranceCaseEventId: null, fileName: p.fileName, sizeInBytes: p.sizeInBytes, createdAtUtc: iso, createdByUserId: me }));
+    this.mutate(db => { if (!db.insuranceCases) db.insuranceCases = [];
+      db.insuranceCases.unshift({ id: cid, ...rec, status: +f.status || 1, waitingFor: f.waitingFor === '' || f.waitingFor === undefined ? 1 : +f.waitingFor, atFault: null,
+        photos, events: [], notes: [], createdAtUtc: iso, createdByUserId: me, updatedAtUtc: null, updatedByUserId: null, concurrencyToken: 't-' + cid + '-01' }); });
+    this.closeDialog();
+    this.toast('Case registered', this.caseTitle(rec), 'ok');
+    this.go('case', cid, null, 'open');
+  }
+  submitCaseEvent(t, cid, eid) {
+    const f = this.state.form, me = this.me().id, add = t === 'case-event-add', c = this.caseById(cid), errors = {};
+    const ev = !add && c ? (c.events || []).find(x => x.id === eid) : null, when = this.localIso(f.happenedAtUtc);
+    if (!when) errors.happenedAtUtc = 'Enter when it happened.';
+    else if (Date.parse(when) > Date.now()) errors.happenedAtUtc = 'The time cannot be in the future.';
+    else if (c && Date.parse(when) < Date.parse(c.happenedAtUtc)) errors.happenedAtUtc = 'An event cannot be before the case happened.';
+    if (!String(f.title || '').trim()) errors.title = 'Enter a title for the event.';
+    if (Object.keys(errors).length) { this.setState({ errors, dialogFail:null }); return; }
+    const conflict = !c ? 'This case no longer exists.' : !add && !ev ? 'This event no longer exists.' : !add && ev.createdByUserId !== me ? 'Only the person who added this event can correct it.' : null;
+    if (!this.guard([], conflict)) return;
+    const iso = new Date().toISOString(), stamp = Date.now(), title = String(f.title).trim(), desc = String(f.description || '').trim() || null;
+    if (add) {
+      const st = +f.status || c.status, wf = f.waitingFor === '' || f.waitingFor === undefined ? c.waitingFor : +f.waitingFor;
+      // An event records only what it changed; a value left as it was stays empty.
+      const sCh = st !== c.status ? st : null, wCh = wf !== c.waitingFor ? wf : null, eId = 'ice' + stamp;
+      this.mutate(db => { const x = db.insuranceCases.find(z => z.id === cid);
+        x.events.push({ id: eId, insuranceCaseId: cid, happenedAtUtc: when, title, description: desc, statusChangedTo: sCh, waitingForChangedTo: wCh, createdAtUtc: iso, createdByUserId: me });
+        (f.photos || []).forEach((p, i) => x.photos.push({ id: 'icp' + stamp + i, insuranceCaseId: cid, insuranceCaseEventId: eId, fileName: p.fileName, sizeInBytes: p.sizeInBytes, createdAtUtc: iso, createdByUserId: me }));
+        if (sCh !== null) x.status = sCh;
+        if (wCh !== null) x.waitingFor = wCh;
+        if (sCh !== null || wCh !== null) { x.updatedAtUtc = iso; x.updatedByUserId = me; } });
+      const bits = [sCh !== null ? 'Status: ' + INS_STATUS[sCh] : '', wCh !== null ? 'Waiting for: ' + INS_PARTY[wCh] : ''].filter(Boolean);
+      this.done('Event added', bits.length ? bits.join(' \u00b7 ') : 'The status and who the case waits for stay as they were.'); return;
+    }
+    const keep = {}; (f.photos || []).forEach(p => { if (p.existingId) keep[p.existingId] = true; });
+    this.mutate(db => { const x = db.insuranceCases.find(z => z.id === cid), y = x.events.find(z => z.id === eid);
+      Object.assign(y, { happenedAtUtc: when, title, description: desc });
+      x.photos = x.photos.filter(p => p.insuranceCaseEventId !== eid || keep[p.id] || p.createdByUserId !== me); });
+    this.done('Event saved');
+  }
+  submitCaseNote(t, cid, nid) {
+    const f = this.state.form, me = this.me().id, add = t === 'case-note-add', c = this.caseById(cid), text = String(f.text || '').trim();
+    if (!text) { this.setState({ errors:{ text:'Write the note.' }, dialogFail:null }); return; }
+    const n = !add && c ? (c.notes || []).find(x => x.id === nid) : null;
+    const conflict = !c ? 'This case no longer exists.' : !add && !n ? 'This note no longer exists.' : !add && n.createdByUserId !== me ? 'Only the person who wrote this note can correct it.' : null;
+    if (!this.guard([], conflict)) return;
+    const iso = new Date().toISOString();
+    this.mutate(db => { const x = db.insuranceCases.find(z => z.id === cid);
+      if (add) x.notes.push({ id: 'icn' + Date.now(), insuranceCaseId: cid, text, createdAtUtc: iso, createdByUserId: me });
+      else x.notes.find(z => z.id === nid).text = text; });
+    this.done(add ? 'Note added' : 'Note saved');
+  }
+
   cell(text, o) {
     const p = o || {};
     const stopGo = fn => (e => { if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); } fn(); });
@@ -3963,6 +4556,67 @@ class Component extends DCLogic {
             dueLabel: fin ? 'Closed' : 'Due', due: fin ? self.fmt(t.closedAtUtc) : t.dueAtUtc ? di.text : 'No due date',
             dueFg: !fin && di.tone ? di.fg : (fin || t.dueAtUtc) ? 'var(--fg-2)' : 'var(--fg-3)',
             hasSteps: st.length > 0, stepsLabel: st.length > 1 ? 'Your steps' : 'Your step', steps: st };
+        },
+        open, empty
+      };
+    }
+
+    if (r === 'insurance') {
+      const tab = this.caseTab(), closed = tab === 'closed', onOpen = tab === 'open', tight = this.isTightTable(), can = this.canCase();
+      const open = c => self.go('case', c.id, null, tab);
+      const filters = [{ key:'ctype', label:'Type', options: OPT(INS_TYPE, 'Any type') }];
+      if (!closed) filters.push({ key:'cstatus', label:'Status', options:[{ value:'', label:'Any status' }].concat([1, 2, 3, 4].map(k => ({ value: String(k), label: INS_STATUS[k] }))) });
+      if (onOpen) filters.push({ key:'cwait', label:'Waiting for', options:[{ value:'', label:'Anyone' }].concat(INS_PARTY_ORDER.map(k => ({ value: String(k), label: INS_PARTY[k] }))) });
+      // The text columns (Case, Handled by, Last event) share the spare width; their text wraps inside them.
+      const cols = [{ key:'case', label:'Case', width:'auto' }, { key:'status', label:'Status', width:'132px' },
+        closed ? { key:'fault', label:'At fault', width:'150px' } : { key:'wait', label:'Waiting for', width:'170px' },
+        { key:'handled', label:'Handled by', width:'auto', tightHide:true },
+        closed ? { key:'closed', label:'Closed', width:'130px' } : { key:'last', label:'Last event', width:'auto' }];
+      const sub = c => INS_TYPE[c.type] + ' \u00b7 ' + (c.timeIsWhenFound ? 'Found ' : 'Happened ') + self.fmt(c.happenedAtUtc, 'dateShort');
+      const drvName = c => { const d = c.driverId ? db.drivers.find(x => x.id === c.driverId) : null; return d ? d.firstName + ' ' + d.lastName : ''; };
+      const empty = {
+        open:{ icon:'car_crash', title:'No open cases', body:'Register a case as soon as you learn about new damage, so nothing is forgotten.', action: can ? { label:'Register case', icon:'add', go: () => this.openDialog('case-register') } : null },
+        us:{ icon:'task_alt', title:'Nothing is waiting for you', body:'A case appears here when the next move is yours.', action:null },
+        closed:{ icon:'inventory_2', title:'No closed cases yet', body:'', action:null } }[tab];
+      return {
+        key:'insurance', noun:'case', minWidth:'920px', searchHint:'Plate, damage, driver, insurer or claim', searchMax:100, noSort:true, caseCards:true,
+        filters, moreFilters:[], columns: cols, source: this.caseRows(tab),
+        activeExtra: q2 => !!q2.ctype || (!closed && !!q2.cstatus) || (onOpen && !!q2.cwait),
+        match: (c, q2) => {
+          if (q2.search) { const hay = [self.casePlate(c), c.damage, drvName(c), c.ourInsurer, c.ourClaimNumber, c.otherInsurer, c.otherClaimNumber].filter(Boolean).join(' ').toLowerCase();
+            if (hay.indexOf(q2.search.toLowerCase().trim()) < 0) return false; }
+          if (q2.ctype && c.type !== +q2.ctype) return false;
+          if (!closed && q2.cstatus && c.status !== +q2.cstatus) return false;
+          if (onOpen && q2.cwait && c.waitingFor !== +q2.cwait) return false;
+          return true;
+        },
+        sortVal: c => c._ord,
+        cells: c => {
+          const lv = self.caseLastEvent(c), h = self.caseHandled(c), ST = INS_STATUS_TONE[c.status];
+          const fold = tight ? [h.text + (h.sub ? ' \u00b7 ' + h.sub : '')] : [];
+          return [
+            self.cell(self.caseTitle(c), { link: () => open(c), quiet:true, strong:true, wrap:true, sub: sub(c), extra: fold }),
+            self.cell(INS_STATUS[c.status], { chip: ST[0], shape: ST[1] }),
+            closed ? self.cell(c.atFault ? INS_FAULT[c.atFault] : 'Not decided yet', { dim: !c.atFault, wrap:true })
+              : self.cell(self.caseWaitText(c), { tone: c.waitingFor === 1 ? 'warn' : null }),
+            self.cell(h.text, { dim: h.dim, wrap:true, sub: h.sub, subMono:true }),
+            closed ? self.cell('Closed ' + self.fmt(self.caseClosedAt(c), 'dateShort'))
+              : lv ? self.cell(lv.title, { wrap:true, sub: self.agoText(lv.happenedAtUtc) }) : self.cell('No events yet', { dim:true })
+          ];
+        },
+        card: c => ({ title: self.caseTitle(c), chip:'', tone:'mute' }),
+        // The Vehicles card: bold title, the chip where the other cards carry theirs, facts in two columns with the right one flush right.
+        caseCard: c => {
+          const h = self.caseHandled(c), lv = self.caseLastEvent(c), ST = INS_STATUS_TONE[c.status], tn = TONE[ST[0]];
+          const F2 = (label, value, o) => { const p = o || {}; return { label, value, hasSub: !!p.sub, sub: p.sub || '', fg: p.fg || 'var(--fg-2)', weight: p.weight || 400,
+            span: p.wide ? '1 / -1' : 'auto', alignItems: p.right ? 'flex-end' : 'flex-start', textAlign: p.right ? 'right' : 'left', subFont: p.subMono ? 'var(--font-mono)' : 'var(--font-sans)' }; };
+          const hf = { sub: h.sub, subMono:true, fg: h.dim ? 'var(--fg-3)' : 'var(--fg-2)' };
+          const facts = closed
+            ? [F2('At fault', c.atFault ? INS_FAULT[c.atFault] : 'Not decided yet', { fg: c.atFault ? 'var(--fg-2)' : 'var(--fg-3)' }),
+               F2('Closed', self.fmt(self.caseClosedAt(c), 'dateShort'), { right:true }), F2('Handled by', h.text, { ...hf, wide:true })]
+            : [F2('Waiting for', self.caseWaitText(c), c.waitingFor === 1 ? { fg:'var(--warn)', weight:500 } : {}), F2('Handled by', h.text, { ...hf, right:true }),
+               F2('Last event', lv ? lv.title : 'No events yet', { wide:true, sub: lv ? self.agoText(lv.happenedAtUtc) : '', fg: lv ? 'var(--fg-2)' : 'var(--fg-3)' })];
+          return { onClick: () => open(c), title: self.caseTitle(c), sub: sub(c), chip: INS_STATUS[c.status], chipBg: tn.bg, chipFg: tn.fg, chipBd: tn.bd, chipShape: ST[1], facts };
         },
         open, empty
       };
@@ -4431,7 +5085,8 @@ class Component extends DCLogic {
       emptyActionLabel: noResult ? 'Clear filters' : (spec.empty.action ? spec.empty.action.label : ''),
       emptyActionIcon: noResult ? 'filter_alt_off' : (spec.empty.action ? spec.empty.action.icon : ''),
       emptyGo: noResult ? () => this.setState(s => ({ q: { ...s.q, [spec.key]: { search:'', page:1, size } } })) : (spec.empty.action ? spec.empty.action.go : () => {}),
-      showTable: showData && !cardMode, showCards: showData && cardMode && !spec.actionCards && !spec.taskCards,
+      showTable: showData && !cardMode, showCards: showData && cardMode && !spec.actionCards && !spec.taskCards && !spec.caseCards,
+      showCaseCards: showData && cardMode && !!spec.caseCards, caseCards: spec.caseCards && showData && cardMode ? slice.map(spec.caseCard) : [],
       showTaskCards: showData && cardMode && !!spec.taskCards, taskCards: spec.taskCards && showData && cardMode ? slice.map(spec.taskCard) : [],
       showActionCards: showData && cardMode && !!spec.actionCards,
       columns: (spec.columns || []).filter((c, i) => mask[i]).map((c, i, all) => {
@@ -4618,6 +5273,80 @@ class Component extends DCLogic {
         bannerBody: t.status === 3 ? (t.cancellationNote || 'No reason given.') : '',
         bannerBg: fin ? 'var(--ok-soft)' : 'var(--mute-soft)', bannerBd: fin ? 'var(--ok-line)' : 'var(--mute-line)', bannerFg: fin ? 'var(--ok)' : 'var(--mute)',
         bannerIcon: fin ? 'task_alt' : 'block', panels };
+    }
+
+    if (r === 'case') {
+      const c = this.caseById(s.route.id); if (!c) return shell;
+      const me = this.me().id, can = this.canCase(), two = s.w >= 1024, editH = narrow ? '44px' : 'auto';
+      const info = this.caseRental(c.vehicleId, c.happenedAtUtc) || { asg:null, customer:null };
+      const drv = c.driverId ? db.drivers.find(x => x.id === c.driverId) : null;
+      const ST = INS_STATUS_TONE[c.status], tn = TONE[ST[0]], found = !!c.timeIsWhenFound, since = this.caseWaitSince(c), hd = this.caseHandled(c);
+      const placeText = c.place + (c.placeIsWhereFound && !found ? ' (where it was found)' : !c.placeIsWhereFound && found ? ' (where it happened)' : '');
+      const thumb = (p, w, h) => ({ name: p.fileName, label: 'Open photo ' + p.fileName, bg: this.photoBg(p.fileName), w, h, open: () => this.setState({ photoView: { caseId: c.id, photoId: p.id } }) });
+      const tw = narrow ? '64px' : '76px', th = narrow ? '48px' : '57px';
+      const phOf = eid => (c.photos || []).filter(p => (p.insuranceCaseEventId || null) === eid);
+      const evs = this.caseEvents(c), reg = phOf(null);
+      // The timeline: the case itself first, then its events, oldest first.
+      const entries = [{ when: this.fmt(c.happenedAtUtc), hasGap:false, gap:'', title: found ? 'Found' : 'Happened', hasPlace:true, place: placeText,
+        hasDesc:true, desc: c.damage, hasPhotos: reg.length > 0, photos: reg.map(p => thumb(p, tw, th)), hasChanges:false, changes:[],
+        by: 'Registered by ' + this.userName(c.createdByUserId) + ', ' + this.fmt(c.createdAtUtc), canEdit:false, edit: () => {}, dotBg:'var(--fg-2)', dotBd:'var(--fg-2)' }];
+      evs.forEach((e, i) => { const prev = i === 0 ? c.happenedAtUtc : evs[i - 1].happenedAtUtc, ph = phOf(e.id), ch = [];
+        if (e.statusChangedTo) ch.push('Status: ' + INS_STATUS[e.statusChangedTo]);
+        if (e.waitingForChangedTo !== null && e.waitingForChangedTo !== undefined) ch.push('Waiting for: ' + INS_PARTY[e.waitingForChangedTo]);
+        const dt = e.statusChangedTo ? TONE[INS_STATUS_TONE[e.statusChangedTo][0]].fg : null;
+        entries.push({ when: this.fmt(e.happenedAtUtc), hasGap:true, gap: this.laterText(prev, e.happenedAtUtc), title: e.title, hasPlace:false, place:'',
+          hasDesc: !!e.description, desc: e.description || '', hasPhotos: ph.length > 0, photos: ph.map(p => thumb(p, tw, th)),
+          hasChanges: ch.length > 0, changes: ch.map(x => ({ text: x })),
+          by: 'Added by ' + this.userName(e.createdByUserId) + ', ' + this.fmt(e.createdAtUtc),
+          canEdit: can && e.createdByUserId === me, edit: () => this.openDialog('case-event-edit', { cid: c.id, id: e.id }),
+          dotBg: dt || 'var(--surface)', dotBd: dt || 'var(--line-3)' }); });
+      entries.forEach((e, i) => { e.lineDisplay = entries.length > 1 ? 'block' : 'none'; e.lineTop = i === 0 ? '22px' : '0';
+        e.lineBottom = i === entries.length - 1 ? 'calc(100% - 22px)' : '0'; e.editH = editH; });
+      const CP = (title, o) => ({ title, hasDesc: !!(o && o.desc), desc: (o && o.desc) || '', actions: [],
+        isTimeline:false, entries:[], isNotes:false, notes:[], isPhotos:false, groups:[], isFacts:false, facts:[], factCols:'1fr', isLinks:false, links:[], isText:false, text:'',
+        isEmpty:false, emptyIcon:'', emptyTitle:'', ...(o || {}) });
+      const FT = (label, value, o) => { const p = o || {}; return { label, value: value === null || value === undefined || value === '' ? '\u2014' : String(value),
+        font: p.mono ? 'var(--font-mono)' : 'var(--font-sans)', fg: p.dim ? 'var(--fg-3)' : 'var(--fg)', hasSub: !!p.sub, sub: p.sub || '', span: p.wide ? '1 / -1' : 'auto' }; };
+      const fc = narrow ? '1fr' : 'repeat(2,minmax(0,1fr))';
+      const timeline = CP('Timeline', { desc:'What happened, oldest first. Times in Tallinn time.', isTimeline:true, entries });
+      const ns = (c.notes || []).slice().sort((a, b) => Date.parse(b.createdAtUtc) - Date.parse(a.createdAtUtc));
+      const notes = CP('Notes', { desc: ns.length ? 'Newest first.' : '', actions: can ? [{ ...A('Add note', 'add', () => this.openDialog('case-note-add', { cid: c.id })), h: editH }] : [],
+        isNotes: ns.length > 0, notes: ns.map(x => ({ text: x.text, by: this.userName(x.createdByUserId) + ', ' + this.fmt(x.createdAtUtc),
+          canEdit: can && x.createdByUserId === me, edit: () => this.openDialog('case-note-edit', { cid: c.id, id: x.id }), editH })),
+        isEmpty: ns.length === 0, emptyIcon:'sticky_note_2', emptyTitle:'No notes yet.' });
+      const ins = CP('Insurance', { isFacts:true, factCols: fc, facts:[
+        FT('Our insurer', c.ourInsurer || 'None', { dim: !c.ourInsurer }), FT('Claim number', c.ourClaimNumber, { mono: !!c.ourClaimNumber, dim: !c.ourClaimNumber }),
+        FT('The other party\u2019s insurer', c.otherInsurer || 'Not known', { dim: !c.otherInsurer }), FT('Claim number', c.otherClaimNumber, { mono: !!c.otherClaimNumber, dim: !c.otherClaimNumber }),
+        FT('Handled by', c.handledBy === 1 && c.ourInsurer ? c.ourInsurer + ' (ours)' : c.handledBy === 2 && c.otherInsurer ? c.otherInsurer + ' (the other party\u2019s)' : hd.text, { dim: hd.dim, wide:true }) ] });
+      const all = this.casePhotoList(c), groups = [];
+      all.forEach(x => { const key = x.p.insuranceCaseEventId || 'case', g = groups.find(y => y.key === key), tb = thumb(x.p, narrow ? '88px' : '96px', narrow ? '66px' : '72px');
+        if (g) g.photos.push(tb); else groups.push({ key, title: x.entry, when: this.fmt(x.at), photos:[tb] }); });
+      const photos = CP('Photos', { desc: all.length ? all.length + (all.length === 1 ? ' photo' : ' photos') + ', by the entry they belong to.' : '', isPhotos: groups.length > 0, groups,
+        isEmpty: !groups.length, emptyIcon:'photo_library', emptyTitle:'No photos yet' });
+      const grp = this.caseGroup(c);
+      const same = grp.length ? CP('Same accident', { desc: grp.length === 1 ? 'The other case of this accident.' : 'The other cases of this accident.', isLinks:true,
+        links: grp.map(x => { const t3 = INS_STATUS_TONE[x.status], tt = TONE[t3[0]];
+          return { title: this.caseTitle(x), sub: INS_TYPE[x.type], go: e => { if (e && e.preventDefault) e.preventDefault(); this.go('case', x.id, null, s.route.from); },
+            chip: INS_STATUS[x.status], chipBg: tt.bg, chipFg: tt.fg, chipBd: tt.bd, chipShape: t3[1] }; }) }) : null;
+      const descP = c.description ? CP('Description', { isText:true, text: c.description }) : null;
+      const recP = CP('Record', { isFacts:true, factCols: fc, facts:[FT('Created', this.fmt(c.createdAtUtc), { mono:true, sub:'by ' + this.userName(c.createdByUserId) }),
+        FT('Last updated', c.updatedAtUtc ? this.fmt(c.updatedAtUtc) : 'Never', { mono: !!c.updatedAtUtc, dim: !c.updatedAtUtc, sub: c.updatedByUserId ? 'by ' + this.userName(c.updatedByUserId) : '' })] });
+      const columns = two ? [{ panels: [timeline, photos] }, { panels: [notes, ins, same, descP, recP].filter(Boolean) }]
+        : [{ panels: [timeline, notes, ins, same, photos, descP, recP].filter(Boolean) }];
+      const heroFacts = [
+        { label:'Waiting for', value: INS_PARTY[c.waitingFor], font:'var(--font-sans)', fg: c.waitingFor === 1 ? 'var(--warn)' : 'var(--fg)', hasSub:true,
+          sub: 'since ' + this.fmt(since) + (c.waitingFor === 0 ? '' : ' \u00b7 ' + this.dur(Date.now() - Date.parse(since))) },
+        { label: found ? 'Found' : 'Happened', value: this.fmt(c.happenedAtUtc), font:'var(--font-sans)', hasSub:true, sub: placeText },
+        { label:'Driver', value: drv ? drv.firstName + ' ' + drv.lastName : 'Not known', go: drv && this.can('Drivers.Read') ? () => this.go('driver', drv.id) : null,
+          font:'var(--font-sans)', fg: drv ? 'var(--fg)' : 'var(--fg-3)', hasSub:false, sub:'' },
+        { label:'Rental', value: info.asg ? this.displayName(info.customer) : 'Not rented then', go: info.asg && this.can('RentalAssignments.Read') ? () => this.go('assignment', info.asg.id) : null,
+          font:'var(--font-sans)', fg: info.asg ? 'var(--fg)' : 'var(--fg-3)', hasSub: !!info.asg,
+          sub: info.asg ? 'Rental from ' + this.fmt(info.asg.startedAtUtc, 'dateShort') + (info.asg.closedAtUtc ? ' to ' + this.fmt(info.asg.closedAtUtc, 'dateShort') : '') : '' },
+        { label:'Handled by', value: hd.text, font:'var(--font-sans)', fg: hd.dim ? 'var(--fg-3)' : 'var(--fg)', hasSub: !!hd.sub, sub: hd.sub },
+        { label:'At fault', value: c.atFault ? INS_FAULT[c.atFault] : 'Not decided yet', font:'var(--font-sans)', fg: c.atFault ? 'var(--fg)' : 'var(--fg-3)', hasSub:false, sub:'' } ];
+      return { show:true, cols:'1fr', hasHero:true, heroChip: INS_STATUS[c.status], heroShape: ST[1], heroBg: tn.bg, heroFg: tn.fg, heroBd: tn.bd,
+        heroFacts, heroActions:[], hasTabs:false, tabs:[], hasBanner:false, bannerTitle:'', bannerBody:'', bannerBg:'', bannerBd:'', bannerFg:'', bannerIcon:'', panels:[],
+        hasCase:true, kase:{ cols: two ? 'minmax(0,1.7fr) minmax(300px,1fr)' : 'minmax(0,1fr)', columns } };
     }
 
     if (r === 'assignment') {
@@ -4915,11 +5644,6 @@ class Component extends DCLogic {
             this.cell(changed || (g.eventType === 'Driver.Created' ? 'Record created' : 'No field values recorded'), { wrap:true, dim: !changed, sub: g.reason || '' })
           ]);
         }) }));
-
-      panels.push(P('Insurance cases', { span:'1 / -1', desc:'Claims and policy records involving this driver.',
-        empty:{ icon:'shield', title:'Nothing recorded yet', body:'' },
-        note:'Insurance cases are not part of the current phase. Once the module ships, claims involving this driver appear here alongside the vehicle and assignment they belong to.',
-        noteIcon:'construction', noteTone:'warn', noteTitle:'Under development' }));
 
       panels.push(P('Record', { span:'1 / -1',
         rows:[R('Created', this.fmt(d.createdAtUtc), { mono:true, dim:true }), R('Last updated', d.updatedAtUtc ? this.fmt(d.updatedAtUtc) : 'Never', { mono: !!d.updatedAtUtc, dim:true }),
@@ -5300,10 +6024,11 @@ class Component extends DCLogic {
       headerPad: narrow ? '14px 16px' : '18px 26px',
       headerGap: narrow ? '8px' : '14px',
       headerMinH: narrow ? '88px' : 'auto',
-      headerRowDir: this.isPhone() ? 'column' : 'row',
+      // A case's long title takes the full row; its four actions sit under it.
+      headerRowDir: this.isPhone() || (s.route.name === 'case' && hdr.actions.length) ? 'column' : 'row',
       // Phone stacks the title block over the actions row; with no actions the empty row would
       // still draw its column gap as dead space under the subtitle.
-      headerRowGap: this.isPhone() ? (hdr.actions.length ? '12px' : '0') : '16px',
+      headerRowGap: this.isPhone() || s.route.name === 'case' ? (hdr.actions.length ? '12px' : '0') : '16px',
       headerTitleMinW: this.isPhone() ? '0' : '200px',
       contentPad: narrow ? '16px' : (s.w < 1280 ? '22px 18px 40px' : '22px 26px 40px'),
       pageActions: hdr.actions.map(a => ({ ...a, showNote: s.actionNote === a.label, closeNote: () => this.setState({ actionNote: null }) })),
@@ -5332,10 +6057,10 @@ class Component extends DCLogic {
 
       toasts: s.toasts.map(t => ({ ...t, hasBody: !!t.body, tint: TONE[t.tone].fg, bd: TONE[t.tone].bd, dismiss: () => this.setState(st => ({ toasts: st.toasts.filter(x => x.id !== t.id) })) })),
 
-      reviewPanelOpen: s.reviewOpen && !s.drawer && !s.dialog,
-      reviewTabVisible: !s.reviewOpen && !s.drawer && !s.dialog,
+      reviewPanelOpen: s.reviewOpen && !s.drawer && !s.dialog && !s.photoView,
+      reviewTabVisible: !s.reviewOpen && !s.drawer && !s.dialog && !s.photoView,
       toggleReview: () => this.setState({ reviewOpen: !s.reviewOpen }),
-      roleDisplay: ROLE_LABEL[s.role], onRole: e => { this.save('role', e.target.value); this.setState({ role: e.target.value, route: { name:'overview', id:null, tab:null }, drawer: null, dialog: null }); },
+      roleDisplay: ROLE_LABEL[s.role], onRole: e => { this.save('role', e.target.value); this.setState({ role: e.target.value, route: { name:'overview', id:null, tab:null }, drawer: null, dialog: null, photoView: null }); },
       dataStateDisplay: (([['ready','Loaded'],['loading','Loading'],['empty','Empty collection'],['noresult','No search results'],['err403','403 Forbidden'],['err429','429 Rate limited'],['err500','500 Server error']].find(d => d[0] === s.dataState) || ['','Loaded'])[1]), onDataState: e => this.setState({ dataState: e.target.value }),
       dataStateOptions: [['ready','Loaded'],['loading','Loading'],['empty','Empty collection'],['noresult','No search results'],['err403','403 Forbidden'],['err429','429 Rate limited'],['err500','500 Server error']].map(d => ({ value:d[0], label:d[1] })),
       failModeDisplay: ((FAIL_MODES.find(x => x[0] === s.failMode) || FAIL_MODES[0])[1]),
@@ -5348,14 +6073,15 @@ class Component extends DCLogic {
       sessionToggleLabel: s.signedIn ? 'Sign out of prototype' : 'Enter application',
       toggleSession: () => this.setState({ signedIn: !s.signedIn, route: { name:'overview', id:null, tab:null } }),
 
-      pgSimple: ['attention','insurance'].includes(s.route.name),
+      pgSimple: s.route.name === 'attention',
       simple: this.simpleModel(),
-      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit','deleterecords'].includes(s.route.name) || (s.route.name === 'tasks' && !this.isSysAdmin()),
+      pgList: ['vehicles','customers','drivers','assignments','users','registrations','audit','deleterecords','insurance'].includes(s.route.name) || (s.route.name === 'tasks' && !this.isSysAdmin()),
       pgTasks: s.route.name === 'tasks' && !this.isSysAdmin(), taskTabs: s.route.name === 'tasks' ? this.taskTabs() : [],
+      pgCaseTabs: s.route.name === 'insurance', caseTabs: s.route.name === 'insurance' ? this.caseTabs() : [], caseTabsW: this.isPhone() ? '100%' : 'max-content',
       list: this.listModel(),
       pgPurge: s.route.name === 'deleterecords' && this.can('Records.Delete'),
       purgeTabs: s.route.name === 'deleterecords' ? this.purgeTabs() : [],
-      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess','task'].includes(s.route.name) || (s.route.name === 'deleterecords' && this.can('Records.Delete')),
+      pgDetail: ['assignment','vehicle','customer','driver','user','auditentry','profile','company','sysadmin','noaccess','task','case'].includes(s.route.name) || (s.route.name === 'deleterecords' && this.can('Records.Delete')),
       detail: { ...(() => { const d = this.detailModel(), card = this.isCardTier();
         // Counts drop only on the phone strip (<768). From 768 up the whole fact row renders as a
         // grid on its own line, so it can never be squeezed out above the lifecycle buttons.
@@ -5395,11 +6121,13 @@ class Component extends DCLogic {
           heroFactsFlex: s.w < 1280 ? '1 1 100%' : '1 1 auto',
           heroFacts: facts.map((f, i) => ({ ...f, span: f.wide && card ? '1 / -1' : 'auto', hasGap: wideFacts && i > 0,
             isPlain: !f.go, isLink: !!f.go, linkGo: f.go ? (e => { if (e && e.preventDefault) e.preventDefault(); f.go(); }) : (() => {}), fg: f.fg || 'var(--fg)' })),
+          hasCase: !!d.hasCase, kase: d.kase || { cols:'1fr', columns:[] },
           bannerHasBody: !!d.bannerBody }; })(),
         rowCols: this.rowColsDefault(),
         heroActW: this.isCardTier() ? '100%' : 'auto', heroBtnFlex: this.isCardTier() ? '1 1 100%' : '0 0 auto',
         heroActMl: !this.isCardTier() && s.w < 1280 ? 'auto' : '0' },
       drawer: this.drawerModel(), closeDrawer: () => this.setState({ drawer: null }),
+      photo: this.photoModel(),
       dialog: this.dialogModel(), closeDialog: () => this.closeDialog()
     };
   }
