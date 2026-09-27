@@ -1,5 +1,6 @@
 import {
-  ApplicationUserStatus, AssignmentStatus, SystemAdministratorTransferStatus, VehicleAvailability,
+  ApplicationUserStatus, AssignmentStatus, InsuranceCaseStatus, InsuranceCaseType,
+  SystemAdministratorTransferStatus, VehicleAvailability,
 } from '@/api/dto';
 
 export type Tone = 'ok' | 'info' | 'warn' | 'bad' | 'mute' | 'accent' | 'plain';
@@ -71,4 +72,30 @@ export const TRANSFER_STATUS_DOT: Record<SystemAdministratorTransferStatus, stri
   [SystemAdministratorTransferStatus.Accepted]: '50%',
   [SystemAdministratorTransferStatus.Cancelled]: '2px',
   [SystemAdministratorTransferStatus.Expired]: '1px',
+};
+
+/**
+ * An insurance case's five statuses (Follow-up 17), in the prototype's tones and shapes: a new case
+ * warns, the two with the insurers inform, a repair is under way, a closed case is quiet.
+ */
+export const CASE_STATUS_TONE: Record<InsuranceCaseStatus, Tone> = {
+  [InsuranceCaseStatus.Happened]: 'warn',
+  [InsuranceCaseStatus.Reported]: 'info',
+  [InsuranceCaseStatus.UnderReview]: 'info',
+  [InsuranceCaseStatus.Repair]: 'ok',
+  [InsuranceCaseStatus.Closed]: 'mute',
+};
+
+export const CASE_STATUS_DOT: Record<InsuranceCaseStatus, string> = {
+  [InsuranceCaseStatus.Happened]: '50%',
+  [InsuranceCaseStatus.Reported]: '2px',
+  [InsuranceCaseStatus.UnderReview]: '50%',
+  [InsuranceCaseStatus.Repair]: '2px',
+  [InsuranceCaseStatus.Closed]: '1px',
+};
+
+/** A case's type, as the plain badge beside its title: a square for Usual, a cut corner for Casco. */
+export const CASE_TYPE_DOT: Record<InsuranceCaseType, string> = {
+  [InsuranceCaseType.Usual]: '2px',
+  [InsuranceCaseType.Casco]: '50% 50% 50% 0',
 };
