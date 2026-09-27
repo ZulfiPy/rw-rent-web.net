@@ -398,16 +398,6 @@ export function DriverRecord() {
         </Panel>
       ) : null}
 
-      <Panel
-        title="Insurance cases"
-        description="Claims and policy records involving this driver."
-        note="Insurance cases are not part of the current phase. Once the module ships, claims involving this driver appear here alongside the vehicle and assignment they belong to."
-        noteIcon="construction"
-        noteTone="warn"
-      >
-        <EmptyState variant="panel" icon="shield" title="Nothing recorded yet" body="" />
-      </Panel>
-
       <Panel title="Record">
         <FactGrid>
           <Fact label="Created" dim sub={d ? formatLocal(d.createdAtUtc) : null}>

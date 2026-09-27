@@ -388,9 +388,11 @@ describe('the Overview’s Open tasks (F12-6)', () => {
     const fobs = around(card, '>Order two spare key fobs<', 'a');
     expect(fobs).toContain('No due date');
     expect(fobs).not.toContain('_rowSub_');
-    // Insurance cases stays exactly as it was.
-    expect(markup).toContain('Unresolved insurance cases');
-    expect(markup).toContain('Sample · module under development');
+    // Follow-up 17: the sample insurance card is gone; round 10's Dita holds no InsuranceCases.Read,
+    // as no reader of an API before round 12 does, so no insurance card or tile shows.
+    expect(markup).not.toContain('Unresolved insurance cases');
+    expect(markup).not.toContain('Sample · module under development');
+    expect(markup).not.toContain('Insurance cases waiting for us');
   });
 
   test('the count follows a mark: Toms’s card before and after he marked Car wash', () => {
@@ -413,7 +415,8 @@ describe('the Overview’s Open tasks (F12-6)', () => {
     const { markup, client } = overview(meAdmin, []);
     expect(meAdmin.permissions).not.toContain('Tasks.Use');
     expect(markup).not.toContain('Open tasks');
-    expect(markup).toContain('Unresolved insurance cases');
+    // Follow-up 17: the sample insurance card is gone.
+    expect(markup).not.toContain('Unresolved insurance cases');
     const tasks = client.getQueryCache().findAll({ queryKey: qk.tasks.all });
     expect(tasks.length).toBeGreaterThan(0);
     for (const query of tasks) expect(enabled(query), JSON.stringify(query.queryKey)).toBe(false);

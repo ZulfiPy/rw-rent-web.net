@@ -5,17 +5,21 @@ import { listAssignments } from '@/api/rentalAssignments';
 import { listSecurityAudit } from '@/api/securityAudit';
 import { getOverviewSummary } from '@/api/overview';
 import { listToDo } from '@/api/tasks';
-import { AssignmentStatus, type SecurityAuditQuery, type WorkTaskToDoItemResponse } from '@/api/dto';
+import { listCases } from '@/api/insuranceCases';
 import {
-  ASSIGNMENT_STATUS_LABEL, EMPTY, LOCAL_TIME_NOTE, aboutText, auditActorName, eventLabel, formatLocal,
-  fromLine, toDoWhen,
+  AssignmentStatus, InsuranceCaseView,
+  type InsuranceCaseListItemResponse, type InsuranceCaseQuery, type SecurityAuditQuery, type WorkTaskToDoItemResponse,
+} from '@/api/dto';
+import {
+  ASSIGNMENT_STATUS_LABEL, EMPTY, LOCAL_TIME_NOTE, NO_EVENTS, aboutText, auditActorName, caseCount, caseTitle,
+  eventLabel, formatLocal, fromLine, toDoWhen, waitingForUsText,
 } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import { PageHeader } from '@/ui/PageHeader';
 import { taskHref, useTaskCounts } from '@/pages/tasks/taskAddress';
+import { caseHref, casesHref, useCaseCounts } from '@/pages/insurance/caseAddress';
 import { useOpenWork } from './useOpenWork';
 import { activityRows } from './activity';
-import { INSURANCE, SAMPLE_CHIP, type SampleRow } from './sample';
 import styles from './Overview.module.css';
 
 /**
@@ -28,6 +32,12 @@ const PICK = { PageSize: 100 } as const;
 
 /** The Open tasks card lists the reader's to-do items, earliest due first: the first hundred. */
 export const TO_DO = { PageNumber: 1, PageSize: 100 } as const;
+
+/**
+ * The Insurance cases card lists the first page of Waiting for us, in its order: the page the list
+ * itself opens on, so the two share one answer.
+ */
+export const WAITING_FOR_US: InsuranceCaseQuery = { View: InsuranceCaseView.WaitingForUs, PageNumber: 1, PageSize: 20 };
 
 interface Metric {
   key: string;
@@ -74,22 +84,25 @@ function ToDoRow({ item, readerId }: { item: WorkTaskToDoItemResponse; readerId:
   );
 }
 
-function SampleRows({ rows }: { rows: SampleRow[] }) {
+/**
+ * One case on the Insurance cases card (Follow-up 17, F17-8): the case, its last event, and how long
+ * it has waited for us; the row opens the case, its breadcrumb leading back to Waiting for us.
+ */
+function CaseRow({ item }: { item: InsuranceCaseListItemResponse }) {
   return (
-    <>
-      {rows.map((r) => (
-        <div key={r.id} className={styles.row}>
-          <span className={styles.tile} data-tone={r.tone === 'plain' ? undefined : r.tone}>
-            <span data-icon aria-hidden="true">{r.icon}</span>
-          </span>
-          <span className={styles.rowText}>
-            <span className={styles.rowTitle}>{r.title}</span>
-            <span className={styles.rowSub}>{r.sub}</span>
-          </span>
-          <span className={styles.when}>{r.when}</span>
-        </div>
-      ))}
-    </>
+    <Link to={caseHref(item.id, 'us')} className={`${styles.row} ${styles.link}`}>
+      <span className={styles.tile} data-tone="warn">
+        <span data-icon aria-hidden="true">car_crash</span>
+      </span>
+      <span className={styles.rowText}>
+        <span className={styles.rowTitle}>{caseTitle(item)}</span>
+        <span className={styles.rowSub}>{item.lastEvent ? item.lastEvent.title : NO_EVENTS}</span>
+      </span>
+      <span className={styles.rowMeta}>
+        <span className={styles.when}>{waitingForUsText(item.waitingSinceUtc)}</span>
+        <span data-icon aria-hidden="true" className={styles.chevron}>chevron_right</span>
+      </span>
+    </Link>
   );
 }
 
@@ -103,6 +116,14 @@ export function Overview() {
     queryKey: qk.tasks.toDo(TO_DO),
     queryFn: () => listToDo(TO_DO),
     enabled: usesTasks,
+  });
+  // Insurance cases only for a holder of InsuranceCases.Read (Follow-up 17): without it neither the
+  // tile nor the card shows, and nothing about insurance is asked for.
+  const { allowed: readsCases, counts: caseCounts } = useCaseCounts();
+  const waiting = useQuery({
+    queryKey: qk.insuranceCases.list(WAITING_FOR_US),
+    queryFn: () => listCases(WAITING_FOR_US),
+    enabled: readsCases,
   });
 
   const mayReadAssignments = can('RentalAssignments.Read');
@@ -128,7 +149,7 @@ export function Overview() {
   const counts = summary.data;
 
   // metricsModel(): the permitted counts in order, capped at four, then Open tasks for a holder of
-  // Tasks.Use, then the sample insurance card.
+  // Tasks.Use, then the insurance cases waiting for us for a holder of InsuranceCases.Read.
   const metrics: Metric[] = [];
   if (counts?.activeAssignments != null) {
     metrics.push({
@@ -172,10 +193,12 @@ export function Overview() {
       value: taskCounts ? String(taskCounts.toDo) : EMPTY, unit: 'to do', to: '/tasks',
     });
   }
-  cards.push({
-    key: 'ins', icon: 'policy', color: 'var(--warn)', label: 'Unresolved insurance cases',
-    value: String(INSURANCE.length), unit: 'cases', to: '/insurance-cases',
-  });
+  if (readsCases) {
+    cards.push({
+      key: 'ins', icon: 'car_crash', color: 'var(--warn)', label: 'Insurance cases waiting for us',
+      value: caseCounts ? String(caseCounts.waitingForUs) : EMPTY, unit: 'cases', to: casesHref('us'),
+    });
+  }
 
   const mixTotal = totalAssignments || 1;
   const mix = MIX.map((m) => {
@@ -330,19 +353,25 @@ export function Overview() {
             </div>
           </section>
 
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div className={styles.heading} data-chip="true">
-                <div className={styles.titleRow}>
-                  <h2 className={styles.title}>Unresolved insurance cases</h2>
-                  <span className={styles.sample}>{SAMPLE_CHIP}</span>
+          {readsCases ? (
+            <section className={styles.panel}>
+              <div className={styles.panelHead}>
+                <div className={`${styles.heading} ${styles.caseHeading}`}>
+                  <h2 className={styles.title}>Insurance cases waiting for us</h2>
+                  <p className={styles.desc}>Open cases where the next move is ours, the longest waiting first.</p>
                 </div>
-                <p className={styles.desc}>Claims and policies with an action outstanding.</p>
+                <span className={styles.count2}>
+                  {waiting.data ? caseCount(waiting.data.totalCount) : caseCounts ? caseCount(caseCounts.waitingForUs) : ''}
+                </span>
               </div>
-              <span className={styles.count2}>{plural(INSURANCE.length, 'case', 'cases')}</span>
-            </div>
-            <SampleRows rows={INSURANCE} />
-          </section>
+              {waiting.data && waiting.data.items.length === 0 ? (
+                <div className={`${styles.empty} ${styles.emptyShort}`}>
+                  <span data-icon aria-hidden="true" className={styles.emptyIcon}>task_alt</span>
+                  <div className={styles.emptyTitle}>Nothing is waiting for you</div>
+                </div>
+              ) : (waiting.data?.items ?? []).map((item) => <CaseRow key={item.id} item={item} />)}
+            </section>
+          ) : null}
         </div>
 
         <div className={styles.column}>

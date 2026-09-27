@@ -5,11 +5,14 @@ import { qk } from '@/api';
 import type { CurrentUserResponse, InsuranceCaseQuery } from '@/api/dto';
 import { AppShell } from '@/app/AppShell';
 import type { PageHeaderModel } from '@/app/pageHeader';
+import { DriverRecord } from './fleet/DriverRecord';
+import { Overview, WAITING_FOR_US } from './overview/Overview';
 import { CaseRecord } from './insurance/CaseRecord';
 import { InsuranceCases } from './insurance/InsuranceCases';
 import { PhotoView, casePhotos } from './insurance/PhotoView';
 import { CASE_REFRESH } from './insurance/caseAddress';
 import { around, clearTaskRenders, count, renderAs } from './followup12.harness';
+import { clearRenders, driver, renderPage } from './followup7b.support';
 import {
   CAPTURED_AT, caseHdvDita, caseJlmDita, caseKlmDita, caseKlmToms, caseMprDita, caseNdpDita, caseTklCascoDita,
   caseTklUsualDita, countsDita, meAdmin, meDita, meToms, notFoundCase, view1Casco, view1Dita, view1Page2of2,
@@ -37,6 +40,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   clearTaskRenders();
+  clearRenders();
   header.last = null;
 });
 
@@ -445,5 +449,63 @@ describe('every write refreshes what it changes (F17-10)', () => {
     await Promise.all(CASE_REFRESH.map((queryKey) => client.invalidateQueries({ queryKey })));
     for (const key of keys) expect(client.getQueryState(key)?.isInvalidated, JSON.stringify(key)).toBe(true);
     expect(client.getQueryState(qk.vehicles.list({ PageSize: 100 }))?.isInvalidated).toBe(false);
+  });
+});
+
+/* the Overview and the driver's page -------------------------------------------------------------- */
+
+const overview = (me: CurrentUserResponse, data: Array<[readonly unknown[], unknown]>) =>
+  renderAs(h(Overview), { at: '/overview', route: '/overview', me, data: [[qk.overview, {}], ...data] });
+
+describe('the Overview’s insurance cases waiting for us (F17-8)', () => {
+  test('the tile reads the count and opens Waiting for us; the card lists that view’s cases, each opening its case', () => {
+    const { markup } = overview(meDita, [[qk.insuranceCases.counts, countsDita], [qk.insuranceCases.list(WAITING_FOR_US), view2Dita]]);
+    expect(WAITING_FOR_US).toEqual(LIST(2));
+    expect(markup).toMatch(/href="\/insurance-cases\?tab=us"[^>]*>.*car_crash<\/span><span[^>]*>Insurance cases waiting for us<\/span><\/span><span[^>]*><span[^>]*>2<\/span><span[^>]*>cases<\/span>/);
+    const card = markup.slice(markup.indexOf('>Insurance cases waiting for us</h2>'));
+    expect(card).toContain('Open cases where the next move is ours, the longest waiting first.');
+    expect(card).toContain('>2 cases<');
+    expect(card).not.toContain('Sample · module under development');
+    const first = around(card, '>770 HDV · Long scratches on both left doors<', 'a');
+    expect(first).toContain(`href="/insurance-cases/${view2Dita.items[0]!.id}?tab=us"`);
+    expect(first).toMatch(/data-tone="warn"><span[^>]*>car_crash<\/span>/);
+    expect(first).toContain('>No events yet<');
+    expect(first).toContain('>Waiting for us · 2 days<');
+    expect(first).toContain('chevron_right');
+    const second = around(card, '>482 TKL · Front bumper and right headlight<', 'a');
+    expect(second).toContain('>Baltic Mutual asked for the mileage and photos of the damage<');
+    expect(second).toContain('>Waiting for us · 21 hours<');
+    expect(card.indexOf('770 HDV')).toBeLessThan(card.indexOf('482 TKL'));
+  });
+
+  test('nothing waiting for us: the card says so', () => {
+    const { markup } = overview(meToms, [[qk.insuranceCases.counts, { ...countsDita, waitingForUs: 0 }], [qk.insuranceCases.list(WAITING_FOR_US), EMPTY_PAGE]]);
+    expect(markup).toContain('>Nothing is waiting for you<');
+    expect(markup).toContain('>0 cases<');
+  });
+
+  test('without InsuranceCases.Read neither the tile nor the card shows, and nothing about insurance is asked', () => {
+    const round11: CurrentUserResponse = { ...meDita, permissions: meDita.permissions.filter((p) => !p.startsWith('InsuranceCases.')) };
+    const { markup, client } = overview(round11, []);
+    expect(markup).not.toContain('Insurance cases waiting for us');
+    expect(markup).not.toContain('Unresolved insurance cases');
+    const queries = client.getQueryCache().findAll({ queryKey: qk.insuranceCases.all });
+    expect(queries.length).toBeGreaterThan(0);
+    for (const query of queries) expect(enabled(query), JSON.stringify(query.queryKey)).toBe(false);
+  });
+});
+
+describe('the driver’s page loses its placeholder panel (F17-1)', () => {
+  test('no “Insurance cases” panel and no “under development” note', () => {
+    const markup = renderPage(h(DriverRecord), {
+      at: `/drivers/${driver.id}`,
+      route: '/drivers/:driverId',
+      permissions: ['Drivers.Read'],
+      data: [[qk.drivers.detail(driver.id), driver]],
+    });
+    expect(markup).toContain('>Record</h2>');
+    expect(markup).not.toContain('>Insurance cases</h2>');
+    expect(markup).not.toContain('Claims and policy records involving this driver.');
+    expect(markup).not.toContain('not part of the current phase');
   });
 });
