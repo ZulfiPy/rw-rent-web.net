@@ -4,6 +4,7 @@ import type {
   DriversQuery, InterruptionsQuery, PagedQuery, RecordDeletionCandidatesQuery,
   RecordDeletionCountsQuery, RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery,
   SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery, WorkTaskQuery, WorkTaskToDoQuery,
+  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery,
 } from './dto';
 
 /**
@@ -19,12 +20,16 @@ export type QueryContract = [
   AssertQuery<DriverAuthorizationsQuery>, AssertQuery<SystemAdministratorTransferQuery>,
   AssertQuery<RecordDeletionCandidatesQuery>, AssertQuery<RecordDeletionCountsQuery>,
   AssertQuery<WorkTaskQuery>, AssertQuery<WorkTaskToDoQuery>,
+  AssertQuery<InsuranceCaseQuery>, AssertQuery<InsuranceCaseDriverSuggestionQuery>,
+  AssertQuery<InsuranceCaseAccidentChoicesQuery>,
 ];
 
 export const get = <T>(path: string, query?: Query) => transport().request<T>('GET', path, { query });
 export const post = <T>(path: string, body?: unknown) => transport().request<T>('POST', path, { body });
 export const put = <T>(path: string, body?: unknown) => transport().request<T>('PUT', path, { body });
 export const del = <T>(path: string) => transport().request<T>('DELETE', path);
+/** A `multipart/form-data` POST: the fields and files as the browser encodes them (Follow-up 17). */
+export const postForm = <T>(path: string, form: FormData) => transport().request<T>('POST', path, { form });
 
 /** Drops undefined and null; leaves the server's PascalCase parameter names untouched. */
 export function toSearchParams(query?: Query): URLSearchParams {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { RecordKind } from './dto';
+import { RecordKind, type DeletableKind } from './dto';
 import { codeToField } from './codes';
 import { ApiError, toFailure } from './problem';
 import { CANDIDATE_PATH } from './recordDeletions';
@@ -84,8 +84,8 @@ describe('the lists', () => {
 
 describe('what a deletion makes stale (Follow-up 9)', () => {
   test('a cascade makes stale what went with the record, and the people whose histories listed it', () => {
-    const stale = (kind: RecordKind) => deletionInvalidates(kind).map((key) => key.join('/'));
-    const has = (kind: RecordKind, ...keys: (readonly unknown[])[]) =>
+    const stale = (kind: DeletableKind) => deletionInvalidates(kind).map((key) => key.join('/'));
+    const has = (kind: DeletableKind, ...keys: (readonly unknown[])[]) =>
       expect(stale(kind)).toEqual(expect.arrayContaining(keys.map((key) => key.join('/'))));
     // A vehicle or a customer takes rentals, their authorizations and interruptions; the drivers'
     // histories listed those authorizations.
@@ -93,7 +93,8 @@ describe('what a deletion makes stale (Follow-up 9)', () => {
     has(RecordKind.Customer, qk.customers.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all);
     // A driver takes authorizations off rentals and clears a customer's link.
     has(RecordKind.Driver, qk.drivers.all, qk.customers.all, qk.assignments.all);
-    for (const kind of Object.values(RecordKind)) {
+    // Every kind the page deletes; an insurance case (round 12) is never one of them.
+    for (const kind of Object.values(RecordKind).filter((k): k is DeletableKind => k !== RecordKind.InsuranceCase)) {
       has(kind, qk.recordDeletions.all, qk.audit.all, qk.overview);
     }
   });

@@ -5,7 +5,8 @@
 // Since its round 7 the Delete records page reads its candidates, counts and deletions here too;
 // since its round 8 a deletion takes what hangs below the record, and the page reads what it takes;
 // since its round 9 the right to delete is a role, Record deleter, that the administrator gives;
-// since its round 10 a person keeps tasks, each with steps given to the Company's people.
+// since its round 10 a person keeps tasks, each with steps given to the Company's people;
+// since its round 12 the company keeps insurance cases, and a vehicle goes with its closed ones.
 // Rules: server-owned names verbatim; JSON body properties camelCase; query parameter names
 // PascalCase as the server binds them; enums are the numeric wire values. Display labels live in
 // src/format/labels.ts, never here.
@@ -866,7 +867,11 @@ export interface OverviewSummaryResponse {
 
 /* record deletions (the backend's rounds 7 and 8) ----------------------- */
 
-/** The six kinds of record the Delete records page can remove. */
+/**
+ * The kinds of record the Delete records page knows. The first six can be deleted; an insurance case
+ * (round 12) appears only among the records that block a vehicle's deletion, and a deletion naming
+ * it is refused: a case goes only with its vehicle.
+ */
 export const RecordKind = {
   RentalAssignment: 1,
   DriverAuthorization: 2,
@@ -874,8 +879,12 @@ export const RecordKind = {
   Vehicle: 4,
   Customer: 5,
   Driver: 6,
+  InsuranceCase: 7,
 } as const;
 export type RecordKind = (typeof RecordKind)[keyof typeof RecordKind];
+
+/** The six kinds the page offers to delete: every kind but an insurance case. */
+export type DeletableKind = Exclude<RecordKind, typeof RecordKind.InsuranceCase>;
 
 export const RecordDeletionReason = {
   EnteredByMistake: 1,
@@ -903,6 +912,8 @@ export const RecordDeletionBlockReason = {
   HasRunningRental: 6,
   /** A driver who holds the only open authorization of a running rental assignment. */
   DriverHoldsOnlyOpenAuthorizationOfRunningRental: 7,
+  /** A vehicle one of whose insurance cases is open (round 12): it has to be closed first. */
+  HasOpenInsuranceCase: 8,
 } as const;
 export type RecordDeletionBlockReason =
   (typeof RecordDeletionBlockReason)[keyof typeof RecordDeletionBlockReason];
@@ -911,7 +922,10 @@ export type RecordDeletionBlockReason =
 export const RecordDeletionShow = { OutOfUse: 1, Everything: 2 } as const;
 export type RecordDeletionShow = (typeof RecordDeletionShow)[keyof typeof RecordDeletionShow];
 
-/** One record in the way of a deletion: since round 8 always a running rental, by its record label. */
+/**
+ * One record in the way of a deletion, by its record label: a running rental, or since round 12 an
+ * open insurance case of the vehicle.
+ */
 export interface RecordDeletionBlockingRecordResponse {
   kind: RecordKind;
   id: Uuid;
@@ -938,6 +952,13 @@ export interface RecordDeletionTakes {
   interruptions: number;
   /** Customer records whose driver link would be cleared; the customers themselves stay. */
   customerLinksCleared: number;
+  /**
+   * A vehicle's insurance cases, which go with it (round 12); 0 for every other kind. Absent from an
+   * API before round 12, as the owner's is until its upgrade, and read as 0 then.
+   */
+  insuranceCases?: number;
+  /** The insurance cases whose driver a driver's deletion would clear; the cases stay (round 12). */
+  insuranceCaseDriversCleared?: number;
 }
 
 export interface RecordDeletionInfo {
@@ -1098,6 +1119,13 @@ export interface RecordDeletionResponse {
   deletedRentalAssignmentCount: number;
   /** The customer records whose link to a deleted driver was cleared; 0 otherwise. */
   clearedCustomerLinkCount: number;
+  /**
+   * The insurance cases that went with a deleted vehicle; 0 otherwise (round 12). Absent from an API
+   * before round 12, and read as 0 then.
+   */
+  deletedInsuranceCaseCount?: number;
+  /** The insurance cases whose driver a deleted driver was; 0 otherwise (round 12). */
+  clearedInsuranceCaseDriverCount?: number;
 }
 
 /* tasks (the backend's round 10) ----------------------------------------- */
@@ -1276,3 +1304,288 @@ export type WorkTaskQuery = {
 
 /** A page of the reader's to-do items, earliest due first. */
 export type WorkTaskToDoQuery = { PageNumber?: number; PageSize?: number }
+
+/* insurance cases (the backend's round 12) --------------------------------- */
+
+/** Usual: the insurers decide who is at fault. Casco: the company's own casco repairs the car now. */
+export const InsuranceCaseType = { Usual: 1, Casco: 2 } as const;
+export type InsuranceCaseType = (typeof InsuranceCaseType)[keyof typeof InsuranceCaseType];
+
+/** Any status may follow any other; it changes only through an event after the registration. */
+export const InsuranceCaseStatus = { Happened: 1, Reported: 2, UnderReview: 3, Repair: 4, Closed: 5 } as const;
+export type InsuranceCaseStatus = (typeof InsuranceCaseStatus)[keyof typeof InsuranceCaseStatus];
+
+/** Who the case waits for. Nobody is 5: no enum of the section has a 0. */
+export const InsuranceCaseParty = { Us: 1, Driver: 2, Insurer: 3, SomeoneElse: 4, Nobody: 5 } as const;
+export type InsuranceCaseParty = (typeof InsuranceCaseParty)[keyof typeof InsuranceCaseParty];
+
+/** The insurer that handles a case names a side, and only a side whose insurer is filled in. */
+export const InsurerSide = { Ours: 1, Theirs: 2 } as const;
+export type InsurerSide = (typeof InsurerSide)[keyof typeof InsurerSide];
+
+export const AtFaultParty = { OurDriver: 1, OtherParty: 2, Both: 3, NotFound: 4 } as const;
+export type AtFaultParty = (typeof AtFaultParty)[keyof typeof AtFaultParty];
+
+/** The three views of the list, each in the order the server gives it. */
+export const InsuranceCaseView = { Open: 1, WaitingForUs: 2, Closed: 3 } as const;
+export type InsuranceCaseView = (typeof InsuranceCaseView)[keyof typeof InsuranceCaseView];
+
+/** What the rental of a car at a moment says about who drove it. */
+export const InsuranceCaseDriverSituation = {
+  NotRented: 1,
+  BusinessCustomerDrivers: 2,
+  OneDriver: 3,
+  SeveralDrivers: 4,
+  NoDriverNamed: 5,
+} as const;
+export type InsuranceCaseDriverSituation =
+  (typeof InsuranceCaseDriverSituation)[keyof typeof InsuranceCaseDriverSituation];
+
+/** One photo: its picture is read from `GET /api/insurance-cases/{caseId}/photos/{photoId}`. */
+export interface InsuranceCasePhotoResponse {
+  id: Uuid;
+  fileName: string;
+  contentType: string;
+  sizeInBytes: number;
+  createdAtUtc: Instant;
+  createdByDisplayName?: string | null;
+}
+
+/**
+ * One event of the timeline. `statusChangedTo` and `waitingForChangedTo` are what it changed, each
+ * null when it left that value as it was; `canCorrect` is whether the reader may correct it.
+ */
+export interface InsuranceCaseEventResponse {
+  id: Uuid;
+  happenedAtUtc: Instant;
+  title: string;
+  description?: string | null;
+  statusChangedTo?: InsuranceCaseStatus | null;
+  waitingForChangedTo?: InsuranceCaseParty | null;
+  photos: InsuranceCasePhotoResponse[];
+  createdAtUtc: Instant;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+  updatedAtUtc?: Instant | null;
+  canCorrect: boolean;
+}
+
+export interface InsuranceCaseNoteResponse {
+  id: Uuid;
+  text: string;
+  createdAtUtc: Instant;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+  updatedAtUtc?: Instant | null;
+  canCorrect: boolean;
+}
+
+/** The rental the car was on when the case happened, found by the server from the car and the time. */
+export interface InsuranceCaseRentalResponse {
+  rentalAssignmentId: Uuid;
+  customerDisplayName: string;
+  startedAtUtc?: Instant | null;
+  closedAtUtc?: Instant | null;
+}
+
+/** Another case, by its label "{plate} · {what is damaged}". */
+export interface InsuranceCaseLinkResponse {
+  id: Uuid;
+  label: string;
+  type: InsuranceCaseType;
+  status: InsuranceCaseStatus;
+}
+
+/**
+ * One case as its page reads it. The server decides who may change it (`canChange`), since when it
+ * waits (`waitingSinceUtc`), when it was closed, its rental and the other cases of its accident. The
+ * case's own `photos` are the registration's; each event carries its own.
+ */
+export interface InsuranceCaseResponse {
+  id: Uuid;
+  type: InsuranceCaseType;
+  vehicleId: Uuid;
+  vehiclePlate: string;
+  vehicleLabel: string;
+  damage: string;
+  description?: string | null;
+  happenedAtUtc: Instant;
+  timeIsWhenFound: boolean;
+  place: string;
+  placeIsWhereFound: boolean;
+  driverId?: Uuid | null;
+  driverDisplayName?: string | null;
+  rental?: InsuranceCaseRentalResponse | null;
+  ourInsurer?: string | null;
+  ourClaimNumber?: string | null;
+  otherInsurer?: string | null;
+  otherClaimNumber?: string | null;
+  handledBy?: InsurerSide | null;
+  status: InsuranceCaseStatus;
+  waitingFor: InsuranceCaseParty;
+  waitingSinceUtc: Instant;
+  closedAtUtc?: Instant | null;
+  atFault?: AtFaultParty | null;
+  sameAccidentCaseId?: Uuid | null;
+  /** The other cases of the accident, its first case first. */
+  sameAccidentCases: InsuranceCaseLinkResponse[];
+  photos: InsuranceCasePhotoResponse[];
+  /** Oldest first. */
+  events: InsuranceCaseEventResponse[];
+  /** Newest first. */
+  notes: InsuranceCaseNoteResponse[];
+  canChange: boolean;
+  concurrencyToken: Uuid;
+  createdAtUtc: Instant;
+  createdByUserId: Uuid;
+  createdByDisplayName?: string | null;
+  updatedAtUtc?: Instant | null;
+  updatedByUserId?: Uuid | null;
+  updatedByDisplayName?: string | null;
+}
+
+export interface InsuranceCaseLastEventResponse {
+  title: string;
+  happenedAtUtc: Instant;
+}
+
+export interface InsuranceCaseListItemResponse {
+  id: Uuid;
+  type: InsuranceCaseType;
+  vehicleId: Uuid;
+  vehiclePlate: string;
+  damage: string;
+  happenedAtUtc: Instant;
+  timeIsWhenFound: boolean;
+  driverDisplayName?: string | null;
+  ourInsurer?: string | null;
+  ourClaimNumber?: string | null;
+  otherInsurer?: string | null;
+  otherClaimNumber?: string | null;
+  handledBy?: InsurerSide | null;
+  status: InsuranceCaseStatus;
+  waitingFor: InsuranceCaseParty;
+  waitingSinceUtc: Instant;
+  closedAtUtc?: Instant | null;
+  atFault?: AtFaultParty | null;
+  lastEvent?: InsuranceCaseLastEventResponse | null;
+  createdAtUtc: Instant;
+}
+
+/** The three views' sizes, before any search or filter. */
+export interface InsuranceCaseCountsResponse {
+  open: number;
+  waitingForUs: number;
+  closed: number;
+}
+
+export interface InsuranceCaseDriverChoiceResponse {
+  driverId: Uuid;
+  displayName: string;
+}
+
+export interface InsuranceCaseSuggestionRentalResponse extends InsuranceCaseRentalResponse {
+  vehiclePlate: string;
+}
+
+/**
+ * Who drove a car at a moment, as its rental says: the rental, the named drivers authorised then, and
+ * the one to fill in when there is exactly one.
+ */
+export interface InsuranceCaseDriverSuggestionResponse {
+  situation: InsuranceCaseDriverSituation;
+  rental?: InsuranceCaseSuggestionRentalResponse | null;
+  drivers: InsuranceCaseDriverChoiceResponse[];
+  suggestedDriverId?: Uuid | null;
+}
+
+/**
+ * One view of the list. Type on every view; Status on Open and Waiting for us (Closed is refused
+ * there); Waiting for on Open only. The views take no sort field: the API refuses one. Search covers
+ * the plate, what is damaged, the driver's name, both insurers and both claim numbers.
+ */
+export type InsuranceCaseQuery = {
+  View?: InsuranceCaseView;
+  Type?: InsuranceCaseType;
+  Status?: InsuranceCaseStatus;
+  WaitingFor?: InsuranceCaseParty;
+  Search?: string;
+  PageNumber?: number;
+  PageSize?: number;
+}
+
+/** Both are required: the car and the moment, an instant in UTC. */
+export type InsuranceCaseDriverSuggestionQuery = { VehicleId?: Uuid; AtUtc?: Instant }
+
+/** On an edit, the case itself, whose own case and the cases that name it are left out. */
+export type InsuranceCaseAccidentChoicesQuery = { ForCaseId?: Uuid }
+
+/**
+ * Register case: the case's fields, sent as `multipart/form-data` together with the files `photos`.
+ * Status is Happened and WaitingFor is Us unless the request says otherwise.
+ */
+export interface RegisterInsuranceCaseRequest {
+  type: InsuranceCaseType;
+  vehicleId: Uuid | null;
+  damage: string;
+  description?: string | null;
+  happenedAtUtc: Instant | null;
+  timeIsWhenFound: boolean;
+  place: string;
+  placeIsWhereFound: boolean;
+  driverId?: Uuid | null;
+  ourInsurer?: string | null;
+  ourClaimNumber?: string | null;
+  otherInsurer?: string | null;
+  otherClaimNumber?: string | null;
+  handledBy?: InsurerSide | null;
+  status: InsuranceCaseStatus;
+  waitingFor: InsuranceCaseParty;
+  sameAccidentCaseId?: Uuid | null;
+}
+
+/** Edit case, as JSON: everything but the status and who the case waits for, with the case's token. */
+export interface UpdateInsuranceCaseRequest {
+  type: InsuranceCaseType | null;
+  vehicleId?: Uuid | null;
+  damage?: string | null;
+  description?: string | null;
+  happenedAtUtc: Instant | null;
+  timeIsWhenFound?: boolean;
+  place?: string | null;
+  placeIsWhereFound?: boolean;
+  driverId?: Uuid | null;
+  ourInsurer?: string | null;
+  ourClaimNumber?: string | null;
+  otherInsurer?: string | null;
+  otherClaimNumber?: string | null;
+  handledBy?: InsurerSide | null;
+  atFault?: AtFaultParty | null;
+  sameAccidentCaseId?: Uuid | null;
+  concurrencyToken?: Uuid | null;
+}
+
+/**
+ * Add event, sent as `multipart/form-data` together with the files `photos`. `statusNow` and
+ * `waitingForNow` are recorded as a change only where they differ from the case's.
+ */
+export interface AddInsuranceCaseEventRequest {
+  happenedAtUtc: Instant | null;
+  title: string;
+  description?: string | null;
+  statusNow: InsuranceCaseStatus;
+  waitingForNow: InsuranceCaseParty;
+  concurrencyToken: Uuid;
+}
+
+/** Edit event, as JSON: its time, title and description, and the photos it removes. */
+export interface CorrectInsuranceCaseEventRequest {
+  happenedAtUtc: Instant | null;
+  title?: string | null;
+  description?: string | null;
+  removePhotoIds?: Uuid[] | null;
+}
+
+export interface InsuranceCaseNoteRequest {
+  text?: string | null;
+}

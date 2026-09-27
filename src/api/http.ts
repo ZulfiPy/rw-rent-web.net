@@ -21,7 +21,8 @@ export function createHttpTransport(baseUrl: string): Transport {
   const send = async (method: Method, path: string, init: RequestInitLike | undefined, retry: boolean): Promise<Response> => {
     const qs = toSearchParams(init?.query).toString();
     const headers: Record<string, string> = {};
-    if (init?.body !== undefined) headers['Content-Type'] = 'application/json';
+    // A form body sets its own Content-Type, boundary included (Follow-up 17).
+    if (init?.body !== undefined && !init.form) headers['Content-Type'] = 'application/json';
     if (method !== 'GET') {
       const token = antiforgery ?? (await fetchAntiforgery());
       headers[token.headerName] = token.requestToken;
@@ -30,7 +31,7 @@ export function createHttpTransport(baseUrl: string): Transport {
       method,
       credentials: 'include',
       headers,
-      body: init?.body === undefined ? undefined : JSON.stringify(init.body),
+      body: init?.form ?? (init?.body === undefined ? undefined : JSON.stringify(init.body)),
     });
     if (res.status === 400 && retry && method !== 'GET') {
       const problem = await res.clone().json().catch(() => ({}));

@@ -6,7 +6,7 @@ import {
   countCandidates, listCandidates, listDeletions, type AnyCandidate,
 } from '@/api/recordDeletions';
 import {
-  CustomerType, RecordDeletionShow, RecordDeletionState, RecordKind,
+  CustomerType, RecordDeletionShow, RecordDeletionState, RecordKind, type DeletableKind,
   type CustomerDeletionCandidateResponse, type DriverAuthorizationDeletionCandidateResponse,
   type DriverDeletionCandidateResponse, type InterruptionDeletionCandidateResponse,
   type PagedResponse, type RecordDeletionBlockingRecordResponse,
@@ -61,7 +61,7 @@ const DEFAULT_PAGE_SIZE = 20;
 const PERMISSION = 'Records.Delete';
 
 interface KindTab {
-  kind: RecordKind;
+  kind: DeletableKind;
   slug: string;
   label: string;
   icon: string;
@@ -426,7 +426,7 @@ const DRIVERS: Spec<DriverDeletionCandidateResponse> = {
  * Each kind's spec. The page reads one kind's list at a time and its cache key carries the kind, so
  * the rows handed to a spec are always that spec's own; the one widening below says so once.
  */
-const SPECS: Record<RecordKind, Spec<never>> = {
+const SPECS: Record<DeletableKind, Spec<never>> = {
   [RecordKind.RentalAssignment]: RENTALS,
   [RecordKind.DriverAuthorization]: AUTHORIZATIONS,
   [RecordKind.Interruption]: INTERRUPTIONS,
@@ -435,10 +435,10 @@ const SPECS: Record<RecordKind, Spec<never>> = {
   [RecordKind.Driver]: DRIVERS,
 };
 
-const rowOf = (kind: RecordKind, value: AnyCandidate): Row =>
+const rowOf = (kind: DeletableKind, value: AnyCandidate): Row =>
   (SPECS[kind] as unknown as Spec<AnyCandidate>).row(value);
 
-const targetOf = (kind: RecordKind, value: AnyCandidate): DeletionTarget =>
+const targetOf = (kind: DeletableKind, value: AnyCandidate): DeletionTarget =>
   ({ kind, value }) as DeletionTarget;
 
 /* the page ------------------------------------------------------------------------------------- */
@@ -529,7 +529,7 @@ export function DeleteRecords() {
   const filtered = !!search || show === RecordDeletionShow.OutOfUse;
   const inUse = outOfUseEmpty(kind, everything.data?.[tab.count]);
 
-  const selectKind = (next: RecordKind) => {
+  const selectKind = (next: DeletableKind) => {
     const slug = KINDS.find((k) => k.kind === next)?.slug ?? '';
     setDone(null);
     patch({ kind: next === RecordKind.RentalAssignment ? '' : slug, search: '' });
@@ -557,7 +557,7 @@ export function DeleteRecords() {
       <RecordTabs
         tabs={KINDS.map((k) => ({ id: String(k.kind), label: k.label, icon: k.icon, count: counts.data?.[k.count] }))}
         active={String(kind)}
-        onSelect={(next) => selectKind(Number(next) as RecordKind)}
+        onSelect={(next) => selectKind(Number(next) as DeletableKind)}
       />
 
       <section className={list.panel}>

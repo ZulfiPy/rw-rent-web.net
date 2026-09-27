@@ -114,6 +114,32 @@ const TASK_WRITE: Record<string, string> = {
 };
 
 /**
+ * Insurance cases (the backend's round 12, Follow-up 17). A refusal of these writes that is about one
+ * field carries it under `errors` as well (`HappenedAtUtc`, `HandledBy`, `Photos[2]`,
+ * `RemovePhotoIds[0]`), so it lands under its input through the shared mapping, a photo's under the
+ * tile the index names; the table names each code's input too, so the dialog still finds it should
+ * the key ever be missing. The four checks of a time land under the dialog's time.
+ */
+const CASE_TIME: Record<string, string> = {
+  'insurance_cases.time_in_future': 'happenedAtUtc',
+  'insurance_cases.event_before_case': 'happenedAtUtc',
+  'insurance_cases.case_after_first_event': 'happenedAtUtc',
+  'insurance_cases.change_out_of_order': 'happenedAtUtc',
+};
+const CASE_WRITE: Record<string, string> = {
+  ...CASE_TIME,
+  'insurance_cases.handler_without_insurer': 'handledBy',
+  'insurance_cases.vehicle_not_available': 'vehicleId',
+  'insurance_cases.driver_not_available': 'driverId',
+  'insurance_cases.accident_case_not_available': 'sameAccidentCaseId',
+};
+/** Without its `Photos[i]`, a refused photo's message stands under the Photos section. */
+const CASE_PHOTOS: Record<string, string> = {
+  'insurance_cases.photo_not_a_picture': 'photos',
+  'insurance_cases.photo_too_large': 'photos',
+};
+
+/**
  * Refusals the app knows and deliberately keeps form-level: they name no input, so they arrive as the
  * dialog's banner in the API's own sentence. The grant of the Record deleter role (round 9) is
  * refused for an address outside the company's domain, naming the domain, and on an installation
@@ -169,6 +195,11 @@ const BY_OP: Record<string, Record<string, string>> = {
   'profile-email': EMAIL_CHANGE,
   'task-create': TASK_WRITE,
   'task-edit': TASK_WRITE,
+  'case-register': { ...CASE_WRITE, ...CASE_PHOTOS },
+  'case-edit': CASE_WRITE,
+  'case-event-add': { ...CASE_TIME, ...CASE_PHOTOS },
+  // Without its `RemovePhotoIds[i]`, a photo that is not the event's stands under the Photos section.
+  'case-event-edit': { ...CASE_TIME, 'insurance_cases.photo_not_in_event': 'removePhotoIds' },
   'correct-timeline': {
     ...PLANNED_DATES,
     'rental_assignments.return_time_invalid': 'closedAtUtc',

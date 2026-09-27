@@ -137,6 +137,25 @@ const BACKEND_CODES: readonly string[] = [
   'tasks.step_not_found',
   'tasks.step_not_in_task',
   'tasks.step_not_yours',
+  // insurance_cases (18) — InsuranceCaseErrors.cs, the backend's round 12 (Follow-up 17)
+  'insurance_cases.accident_case_not_available',
+  'insurance_cases.case_after_first_event',
+  'insurance_cases.change_out_of_order',
+  'insurance_cases.concurrency_conflict',
+  'insurance_cases.driver_not_available',
+  'insurance_cases.event_before_case',
+  'insurance_cases.event_not_found',
+  'insurance_cases.handler_without_insurer',
+  'insurance_cases.not_found',
+  'insurance_cases.not_your_event',
+  'insurance_cases.not_your_note',
+  'insurance_cases.note_not_found',
+  'insurance_cases.photo_not_a_picture',
+  'insurance_cases.photo_not_found',
+  'insurance_cases.photo_not_in_event',
+  'insurance_cases.photo_too_large',
+  'insurance_cases.time_in_future',
+  'insurance_cases.vehicle_not_available',
 ];
 
 describe('every code the app knows is one the API sends', () => {
@@ -217,6 +236,36 @@ describe('the refusals of the delete right (Follow-up 10)', () => {
       expect(KNOWN_CODES).toContain(code);
       expect(codeToField(code, 'record-deleter-grant'), code).toBeUndefined();
       expect(codeToField(code, 'role-grant'), code).toBeUndefined();
+    }
+  });
+});
+
+describe('the refusals of insurance cases land where they belong (Follow-up 17)', () => {
+  test.each([
+    ['insurance_cases.time_in_future', 'case-register', 'happenedAtUtc'],
+    ['insurance_cases.time_in_future', 'case-event-add', 'happenedAtUtc'],
+    ['insurance_cases.event_before_case', 'case-event-add', 'happenedAtUtc'],
+    ['insurance_cases.event_before_case', 'case-event-edit', 'happenedAtUtc'],
+    ['insurance_cases.case_after_first_event', 'case-edit', 'happenedAtUtc'],
+    ['insurance_cases.change_out_of_order', 'case-event-add', 'happenedAtUtc'],
+    ['insurance_cases.change_out_of_order', 'case-event-edit', 'happenedAtUtc'],
+    ['insurance_cases.handler_without_insurer', 'case-register', 'handledBy'],
+    ['insurance_cases.handler_without_insurer', 'case-edit', 'handledBy'],
+    ['insurance_cases.vehicle_not_available', 'case-edit', 'vehicleId'],
+    ['insurance_cases.driver_not_available', 'case-register', 'driverId'],
+    ['insurance_cases.accident_case_not_available', 'case-edit', 'sameAccidentCaseId'],
+    ['insurance_cases.photo_not_a_picture', 'case-register', 'photos'],
+    ['insurance_cases.photo_too_large', 'case-event-add', 'photos'],
+    ['insurance_cases.photo_not_in_event', 'case-event-edit', 'removePhotoIds'],
+  ])('%s on %s lands on %s', (code, op, field) => {
+    expect(codeToField(code, op)).toBe(field);
+  });
+
+  test('who may correct an entry is never an input: those refusals stay the dialog’s banner', () => {
+    for (const code of ['insurance_cases.not_your_event', 'insurance_cases.not_your_note', 'insurance_cases.concurrency_conflict']) {
+      for (const op of ['case-register', 'case-edit', 'case-event-add', 'case-event-edit', 'case-note-add', 'case-note-edit']) {
+        expect(codeToField(code, op), `${code} on ${op}`).toBeUndefined();
+      }
     }
   });
 });

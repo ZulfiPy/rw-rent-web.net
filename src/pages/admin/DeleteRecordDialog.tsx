@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { qk } from '@/api';
 import { deleteRecord } from '@/api/recordDeletions';
 import {
-  RecordDeletionReason, RecordKind,
+  RecordDeletionReason, RecordKind, type DeletableKind,
   type DeleteRecordRequest, type RecordDeletionResponse,
 } from '@/api/dto';
 import { isApiError, type Failure } from '@/api/problem';
@@ -46,7 +46,7 @@ export function deletionFormBlocked(form: DeletionForm): string | null {
  * rentals with their authorizations and interruptions, which the drivers' histories list; a driver
  * takes authorizations off rentals and clears a customer's link.
  */
-export function deletionInvalidates(kind: RecordKind): ReadonlyArray<readonly unknown[]> {
+export function deletionInvalidates(kind: DeletableKind): ReadonlyArray<readonly unknown[]> {
   const page = [qk.recordDeletions.all, qk.audit.all, qk.overview];
   switch (kind) {
     case RecordKind.RentalAssignment:

@@ -1,7 +1,7 @@
 import { get, post } from './client';
 import {
   RecordKind,
-  type CustomerDeletionCandidateResponse, type DeleteRecordRequest,
+  type CustomerDeletionCandidateResponse, type DeletableKind, type DeleteRecordRequest,
   type DriverAuthorizationDeletionCandidateResponse, type DriverDeletionCandidateResponse,
   type InterruptionDeletionCandidateResponse, type PagedQuery, type PagedResponse,
   type RecordDeletionCandidateCountsResponse, type RecordDeletionCandidatesQuery,
@@ -24,10 +24,10 @@ export interface CandidateByKind {
   [RecordKind.Driver]: DriverDeletionCandidateResponse;
 }
 
-export type AnyCandidate = CandidateByKind[RecordKind];
+export type AnyCandidate = CandidateByKind[DeletableKind];
 
-/** The path segment of each kind's candidate list. */
-export const CANDIDATE_PATH: Record<RecordKind, string> = {
+/** The path segment of each kind's candidate list; an insurance case has none (round 12). */
+export const CANDIDATE_PATH: Record<DeletableKind, string> = {
   [RecordKind.RentalAssignment]: 'rental-assignments',
   [RecordKind.DriverAuthorization]: 'driver-authorizations',
   [RecordKind.Interruption]: 'interruptions',
@@ -37,7 +37,7 @@ export const CANDIDATE_PATH: Record<RecordKind, string> = {
 };
 
 /** One kind's candidates: newest created first, filtered by Show and searched as that kind's list is. */
-export const listCandidates = <K extends RecordKind>(kind: K, query: RecordDeletionCandidatesQuery = {}) =>
+export const listCandidates = <K extends DeletableKind>(kind: K, query: RecordDeletionCandidatesQuery = {}) =>
   get<PagedResponse<CandidateByKind[K]>>(`/api/record-deletions/candidates/${CANDIDATE_PATH[kind]}`, query);
 
 /** The six totals under the filter, for the tab strip. The search does not narrow them. */

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   RecordDeletionBlockReason, RecordDeletionReason, RecordKind, type RecordDeletionBlockResponse,
-  type RecordDeletionTakes,
+  type DeletableKind, type RecordDeletionTakes,
 } from '@/api/dto';
 import {
   AUDIT_CONSEQUENCE, blockSentence, candidateDescription, cannotBeRestored, deletionConsequences,
@@ -119,7 +119,8 @@ describe('the dialog', () => {
   });
 
   test('every kind ends with the audit line; a vehicle, a customer and a driver say what they take along', () => {
-    for (const kind of Object.values(RecordKind)) {
+    // Every kind the page deletes; an insurance case (round 12) is never one of them.
+    for (const kind of Object.values(RecordKind).filter((k): k is DeletableKind => k !== RecordKind.InsuranceCase)) {
       expect(deletionConsequences(kind, takes(0, 0, 0)).at(-1)).toBe(AUDIT_CONSEQUENCE);
     }
     expect(deletionConsequences(RecordKind.Vehicle, vehicleWithRentals.deletion.takes)).toEqual([

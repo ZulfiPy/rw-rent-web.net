@@ -141,7 +141,10 @@ export const DELETION_REASON_LABEL: Record<RecordDeletionReason, string> = {
   [RecordDeletionReason.Other]: 'Other',
 };
 
-/** A deletable record's kind, as the page's tabs, dialog and history name it. */
+/**
+ * A record's kind, as the Delete records page's tabs, dialog and history name it; an insurance case
+ * is named only among the records that block a vehicle's deletion (round 12).
+ */
 export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
   [RecordKind.RentalAssignment]: 'Rental assignment',
   [RecordKind.DriverAuthorization]: 'Driver authorization',
@@ -149,6 +152,7 @@ export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
   [RecordKind.Vehicle]: 'Vehicle',
   [RecordKind.Customer]: 'Customer',
   [RecordKind.Driver]: 'Driver',
+  [RecordKind.InsuranceCase]: 'Insurance case',
 };
 
 /**

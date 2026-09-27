@@ -25,6 +25,10 @@ export const PERMISSIONS = [
   // Tasks (the backend's round 10): the Viewer's, and so the Fleet Manager's and the Company
   // Principal's. The System Administrator and a Record deleter alone never hold it.
   'Tasks.Use',
+  // Insurance cases (the backend's round 12): reading for the Viewer, and so for the Fleet Manager and
+  // the Company Principal; managing for those two and the System Administrator, who also reads. A
+  // Record deleter alone holds neither.
+  'InsuranceCases.Read', 'InsuranceCases.Manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

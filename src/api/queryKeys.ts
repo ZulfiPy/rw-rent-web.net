@@ -3,6 +3,7 @@ import type {
   DriversQuery, InterruptionsQuery, RecordDeletionCandidatesQuery, RecordDeletionShow, RecordKind,
   RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery, SystemAdministratorTransferQuery,
   UsersQuery, VehiclesQuery, PagedQuery, Uuid, WorkTaskQuery, WorkTaskToDoQuery,
+  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery,
 } from './dto';
 
 /** One key factory per resource. Mutations invalidate by prefix: qk.users.all, qk.roles.of(id), … */
@@ -83,5 +84,18 @@ export const qk = {
     toDo: (q: WorkTaskToDoQuery) => ['tasks', 'to-do', q] as const,
     people: ['tasks', 'people'] as const,
     detail: (id: Uuid) => ['tasks', 'detail', id] as const,
+  },
+  /**
+   * Insurance cases (Follow-up 17): one prefix, so every write refreshes the case, the three views,
+   * the counts, the Overview's card and tile and the navigation's count at once.
+   */
+  insuranceCases: {
+    all: ['insurance-cases'] as const,
+    list: (q: InsuranceCaseQuery) => ['insurance-cases', 'list', q] as const,
+    counts: ['insurance-cases', 'counts'] as const,
+    detail: (id: Uuid) => ['insurance-cases', 'detail', id] as const,
+    insurers: ['insurance-cases', 'insurers'] as const,
+    accidentChoices: (q: InsuranceCaseAccidentChoicesQuery) => ['insurance-cases', 'accident-choices', q] as const,
+    driverSuggestion: (q: InsuranceCaseDriverSuggestionQuery) => ['insurance-cases', 'driver-suggestion', q] as const,
   },
 };

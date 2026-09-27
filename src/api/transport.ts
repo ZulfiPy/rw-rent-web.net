@@ -21,6 +21,12 @@ export type AssertQuery<Q extends Query> = Q;
 export interface RequestInitLike {
   query?: Query;
   body?: unknown;
+  /**
+   * A `multipart/form-data` body instead of JSON (Follow-up 17): an insurance case's registration and
+   * a new event carry their photos this way. The browser writes the boundary, so no Content-Type is
+   * set for it.
+   */
+  form?: FormData;
 }
 
 export interface Transport {
@@ -28,6 +34,7 @@ export interface Transport {
 }
 
 let active: Transport | undefined;
+let resourceBase = '';
 
 /** Called once at bootstrap. Phase 3 swaps the mock transport for the http one here and nowhere else. */
 export function installTransport(t: Transport): void {
@@ -38,3 +45,11 @@ export function transport(): Transport {
   if (!active) throw new Error('No transport installed — call installTransport() before any api call.');
   return active;
 }
+
+/** Where the API answers, for what the browser reads by address itself: a photo's picture in an img. */
+export function installResourceBase(baseUrl: string): void {
+  resourceBase = baseUrl;
+}
+
+/** The full address of an API path the browser loads on its own; the bare path before bootstrap. */
+export const resourceUrl = (path: string) => `${resourceBase}${path}`;

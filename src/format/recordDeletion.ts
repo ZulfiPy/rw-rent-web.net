@@ -1,5 +1,5 @@
 import {
-  AssignmentStatus, RecordDeletionBlockReason, RecordKind,
+  AssignmentStatus, RecordDeletionBlockReason, RecordKind, type DeletableKind,
   type CustomerDeletionCandidateResponse, type DriverAuthorizationDeletionCandidateResponse,
   type DriverDeletionCandidateResponse, type InterruptionDeletionCandidateResponse,
   type RecordDeletionBlockResponse, type RecordDeletionReason, type RecordDeletionResponse,
@@ -34,7 +34,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
  * out of use is a cancelled or ended rental, a stopped authorization, an ended interruption, an
  * inactive vehicle, customer or driver.
  */
-const IN_USE: Record<RecordKind, [one: string, many: string]> = {
+const IN_USE: Record<DeletableKind, [one: string, many: string]> = {
   [RecordKind.RentalAssignment]: ['planned or active rental assignment', 'planned or active rental assignments'],
   [RecordKind.DriverAuthorization]: ['open driver authorization', 'open driver authorizations'],
   [RecordKind.Interruption]: ['open interruption', 'open interruptions'],
@@ -48,7 +48,7 @@ const IN_USE: Record<RecordKind, [one: string, many: string]> = {
  * holds, from the server's counts, or undefined while they are not known. With nothing out of use,
  * each of them is one in use. Null when Everything holds none either, so the page offers no switch.
  */
-export function outOfUseEmpty(kind: RecordKind, everything: number | undefined): string | null {
+export function outOfUseEmpty(kind: DeletableKind, everything: number | undefined): string | null {
   if (everything === 0) return null;
   if (everything === undefined) return 'Everything lists the records still in use.';
   const [one, many] = IN_USE[kind];
@@ -214,7 +214,7 @@ const NOTHING_ELSE = 'Nothing else goes with it.';
  * What a deletion does, in the dialog's consequence box (§9, 4), built from the row's `takes` with
  * exact counts. Every kind ends with the audit line.
  */
-export function deletionConsequences(kind: RecordKind, takes: RecordDeletionTakes): string[] {
+export function deletionConsequences(kind: DeletableKind, takes: RecordDeletionTakes): string[] {
   const noun = kindNoun(kind);
   switch (kind) {
     case RecordKind.RentalAssignment: {

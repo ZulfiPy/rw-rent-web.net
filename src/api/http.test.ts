@@ -101,3 +101,24 @@ describe('http transport', () => {
     await expect(t.request('POST', '/api/auth/logout')).resolves.toBeUndefined();
   });
 });
+
+describe('a form body (Follow-up 17)', () => {
+  it('goes as the browser encodes it: no JSON content type, the antiforgery header, the form itself', async () => {
+    const calls = install([antiforgery, () => json(201, { id: 'case-1' })]);
+    const t = createHttpTransport('http://api.test');
+    const form = new FormData();
+    form.append('Damage', 'Rear bumper dented');
+    form.append('photos', new Blob(['x'], { type: 'image/jpeg' }), 'IMG_1.jpg');
+
+    const body = await t.request<{ id: string }>('POST', '/api/insurance-cases', { form });
+
+    expect(body.id).toBe('case-1');
+    const sent = calls[1]!;
+    expect(sent.url).toBe('http://api.test/api/insurance-cases');
+    expect(sent.init.method).toBe('POST');
+    expect(sent.init.body).toBe(form);
+    const headers = sent.init.headers as Record<string, string>;
+    expect(headers['Content-Type']).toBeUndefined();
+    expect(headers['X-RWRent-Antiforgery']).toBe('token-1');
+  });
+});

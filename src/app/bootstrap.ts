@@ -1,4 +1,5 @@
 import { installTransport } from '@/api';
+import { installResourceBase } from '@/api/transport';
 import { createHttpTransport } from '@/api/http';
 
 /**
@@ -14,4 +15,6 @@ export function bootstrapApi(): void {
     );
   }
   installTransport(createHttpTransport(baseUrl ?? ''));
+  // A photo's picture is read by the browser from the same API (Follow-up 17).
+  installResourceBase(baseUrl ?? '');
 }
