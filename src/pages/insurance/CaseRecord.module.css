@@ -1,0 +1,195 @@
+/* A case's page (Follow-up 17), from the handover's values (`Context/prototype/insurance/HANDOVER.md` e,
+   `new-styles.css`): the two columns of panels, the timeline, the thumbnails, the notes, the photo
+   groups and the other cases of the accident. The hero band, the panels and the fact grids are
+   `src/ui`'s. */
+
+.dim { color: var(--fg-3); }
+/* The case waits for us: the warn tone at 500. */
+.us { color: var(--warn); font-weight: 500; }
+
+/* Driver and Rental in the hero: the quiet dark link, as a task's record is. */
+.heroLink {
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 500;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-3);
+  overflow-wrap: anywhere;
+}
+.heroLink:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
+
+/* From 1024 up two columns, 1.7 : 1 with the right one at least 300px; one column below. Each column
+   stacks its panels on its own, so a long timeline never stretches the notes beside it. */
+.columns { display: grid; gap: 14px; align-items: start; }
+.columns[data-cols='2'] { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); }
+.columns[data-cols='1'] { grid-template-columns: minmax(0, 1fr); }
+.column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* The timeline: a 22px rail and a 12px gap; the dot 9px, 17px from the top of its entry, with a 4px
+   ring in the surface colour; one 1px line from the first dot to the last. */
+.timeline { margin: 0; padding: 6px 0 8px; list-style: none; display: flex; flex-direction: column; }
+.entry { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 12px; padding: 0 17px; }
+.rail { position: relative; display: flex; justify-content: center; }
+.timeline[data-line='true'] .rail::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--line-2);
+}
+.timeline[data-line='true'] .entry:first-child .rail::before { top: 22px; }
+.timeline[data-line='true'] .entry:last-child .rail::before { bottom: calc(100% - 22px); }
+.dot {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  margin-top: 17px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line-3);
+  box-shadow: 0 0 0 4px var(--surface);
+}
+/* The case's own entry is solid; an event that changed the status takes that status's tone; the
+   others stay hollow. */
+.dot[data-kind='case'] { background: var(--fg-2); border-color: var(--fg-2); }
+.dot[data-tone='warn'] { background: var(--warn); border-color: var(--warn); }
+.dot[data-tone='info'] { background: var(--info); border-color: var(--info); }
+.dot[data-tone='ok'] { background: var(--ok); border-color: var(--ok); }
+.dot[data-tone='mute'] { background: var(--mute); border-color: var(--mute); }
+
+.entryBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 0 14px; }
+.entryWhen { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.when { font-family: var(--font-mono); font-size: 12px; color: var(--fg-2); }
+.later { font-size: 12px; color: var(--fg-3); }
+.entryTitle { font-size: 13.5px; font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+.place { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; color: var(--fg-2); }
+.placeIcon { flex: none; margin-top: 2px; font-size: 15px; color: var(--fg-3); }
+.placeText { min-width: 0; overflow-wrap: anywhere; }
+.entryText {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg-2);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.change {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.by { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; font-size: 12px; color: var(--fg-3); }
+/* Edit under one's own entry: underlined text, 44px high on the sheet tier. */
+.edit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.edit:hover { color: var(--fg); }
+@media (max-width: 639px) {
+  .edit { min-height: 44px; }
+}
+
+/* Thumbnails: 76 × 57 on the timeline (64 × 48 below 640), 96 × 72 in the Photos panel (88 × 66). */
+.thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 76px;
+  height: 57px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--fg-4);
+  cursor: zoom-in;
+}
+.thumb[data-size='panel'] { width: 96px; height: 72px; }
+.thumb:hover { border-color: var(--line-3); color: var(--fg-3); }
+.thumbImg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.thumbIcon { font-size: 18px; }
+@media (max-width: 639px) {
+  .thumb { width: 64px; height: 48px; }
+  .thumb[data-size='panel'] { width: 88px; height: 66px; }
+}
+
+/* Notes: rows 13 × 17, the text 13.5/1.55. */
+.notes { display: flex; flex-direction: column; }
+.note { display: flex; flex-direction: column; gap: 6px; padding: 13px 17px; border-bottom: 1px solid var(--line); }
+.note:last-child { border-bottom: none; }
+.noteText {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--fg);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* The Photos panel: its groups, each with its entry's title and date. */
+.groups { display: flex; flex-direction: column; gap: 16px; padding: 14px 17px 17px; }
+.group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.groupHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.groupTitle { font-size: 12.5px; font-weight: 500; color: var(--fg); overflow-wrap: anywhere; }
+.groupWhen { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-3); }
+
+/* The other cases of the accident: a dark link with its rule, its type under it, its status chip. */
+.links { display: flex; flex-direction: column; }
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 13px 17px;
+  border-bottom: 1px solid var(--line);
+}
+.linkRow:last-child { border-bottom: none; }
+.linkText { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.linkTitleRow { display: flex; min-width: 0; }
+.linkTitle {
+  max-width: 100%;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-3);
+  overflow-wrap: anywhere;
+}
+.linkTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
+.linkSub { font-size: 12px; color: var(--fg-3); }
+
+.description {
+  margin: 0;
+  padding: 14px 17px 16px;
+  max-width: 80ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

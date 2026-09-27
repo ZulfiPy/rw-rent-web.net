@@ -11,7 +11,7 @@ import styles from './RecordHeader.module.css';
  */
 export function RecordHeader({
   backTo, backLabel, title, mono, description, badges, code, pageId, headerActions, actionsKey,
-  chip, actions, stackActions, children,
+  headerActionsBelow, chip, actions, stackActions, children,
 }: {
   backTo: string;
   backLabel: string;
@@ -25,6 +25,8 @@ export function RecordHeader({
   headerActions?: ReactNode;
   /** Everything variable about those actions, so the bar re-renders when they change. */
   actionsKey?: string;
+  /** Those actions on a row of their own under the title at every width (an insurance case's). */
+  headerActionsBelow?: boolean;
   /** The prototype's `heroChip`: the record's lifecycle state, at the band's leading edge. */
   chip?: { label: string; tone: Tone; dot: string };
   /** The prototype's `heroActions`, inside the band at its trailing edge. */
@@ -43,6 +45,7 @@ export function RecordHeader({
     pageId,
     actions: headerActions,
     actionsKey,
+    actionsBelow: headerActionsBelow,
   });
 
   if (!children && !chip && !actions) return null;

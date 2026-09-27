@@ -8,7 +8,8 @@ import { SecurityAudit } from '@/pages/audit/SecurityAudit';
 import { AuditEntry } from '@/pages/audit/AuditEntry';
 import { Overview } from '@/pages/overview/Overview';
 import { NeedsAttention } from '@/pages/overview/NeedsAttention';
-import { InsuranceCases } from '@/pages/simple/Placeholders';
+import { InsuranceCases } from '@/pages/insurance/InsuranceCases';
+import { CaseRecord } from '@/pages/insurance/CaseRecord';
 import { Tasks } from '@/pages/tasks/Tasks';
 import { TaskRecord } from '@/pages/tasks/TaskRecord';
 import { Assignments } from '@/pages/fleet/Assignments';
@@ -30,7 +31,7 @@ export interface NavEntry {
   group: string;
   label: string;
   icon: string;
-  badge?: 'queue' | 'registrations' | 'tasks';
+  badge?: 'queue' | 'registrations' | 'tasks' | 'insurance';
 }
 
 export interface AppRoute {
@@ -104,11 +105,21 @@ export const ROUTES: readonly AppRoute[] = [
     element: <TaskRecord />,
     permission: 'Tasks.Use',
   },
+  /*
+   * Insurance cases (Follow-up 17): the backend's round 12 gives `InsuranceCases.Read` to the Viewer,
+   * the Fleet Manager, the Company Principal and the System Administrator, never to a Record deleter
+   * alone. The count on the entry is the cases waiting for us.
+   */
   {
     path: '/insurance-cases',
     element: <InsuranceCases />,
-    permission: null,
-    nav: { group: 'Operations', label: 'Insurance cases', icon: 'shield' },
+    permission: 'InsuranceCases.Read',
+    nav: { group: 'Operations', label: 'Insurance cases', icon: 'shield', badge: 'insurance' },
+  },
+  {
+    path: '/insurance-cases/:caseId',
+    element: <CaseRecord />,
+    permission: 'InsuranceCases.Read',
   },
   {
     path: '/vehicles',
@@ -221,7 +232,7 @@ export interface NavItem {
   label: string;
   icon: string;
   permission: Permission | null;
-  badge?: 'queue' | 'registrations' | 'tasks';
+  badge?: 'queue' | 'registrations' | 'tasks' | 'insurance';
 }
 
 export const NAV_GROUPS: ReadonlyArray<{ label: string; items: readonly NavItem[] }> = (() => {

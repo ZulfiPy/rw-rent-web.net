@@ -263,6 +263,9 @@
 .idCopy:hover { color: var(--fg); border-color: var(--line-3); }
 .idCopyIcon { font-size: 14px; }
 .headerActions { display: flex; align-items: center; align-self: flex-start; gap: 9px; flex-wrap: wrap; }
+/* A record whose actions sit under its title at every width (an insurance case, Follow-up 17). */
+.headerRow[data-stack='true'] { flex-direction: column; gap: 12px; }
+.headerRow[data-stack='true'] .titleBlock { min-width: 0; }
 
 .main { flex: 1; min-width: 0; max-width: 100%; display: flex; flex-direction: column; overflow: hidden; }
 .menu {

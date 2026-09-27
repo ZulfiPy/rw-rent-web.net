@@ -1,0 +1,112 @@
+/* The large photo view (Follow-up 17), from the handover's values (HANDOVER.md e, `new-styles.css`
+   L1757–1784): above the dialogs' layer (75 over 70; the two never open together), at most 980px
+   wide and 24px from the viewport, the picture area 4:3 and never over 68vh; full-bleed below 640. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, .8);
+}
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  box-shadow: var(--sh-3);
+  overflow: hidden;
+}
+.head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.heading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.entry { font-size: 14px; font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
+.when { font-size: 12.5px; color: var(--fg-3); overflow-wrap: anywhere; }
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg-2);
+}
+.close:hover { background: var(--surface-2); color: var(--fg); }
+.closeIcon { font-size: 19px; }
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 68vh;
+  background: var(--inset);
+  color: var(--fg-4);
+}
+.img { display: block; max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; }
+.placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; text-align: center; }
+.placeholderIcon { font-size: 56px; }
+.placeholderName { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); overflow-wrap: anywhere; }
+
+.step {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  color: var(--fg);
+  box-shadow: var(--sh-2);
+}
+.step:hover { background: var(--surface-2); }
+.step[data-side='prev'] { left: 12px; }
+.step[data-side='next'] { right: 12px; }
+.stepIcon { font-size: 20px; }
+
+.foot {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+.name { font-family: var(--font-mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.counter { margin-left: auto; font-family: var(--font-mono); }
+
+/* The phone: full-bleed, square corners, 44px buttons. */
+@media (max-width: 639px) {
+  .overlay { padding: 0; }
+  .panel { border-radius: 0; border: none; height: 100%; }
+  .close, .step { width: 44px; height: 44px; }
+  .stage { max-height: none; aspect-ratio: auto; }
+}

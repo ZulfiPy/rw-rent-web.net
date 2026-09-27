@@ -4,6 +4,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { primaryRoleLabel } from '@/format/labels';
 import { useOpenWork } from '@/pages/overview/useOpenWork';
 import { useTaskCounts } from '@/pages/tasks/taskAddress';
+import { useCaseCounts } from '@/pages/insurance/caseAddress';
 import { Chip } from '@/ui/Chip';
 import { NAV_GROUPS, type NavItem } from './routes';
 import { PageHeaderProvider, type PageHeaderModel } from './pageHeader';
@@ -97,6 +98,8 @@ export function AppShell({ companyName }: { companyName: string }) {
   const work = useOpenWork();
   // Only for a holder of Tasks.Use: without it nothing is asked and the entry is not offered.
   const tasks = useTaskCounts();
+  // Only for a holder of InsuranceCases.Read, likewise: the cases waiting for us (Follow-up 17).
+  const cases = useCaseCounts();
 
   useEffect(() => setDrawerOpen(false), [location.pathname, location.search]);
 
@@ -110,6 +113,7 @@ export function AppShell({ companyName }: { companyName: string }) {
     if (kind === 'queue') return work.items.length || undefined;
     if (kind === 'registrations') return work.pendingRegistrations || undefined;
     if (kind === 'tasks') return tasks.counts?.toDo || undefined;
+    if (kind === 'insurance') return cases.counts?.waitingForUs || undefined;
     return undefined;
   };
 
@@ -248,7 +252,7 @@ export function AppShell({ companyName }: { companyName: string }) {
                 {header ? <Breadcrumb crumbs={header.crumbs} /> : null}
               </div>
               {header ? (
-                <div className={styles.headerRow}>
+                <div className={styles.headerRow} data-stack={header.actionsBelow ? 'true' : undefined}>
                   <div className={styles.titleBlock}>
                     <div className={styles.titleLine}>
                       <h1 className={styles.h1} data-mono={header.mono ? 'true' : undefined}>{header.title}</h1>

@@ -55,12 +55,16 @@ const VIEWER = [
   'RentalAssignments.Read', 'DriverAuthorizations.Read', 'Interruptions.Read',
   // Since the backend's round 10 (Follow-up 12): the Viewer's, and so the two roles above it.
   'Tasks.Use',
+  // Since the backend's round 12 (Follow-up 17): reading insurance cases, likewise.
+  'InsuranceCases.Read',
 ];
 const FLEET_MANAGER = [
   ...VIEWER,
   'Company.Update', 'Users.ReviewRegistrations', 'Users.ManageRegistrations', 'Users.ActivateViewer',
   'Drivers.Manage', 'Customers.Manage', 'Vehicles.Manage', 'RentalAssignments.Manage',
   'DriverAuthorizations.Manage', 'Interruptions.Manage',
+  // Since the backend's round 12: managing insurance cases, the Fleet Manager's and so the Principal's.
+  'InsuranceCases.Manage',
 ];
 const COMPANY_PRINCIPAL = [
   ...FLEET_MANAGER,
@@ -199,9 +203,10 @@ describe('the same destination, written differently', () => {
 
 describe('what each destination needs', () => {
   test('the pages open to every signed-in persona need nothing', () => {
-    // Tasks left this list in Follow-up 12: it needs Tasks.Use (below).
+    // Tasks left this list in Follow-up 12: it needs Tasks.Use; Insurance cases in Follow-up 17: it needs
+    // InsuranceCases.Read (both below).
     for (const address of [
-      '/overview', '/needs-attention', '/insurance-cases', '/profile',
+      '/overview', '/needs-attention', '/profile',
     ]) {
       expect(permissionFor(address), address).toBeNull();
       expect(mayOpen(address, []), address).toBe(true);
@@ -291,9 +296,10 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     const reachable = ROUTES
       .filter((route) => route.path !== '*' && mayOpen(route.path, RECORD_DELETER))
       .map((route) => route.path);
-    // Not Tasks since Follow-up 12: the Record deleter role holds Records.Delete alone.
+    // Not Tasks since Follow-up 12, nor Insurance cases since Follow-up 17: the Record deleter role
+    // holds Records.Delete alone.
     expect(reachable).toEqual([
-      '/overview', '/needs-attention', '/insurance-cases', '/delete-records', '/profile',
+      '/overview', '/needs-attention', '/delete-records', '/profile',
     ]);
     const offered = NAV_GROUPS.flatMap((group) => group.items)
       .filter((item) => item.permission !== null && createCan(RECORD_DELETER)(item.permission))
@@ -305,9 +311,10 @@ describe('the tester’s T-001, as the three ordinary roles', () => {
     const reachable = ROUTES
       .filter((route) => route.path !== '*' && mayOpen(route.path, []))
       .map((route) => route.path);
-    // Not Tasks since Follow-up 12, which needs Tasks.Use.
+    // Not Tasks since Follow-up 12, which needs Tasks.Use, nor Insurance cases since Follow-up 17,
+    // which needs InsuranceCases.Read.
     expect(reachable).toEqual([
-      '/overview', '/needs-attention', '/insurance-cases', '/profile',
+      '/overview', '/needs-attention', '/profile',
     ]);
   });
 });
@@ -345,7 +352,45 @@ describe('Tasks needs Tasks.Use (Follow-up 12)', () => {
     expect(offered(VIEWER)).toContain('/tasks');
     expect(offered(SYSTEM_ADMINISTRATOR)).not.toContain('/tasks');
     expect(offered(RECORD_DELETER)).not.toContain('/tasks');
-    // Insurance cases is untouched: offered to everyone, as before.
-    expect(offered([])).toContain('/insurance-cases');
+    // Follow-up 17: Insurance cases is no longer offered to everyone; it needs InsuranceCases.Read.
+    expect(offered([])).not.toContain('/insurance-cases');
+  });
+});
+
+describe('Insurance cases needs InsuranceCases.Read (Follow-up 17)', () => {
+  test('the list and a case’s page name it, by any spelling', () => {
+    for (const address of ['/insurance-cases', '/Insurance-Cases', '/INSURANCE-CASES', '/%69nsurance-cases', '/insurance-cases?tab=us']) {
+      expect(land(address).path, address).toBe('/insurance-cases');
+      expect(permissionFor(address), address).toBe('InsuranceCases.Read');
+    }
+    for (const address of ['/insurance-cases/c3e5a7b9-0001', '/Insurance-Cases/C3E5A7B9-0001', '/insurance-cases/x?tab=closed']) {
+      expect(land(address).path, address).toBe('/insurance-cases/:caseId');
+      expect(permissionFor(address), address).toBe('InsuranceCases.Read');
+    }
+  });
+
+  test('the four roles that hold it open Insurance cases; a Record deleter alone and an API before round 12 do not', () => {
+    for (const persona of [VIEWER, FLEET_MANAGER, COMPANY_PRINCIPAL, SYSTEM_ADMINISTRATOR]) {
+      expect(mayOpen('/insurance-cases', persona)).toBe(true);
+      expect(mayOpen('/insurance-cases/x', persona)).toBe(true);
+    }
+    // Round 11's Viewer, as the owner's API still answers: no insurance permission at all.
+    const round11Viewer = VIEWER.filter((permission) => !permission.startsWith('InsuranceCases.'));
+    for (const persona of [RECORD_DELETER, round11Viewer, []]) {
+      expect(mayOpen('/insurance-cases', persona)).toBe(false);
+      expect(mayOpen('/INSURANCE-CASES', persona)).toBe(false);
+      expect(mayOpen('/insurance-cases/x', persona)).toBe(false);
+    }
+  });
+
+  test('the navigation offers Insurance cases with its count only to a holder', () => {
+    const entry = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.to === '/insurance-cases');
+    expect(entry).toMatchObject({ label: 'Insurance cases', icon: 'shield', permission: 'InsuranceCases.Read', badge: 'insurance' });
+    const offered = (permissions: readonly string[]) => NAV_GROUPS.flatMap((group) => group.items)
+      .filter((item) => item.permission === null || createCan(permissions)(item.permission))
+      .map((item) => item.to);
+    expect(offered(VIEWER)).toContain('/insurance-cases');
+    expect(offered(SYSTEM_ADMINISTRATOR)).toContain('/insurance-cases');
+    expect(offered(RECORD_DELETER)).not.toContain('/insurance-cases');
   });
 });

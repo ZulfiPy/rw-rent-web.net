@@ -25,6 +25,11 @@ export interface PageHeaderModel {
    */
   actions?: ReactNode;
   actionsKey?: string | undefined;
+  /**
+   * The actions on a row of their own under the title at every width, not beside it: an insurance
+   * case's four (Follow-up 17), which would otherwise squeeze a long title.
+   */
+  actionsBelow?: boolean | undefined;
 }
 
 interface Store {
@@ -52,7 +57,7 @@ export function usePageHeader(model: PageHeaderModel) {
   const { setHeader } = useContext(HeaderContext);
   const key = JSON.stringify([
     model.crumbs, model.title, model.description, model.mono, model.badges, model.code,
-    model.pageId, model.actionsKey,
+    model.pageId, model.actionsKey, model.actionsBelow,
   ]);
   useEffect(() => {
     setHeader(model);

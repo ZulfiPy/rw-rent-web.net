@@ -442,10 +442,12 @@ describe('the count on Tasks in the sidebar (F12-6)', () => {
     expect(around(after, 'aria-label="Tasks"', 'a')).toMatch(/_badge_[^"]*">1<\/span>/);
   });
 
-  test('without Tasks.Use there is no entry and no count is asked for; Insurance cases stays', () => {
+  test('without Tasks.Use there is no entry and no count is asked for; Insurance cases needs its own permission', () => {
     const { markup, client } = shell(meAdmin, []);
     expect(markup).not.toContain('aria-label="Tasks"');
-    expect(markup).toContain('aria-label="Insurance cases"');
+    // Follow-up 17: round 10's administrator holds no InsuranceCases.Read, as no reader of an API before
+    // round 12 does, so the entry is not offered either.
+    expect(markup).not.toContain('aria-label="Insurance cases"');
     const counts = client.getQueryCache().find({ queryKey: qk.tasks.counts });
     expect(counts && enabled(counts)).toBe(false);
   });

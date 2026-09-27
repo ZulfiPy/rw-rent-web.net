@@ -113,7 +113,7 @@ describe('on the phone the Tasks tab bar spans the list (F16-2)', () => {
     }
   });
 
-  test('only Tasks draws the compact strip, so the other three pages’ bars do not change', () => {
+  test('only Tasks and Insurance cases draw the compact strip, so the other three pages’ bars do not change', () => {
     const files: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {
@@ -124,10 +124,14 @@ describe('on the phone the Tasks tab bar spans the list (F16-2)', () => {
     };
     walk(new URL('..', import.meta.url).pathname);
     const users = files.flatMap((path) => [...readFileSync(path, 'utf8').matchAll(/<RecordTabs\b([^>]*?)\/?>/gs)].map((use) => ({ path, props: use[1]! })));
+    // Follow-up 17: the Insurance cases list draws the same compact strip as Tasks, as wide as the list
+    // on the phone; the other three pages' strips stay as they were.
     expect(users.map((use) => use.path.split('/src/')[1]).sort()).toEqual([
-      'pages/account/Profile.tsx', 'pages/admin/DeleteRecords.tsx', 'pages/fleet/AssignmentRecord.tsx', 'pages/tasks/Tasks.tsx',
+      'pages/account/Profile.tsx', 'pages/admin/DeleteRecords.tsx', 'pages/fleet/AssignmentRecord.tsx',
+      'pages/insurance/InsuranceCases.tsx', 'pages/tasks/Tasks.tsx',
     ]);
-    expect(users.filter((use) => /\bcompact\b/.test(use.props)).map((use) => use.path.split('/src/')[1])).toEqual(['pages/tasks/Tasks.tsx']);
+    expect(users.filter((use) => /\bcompact\b/.test(use.props)).map((use) => use.path.split('/src/')[1]).sort())
+      .toEqual(['pages/insurance/InsuranceCases.tsx', 'pages/tasks/Tasks.tsx']);
     for (const markup of views()) expect(markup).toContain('role="tablist" data-fade="none" data-compact="true"');
   });
 });

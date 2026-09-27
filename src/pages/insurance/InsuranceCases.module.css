@@ -1,0 +1,43 @@
+/* The Insurance cases list (Follow-up 17), from the handover's values (`Context/prototype/insurance/
+   HANDOVER.md` e, `new-styles.css`): each view's column widths, the folded band, and the phone card.
+   Every value is a design token the app already uses; the list, table, card and tab vocabularies are
+   `src/ui`'s. */
+
+/* From 1024 up: Case, Handled by and Last event share the spare width and their text wraps; Status,
+   Waiting for (or At fault) and Closed hold their widths. The table never takes less than 920px. */
+.table { min-width: 920px; }
+.cCase { width: auto; }
+.cStatus { width: 132px; }
+.cWaiting { width: 170px; }
+.cFault { width: 150px; }
+.cHandled { width: auto; }
+.cLast { width: auto; }
+.cClosed { width: 130px; }
+
+/* The folded band (768–1023): fixed layout, the fixed widths at 71%, Handled by folded under the case
+   (the shared `foldTablet` / `showTablet`); headings may wrap. At 653px nothing scrolls. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; min-width: 653px; }
+  .table th { white-space: normal; }
+  .cStatus { width: 94px; }
+  .cWaiting { width: 121px; }
+  .cFault { width: 107px; }
+  .cClosed { width: 92px; }
+}
+
+/* A cell's own text wraps anywhere rather than widening the table; the fold's ellipsis never cuts it. */
+.cellText { overflow-wrap: anywhere; text-wrap: pretty; white-space: normal; }
+.dim { color: var(--fg-3); }
+/* The case waits for us: the warn tone at 500, in the cell and on the card. */
+.us { color: var(--warn); font-weight: 500; }
+
+/* The phone card (below 768) is the other lists' card: 14 × 16 padding with an 11px gap, the title
+   wrapping with no line under it, the status chip top right, and two columns of facts whose right one
+   is flush right. */
+.card { gap: 11px; cursor: pointer; }
+.cardTitle { overflow-wrap: anywhere; }
+.cardFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.cardFacts .us { color: var(--warn); font-weight: 500; }
+.cardFacts .cardDim { color: var(--fg-3); }
+.cardSub { font-size: 11.5px; color: var(--fg-3); }
+.cardSubMono { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-3); }
