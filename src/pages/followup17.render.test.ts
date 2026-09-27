@@ -368,6 +368,16 @@ describe('a case’s page (F17-3)', () => {
     expect(mpr).toMatch(/>Driver<\/span><span[^>]*><span[^>]*><span class="_dim_[^"]*">Not known<\/span>/);
   });
 
+  test('while the case loads, the hero says nothing it does not know yet', () => {
+    const { markup } = renderAs(h(CaseRecord), {
+      at: '/insurance-cases/loading', route: '/insurance-cases/:caseId', me: meDita,
+    });
+    expect(markup).not.toContain('Not known');
+    expect(markup).not.toContain('Not rented then');
+    expect(markup).not.toContain('Not decided yet');
+    expect(count(markup, '>—<')).toBeGreaterThanOrEqual(6);
+  });
+
   test('a case that does not exist', () => {
     const { markup } = renderAs(h(CaseRecord), {
       at: '/insurance-cases/gone', route: '/insurance-cases/:caseId', me: meDita,

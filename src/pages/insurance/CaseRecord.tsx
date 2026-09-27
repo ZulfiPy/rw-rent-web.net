@@ -377,13 +377,13 @@ export function CaseRecord() {
         />
         <HeaderFact
           label="Driver"
-          value={kase?.driverDisplayName
+          value={!kase ? '—' : kase.driverDisplayName
             ? driverTo ? <Link to={driverTo} className={styles.heroLink}>{kase.driverDisplayName}</Link> : kase.driverDisplayName
             : <span className={styles.dim}>Not known</span>}
         />
         <HeaderFact
           label="Rental"
-          value={kase?.rental
+          value={!kase ? '—' : kase.rental
             ? rentalTo ? <Link to={rentalTo} className={styles.heroLink}>{kase.rental.customerDisplayName}</Link> : kase.rental.customerDisplayName
             : <span className={styles.dim}>Not rented then</span>}
           sub={kase?.rental ? rentalSub(kase.rental) : null}
@@ -395,7 +395,7 @@ export function CaseRecord() {
         />
         <HeaderFact
           label="At fault"
-          value={<span className={kase?.atFault ? undefined : styles.dim}>{atFaultText(kase?.atFault)}</span>}
+          value={kase ? <span className={kase.atFault ? undefined : styles.dim}>{atFaultText(kase.atFault)}</span> : '—'}
         />
       </RecordHeader>
 

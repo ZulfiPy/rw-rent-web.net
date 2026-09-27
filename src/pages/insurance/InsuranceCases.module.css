@@ -15,11 +15,13 @@
 .cClosed { width: 130px; }
 
 /* The folded band (768–1023): fixed layout, the fixed widths at 71%, Handled by folded under the case
-   (the shared `foldTablet` / `showTablet`); headings may wrap. At 653px nothing scrolls. */
+   (the shared `foldTablet` / `showTablet`); headings may wrap. Status is the exception: the handover's
+   94px would cut every chip but Repair (the band's cells keep 9px each side, and "Under review" is
+   101px), so it keeps the 120px the widest one needs. At 679px nothing scrolls. */
 @media (max-width: 1023px) {
-  .table { table-layout: fixed; min-width: 653px; }
+  .table { table-layout: fixed; min-width: 679px; }
   .table th { white-space: normal; }
-  .cStatus { width: 94px; }
+  .cStatus { width: 120px; }
   .cWaiting { width: 121px; }
   .cFault { width: 107px; }
   .cClosed { width: 92px; }

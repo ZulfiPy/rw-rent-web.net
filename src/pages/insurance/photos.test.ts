@@ -14,7 +14,9 @@ describe('how a picture goes', () => {
     for (const type of ['image/jpeg', 'image/png', 'image/webp']) {
       expect(photoPlan({ type, size: 2_000_000, width: 2560, height: 1920 })).toEqual({ redraw: false });
     }
-    expect(photoPlan({ type: 'image/jpeg', size: MAX_BYTES_AS_IS, width: 1200, height: 1600 })).toEqual({ redraw: false });
+    // The limits are written out, not read from the rule, so a changed limit is caught.
+    expect(MAX_BYTES_AS_IS).toBe(3 * 1024 * 1024);
+    expect(photoPlan({ type: 'image/jpeg', size: 3 * 1024 * 1024, width: 1200, height: 1600 })).toEqual({ redraw: false });
   });
 
   test('a longer side over 2560 is scaled to 2560, the other side in proportion', () => {
@@ -25,7 +27,7 @@ describe('how a picture goes', () => {
   });
 
   test('over 3 MB it is redrawn at its own size when its sides are within 2560', () => {
-    expect(photoPlan({ type: 'image/jpeg', size: MAX_BYTES_AS_IS + 1, width: 2400, height: 1800 }))
+    expect(photoPlan({ type: 'image/jpeg', size: 3 * 1024 * 1024 + 1, width: 2400, height: 1800 }))
       .toEqual({ redraw: true, width: 2400, height: 1800 });
   });
 
