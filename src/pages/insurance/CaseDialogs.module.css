@@ -1,0 +1,99 @@
+/* The dialogs of Insurance cases (Follow-up 17), from the handover's values (HANDOVER.md e,
+   `new-styles.css` L1637–1663): paired fields in two columns from 1024 px and one below, and the photo
+   tiles. The fields, the tick cards, the sections and the sheet below 640 are `src/ui`'s. */
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.span { grid-column: 1 / -1; display: flex; flex-direction: column; min-width: 0; }
+@media (max-width: 1023px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.photos { display: flex; flex-direction: column; gap: 10px; }
+.tiles { display: flex; flex-wrap: wrap; gap: 10px; }
+/* A tile: the picture 104 × 78, its name and size, and Remove (28px high, 44px on the sheet). */
+.tile { display: flex; flex-direction: column; gap: 5px; width: 104px; min-width: 0; }
+.tilePicture {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 78px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--fg-4);
+}
+.tile[data-refused='true'] .tilePicture { border-color: var(--bad-line); background: var(--bad-soft); }
+.tileImg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tileIcon { font-size: 20px; }
+/* A photo Edit event will remove: dimmed, with the word on it, until Keep or Save changes. */
+.tile[data-removed='true'] .tileImg { opacity: .35; }
+.tileGone {
+  position: absolute;
+  inset: auto 6px 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-2);
+  text-align: center;
+}
+.tileName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tileSize { font-size: 11px; color: var(--fg-3); }
+.tileRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.tileRemove:hover { background: var(--surface-3); color: var(--fg); }
+.tileRemoveIcon { font-size: 15px; }
+.tileError { overflow-wrap: anywhere; }
+
+/* Add photos: the picker's input over the whole button, invisible. */
+.add {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 8px 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.add:hover { background: var(--surface-3); }
+.add:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px var(--ring); }
+.add[data-full='true'] { opacity: .55; cursor: default; }
+.addIcon { font-size: 16px; }
+.addInput { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.add[data-full='true'] .addInput { cursor: default; }
+
+.hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--fg-3); text-wrap: pretty; }
+
+@media (max-width: 639px) {
+  .tileRemove, .add { min-height: 44px; }
+}
