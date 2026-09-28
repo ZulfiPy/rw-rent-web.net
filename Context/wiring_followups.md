@@ -947,9 +947,12 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
   handling them, because "I'm going to enter or provide the insurance provider's name correctly and
   the other person will come and write it like shortly. Without providing the full name." **Wanted:**
   the company keeps one list of insurers; Our insurer and The other party's insurer are picked from
-  it; the cases list can be filtered by the insurer that handles them. The reviewer's defaults, unless
-  the owner decides otherwise: the people who register cases (`InsuranceCases.Manage`) add and rename
-  insurers, and everyone who reads cases sees the list; an insurer is its name only; a rename shows on
+  it; the cases list can be filtered by the insurer that handles them. **Decided by the owner
+  (2026-09-28):** the list, "because it's more safe", so that a case names "absolutely the same
+  insurer if it's the same insurer"; "anyone who is fleet manager and above can add or edit the list
+  of insurers", which is `InsuranceCases.Manage` as it stands (Fleet Manager, Company Principal,
+  System Administrator), the same people who register and edit cases. The reviewer's defaults, unless
+  the owner decides otherwise: everyone who reads cases sees the list; an insurer is its name only; a rename shows on
   every case at once; an insurer no longer used is put out of use, as a vehicle is: gone from the
   picker, kept on its cases, and it can come back; the list's new filter is Handled by; on the
   practice copy the names already used become the list; the owner's real list starts empty and the
@@ -963,7 +966,13 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
     an insurer opens the same small window as the Insurers page, which shows the names on the list
     that look like what is typed ("Baltic" shows Baltic Mutual) before a new one is added. The
     alternative: only on the Insurers page, and a case waits for its insurer until someone adds it
-    there.
+    there. The owner (2026-09-28): "it depends totally how it's going to look like"; the reviewer
+    showed a clickable mock-up in the chat: the picker opens a list with a find box, Not chosen, the
+    insurers, and Add an insurer at its foot; the window takes the name, lists the insurers that look
+    alike (the name holds what is typed, what is typed holds a word of four letters or more of the
+    name, or what is typed is the name's initials, so "BM" shows Baltic Mutual), each with Use this
+    one; the same name in other letters or spaces is refused; a name added is chosen on the case
+    and is on the list for everyone.
 - **F18-3. Desktop: a line break in the list's Waiting for column** (the reviewer's finding, kept if
   the owner agrees). At 1512 px the column is 170 px wide and "Someone else · 21 hours" takes two
   lines, broken after the dot; the other rows fit. **Wanted:** every value of the column on one line
