@@ -916,8 +916,9 @@ Insurance cases on real data.
 
 > **Status: COLLECTING, from 2026-09-28.** The owner goes through Insurance cases on the practice copy
 > (5174: the seven sample cases, and what the owner added to 770 HDV), the desktop first, then the
-> tablet and the phone. F18-2 needs the backend as well (round 13, backend backlog item 31) and waits
-> for the owner's answers to its two questions. Built when the owner says so.
+> tablet and the phone. F18-2 needs the backend as well: round 13, specified and sent to the
+> implementation agent on 2026-09-28; the app's half comes with the rest of this list. Built when the
+> owner says so.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
@@ -973,7 +974,8 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
     Renaming and putting out of use happen only on the Insurers page.
   - The insurer itself. The owner: "we have to make a simple class where we have an insurer's name,
     their like email, phone number maybe and that's it", kept by the server, not "just in memory".
-    The reviewer's sketch, shown to the owner for their yes: `Insurer` with `Name` (required, at most
+    The reviewer's sketch, approved by the owner ("yes, the class is right, go ahead"), now backend
+    round 13 (`RWRentApi-wiring/Context/round13_spec_and_plan.md`): `Insurer` with `Name` (required, at most
     100 characters, unique whatever the case of its letters), `Email` and `PhoneNumber` (both
     optional, so that an insurer can be added from a case knowing only its name and completed later
     on the Insurers page), `IsActive` (out of use when false, as a vehicle or a customer), and the
