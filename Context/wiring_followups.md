@@ -952,27 +952,35 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
   insurer if it's the same insurer"; "anyone who is fleet manager and above can add or edit the list
   of insurers", which is `InsuranceCases.Manage` as it stands (Fleet Manager, Company Principal,
   System Administrator), the same people who register and edit cases. The reviewer's defaults, unless
-  the owner decides otherwise: everyone who reads cases sees the list; an insurer is its name only; a rename shows on
-  every case at once; an insurer no longer used is put out of use, as a vehicle is: gone from the
-  picker, kept on its cases, and it can come back; the list's new filter is Handled by; on the
-  practice copy the names already used become the list; the owner's real list starts empty and the
-  owner fills it once after the upgrade, since the reviewer writes nothing into the real data.
-  **Open, the owner's answers:**
-  - Q1. Where the list lives. The reviewer recommends a button Insurers beside Register case on the
-    Insurance cases page, opening its own page: each insurer with the number of open cases it
-    handles, a click opening the cases list filtered to it. The alternatives: an entry of its own in
-    the side menu, or a part of Company profile.
-  - Q2. Adding an insurer while filling in a case. The reviewer recommends yes: under the picker, Add
-    an insurer opens the same small window as the Insurers page, which shows the names on the list
-    that look like what is typed ("Baltic" shows Baltic Mutual) before a new one is added. The
-    alternative: only on the Insurers page, and a case waits for its insurer until someone adds it
-    there. The owner (2026-09-28): "it depends totally how it's going to look like"; the reviewer
-    showed a clickable mock-up in the chat: the picker opens a list with a find box, Not chosen, the
-    insurers, and Add an insurer at its foot; the window takes the name, lists the insurers that look
-    alike (the name holds what is typed, what is typed holds a word of four letters or more of the
-    name, or what is typed is the name's initials, so "BM" shows Baltic Mutual), each with Use this
-    one; the same name in other letters or spaces is refused; a name added is chosen on the case
-    and is on the list for everyone.
+  the owner decides otherwise: everyone who reads cases sees the list; a rename shows on every case at
+  once; an insurer no longer used is put out of use, as a vehicle is: gone from the picker, kept on
+  its cases, and it can come back; the list's new filter is Handled by; on the practice copy the
+  names already used become the list; the owner's real list starts empty and the owner fills it once
+  after the upgrade, since the reviewer writes nothing into the real data.
+  **The owner's answers (2026-09-28)**, "Yes, yes, yes" after the mock-up, to adding from the case's
+  form and to the page's place, the reviewer's two recommendations:
+  - Q1. Where the list lives: a button Insurers beside Register case on the Insurance cases page,
+    opening its own page: each insurer with the number of open cases it handles, a click opening the
+    cases list filtered to it. (The alternatives were an entry of its own in the side menu, or a part
+    of Company profile.)
+  - Q2. Adding an insurer while filling in a case: yes, as the clickable mock-up shown in the chat has
+    it (the owner had asked to see it first: "it depends totally how it's going to look like"). The
+    picker opens a list with a find box, Not chosen, the insurers, and Add an insurer at its foot; the
+    window takes the insurer, lists the insurers that look alike (the name holds what is typed, what
+    is typed holds a word of four letters or more of the name, or what is typed is the name's
+    initials, so "BM" shows Baltic Mutual), each with Use this one; the same name in other letters or
+    spaces is refused; an insurer added is chosen on the case and is on the list for everyone.
+    Renaming and putting out of use happen only on the Insurers page.
+  - The insurer itself. The owner: "we have to make a simple class where we have an insurer's name,
+    their like email, phone number maybe and that's it", kept by the server, not "just in memory".
+    The reviewer's sketch, shown to the owner for their yes: `Insurer` with `Name` (required, at most
+    100 characters, unique whatever the case of its letters), `Email` and `PhoneNumber` (both
+    optional, so that an insurer can be added from a case knowing only its name and completed later
+    on the Insurers page), `IsActive` (out of use when false, as a vehicle or a customer), and the
+    who and when of its adding and of its last change, as a customer has; the case's `OurInsurer`
+    and `OtherInsurer` texts become `OurInsurerId` and `OtherInsurerId`, links to it. The Add an
+    insurer window asks for the three; a case's Insurance card shows its insurers' email and phone
+    under their names.
 - **F18-3. Desktop: a line break in the list's Waiting for column** (the reviewer's finding, kept if
   the owner agrees). At 1512 px the column is 170 px wide and "Someone else · 21 hours" takes two
   lines, broken after the dot; the other rows fit. **Wanted:** every value of the column on one line
