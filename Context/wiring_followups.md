@@ -933,9 +933,14 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
   lines under the values below that; the chip and the buttons stay where they are; a band where no
   fact has a line under its value looks as it does today.
 - **F18-2. Insurers: a list the company keeps, not names typed on each case** (the owner). Today each
-  insurer field is free text of up to 100 characters, and the names already used are offered as the
-  browser's own suggestions (`GET /api/insurance-cases/insurers`); in the owner's browser that looks
-  like a dark drop-down, so it reads as a closed menu. The owner: "sometimes there is an insurer that
+  insurer field is free text of up to 100 characters, and every name saved on any case, open or
+  closed, by anyone, is offered to everyone who may edit cases (`GET /api/insurance-cases/insurers`,
+  `InsuranceCases.Manage`), in the browser's suggestion list; in the owner's browser that looks like a
+  dark drop-down, so it reads as a closed menu. The owner asked whether those suggestions were only
+  their own browser's memory: no; the "Lolkastan" the owner typed on the usual 770 HDV case was
+  offered to Signe as soon as her form loaded the names (the app keeps them half a minute). A
+  spelling becomes everyone's suggestion and leaves only when no case carries it any longer. The
+  owner, before seeing that one can type: "sometimes there is an insurer that
   doesn't exist in this table. So either we have to have a separate place where we add those insurers
   and we have already like pre-existing insurers or we have to provide a text input, not a drop-down
   menu. I think the first option is much better", so that the cases can be filtered by the insurer
