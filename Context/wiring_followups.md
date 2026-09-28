@@ -911,3 +911,55 @@ practice copy with the seven sample cases and lists what to fix, screen by scree
 next follow-ups. When the owner says so, the reviewer takes a copy of `rwrent_v1`, applies
 `V10InsuranceCases`, restarts the owner's API on the round-12 Debug build, and the owner uses
 Insurance cases on real data.
+
+## 18. Follow-up 18 — the owner's look at Insurance cases on the practice copy
+
+> **Status: COLLECTING, from 2026-09-28.** The owner goes through Insurance cases on the practice copy
+> (5174: the seven sample cases, and what the owner added to 770 HDV), the desktop first, then the
+> tablet and the phone. F18-2 needs the backend as well (round 13, backend backlog item 31) and waits
+> for the owner's answers to its two questions. Built when the owner says so.
+
+On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
+wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
+asked from its insurer. That flow worked as the handover has it. What was asked:
+
+- **F18-1. Desktop: the labels in a case's band are not on one line** (the owner). On both 770 HDV
+  cases, Driver, Handled by and At fault stand 9 px lower than Waiting for, Found and Rental (measured
+  at 1512 px). Why: every fact is centred in a reserve as tall as a fact with a line under its value
+  (Delivery 26), so a fact without that line sits lower. The band is shared: the task page has the
+  same fault (Created by, and on some tasks Due, stand higher than About and Progress); on the user
+  and rental-assignment pages no fact has a line under its value, so their labels line up already.
+  **Wanted:** in every record band, every label on one line, every value on the line under it, the
+  lines under the values below that; the chip and the buttons stay where they are; a band where no
+  fact has a line under its value looks as it does today.
+- **F18-2. Insurers: a list the company keeps, not names typed on each case** (the owner). Today each
+  insurer field is free text of up to 100 characters, and the names already used are offered as the
+  browser's own suggestions (`GET /api/insurance-cases/insurers`); in the owner's browser that looks
+  like a dark drop-down, so it reads as a closed menu. The owner: "sometimes there is an insurer that
+  doesn't exist in this table. So either we have to have a separate place where we add those insurers
+  and we have already like pre-existing insurers or we have to provide a text input, not a drop-down
+  menu. I think the first option is much better", so that the cases can be filtered by the insurer
+  handling them, because "I'm going to enter or provide the insurance provider's name correctly and
+  the other person will come and write it like shortly. Without providing the full name." **Wanted:**
+  the company keeps one list of insurers; Our insurer and The other party's insurer are picked from
+  it; the cases list can be filtered by the insurer that handles them. The reviewer's defaults, unless
+  the owner decides otherwise: the people who register cases (`InsuranceCases.Manage`) add and rename
+  insurers, and everyone who reads cases sees the list; an insurer is its name only; a rename shows on
+  every case at once; an insurer no longer used is put out of use, as a vehicle is: gone from the
+  picker, kept on its cases, and it can come back; the list's new filter is Handled by; on the
+  practice copy the names already used become the list; the owner's real list starts empty and the
+  owner fills it once after the upgrade, since the reviewer writes nothing into the real data.
+  **Open, the owner's answers:**
+  - Q1. Where the list lives. The reviewer recommends a button Insurers beside Register case on the
+    Insurance cases page, opening its own page: each insurer with the number of open cases it
+    handles, a click opening the cases list filtered to it. The alternatives: an entry of its own in
+    the side menu, or a part of Company profile.
+  - Q2. Adding an insurer while filling in a case. The reviewer recommends yes: under the picker, Add
+    an insurer opens the same small window as the Insurers page, which shows the names on the list
+    that look like what is typed ("Baltic" shows Baltic Mutual) before a new one is added. The
+    alternative: only on the Insurers page, and a case waits for its insurer until someone adds it
+    there.
+- **F18-3. Desktop: a line break in the list's Waiting for column** (the reviewer's finding, kept if
+  the owner agrees). At 1512 px the column is 170 px wide and "Someone else · 21 hours" takes two
+  lines, broken after the dot; the other rows fit. **Wanted:** every value of the column on one line
+  on the desktop (1024 px and up).
