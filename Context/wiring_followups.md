@@ -916,9 +916,12 @@ Insurance cases on real data.
 
 > **Status: COLLECTING, from 2026-09-28.** The owner goes through Insurance cases on the practice copy
 > (5174: the seven sample cases, and what the owner added to 770 HDV), the desktop first, then the
-> tablet and the phone. F18-2 needs the backend as well: round 13, specified and sent to the
-> implementation agent on 2026-09-28; the app's half comes with the rest of this list. Built when the
-> owner says so.
+> tablet and the phone. F18-2 needs the backend as well: round 13, built and verified on
+> 2026-09-28 (backend `97797e1`, the reviewer's note `5604c83`, backend `main` level; its contract
+> deltas are `RWRentApi-wiring/Context/round13_report.md` §5). The app's half comes with the rest of
+> this list. Round 13 cannot serve the app of Follow-up 17 (the insurers are sent and read in a new
+> shape), so the practice copy on 5002 and the owner's API on 5001 take it only together with this
+> follow-up. Built when the owner says so.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
