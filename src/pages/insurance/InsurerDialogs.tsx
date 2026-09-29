@@ -194,6 +194,10 @@ export function InsurerForm({ insurer, insurers, initialName, onUse, onAdded, on
   );
 }
 
+/** What the window sends: an insurer in use is put out of use, one out of use back in use. */
+export const toggleInsurer = (insurer: Pick<InsurerListItemResponse, 'id' | 'isActive'>) =>
+  (insurer.isActive ? deactivateInsurer(insurer.id) : activateInsurer(insurer.id));
+
 /**
  * Put out of use, or Put back in use (F18-2b), through a confirmation window as a vehicle's Deactivate
  * and Activate are, in the API's words. Out of use, the insurer stays on every case that names it and
@@ -204,7 +208,7 @@ export function InsurerToggle({ insurer, onClose }: { insurer: InsurerListItemRe
   const out = insurer.isActive;
   const m = useActionMutation({
     op: 'insurer-toggle',
-    mutationFn: () => (out ? deactivateInsurer(insurer.id) : activateInsurer(insurer.id)),
+    mutationFn: () => toggleInsurer(insurer),
     invalidate: INSURER_CHANGE_REFRESH,
     refusal: insurerRefusal,
     onDone: onClose,

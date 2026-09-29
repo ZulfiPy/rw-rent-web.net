@@ -318,6 +318,15 @@ export const cascoFormOf = (source: InsuranceCaseResponse): CaseFormState => ({
 
 const optionalNumber = <T extends number>(value: string) => (value === '' ? null : (Number(value) as T));
 
+/**
+ * A side's insurer chosen, or cleared (Follow-up 18): clearing the side Handled by names resets
+ * Handled by (handover d), since the API refuses a handler without its insurer.
+ */
+export function withInsurer(form: CaseFormState, key: 'ourInsurerId' | 'otherInsurerId', insurerId: string): CaseFormState {
+  const side = key === 'ourInsurerId' ? String(InsurerSide.Ours) : String(InsurerSide.Theirs);
+  return { ...form, [key]: insurerId, handledBy: !insurerId && form.handledBy === side ? '' : form.handledBy };
+}
+
 /** What Register case sends: the form as the person left it; blanks go as none. */
 export function registerRequest(form: CaseFormState, stored?: string | null): RegisterInsuranceCaseRequest {
   return {
@@ -420,15 +429,8 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos, ini
     setForm(complete ? next : { ...next, driverId: '' });
   };
 
-  /** Clearing the chosen side's insurer resets Handled by (handover d). */
-  const setInsurer = (key: 'ourInsurerId' | 'otherInsurerId', value: string) => {
-    const side = key === 'ourInsurerId' ? String(InsurerSide.Ours) : String(InsurerSide.Theirs);
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-      handledBy: !value && current.handledBy === side ? '' : current.handledBy,
-    }));
-  };
+  const setInsurer = (key: 'ourInsurerId' | 'otherInsurerId', insurerId: string) =>
+    setForm((current) => withInsurer(current, key, insurerId));
 
   const m = useActionMutation({
     op: kase ? 'case-edit' : 'case-register',

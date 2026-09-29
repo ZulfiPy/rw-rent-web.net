@@ -4,8 +4,11 @@ import { qk } from '@/api';
 import { fieldMessages, toFailure } from '@/api/problem';
 import { CARRIED_BY_ERRORS_CODES, codeToField } from '@/api/codes';
 import type { InsurerListItemResponse, ProblemDetails } from '@/api/dto';
-import { CaseForm, cascoFormOf, registerRequest, updateRequest, blankCase } from './insurance/CaseDialogs';
-import { InsurerForm, InsurerToggle, createInsurerRequest, insurerRefusal, updateInsurerRequest } from './insurance/InsurerDialogs';
+import { CaseForm, cascoFormOf, registerRequest, updateRequest, blankCase, withInsurer } from './insurance/CaseDialogs';
+import {
+  InsurerForm, InsurerToggle, createInsurerRequest, insurerRefusal, toggleInsurer, updateInsurerRequest,
+} from './insurance/InsurerDialogs';
+import { installTransport, type Method } from '@/api/transport';
 import { chosenInsurer, findKey, pickerItems } from './insurance/InsurerPicker';
 import { around, clearTaskRenders, count, refused, renderAs } from './followup12.harness';
 import { caseKlmDita, choicesKlm, choicesNew, meDita, pickDrivers, pickVehicles } from './followup17.support';
@@ -122,6 +125,8 @@ describe('the picker’s own rules (F18-2d)', () => {
   test('the chosen insurer: the list’s, or the case’s own while the list loads; none for no id', () => {
     expect(chosenInsurer(BALTIC.id, insurersAll, null)?.name).toBe('Baltic Mutual');
     expect(chosenInsurer(practiceCaseOutOfUse.otherInsurer!.id, undefined, practiceCaseOutOfUse.otherInsurer)?.name).toBe('Pilot Insurance Group');
+    // A rename shows at once: the list's copy of the case's own insurer wins over the case's.
+    expect(chosenInsurer(pilotRenamed.id, [pilotRenamed], { ...pilotRenamed, name: 'Pilot Insurance AS' })?.name).toBe('Pilot Insurance Group');
     expect(chosenInsurer('', insurersAll, null)).toBeNull();
     expect(chosenInsurer('unknown', insurersAll, null)).toBeNull();
   });
@@ -191,6 +196,15 @@ describe('the pickers of Register case (F18-2d)', () => {
     // The arrows start from the chosen insurer.
     expect(/<input[^>]*role="combobox"[^>]*>/.exec(open.markup)![0]).toMatch(/aria-activedescendant="[^"]+-option-1"/);
     expect(open.list).toMatch(/id="[^"]+-option-1"[^>]*aria-selected="true" data-active="true"/);
+  });
+
+  test('choosing a side’s insurer keeps Handled by; clearing the side it names resets it, clearing the other does not', () => {
+    const form = { ...blankCase(), ourInsurerId: BALTIC.id, otherInsurerId: MERIDIAN.id, handledBy: '2' };
+    expect(withInsurer(form, 'ourInsurerId', HARBOUR.id)).toMatchObject({ ourInsurerId: HARBOUR.id, handledBy: '2' });
+    expect(withInsurer(form, 'ourInsurerId', '')).toMatchObject({ ourInsurerId: '', handledBy: '2' });
+    expect(withInsurer(form, 'otherInsurerId', '')).toMatchObject({ otherInsurerId: '', handledBy: '' });
+    expect(withInsurer({ ...form, handledBy: '1' }, 'ourInsurerId', '')).toMatchObject({ ourInsurerId: '', handledBy: '' });
+    expect(withInsurer({ ...form, handledBy: '1' }, 'otherInsurerId', BALTIC.id)).toMatchObject({ otherInsurerId: BALTIC.id, handledBy: '1' });
   });
 
   test('what Register case sends: the insurers by their ids, none as none', () => {
@@ -396,6 +410,17 @@ describe('Put out of use and Put back in use (F18-2b)', () => {
     expect(markup).toContain('>Old Harbour Insurance is offered on cases again.</p>');
     expect(markup).toContain('The cases that name it are unchanged.');
     expect(markup).toMatch(/data-tone="primary"[^>]*>Put back in use<\/button>/);
+  });
+
+  test('what each sends: one in use is put out of use, one out of use back in use, with no body', async () => {
+    const sent: Array<[Method, string, unknown]> = [];
+    installTransport({ async request<T>(method: Method, path: string, init?: { body?: unknown }) { sent.push([method, path, init?.body]); return undefined as T; } });
+    await toggleInsurer(BALTIC);
+    await toggleInsurer(HARBOUR);
+    expect(sent).toEqual([
+      ['POST', `/api/insurers/${BALTIC.id}/deactivate`, undefined],
+      ['POST', `/api/insurers/${HARBOUR.id}/activate`, undefined],
+    ]);
   });
 
   test('an insurer gone is a refused change in the API’s words', () => {
