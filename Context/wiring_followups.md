@@ -1095,10 +1095,17 @@ reviewer then checks it signed in.
   insurer whose name has the word "Insurance", since what is typed holds that word of four letters
   or more. With the owner's real insurers (many named "… Insurance", "… Kindlustus" or "… Insurance
   Group") the list would warn about nearly all of them every time, and a warning shown every time is
-  soon not read. **Proposed:** a word counts only when it tells insurers apart: not a word that names
-  the trade or the company's form (insurance, kindlustus, apdrošināšana, draudimas, mutual,
-  assurance, group, company, and the like), and not a word two or more insurers on the list share.
-  The other two rules stay: the name holding what is typed, and the initials. Built only if the owner
+  soon not read. **Proposed:** in the word rule, a word that names the trade or the company's form
+  does not count: insurance, insurer, assurance, reinsurance, kindlustus, kindlustuse,
+  apdrošināšana, apdrošināšanas, draudimas, draudimo, vakuutus, forsikring, försäkring,
+  versicherung, mutual, group, company, limited, holding and GmbH (the shorter forms, AS, SE, OÜ,
+  SIA, UAB, P&C, are under the four-letter floor already). The other two rules stay: the name
+  holding what is typed, and the initials. (A first version also left out a word two or more
+  insurers share; it was dropped, since with "Baltic Mutual" and "BTA Baltic Insurance Company" on
+  the list, "Baltic Mutual Insurance" would then look like nothing.) Tried by the reviewer on ten
+  realistic names: "Newco Insurance" 7 look-alikes today, none with it; "Baltic Mutual Insurance" 8
+  today, 2 with it (Baltic Mutual and BTA Baltic Insurance Company); "Meridian Insurance AS" 7, then
+  1; "Pilot Insurance Group" 7, then 1; "BM", "Baltic" and "ERGO" unchanged. Built only if the owner
   agrees.
 
 **Checked by the owner on the desktop, nothing to change (2026-09-29):** the Closed tab; the three
