@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listCases } from '@/api/insuranceCases';
+import { listInsurers } from '@/api/insurers';
 import {
   InsuranceCaseParty, InsuranceCaseStatus,
   type InsuranceCaseListItemResponse, type InsuranceCaseQuery, type InsuranceCaseStatus as Status,
 } from '@/api/dto';
-import { toFailure } from '@/api/problem';
+import { fieldMessages, toFailure } from '@/api/problem';
 import {
   CASE_STATUS_LABEL, NO_EVENTS, atFaultText, caseCount, caseSub, caseTitle, closedText, daysAgoText,
   formatLocal, handledInfo, handledLine, waitText,
@@ -17,6 +18,7 @@ import { useAccess } from '@/permissions/usePermissions';
 import { Button } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { EmptyState } from '@/ui/EmptyState';
+import { fieldStyles } from '@/ui/Field';
 import { ClearFilters, SearchInput, SelectFilter } from '@/ui/Filters';
 import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
@@ -30,7 +32,7 @@ import table from '@/ui/table.module.css';
 import { RegisterCaseDialog } from './CaseDialogs';
 import {
   CASE_TABS, CASES_MANAGE, CASES_READ, STATUS_OPTIONS, TYPE_OPTIONS, WAITING_OPTIONS, caseHref, caseTabOf,
-  filterValue, useCaseCounts, type CaseTab, type CaseTabSpec,
+  filterValue, handledOptions, useCaseCounts, type CaseTab, type CaseTabSpec,
 } from './caseAddress';
 import styles from './InsuranceCases.module.css';
 
@@ -46,6 +48,9 @@ import styles from './InsuranceCases.module.css';
  * view, the search, the filters and the page live in the address. A filter set on one view is kept in
  * the address but not applied where the view does not offer it (handover d), and a change of view
  * starts again at the first page.
+ *
+ * Follow-up 18: Handled by on every view, from the insurers the company keeps (F18-2f); an insurer the
+ * API does not know is refused under it.
  */
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -177,6 +182,8 @@ export function InsuranceCases() {
   const typeSlug = params.get('type') ?? '';
   const statusSlug = params.get('status') ?? '';
   const waitingSlug = params.get('waiting') ?? '';
+  // Handled by is a filter on every view (Follow-up 18): an insurer's id, sent as the address has it.
+  const handled = params.get('handled') ?? '';
   const type = filterValue(TYPE_OPTIONS, typeSlug);
   // Only the filters this view offers are applied; the others stay in the address for their view.
   const status = tab.statusFilter ? filterValue(STATUS_OPTIONS, statusSlug) : undefined;
@@ -201,6 +208,7 @@ export function InsuranceCases() {
     ...(type ? { Type: type as InsuranceCaseQuery['Type'] } : {}),
     ...(status ? { Status: status as Status } : {}),
     ...(waiting ? { WaitingFor: waiting as InsuranceCaseParty } : {}),
+    ...(handled ? { HandledByInsurerId: handled } : {}),
     ...(search ? { Search: search } : {}),
   };
 
@@ -213,6 +221,8 @@ export function InsuranceCases() {
     placeholderData: (previous, previousQuery) =>
       (previousQuery?.queryKey[2] as InsuranceCaseQuery | undefined)?.View === tab.view ? previous : undefined,
   });
+
+  const insurers = useQuery({ queryKey: qk.insurers.list({}), queryFn: () => listInsurers({}), enabled: allowed });
 
   const header = (
     <PageHeader
@@ -235,10 +245,12 @@ export function InsuranceCases() {
 
   const page = cases.data;
   const rows = page?.items ?? [];
-  const filtered = !!search || !!type || !!status || !!waiting;
+  const filtered = !!search || !!type || !!status || !!waiting || !!handled;
   const closed = tab.id === 'closed';
   const empty = EMPTY[tab.id];
-  const clear = () => patch({ search: '', type: '', status: '', waiting: '' });
+  const clear = () => patch({ search: '', type: '', status: '', waiting: '', handled: '' });
+  // An insurer the API does not know is refused under Handled by, and the list finds nothing for it.
+  const handledError = failure ? fieldMessages(failure)['handledByInsurerId'] : undefined;
 
   return (
     <div className={shell.page}>
@@ -266,12 +278,28 @@ export function InsuranceCases() {
           {tab.waitingFilter ? (
             <SelectFilter value={waiting ? waitingSlug : ''} options={WAITING_OPTIONS} label="Waiting for" onChange={(next) => patch({ waiting: next })} />
           ) : null}
+          <span className={styles.handledFilter}>
+            <SelectFilter value={handled} options={handledOptions(insurers.data, handled)} label="Handled by" onChange={(next) => patch({ handled: next })} />
+            {handledError ? (
+              <span role="alert" className={fieldStyles.error}>
+                <span data-icon aria-hidden="true" className={fieldStyles.errorIcon}>error</span>
+                {handledError}
+              </span>
+            ) : null}
+          </span>
           <span className={filters.spacer} />
           {filtered ? <ClearFilters onClear={clear} /> : null}
           <span className={filters.count}>{page ? caseCount(page.totalCount) : ''}</span>
         </div>
 
-        {failure ? (
+        {handledError ? (
+          <EmptyState
+            icon="search_off"
+            title="No results for these filters"
+            body="Nothing matches the current search and filters. Clearing them restores the full list."
+            action={{ label: 'Clear filters', icon: 'filter_alt_off', onClick: clear }}
+          />
+        ) : failure ? (
           <EmptyState
             icon="error"
             title="The cases could not be loaded"

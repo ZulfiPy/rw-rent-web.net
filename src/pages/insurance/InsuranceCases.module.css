@@ -34,6 +34,10 @@
   .waitingText { white-space: nowrap; }
 }
 
+/* Handled by in the toolbar (Follow-up 18): the API's refusal of an insurer it does not know stands
+   under the filter. */
+.handledFilter { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; }
+
 /* A cell's own text wraps anywhere rather than widening the table; the fold's ellipsis never cuts it. */
 .cellText { overflow-wrap: anywhere; text-wrap: pretty; white-space: normal; }
 .dim { color: var(--fg-3); }

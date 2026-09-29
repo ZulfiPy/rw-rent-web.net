@@ -2,10 +2,10 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { qk } from '@/api';
 import { countCases } from '@/api/insuranceCases';
 import {
-  InsuranceCaseView, type InsuranceCaseCountsResponse, type Uuid,
+  InsuranceCaseView, type InsuranceCaseCountsResponse, type InsurerListItemResponse, type Uuid,
 } from '@/api/dto';
 import {
-  CASE_PARTIES, CASE_PARTY_LABEL, CASE_STATUS_LABEL, CASE_TYPE_LABEL, OPEN_STATUSES,
+  CASE_PARTIES, CASE_PARTY_LABEL, CASE_STATUS_LABEL, CASE_TYPE_LABEL, OPEN_STATUSES, OUT_OF_USE,
 } from '@/format';
 import { useAccess } from '@/permissions/usePermissions';
 import type { FilterOption } from '@/ui/Filters';
@@ -47,6 +47,9 @@ export const caseTabOf = (value: string | null | undefined): CaseTabSpec =>
 /** The list at a view: Open is the bare address. */
 export const casesHref = (tab: CaseTab = 'open') => (tab === 'open' ? '/insurance-cases' : `/insurance-cases?tab=${tab}`);
 
+/** The Open view filtered to the cases an insurer handles (the Insurers page's link, F18-2f). */
+export const casesHandledByHref = (insurerId: Uuid) => `/insurance-cases?handled=${insurerId}`;
+
 /** A case's page, carrying the view it was opened from. */
 export const caseHref = (id: Uuid, tab: CaseTab = 'open') =>
   (tab === 'open' ? `/insurance-cases/${id}` : `/insurance-cases/${id}?tab=${tab}`);
@@ -66,6 +69,25 @@ export const WAITING_OPTIONS: FilterOption[] = [
   { value: '', label: 'Anyone' },
   ...CASE_PARTIES.map((party) => ({ value: String(party), label: CASE_PARTY_LABEL[party] })),
 ];
+
+/**
+ * Handled by (Follow-up 18, F18-2f): Anyone, then every insurer of the list, those in use first and
+ * those out of use after them, marked so, each in the list's order. An insurer the address names that
+ * the list does not hold is kept as an option of its own, so the filter shows what is asked and the
+ * API's refusal can stand under it.
+ */
+export function handledOptions(insurers: readonly InsurerListItemResponse[] | undefined, handled: string): FilterOption[] {
+  const list = insurers ?? [];
+  const options: FilterOption[] = [
+    { value: '', label: 'Anyone' },
+    ...list.filter((insurer) => insurer.isActive).map((insurer) => ({ value: insurer.id, label: insurer.name })),
+    ...list.filter((insurer) => !insurer.isActive).map((insurer) => ({ value: insurer.id, label: `${insurer.name} · ${OUT_OF_USE}` })),
+  ];
+  if (handled && !options.some((option) => option.value === handled)) {
+    options.push({ value: handled, label: insurers ? 'Not on the list' : '…' });
+  }
+  return options;
+}
 
 /** A filter's value from the address, or undefined when it names nothing the options offer. */
 export function filterValue(options: FilterOption[], value: string | null): number | undefined {

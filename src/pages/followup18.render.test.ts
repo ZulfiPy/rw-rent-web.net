@@ -4,11 +4,17 @@ import { RecordKind, qk } from '@/api';
 import { deletionInvalidates } from './admin/DeleteRecordDialog';
 import { CASE_REFRESH } from './insurance/caseAddress';
 import { INSURER_ADD_REFRESH, INSURER_CHANGE_REFRESH } from './insurance/InsurerDialogs';
-import { around, clearTaskRenders, renderAs } from './followup12.harness';
+import type { CurrentUserResponse, InsuranceCaseQuery, InsurerListItemResponse } from '@/api/dto';
+import { around, clearTaskRenders, count, renderAs } from './followup12.harness';
 import { CaseRecord } from './insurance/CaseRecord';
 import { InsuranceCases } from './insurance/InsuranceCases';
 import { countsDita, meDita, meToms } from './followup17.support';
-import { PRACTICE18_AT, openHandledByPilot, practiceCaseOutOfUse, practiceCaseRenamed } from './followup18.practice';
+import {
+  closedHandledByBaltic, handledUnknownRefusal, insurersAll, openHandledByBaltic, openHandledByHarbour, usHandledByBaltic,
+} from './followup18.support';
+import {
+  PRACTICE18_AT, insurersAllWithPilotOut, openHandledByPilot, practiceCaseOutOfUse, practiceCaseRenamed,
+} from './followup18.practice';
 
 /**
  * Follow-up 18, rendered to markup from round 13's answers (`followup18.support.ts`) and the joint
@@ -110,5 +116,94 @@ describe('every write refreshes what it changes (F18-2a)', () => {
   test('a case’s every write refreshes the insurers, which count the cases; so does a vehicle’s deletion, which takes its cases', () => {
     expect(keys(CASE_REFRESH)).toContain(qk.insurers.all.join('/'));
     expect(keys(deletionInvalidates(RecordKind.Vehicle))).toContain(qk.insurers.all.join('/'));
+  });
+});
+
+/* the cases list's Handled by ---------------------------------------------------------------------- */
+
+const LIST = (View: InsuranceCaseQuery['View'], extra: Partial<InsuranceCaseQuery> = {}): InsuranceCaseQuery =>
+  ({ View, PageNumber: 1, PageSize: 20, ...extra });
+const BALTIC = insurersAll.find((i) => i.name === 'Baltic Mutual')!.id;
+const HARBOUR = insurersAll.find((i) => i.name === 'Old Harbour Insurance')!.id;
+
+const cases = (at: string, data: Array<[readonly unknown[], unknown]>, insurers: InsurerListItemResponse[] | null = insurersAllWithPilotOut,
+  me: CurrentUserResponse = meDita, errors: Array<[readonly unknown[], typeof handledUnknownRefusal]> = []) =>
+  renderAs(h(InsuranceCases), {
+    at, route: '/insurance-cases', me, errors,
+    data: [[qk.insuranceCases.counts, countsDita], ...(insurers ? [[qk.insurers.list({}), insurers] as [readonly unknown[], unknown]] : []), ...data],
+  });
+
+/** The Handled by filter: its shown value and its options, in order. */
+const handledFilter = (markup: string) => {
+  // The filter and what stands under it: from its wrapper to the toolbar's spacer after it.
+  const filter = markup.slice(markup.indexOf('_handledFilter_'), markup.indexOf('_spacer_', markup.indexOf('_handledFilter_')));
+  const select = around(markup, 'aria-label="Filter by handled by"', 'select');
+  return {
+    shown: /_selectValue_[^"]*">([^<]*)</.exec(markup.slice(markup.indexOf('>Handled by</span>')))![1],
+    options: [...select.matchAll(/<option value="([^"]*)"[^>]*>([^<]*)<\/option>/g)].map((m) => m[2]),
+    selected: /<option value="([^"]*)" selected="">/.exec(select)?.[1] ?? null,
+    filter,
+  };
+};
+
+describe('the cases list’s Handled by (F18-2f)', () => {
+  test('on every view, beside Waiting for: Anyone, the insurers in use, then those out of use, marked so', () => {
+    for (const [at, view] of [['/insurance-cases', 1], ['/insurance-cases?tab=us', 2], ['/insurance-cases?tab=closed', 3]] as const) {
+      const { markup } = cases(at, [[qk.insuranceCases.list(LIST(view)), { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 }]]);
+      const filter = handledFilter(markup);
+      expect(filter.options).toEqual(['Anyone', 'Baltic Mutual', 'Meridian Insurance', 'Northgate Insurance',
+        'Old Harbour Insurance · Out of use', 'Pilot Insurance Group · Out of use']);
+      expect(filter.shown).toBe('Anyone');
+    }
+    // Beside Waiting for on Open, after Type on Closed.
+    const open = cases('/insurance-cases', [[qk.insuranceCases.list(LIST(1)), openHandledByBaltic]]).markup;
+    expect(open.indexOf('>Waiting for</span>')).toBeLessThan(open.indexOf('>Handled by</span>'));
+    expect(open.indexOf('>Handled by</span>')).toBeLessThan(open.indexOf('<table'));
+    const closed = cases('/insurance-cases?tab=closed', [[qk.insuranceCases.list(LIST(3)), closedHandledByBaltic]]).markup;
+    expect(closed.indexOf('>Type</span>')).toBeLessThan(closed.indexOf('>Handled by</span>'));
+    expect(closed).not.toContain('>Waiting for</span>');
+  });
+
+  test('set, it asks for the cases that insurer handles on each view, and Clear filters offers to clear it', () => {
+    const views = [
+      ['/insurance-cases', 1, openHandledByBaltic, '3 cases'],
+      ['/insurance-cases?tab=us', 2, usHandledByBaltic, '1 case'],
+      ['/insurance-cases?tab=closed', 3, closedHandledByBaltic, '0 cases'],
+    ] as const;
+    for (const [at, view, page, total] of views) {
+      const { markup } = cases(`${at}${at.includes('?') ? '&' : '?'}handled=${BALTIC}`,
+        [[qk.insuranceCases.list(LIST(view, { HandledByInsurerId: BALTIC })), page]]);
+      const filter = handledFilter(markup);
+      expect(filter.selected).toBe(BALTIC);
+      expect(filter.shown).toBe('Baltic Mutual');
+      expect(markup).toContain('Clear filters');
+      expect(markup).toContain(`>${total}<`);
+      expect(count(markup, '<tr class=')).toBe(page.items.length);
+    }
+    // Closed holds no case handled by Baltic Mutual: the filters' own empty state.
+    const closed = cases(`/insurance-cases?tab=closed&handled=${BALTIC}`, [[qk.insuranceCases.list(LIST(3, { HandledByInsurerId: BALTIC })), closedHandledByBaltic]]).markup;
+    expect(closed).toContain('No results for these filters');
+  });
+
+  test('an insurer out of use is a filter like any other', () => {
+    const { markup } = cases(`/insurance-cases?handled=${HARBOUR}`, [[qk.insuranceCases.list(LIST(1, { HandledByInsurerId: HARBOUR })), openHandledByHarbour]]);
+    expect(handledFilter(markup).shown).toBe('Old Harbour Insurance · Out of use');
+    expect(markup).toContain('No results for these filters');
+  });
+
+  test('an insurer the API does not know: its sentence under Handled by, and the list finds nothing', () => {
+    const unknown = '5f9e2a61-0000-4000-8000-000000000000';
+    const { markup } = cases(`/insurance-cases?handled=${unknown}`, [], insurersAllWithPilotOut, meDita,
+      [[qk.insuranceCases.list(LIST(1, { HandledByInsurerId: unknown })), handledUnknownRefusal]]);
+    const filter = handledFilter(markup);
+    expect(filter.shown).toBe('Not on the list');
+    expect(filter.filter).toMatch(/role="alert"[^>]*>.*This insurer does not exist\.<\/span>/);
+    expect(markup).toContain('No results for these filters');
+    expect(markup).not.toContain('The cases could not be loaded');
+  });
+
+  test('while the list of insurers loads, a filter set shows as being read', () => {
+    const { markup } = cases(`/insurance-cases?handled=${BALTIC}`, [[qk.insuranceCases.list(LIST(1, { HandledByInsurerId: BALTIC })), openHandledByBaltic]], null);
+    expect(handledFilter(markup).shown).toBe('…');
   });
 });
