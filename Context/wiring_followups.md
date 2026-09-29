@@ -912,16 +912,30 @@ next follow-ups. When the owner says so, the reviewer takes a copy of `rwrent_v1
 `V10InsuranceCases`, restarts the owner's API on the round-12 Debug build, and the owner uses
 Insurance cases on real data.
 
-## 18. Follow-up 18 — the owner's look at Insurance cases on the practice copy
+## 18. Follow-up 18 — the owner's look at Insurance cases on the practice copy: the desktop
 
-> **Status: COLLECTING, from 2026-09-28.** The owner goes through Insurance cases on the practice copy
-> (5174: the seven sample cases, and what the owner added to 770 HDV), the desktop first, then the
-> tablet and the phone. F18-2 needs the backend as well: round 13, built and verified on
-> 2026-09-28 (backend `97797e1`, the reviewer's note `5604c83`, backend `main` level; its contract
-> deltas are `RWRentApi-wiring/Context/round13_report.md` §5). The app's half comes with the rest of
-> this list. Round 13 cannot serve the app of Follow-up 17 (the insurers are sent and read in a new
-> shape), so the practice copy on 5002 and the owner's API on 5001 take it only together with this
-> follow-up. Built when the owner says so.
+> **Status: AUTHORISED 2026-09-29, the desktop.** The owner went through the desktop and asked for
+> this follow-up to be built now; the owner sends it to the implementation agent themselves. The
+> tablet and the phone come after it, in a follow-up of their own. Frontend only: the backend's half
+> of F18-2 is round 13, verified and in `main` (backend `97797e1`, the reviewer's note `5604c83`); its
+> contract is `RWRentApi-wiring/Context/round13_report.md` §5, and its rules are INS-005, INS-014,
+> INS-017 and INS-018 in `RWRentApi-wiring/Context/business_rules.md`. **Branch:
+> `feature/backend-wiring` in this worktree**; the reviewer fast-forwards `main` after verification.
+> **Two apps run from this worktree and reload every saved edit:** the owner's real app on 5173
+> (pid 24831), over the owner's API on 5001, still round 11, which grants no insurance permission, so
+> the section stays hidden there; and the owner's practice app on 5174 (pid 58932), over the practice
+> API on 5002, still round 12, whose insurance pages will not work with this follow-up's code until the
+> reviewer upgrades the practice copy to round 13 after verifying it (the owner knows). Never stop,
+> restart or open either app, never call 5001 or 5002, never write to `rwrent_v1` or `rwrent_check`.
+> **The agent's own stack:** round 13's API on 5003 over `rwrent_r13` (left running by round 13,
+> pid 86580, trusting `http://localhost:5176`), which the agent may re-create, re-seed and restart as
+> round 13's report §7 describes, and a Vite of its own on 5176, started with
+> `VITE_API_BASE_URL=http://localhost:5003`, in a browser profile of its own. What is built: F18-1,
+> F18-2 as F18-2a to F18-2g below say, and F18-3 unless the owner's message to the agent says
+> otherwise. Tests for each item; typecheck, tests and build green; no new runtime dependency.
+> Report: `Context/wiring_report.md` rewritten. Commits: several grouped commits, `Wiring 45: …`, the
+> report last as `Wiring 46: …`, each group committed as soon as it is green, pushed with an ordinary
+> push at the end and checked with `git ls-remote`. This document is not edited by the agent.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
@@ -935,7 +949,8 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
   and rental-assignment pages no fact has a line under its value, so their labels line up already.
   **Wanted:** in every record band, every label on one line, every value on the line under it, the
   lines under the values below that; the chip and the buttons stay where they are; a band where no
-  fact has a line under its value looks as it does today.
+  fact has a line under its value looks as it does today. (The centring is `.fact` in
+  `src/ui/RecordHeader.module.css`; the phone tier already stacks the facts from the top.)
 - **F18-2. Insurers: a list the company keeps, not names typed on each case** (the owner). Today each
   insurer field is free text of up to 100 characters, and every name saved on any case, open or
   closed, by anyone, is offered to everyone who may edit cases (`GET /api/insurance-cases/insurers`,
@@ -986,7 +1001,96 @@ asked from its insurer. That flow worked as the handover has it. What was asked:
     and `OtherInsurer` texts become `OurInsurerId` and `OtherInsurerId`, links to it. The Add an
     insurer window asks for the three; a case's Insurance card shows its insurers' email and phone
     under their names.
-- **F18-3. Desktop: a line break in the list's Waiting for column** (the reviewer's finding, kept if
-  the owner agrees). At 1512 px the column is 170 px wide and "Someone else · 21 hours" takes two
-  lines, broken after the dot; the other rows fit. **Wanted:** every value of the column on one line
-  on the desktop (1024 px and up).
+- **F18-3. Desktop: a line break in the list's Waiting for column** (the reviewer's finding). At 1512
+  px the column is 170 px wide (`.cWaiting` in `src/pages/insurance/InsuranceCases.module.css`) and
+  "Someone else · 21 hours" takes two lines, broken after the dot; the other rows fit. **Wanted:**
+  every value of the column on one line on the desktop (1024 px and up). The owner had not answered
+  by 2026-09-29, when the reviewer recommended keeping it; it is built unless the owner's message to
+  the agent says otherwise, and the report says whether it was built.
+
+**How F18-2 is built in the app**, from the owner's decisions above, the clickable mock-up the owner
+approved and round 13's contract. The API holds every rule; the app never re-implements one.
+
+- **F18-2a. The contract.** `src/api/dto.ts` and `src/api/insuranceCases.ts` follow round 13's report
+  §5: a case and a list item carry `ourInsurer` and `otherInsurer` as `{ id, name, email,
+  phoneNumber, isActive }` or null; a registration's form and an edit's JSON send `OurInsurerId` and
+  `OtherInsurerId`; `listInsurers` of `GET /api/insurance-cases/insurers`, the `rw-insurers` datalist
+  and the typed insurer fields go. A new `src/api/insurers.ts` holds the six operations of
+  `/api/insurers`. `src/api/codes.ts` gains `insurers.name_conflict` (a 409 that carries its field:
+  shown under the name), `insurers.concurrency_conflict` (the stale-record banner and its Refresh),
+  `insurers.not_found`, and `insurance_cases.insurer_not_found` and `insurance_cases.insurer_out_of_use`
+  (under the insurer's field of the case's form, or under Handled by for the list's filter). Every
+  write refreshes what it changes: adding an insurer refreshes the insurers; editing one, or putting
+  it out of use or back, refreshes the insurers and every case read, so a rename shows on the cases
+  at once.
+- **F18-2b. The Insurers page.** A button **Insurers** beside Register case in the Insurance cases
+  page's header, for everyone who reads cases, opens `/insurance-cases/insurers` (the breadcrumb:
+  Insurance cases, Insurers). The page: its title, the description "The insurers the company works
+  with. A case picks its insurers from this list."; a Show filter, In use (the default), Out of use
+  and All; a table of Name (one out of use marked Out of use), Email (a mailto link), Phone (a tel
+  link), Open cases it handles (a link opening the Open tab filtered to that insurer, a plain 0 when
+  none) and Cases (how many name it). With `InsuranceCases.Manage`: the button Add insurer in the
+  header, and on each row Edit and Put out of use, or Put back in use, each through a confirmation
+  window, as a vehicle's Deactivate and Activate are (the words stay "out of use", as the API's
+  refusal says). Without it, no action anywhere. With no insurer at all (the owner's
+  real list starts empty): "No insurers yet", "Add the insurers the company works with.", and Add
+  insurer for those who manage. The page follows the app's other lists at every width; the owner
+  looks at the tablet and the phone in the next follow-up.
+- **F18-2c. The Add insurer and Edit insurer windows.** Name (required), Email and Phone (optional).
+  While a name is typed, from two letters on, the insurers of the list that look alike are shown
+  above the buttons, "Already on the list, and looks alike", those out of use marked so: an insurer
+  looks alike when its name holds what is typed, when what is typed holds a word of four letters or
+  more of its name, or when what is typed, without spaces, is its name's initials ("BM" shows Baltic
+  Mutual), all ignoring letter case, accents and runs of spaces. On the Insurers page they are only
+  shown. The server's `name_conflict` shows under Name. Edit sends the insurer's token; a stale one
+  shows the stale-record banner.
+- **F18-2d. The picker in the case's form** (Register case, Edit case, Casco case for this accident),
+  for Our insurer and for The other party's insurer, as the mock-up had it: closed, it shows the chosen
+  insurer or "Choose an insurer"; open, a find box with the focus, then Not chosen, then the insurers
+  in use whose names hold what is typed, the chosen one with a check; the case's current insurer stays
+  offered and chosen even when it is out of use, marked so; at the foot, **Add an insurer**, which
+  opens the Add insurer window with what was typed in the find box. There each look-alike in use
+  carries **Use this one**, which chooses it on the case and closes the window; one out of use is
+  marked so, without the button. An insurer added is chosen on the case at once and is on the list
+  for everyone. With no insurer on the list, the open picker says "No insurers yet" above Add an
+  insurer. Arrows and Enter choose, Esc closes. Handled by keeps its options from the two chosen
+  insurers ("Our insurer · Baltic Mutual"). Casco case for this accident copies the usual case's own
+  insurer, with Handled by Ours, only when that insurer is in use.
+- **F18-2e. A case's page.** The Insurance panel shows each insurer's name and, under it, its email
+  (a mailto link) and phone (a tel link) when it has them; one out of use is marked Out of use. The
+  band's Handled by and the list's Handled by column show the name as today.
+- **F18-2f. The cases list.** A new filter **Handled by** beside Waiting for, on every tab: Anyone
+  (the default), then every insurer, those in use first and those out of use after them, marked so;
+  it sends `HandledByInsurerId` and is kept and cleared like the other filters. The Insurers page's
+  link to an insurer's open cases opens this list with it set.
+- **F18-2g. Hidden with the section.** Without `InsuranceCases.Read` (the owner's 5001 until the
+  upgrade, a Record deleter alone), there is no Insurers button or page, and no insurer request is
+  made.
+
+**Tests and checks.** A render test for each item, in the manner of Follow-up 17; the tests whose
+expectations change on purpose named in the report with their old and new expectation; breakages
+planted and reported as in Follow-up 17. A joint check through the API against 5003 with the seeded
+people: the list, adding one (and the same name refused), a rename seen on a case, out of use and
+back, a case registered and edited with insurers, an out-of-use insurer refused on a new case and
+kept on an old one, the Handled by filter on each tab. The layout measured in the browser at 1512 and
+1024 px, as Follow-up 17 did: the band's labels at one height on a case's page and on a task's page,
+the user and rental-assignment bands unchanged; no line break in the Waiting for column. The
+reviewer then checks it signed in.
+
+**Checked by the owner on the desktop, nothing to change (2026-09-29):** the Closed tab; the three
+tabs with filters that find nothing; registering a case with a driver.
+
+**The owner's rental test, explained (2026-09-29).** The owner registered a case on 212 KBH that
+happened on 21 August, then created a rental of 212 KBH from 19 to 22 August, and expected the case's
+Rental to show it. It kept showing "Not rented then", and the rental stayed Planned though its dates
+had passed. The owner took both for effects of the sample data; they are how the app works, since the
+practice copy is the real app over a real server. A case counts only a rental that was handed over,
+Active or Ended (INS-003), and a rental's status never changes by its dates: it is started with its
+actual handover time and ended with its actual return (ASSIGN-007, ASSIGN-010, ASSIGN-012). The
+reviewer replayed it on round 13's stack: a planned rental around a past case left it "not rented";
+with a driver authorised from the rental's start and the rental activated with its actual start in
+the past, the case showed the rental at once, and still did after the rental was ended with its
+actual end. On the practice copy: on 212 KBH's rental, authorise the driver from 19 August, Activate
+with the actual start on 19 August, then End assignment with Closed at 22 August. Whether a planned
+rental that was never started should show on a case, or whether a rental whose dates have passed
+should say so, is the owner's to raise; nothing is built for it now.
