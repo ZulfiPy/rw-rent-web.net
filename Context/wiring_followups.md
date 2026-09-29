@@ -914,28 +914,40 @@ Insurance cases on real data.
 
 ## 18. Follow-up 18 — the owner's look at Insurance cases on the practice copy: the desktop
 
-> **Status: AUTHORISED 2026-09-29, the desktop.** The owner went through the desktop and asked for
-> this follow-up to be built now; the owner sends it to the implementation agent themselves. The
-> tablet and the phone come after it, in a follow-up of their own. Frontend only: the backend's half
-> of F18-2 is round 13, verified and in `main` (backend `97797e1`, the reviewer's note `5604c83`); its
-> contract is `RWRentApi-wiring/Context/round13_report.md` §5, and its rules are INS-005, INS-014,
-> INS-017 and INS-018 in `RWRentApi-wiring/Context/business_rules.md`. **Branch:
-> `feature/backend-wiring` in this worktree**; the reviewer fast-forwards `main` after verification.
-> **Two apps run from this worktree and reload every saved edit:** the owner's real app on 5173
-> (pid 24831), over the owner's API on 5001, still round 11, which grants no insurance permission, so
-> the section stays hidden there; and the owner's practice app on 5174 (pid 58932), over the practice
-> API on 5002, still round 12, whose insurance pages will not work with this follow-up's code until the
-> reviewer upgrades the practice copy to round 13 after verifying it (the owner knows). Never stop,
-> restart or open either app, never call 5001 or 5002, never write to `rwrent_v1` or `rwrent_check`.
-> **The agent's own stack:** round 13's API on 5003 over `rwrent_r13` (left running by round 13,
-> pid 86580, trusting `http://localhost:5176`), which the agent may re-create, re-seed and restart as
-> round 13's report §7 describes, and a Vite of its own on 5176, started with
-> `VITE_API_BASE_URL=http://localhost:5003`, in a browser profile of its own. What is built: F18-1,
-> F18-2 as F18-2a to F18-2g below say, and F18-3 unless the owner's message to the agent says
-> otherwise. Tests for each item; typecheck, tests and build green; no new runtime dependency.
-> Report: `Context/wiring_report.md` rewritten. Commits: several grouped commits, `Wiring 45: …`, the
-> report last as `Wiring 46: …`, each group committed as soon as it is green, pushed with an ordinary
-> push at the end and checked with `git ls-remote`. This document is not edited by the agent.
+> **Status: IMPLEMENTED 2026-09-29, verified the same day** (app `305140b`…`6e7b094` Wiring 45 in
+> seven grouped commits and `c97048e`, `e0ada64` Wiring 46, on `feature/backend-wiring`, pushed and
+> level with GitHub, then fast-forwarded into `main`; report `Context/wiring_report.md`). The owner
+> sent the prompt to the agent themselves. On the pushed state the reviewer ran typecheck (clean), 704
+> tests in 63 files (green) and the build, and read the three changes that reach beyond insurance:
+> `Dialog`'s Esc now closes only the top one of the open modals (only `Dialog` and the photo view
+> carry `role="dialog"` with `aria-modal`, both mounted only while open); the band's mark reads its
+> children's `sub` safely; every insurer query is enabled only with `InsuranceCases.Read`, and the
+> new refreshes on case writes and a vehicle's deletion reach no query on 5173. Signed in, in a
+> headless browser against a Vite of the reviewer's own on 5176 over round 13's API on 5003, the
+> reviewer's 55 checks all passed in substance (three first counted the insurers one of the
+> reviewer's own earlier attempts had added; recounted against the API, they pass): Handled by on the
+> three views with the API's rows and kept in the address; the Insurers page, its Show, its counts
+> and its link to the cases an insurer handles; Add insurer with "BM" showing Baltic Mutual, the same
+> name refused under Name, a new one added, renamed, put out of use and back through the
+> confirmation; a rename seen on a case page already open, without a reload; the band's labels at
+> one height on a case and a task at 1512 and 1024, the user and rental bands unmarked and as before;
+> the insurers' emails and phones as links; in Edit case the picker with the focus in its find box,
+> Esc closing only the list, typing and Enter choosing the first match, ArrowDown the next; in
+> Register case Add an insurer opening its window over the form with the typed name, Esc closing only
+> that window, the insurer added chosen at once (C17), Handled by offering it, Use this one choosing
+> Baltic Mutual, and the case saved naming both; an insurer out of use kept on a case's edit, not
+> offered on a new case; Casco case for this accident copying Baltic Mutual with Handled by Ours; a
+> vehicle's Edit vehicle, alone, still closing on Esc; Toms with Insurers but no action; every
+> Waiting for value on one line at 1024; the Insurers page not scrolling sideways at 1024; no request
+> to 5001, 5002, 5173 or 5174. **The practice copy's upgrade** (2026-09-29): the practice API on 5002
+> was stopped, `rwrent_check` backed up to
+> `/Users/zulf/rw-rent-api/testing-scratch/backups/rwrent_check-before-V11-2026-09-29.dump`, and
+> `V11Insurers` applied to it alone: five insurers from the names typed (Baltic Mutual, Lolkastan,
+> Meridian Insurance, Northgate Insurance and RW-Rent OÜ, the last typed by the owner on 212 KBH's
+> case that day), every case linked as its names were. Restarting the practice API on round 13's
+> Release build was held by the session's safety check; the owner restarts it (or allows the
+> reviewer to), after which the reviewer checks 5174 signed in. **Open, the owner's decision:**
+> F18-4 below.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
@@ -1077,8 +1089,26 @@ kept on an old one, the Handled by filter on each tab. The layout measured in th
 the user and rental-assignment bands unchanged; no line break in the Waiting for column. The
 reviewer then checks it signed in.
 
+- **F18-4. The look-alikes are too many when a name holds a common word** (the reviewer's finding,
+  2026-09-29, from the rule the reviewer wrote into F18-2c). Adding "Newco Insurance" lists Meridian
+  Insurance, Northgate Insurance, Old Harbour Insurance, Pilot Insurance Group and every other
+  insurer whose name has the word "Insurance", since what is typed holds that word of four letters
+  or more. With the owner's real insurers (many named "… Insurance", "… Kindlustus" or "… Insurance
+  Group") the list would warn about nearly all of them every time, and a warning shown every time is
+  soon not read. **Proposed:** a word counts only when it tells insurers apart: not a word that names
+  the trade or the company's form (insurance, kindlustus, apdrošināšana, draudimas, mutual,
+  assurance, group, company, and the like), and not a word two or more insurers on the list share.
+  The other two rules stay: the name holding what is typed, and the initials. Built only if the owner
+  agrees.
+
 **Checked by the owner on the desktop, nothing to change (2026-09-29):** the Closed tab; the three
 tabs with filters that find nothing; registering a case with a driver.
+
+**Observed during the review, for the tablet and phone follow-up:** the agent measured the cases
+list at 1024 px scrolling sideways by 8 px in a browser that draws classic scroll bars (the table's
+920 px floor since Follow-up 17 is wider than the 912 px left); the reviewer's headless browser,
+without scroll bars, measured 0, and on a Mac with its usual overlay scroll bars it should not show.
+The list's toolbar takes a second row at 1024 px now that it has one more filter.
 
 **The owner's rental test, explained (2026-09-29).** The owner registered a case on 212 KBH that
 happened on 21 August, then created a rental of 212 KBH from 19 to 22 August, and expected the case's
