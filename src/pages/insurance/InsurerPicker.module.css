@@ -1,0 +1,80 @@
+/* The insurer picker of a case's form (Follow-up 18, F18-2d), from the mock-up the owner approved:
+   closed, a control like the form's selects showing the chosen insurer; open, a list under it with a
+   find box, Not chosen, the insurers and Add an insurer at its foot. Every value is a design token the
+   app already uses. */
+
+.picker { position: relative; min-width: 0; }
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 11px;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+.trigger:focus-visible, .trigger[aria-expanded='true'] { outline: none; border-color: var(--line-3); }
+.trigger[data-invalid='true'] { border-color: var(--bad-line); background: var(--bad-soft); }
+.value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.placeholder { color: var(--fg-4); }
+.caret { flex: none; font-size: 18px; color: var(--fg-3); }
+
+/* The open list, over the fields below it, as wide as the control and never narrower than 260px. */
+.popover {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  box-shadow: var(--sh-3);
+}
+.find {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.find:focus { outline: none; border-color: var(--line-3); }
+
+.options { display: flex; flex-direction: column; margin: 0; padding: 0; max-height: 244px; overflow-y: auto; list-style: none; }
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+}
+.option[data-active='true'] { background: var(--surface-3); }
+.optionName { min-width: 0; overflow-wrap: anywhere; }
+.none { color: var(--fg-3); }
+.check { flex: none; margin-left: auto; font-size: 17px; color: var(--accent); }
+/* Add an insurer: the list's foot, set off by a rule, in the accent. */
+.add { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 7px 7px; color: var(--accent); font-weight: 500; }
+.addIcon { flex: none; font-size: 17px; }
+.empty { margin: 0; padding: 6px 10px; font-size: 12.5px; color: var(--fg-3); }
+
+@media (max-width: 639px) {
+  .option { min-height: 44px; }
+}

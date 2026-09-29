@@ -8,6 +8,10 @@ import type {
  * with the casco case of its accident; and a practice car and driver on the deletions page, blocked
  * by an open case, then deleted with it. Typed as the DTOs; only the tests import this module. The
  * tests read these with the clock set to `PRACTICE_AT`, when the answers were given.
+ *
+ * Follow-up 18 moved the cases to round 13's contract: each insurer, a name in round 12, is the
+ * seeded insurer of that name as round 13 gives it (`followup17.support.ts` says how). The deletions'
+ * audit copies stay as round 12 wrote them, with the names: a copy is never rewritten.
  */
 
 export const PRACTICE_AT = "2026-09-27T09:12:53.205408+00:00";
@@ -32,7 +36,13 @@ export const practiceRegistered: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-23T09:12:50.276743+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": null,
   "otherInsurer": null,
   "otherClaimNumber": null,
@@ -94,7 +104,13 @@ export const practiceAfterEvent: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-23T09:12:50.276743+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": null,
   "otherInsurer": null,
   "otherClaimNumber": null,
@@ -186,7 +202,13 @@ export const practiceFinal: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-23T09:12:50.276743+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-PRACTICE-1",
   "otherInsurer": null,
   "otherClaimNumber": null,
@@ -273,9 +295,21 @@ export const klmWithCasco: InsuranceCaseResponse = {
     "startedAtUtc": "2026-08-28T09:12:50.276743+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-04417",
-  "otherInsurer": "Meridian Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+    "name": "Meridian Insurance",
+    "email": "claims@meridian-insurance.example",
+    "phoneNumber": "+372 600 2200",
+    "isActive": true
+  },
   "otherClaimNumber": "MI-2026-118305",
   "handledBy": 2,
   "status": 3,

@@ -175,7 +175,12 @@ export function Dialog({
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      // Only the dialog on top closes: a window opened over another (Add insurer over a case's form,
+      // Follow-up 18) leaves the one under it open.
+      const open = document.querySelectorAll('[role="dialog"][aria-modal="true"]');
+      if (open.length > 1 && open[open.length - 1] !== panelRef.current) return;
+      onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

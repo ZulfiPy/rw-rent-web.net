@@ -1388,6 +1388,19 @@ export interface InsuranceCaseRentalResponse {
   closedAtUtc?: Instant | null;
 }
 
+/**
+ * An insurer as a case names it (the backend's round 13): one of the list the company keeps, with its
+ * email and phone number when it has them. `isActive` false is an insurer out of use, which stays on
+ * every case that names it.
+ */
+export interface InsuranceCaseInsurerResponse {
+  id: Uuid;
+  name: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  isActive: boolean;
+}
+
 /** Another case, by its label "{plate} · {what is damaged}". */
 export interface InsuranceCaseLinkResponse {
   id: Uuid;
@@ -1416,9 +1429,9 @@ export interface InsuranceCaseResponse {
   driverId?: Uuid | null;
   driverDisplayName?: string | null;
   rental?: InsuranceCaseRentalResponse | null;
-  ourInsurer?: string | null;
+  ourInsurer?: InsuranceCaseInsurerResponse | null;
   ourClaimNumber?: string | null;
-  otherInsurer?: string | null;
+  otherInsurer?: InsuranceCaseInsurerResponse | null;
   otherClaimNumber?: string | null;
   handledBy?: InsurerSide | null;
   status: InsuranceCaseStatus;
@@ -1458,9 +1471,9 @@ export interface InsuranceCaseListItemResponse {
   happenedAtUtc: Instant;
   timeIsWhenFound: boolean;
   driverDisplayName?: string | null;
-  ourInsurer?: string | null;
+  ourInsurer?: InsuranceCaseInsurerResponse | null;
   ourClaimNumber?: string | null;
-  otherInsurer?: string | null;
+  otherInsurer?: InsuranceCaseInsurerResponse | null;
   otherClaimNumber?: string | null;
   handledBy?: InsurerSide | null;
   status: InsuranceCaseStatus;
@@ -1501,14 +1514,17 @@ export interface InsuranceCaseDriverSuggestionResponse {
 
 /**
  * One view of the list. Type on every view; Status on Open and Waiting for us (Closed is refused
- * there); Waiting for on Open only. The views take no sort field: the API refuses one. Search covers
- * the plate, what is damaged, the driver's name, both insurers and both claim numbers.
+ * there); Waiting for on Open only; Handled by on every view (round 13): the cases whose Handled by
+ * names the side that insurer is on, an insurer that is not on the list refused under
+ * `HandledByInsurerId`. The views take no sort field: the API refuses one. Search covers the plate,
+ * what is damaged, the driver's name, both insurers' names and both claim numbers.
  */
 export type InsuranceCaseQuery = {
   View?: InsuranceCaseView;
   Type?: InsuranceCaseType;
   Status?: InsuranceCaseStatus;
   WaitingFor?: InsuranceCaseParty;
+  HandledByInsurerId?: Uuid;
   Search?: string;
   PageNumber?: number;
   PageSize?: number;
@@ -1522,7 +1538,8 @@ export type InsuranceCaseAccidentChoicesQuery = { ForCaseId?: Uuid }
 
 /**
  * Register case: the case's fields, sent as `multipart/form-data` together with the files `photos`.
- * Status is Happened and WaitingFor is Us unless the request says otherwise.
+ * Status is Happened and WaitingFor is Us unless the request says otherwise. Each insurer is one of
+ * the list, by its id, and one in use (round 13).
  */
 export interface RegisterInsuranceCaseRequest {
   type: InsuranceCaseType;
@@ -1534,9 +1551,9 @@ export interface RegisterInsuranceCaseRequest {
   place: string;
   placeIsWhereFound: boolean;
   driverId?: Uuid | null;
-  ourInsurer?: string | null;
+  ourInsurerId?: Uuid | null;
   ourClaimNumber?: string | null;
-  otherInsurer?: string | null;
+  otherInsurerId?: Uuid | null;
   otherClaimNumber?: string | null;
   handledBy?: InsurerSide | null;
   status: InsuranceCaseStatus;
@@ -1544,7 +1561,10 @@ export interface RegisterInsuranceCaseRequest {
   sameAccidentCaseId?: Uuid | null;
 }
 
-/** Edit case, as JSON: everything but the status and who the case waits for, with the case's token. */
+/**
+ * Edit case, as JSON: everything but the status and who the case waits for, with the case's token. A
+ * side whose insurer is left as it was may keep an insurer out of use; a changed one must be in use.
+ */
 export interface UpdateInsuranceCaseRequest {
   type: InsuranceCaseType | null;
   vehicleId?: Uuid | null;
@@ -1555,9 +1575,9 @@ export interface UpdateInsuranceCaseRequest {
   place?: string | null;
   placeIsWhereFound?: boolean;
   driverId?: Uuid | null;
-  ourInsurer?: string | null;
+  ourInsurerId?: Uuid | null;
   ourClaimNumber?: string | null;
-  otherInsurer?: string | null;
+  otherInsurerId?: Uuid | null;
   otherClaimNumber?: string | null;
   handledBy?: InsurerSide | null;
   atFault?: AtFaultParty | null;

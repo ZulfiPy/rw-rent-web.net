@@ -12,11 +12,12 @@ import { MAX_PHOTOS } from './insurance/photos';
 import { clearTaskRenders, count, refused, renderAs } from './followup12.harness';
 import {
   CAPTURED_AT, caseAfterFirstEventRefusal, caseKlmDita, changeOutOfOrderRefusal, choicesKlm, choicesNew,
-  eventBeforeCaseRefusal, insurers, meDita, noteEmptyRefusal, notFoundCase, notYourEventRefusal,
+  eventBeforeCaseRefusal, meDita, noteEmptyRefusal, notFoundCase, notYourEventRefusal,
   notYourNoteRefusal, pickDrivers, pickVehicles, registerEmptyRefusal, registerFutureRefusal,
   registerHandlerRefusal, registerNotAPictureRefusal, staleTokenRefusal, suggestBusiness, suggestNobodyNamed,
   suggestNotRented, suggestOne, suggestSeveral, suggestionQueries,
 } from './followup17.support';
+import { insurersAll } from './followup18.support';
 
 /**
  * Follow-up 17, F17-4 to F17-7: Register case and Edit case, Casco case for this accident, Add event
@@ -53,7 +54,8 @@ const ACTIVE = { IsActive: true, PageSize: 100 } as const;
 const LISTS: Array<[readonly unknown[], unknown]> = [
   [qk.vehicles.list(ACTIVE), pickVehicles],
   [qk.drivers.list(ACTIVE), pickDrivers],
-  [qk.insuranceCases.insurers, insurers],
+  // Follow-up 18: the insurers are the list the company keeps, no longer the names typed on cases.
+  [qk.insurers.list({}), insurersAll],
   [qk.insuranceCases.accidentChoices({}), choicesNew],
   [qk.insuranceCases.accidentChoices({ ForCaseId: caseKlmDita.id }), choicesKlm],
 ];
@@ -62,6 +64,15 @@ const dialog = (element: ReturnType<typeof h>, body: ProblemDetails | null = nul
   hook.refusal = body ? refused(body) : null;
   return renderAs(element, { at: '/x', route: '/x', me: meDita, data: [...LISTS, ...data] }).markup;
 };
+
+/** An insurer picker's control, by its field's label: what it shows as chosen (Follow-up 18). */
+const picker = (markup: string, label: string) => {
+  const match = new RegExp(`<button type="button"[^>]*aria-label="${label}: ([^"]*)"`).exec(markup);
+  expect(match, `no picker ${label}`).not.toBeNull();
+  return match![1];
+};
+const BALTIC = insurersAll.find((i) => i.name === 'Baltic Mutual')!.id;
+const MERIDIAN = insurersAll.find((i) => i.name === 'Meridian Insurance')!.id;
 
 /** The markup of one field, from its label to the end of that field. */
 const field = (markup: string, label: string, from = 0) => {
@@ -121,10 +132,10 @@ describe('Register case (F17-4)', () => {
     expect(driver).toContain('Choose the car and the time, and the driver is filled in from its rental.');
     // Any active driver can be chosen.
     for (const d of pickDrivers.items) expect(driver).toContain(`>${d.firstName} ${d.lastName}</option>`);
-    expect(field(markup, 'Our insurer')).toContain('list="rw-insurers"');
-    expect(field(markup, 'Our insurer')).toContain('maxLength="100"');
-    expect(markup).toContain('<datalist id="rw-insurers">');
-    for (const name of insurers) expect(markup).toContain(`<option value="${name}"></option>`);
+    // Follow-up 18: each insurer is picked from the list, none chosen yet; nothing is typed or suggested.
+    expect(picker(markup, 'Our insurer')).toBe('Choose an insurer');
+    expect(picker(markup, 'The other party’s insurer')).toBe('Choose an insurer');
+    expect(markup).not.toContain('<datalist');
     const handled = field(markup, 'Handled by');
     expect(count(handled, '<option')).toBe(1);
     expect(handled).toContain('>Not known yet</option>');
@@ -166,7 +177,7 @@ describe('Register case (F17-4)', () => {
   });
 
   test('the ticks turn the labels into Found and Where it was found; the insurers become Handled by’s options', () => {
-    const markup = dialog(register({ timeIsWhenFound: true, placeIsWhereFound: true, ourInsurer: 'Baltic Mutual', otherInsurer: 'Meridian Insurance', type: '2' }));
+    const markup = dialog(register({ timeIsWhenFound: true, placeIsWhereFound: true, ourInsurerId: BALTIC, otherInsurerId: MERIDIAN, type: '2' }));
     expect(field(markup, 'Found')).toContain('type="datetime-local"');
     expect(field(markup, 'Where it was found')).toContain('maxLength="200"');
     expect(markup).not.toContain('<span>Happened</span>');
@@ -180,13 +191,13 @@ describe('Register case (F17-4)', () => {
   test('what Register case sends: the form as left, blanks as none, the time in UTC', () => {
     const request = registerRequest({
       vehicleId: 'car', type: '2', damage: 'Door', description: '  ', happened: '2026-09-27T11:40', timeIsWhenFound: true,
-      place: 'Riga', placeIsWhereFound: false, driverId: '', ourInsurer: 'Baltic Mutual', ourClaimNumber: '', otherInsurer: '',
+      place: 'Riga', placeIsWhereFound: false, driverId: '', ourInsurerId: BALTIC, ourClaimNumber: '', otherInsurerId: '',
       otherClaimNumber: 'X-1', handledBy: '1', status: '5', waitingFor: '5', atFault: '', sameAccidentCaseId: '',
     });
     expect(request).toEqual({
       type: 2, vehicleId: 'car', damage: 'Door', description: null, happenedAtUtc: '2026-09-27T08:40:00.000Z',
-      timeIsWhenFound: true, place: 'Riga', placeIsWhereFound: false, driverId: null, ourInsurer: 'Baltic Mutual',
-      ourClaimNumber: null, otherInsurer: null, otherClaimNumber: 'X-1', handledBy: 1, status: 5, waitingFor: 5,
+      timeIsWhenFound: true, place: 'Riga', placeIsWhereFound: false, driverId: null, ourInsurerId: BALTIC,
+      ourClaimNumber: null, otherInsurerId: null, otherClaimNumber: 'X-1', handledBy: 1, status: 5, waitingFor: 5,
       sameAccidentCaseId: null,
     });
   });
@@ -219,7 +230,8 @@ describe('Edit case, and Casco case for this accident (F17-4)', () => {
     expect(markup).toContain('>552 KLM · Rear bumper and boot lid dented</p>');
     expect(selected(field(markup, 'Car'), caseKlmDita.vehicleId)).toBe(true);
     expect(field(markup, 'Happened')).toContain(`value="${toLocalInput(caseKlmDita.happenedAtUtc)}"`);
-    expect(field(markup, 'Our insurer')).toContain('value="Baltic Mutual"');
+    expect(picker(markup, 'Our insurer')).toBe('Baltic Mutual');
+    expect(picker(markup, 'The other party’s insurer')).toBe('Meridian Insurance');
     expect(field(markup, 'Claim number')).toContain('value="BM-26-04417"');
     expect(selected(field(markup, 'Handled by'), '2')).toBe(true);
     expect(markup).toContain('>Decision</p>');
@@ -239,8 +251,8 @@ describe('Edit case, and Casco case for this accident (F17-4)', () => {
   test('what Edit case sends: no status, the time the person did not touch exactly as stored, the case’s token', () => {
     const request = updateRequest({
       vehicleId: caseKlmDita.vehicleId, type: '1', damage: caseKlmDita.damage, description: '', happened: toLocalInput(caseKlmDita.happenedAtUtc),
-      timeIsWhenFound: false, place: caseKlmDita.place, placeIsWhereFound: false, driverId: '', ourInsurer: 'Baltic Mutual',
-      ourClaimNumber: 'BM-26-04417', otherInsurer: 'Meridian Insurance', otherClaimNumber: 'MI-2026-118305', handledBy: '2',
+      timeIsWhenFound: false, place: caseKlmDita.place, placeIsWhereFound: false, driverId: '', ourInsurerId: BALTIC,
+      ourClaimNumber: 'BM-26-04417', otherInsurerId: MERIDIAN, otherClaimNumber: 'MI-2026-118305', handledBy: '2',
       status: '1', waitingFor: '1', atFault: '3', sameAccidentCaseId: '',
     }, caseKlmDita);
     expect(request).not.toHaveProperty('status');
@@ -248,6 +260,8 @@ describe('Edit case, and Casco case for this accident (F17-4)', () => {
     expect(request.happenedAtUtc).toBe(caseKlmDita.happenedAtUtc);
     expect(request.atFault).toBe(3);
     expect(request.handledBy).toBe(2);
+    expect(request.ourInsurerId).toBe(BALTIC);
+    expect(request.otherInsurerId).toBe(MERIDIAN);
     expect(request.concurrencyToken).toBe(caseKlmDita.concurrencyToken);
   });
 
@@ -269,11 +283,11 @@ describe('Edit case, and Casco case for this accident (F17-4)', () => {
     expect(field(markup, 'Description')).toContain('Hit from behind at a crossing while waiting at the red light.');
     expect(field(markup, 'Happened')).toContain(`value="${toLocalInput(caseKlmDita.happenedAtUtc)}"`);
     expect(field(markup, 'Place')).toContain(`value="${caseKlmDita.place}"`);
-    expect(field(markup, 'Our insurer')).toContain('value="Baltic Mutual"');
+    expect(picker(markup, 'Our insurer')).toBe('Baltic Mutual');
     // Handled by ours; the claim numbers and the other party's insurer are left out.
     expect(selected(field(markup, 'Handled by'), '1')).toBe(true);
     expect(field(markup, 'Claim number')).toContain('value=""');
-    expect(field(markup, 'The other party’s insurer')).toContain('value=""');
+    expect(picker(markup, 'The other party’s insurer')).toBe('Choose an insurer');
     expect(selected(field(markup, 'Status'), '1')).toBe(true);
     expect(selected(field(markup, 'Same accident as'), caseKlmDita.id)).toBe(true);
     expect(field(markup, 'Same accident as')).toContain('>552 KLM · Rear bumper and boot lid dented · Usual</option>');

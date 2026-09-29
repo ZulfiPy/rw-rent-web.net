@@ -293,9 +293,10 @@ describe('a case’s page (F17-3)', () => {
     expect(notes).toContain('Signe Priede, 19 Sep, 16:20');
 
     const insurance = markup.slice(markup.indexOf('>Insurance<'));
-    expect(insurance).toMatch(/>Our insurer<\/span><span[^>]*>Baltic Mutual</);
+    // Follow-up 18: each insurer's name leads its own block, its email and phone under it.
+    expect(insurance).toMatch(/>Our insurer<\/span><span[^>]*><span class="_insurer_[^"]*"><span[^>]*>Baltic Mutual</);
     expect(insurance).toMatch(/>Claim number<\/span><span class="_mono_[^"]*[^>]*>BM-26-04417</);
-    expect(insurance).toMatch(/>The other party’s insurer<\/span><span[^>]*>Meridian Insurance</);
+    expect(insurance).toMatch(/>The other party’s insurer<\/span><span[^>]*><span class="_insurer_[^"]*"><span[^>]*>Meridian Insurance</);
     expect(insurance).toMatch(/_full_[^"]*"><span[^>]*>Handled by<\/span><span[^>]*>Meridian Insurance \(the other party’s\)</);
     expect(markup).toMatch(/>Description<\/h2>.*Hit from behind at a crossing while waiting at the red light./s);
     expect(markup).toMatch(/>Created<\/span><span[^>]*>08 Sep, 10:05<\/span><span[^>]*>by Dita Smite<\/span>/);
@@ -447,12 +448,12 @@ describe('the count on Insurance cases in the navigation (F17-8)', () => {
 });
 
 describe('every write refreshes what it changes (F17-10)', () => {
-  test('one prefix holds the case, the views, the counts and the dialogs’ lists; the deletions page follows', async () => {
+  test('one prefix holds the case, the views, the counts and the dialogs’ lists; the deletions page and the insurers follow', async () => {
     const { QueryClient } = await import('@tanstack/react-query');
     const client = new QueryClient();
     const keys = [
       qk.insuranceCases.detail(caseKlmDita.id), qk.insuranceCases.list(LIST(1)), qk.insuranceCases.list(LIST(2)),
-      qk.insuranceCases.counts, qk.insuranceCases.insurers, qk.recordDeletions.counts(2),
+      qk.insuranceCases.counts, qk.insurers.list({}), qk.recordDeletions.counts(2),
     ];
     for (const key of keys) client.setQueryData(key, {});
     client.setQueryData(qk.vehicles.list({ PageSize: 100 }), {});

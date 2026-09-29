@@ -87,13 +87,16 @@ describe('a case in words', () => {
   });
 
   test('who handles it: the chosen side’s insurer, not decided yet, not reported', () => {
-    const both = { ourInsurer: 'Baltic Mutual', ourClaimNumber: 'BM-1', otherInsurer: 'Meridian Insurance', otherClaimNumber: 'MI-2' };
+    // Follow-up 18: each insurer is one of the list, as round 13 names it on a case.
+    const baltic = { id: 'a7c9e1f3-0001-4a7c-9a7c-000000000001', name: 'Baltic Mutual', email: null, phoneNumber: null, isActive: true };
+    const meridian = { id: 'a7c9e1f3-0002-4a7c-9a7c-000000000002', name: 'Meridian Insurance', email: null, phoneNumber: null, isActive: true };
+    const both = { ourInsurer: baltic, ourClaimNumber: 'BM-1', otherInsurer: meridian, otherClaimNumber: 'MI-2' };
     expect(handledInfo({ ...both, handledBy: InsurerSide.Theirs })).toEqual({ text: 'Meridian Insurance', sub: 'MI-2', dim: false });
     expect(handledInfo({ ...both, handledBy: InsurerSide.Ours })).toEqual({ text: 'Baltic Mutual', sub: 'BM-1', dim: false });
     expect(handledInfo({ ...both, handledBy: null })).toEqual({ text: 'Not decided yet', sub: '', dim: true });
     expect(handledInfo({})).toEqual({ text: 'Not reported', sub: '', dim: true });
     // A side chosen without its insurer (the API refuses it) reads as not decided.
-    expect(handledInfo({ otherInsurer: 'Meridian Insurance', handledBy: InsurerSide.Ours }).text).toBe('Not decided yet');
+    expect(handledInfo({ otherInsurer: meridian, handledBy: InsurerSide.Ours }).text).toBe('Not decided yet');
     expect(handledLine({ ...both, handledBy: InsurerSide.Theirs })).toBe('Meridian Insurance · MI-2');
     expect(handledLine({})).toBe('Not reported');
     expect(handledLong({ ...both, handledBy: InsurerSide.Ours })).toBe('Baltic Mutual (ours)');

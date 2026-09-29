@@ -20,7 +20,8 @@ describe('the form of a write with photos', () => {
       place: 'Riga, Brivibas iela 1',
       placeIsWhereFound: true,
       driverId: null,
-      ourInsurer: 'Baltic Mutual',
+      ourInsurerId: 'insurer-1',
+      otherInsurerId: null,
       handledBy: InsurerSide.Ours,
       status: InsuranceCaseStatus.Happened,
       waitingFor: InsuranceCaseParty.Nobody,
@@ -33,9 +34,12 @@ describe('the form of a write with photos', () => {
     const names = [...form.keys()];
     expect(names).toEqual([
       'Type', 'VehicleId', 'Damage', 'HappenedAtUtc', 'TimeIsWhenFound', 'Place', 'PlaceIsWhereFound',
-      'OurInsurer', 'HandledBy', 'Status', 'WaitingFor', 'photos', 'photos',
+      'OurInsurerId', 'HandledBy', 'Status', 'WaitingFor', 'photos', 'photos',
     ]);
     expect(form.get('Type')).toBe('2');
+    // Round 13 (Follow-up 18): an insurer goes by its id, one of the list; none is left out.
+    expect(form.get('OurInsurerId')).toBe('insurer-1');
+    expect(form.has('OtherInsurerId')).toBe(false);
     expect(form.get('TimeIsWhenFound')).toBe('false');
     expect(form.get('PlaceIsWhereFound')).toBe('true');
     // Nobody is 5, never 0 (the API's enums have no 0).

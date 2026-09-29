@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { qk } from '@/api';
 import { listDrivers } from '@/api/drivers';
 import {
-  addEvent, addNote, correctEvent, correctNote, listAccidentChoices, listInsurers, photoUrl, registerCase,
+  addEvent, addNote, correctEvent, correctNote, listAccidentChoices, photoUrl, registerCase,
   suggestDriver, updateCase, type PhotoUpload,
 } from '@/api/insuranceCases';
+import { listInsurers } from '@/api/insurers';
 import { listVehicles } from '@/api/vehicles';
 import {
   AtFaultParty, InsuranceCaseDriverSituation, InsuranceCaseParty, InsuranceCaseStatus, InsuranceCaseType,
@@ -23,10 +24,13 @@ import {
 } from '@/format';
 import { ReseedScope } from '@/app/reseed';
 import { useActionMutation } from '@/app/useActionMutation';
+import { useAccess } from '@/permissions/usePermissions';
 import { CheckCard } from '@/ui/CheckCard';
 import { Dialog, DialogNote, dialogStyles } from '@/ui/Dialog';
 import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
-import { CASE_REFRESH, caseHref, type CaseTab } from './caseAddress';
+import { CASES_MANAGE, CASE_REFRESH, caseHref, type CaseTab } from './caseAddress';
+import { InsurerForm } from './InsurerDialogs';
+import { InsurerPicker, chosenInsurer } from './InsurerPicker';
 import { MAX_PHOTOS, preparePhoto } from './photos';
 import styles from './CaseDialogs.module.css';
 
@@ -248,9 +252,10 @@ export interface CaseFormState {
   place: string;
   placeIsWhereFound: boolean;
   driverId: string;
-  ourInsurer: string;
+  /** Each insurer is one of the list, by its id (Follow-up 18); '' for none. */
+  ourInsurerId: string;
   ourClaimNumber: string;
-  otherInsurer: string;
+  otherInsurerId: string;
   otherClaimNumber: string;
   handledBy: string;
   status: string;
@@ -262,8 +267,8 @@ export interface CaseFormState {
 /** A new case (handover d): Usual, happened now, both ticks off, Happened and Us, no other case. */
 export const blankCase = (): CaseFormState => ({
   vehicleId: '', type: String(InsuranceCaseType.Usual), damage: '', description: '', happened: nowInput(),
-  timeIsWhenFound: false, place: '', placeIsWhereFound: false, driverId: '', ourInsurer: '', ourClaimNumber: '',
-  otherInsurer: '', otherClaimNumber: '', handledBy: '', status: String(InsuranceCaseStatus.Happened),
+  timeIsWhenFound: false, place: '', placeIsWhereFound: false, driverId: '', ourInsurerId: '', ourClaimNumber: '',
+  otherInsurerId: '', otherClaimNumber: '', handledBy: '', status: String(InsuranceCaseStatus.Happened),
   waitingFor: String(InsuranceCaseParty.Us), atFault: '', sameAccidentCaseId: '',
 });
 
@@ -278,9 +283,9 @@ export const caseFormOf = (kase: InsuranceCaseResponse): CaseFormState => ({
   place: kase.place,
   placeIsWhereFound: kase.placeIsWhereFound,
   driverId: kase.driverId ?? '',
-  ourInsurer: kase.ourInsurer ?? '',
+  ourInsurerId: kase.ourInsurer?.id ?? '',
   ourClaimNumber: kase.ourClaimNumber ?? '',
-  otherInsurer: kase.otherInsurer ?? '',
+  otherInsurerId: kase.otherInsurer?.id ?? '',
   otherClaimNumber: kase.otherClaimNumber ?? '',
   handledBy: kase.handledBy ? String(kase.handledBy) : '',
   status: String(kase.status),
@@ -293,6 +298,7 @@ export const caseFormOf = (kase: InsuranceCaseResponse): CaseFormState => ({
  * Casco case for this accident (handover d): the car, what is damaged, the description, the time and
  * the place with their ticks, the driver, and our insurer with Handled by ours when there is one; the
  * type Casco and the accident's first case as Same accident. Everything else as a new case has it.
+ * Our insurer is copied only while it is in use (Follow-up 18): one out of use cannot go on a new case.
  */
 export const cascoFormOf = (source: InsuranceCaseResponse): CaseFormState => ({
   ...blankCase(),
@@ -305,8 +311,8 @@ export const cascoFormOf = (source: InsuranceCaseResponse): CaseFormState => ({
   place: source.place,
   placeIsWhereFound: source.placeIsWhereFound,
   driverId: source.driverId ?? '',
-  ourInsurer: source.ourInsurer ?? '',
-  handledBy: source.ourInsurer ? String(InsurerSide.Ours) : '',
+  ourInsurerId: source.ourInsurer?.isActive ? source.ourInsurer.id : '',
+  handledBy: source.ourInsurer?.isActive ? String(InsurerSide.Ours) : '',
   sameAccidentCaseId: source.sameAccidentCaseId ?? source.id,
 });
 
@@ -324,9 +330,9 @@ export function registerRequest(form: CaseFormState, stored?: string | null): Re
     place: form.place,
     placeIsWhereFound: form.placeIsWhereFound,
     driverId: form.driverId || null,
-    ourInsurer: blankToNull(form.ourInsurer),
+    ourInsurerId: form.ourInsurerId || null,
     ourClaimNumber: blankToNull(form.ourClaimNumber),
-    otherInsurer: blankToNull(form.otherInsurer),
+    otherInsurerId: form.otherInsurerId || null,
     otherClaimNumber: blankToNull(form.otherClaimNumber),
     handledBy: optionalNumber<InsurerSide>(form.handledBy),
     status: Number(form.status) as InsuranceCaseStatus,
@@ -348,7 +354,10 @@ export function updateRequest(form: CaseFormState, kase: InsuranceCaseResponse):
   };
 }
 
-export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
+/** The side of a case whose insurer the Add insurer window is adding, with what was typed in its picker. */
+type Adding = { key: 'ourInsurerId' | 'otherInsurerId'; typed: string };
+
+export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos, initialPicker, initialAdding }: {
   /** The case Edit case opens on; without it the dialog registers a new case. */
   kase?: InsuranceCaseResponse;
   /** The usual case whose casco case is registered (Casco case for this accident). */
@@ -357,8 +366,14 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
   onClose: () => void;
   initial?: Partial<CaseFormState>;
   initialPhotos?: PhotoTile[];
+  /** One insurer picker open, with a find typed: the render tests use it. */
+  initialPicker?: { key: 'ourInsurerId' | 'otherInsurerId'; find: string };
+  /** The Add insurer window open over the form: the render tests use it. */
+  initialAdding?: Adding;
 }) {
   const navigate = useNavigate();
+  const { can } = useAccess();
+  const [adding, setAdding] = useState<Adding | null>(initialAdding ?? null);
   const seed = { ...(kase ? caseFormOf(kase) : from ? cascoFormOf(from) : blankCase()), ...initial };
   const [form, setForm] = useState<CaseFormState>(seed);
   const photos = usePhotoTiles(initialPhotos);
@@ -373,7 +388,8 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
 
   const vehicles = useQuery({ queryKey: qk.vehicles.list(ACTIVE), queryFn: () => listVehicles(ACTIVE) });
   const drivers = useQuery({ queryKey: qk.drivers.list(ACTIVE), queryFn: () => listDrivers(ACTIVE) });
-  const insurers = useQuery({ queryKey: qk.insuranceCases.insurers, queryFn: listInsurers });
+  // The whole list, in use and out of use: the pickers offer those in use and the case's own.
+  const insurers = useQuery({ queryKey: qk.insurers.list({}), queryFn: () => listInsurers({}) });
   const choicesQuery = kase ? { ForCaseId: kase.id } : {};
   const choices = useQuery({
     queryKey: qk.insuranceCases.accidentChoices(choicesQuery),
@@ -405,12 +421,12 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
   };
 
   /** Clearing the chosen side's insurer resets Handled by (handover d). */
-  const setInsurer = (key: 'ourInsurer' | 'otherInsurer', value: string) => {
-    const side = key === 'ourInsurer' ? String(InsurerSide.Ours) : String(InsurerSide.Theirs);
+  const setInsurer = (key: 'ourInsurerId' | 'otherInsurerId', value: string) => {
+    const side = key === 'ourInsurerId' ? String(InsurerSide.Ours) : String(InsurerSide.Theirs);
     setForm((current) => ({
       ...current,
       [key]: value,
-      handledBy: !value.trim() && current.handledBy === side ? '' : current.handledBy,
+      handledBy: !value && current.handledBy === side ? '' : current.handledBy,
     }));
   };
 
@@ -433,6 +449,7 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
     },
   });
 
+  const fields = m.fields;
   const source = kase ?? from;
   const vehicleOptions = (vehicles.data?.items ?? []).map((v) => ({ value: v.id, label: `${v.plateNumber} · ${v.make} ${v.model}` }));
   // On an edit, an inactive car already on the case is still shown (F17-4).
@@ -456,13 +473,32 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
     driverOptions.push({ value: form.driverId, label: name ?? 'The driver on the case' });
   }
 
-  const our = form.ourInsurer.trim();
-  const other = form.otherInsurer.trim();
+  // On an edit, the case's own insurers stay offered and chosen even when they are out of use; a
+  // casco case's copy of its usual case's insurer, which is in use, is named while the list loads.
+  const keptOur = kase?.ourInsurer ?? (from?.ourInsurer?.isActive ? from.ourInsurer : null);
+  const keptOther = kase?.otherInsurer ?? null;
+  const our = chosenInsurer(form.ourInsurerId, insurers.data, keptOur)?.name ?? '';
+  const other = chosenInsurer(form.otherInsurerId, insurers.data, keptOther)?.name ?? '';
+  // Handled by keeps its options from the two insurers chosen (F18-2d).
   const handledOptions = [
     { value: '', label: 'Not known yet' },
-    ...(our ? [{ value: String(InsurerSide.Ours), label: `Our insurer · ${our}` }] : []),
-    ...(other ? [{ value: String(InsurerSide.Theirs), label: `The other party’s insurer · ${other}` }] : []),
+    ...(form.ourInsurerId ? [{ value: String(InsurerSide.Ours), label: our ? `Our insurer · ${our}` : 'Our insurer' }] : []),
+    ...(form.otherInsurerId ? [{ value: String(InsurerSide.Theirs), label: other ? `The other party’s insurer · ${other}` : 'The other party’s insurer' }] : []),
   ];
+  const canAdd = can(CASES_MANAGE);
+  const picker = (key: 'ourInsurerId' | 'otherInsurerId', label: string) => (
+    <InsurerPicker
+      label={label}
+      value={form[key]}
+      insurers={insurers.data}
+      kept={key === 'ourInsurerId' ? keptOur : keptOther}
+      canAdd={canAdd}
+      error={fields[key]}
+      onChange={(id) => setInsurer(key, id)}
+      onAdd={(typed) => setAdding({ key, typed })}
+      {...(initialPicker?.key === key ? { initialOpen: true, initialFind: initialPicker.find } : {})}
+    />
+  );
 
   const sameOptions = (choices.data ?? []).map((c) => ({ value: c.id, label: `${c.label} · ${CASE_TYPE_LABEL[c.type]}` }));
   if (form.sameAccidentCaseId && !sameOptions.some((o) => o.value === form.sameAccidentCaseId)) {
@@ -474,206 +510,220 @@ export function CaseForm({ kase, from, tab, onClose, initial, initialPhotos }: {
     });
   }
 
-  const fields = m.fields;
   const timeError = fields['happenedAtUtc'];
 
   return (
-    <Dialog
-      title={kase ? 'Edit case' : 'Register case'}
-      description={kase ? caseTitle(kase) : from ? `Filled in from ${caseTitle(from)}, as its casco case.` : undefined}
-      icon="car_crash"
-      tone="accent"
-      width={720}
-      submitLabel={kase ? 'Save changes' : 'Register case'}
-      submitBlocked={kase ? null : photos.blocked}
-      busy={m.busy}
-      failure={m.failure}
-      footnote={kase
-        ? 'Status and Waiting for change only through an event.'
-        : 'After this, the status and who the case waits for change only through an event.'}
-      onClose={onClose}
-      onSubmit={() => m.submit(undefined)}
-      onRefresh={m.refresh}
-    >
-      <div className={dialogStyles.section}>
-        <p className={dialogStyles.sectionTitle}>The damage</p>
-        <div className={styles.grid}>
-          <Field label="Car" required error={fields['vehicleId']}>
-            <select className={f.control} {...invalidProps(fields['vehicleId'])} value={form.vehicleId} onChange={(e) => setRentalKey('vehicleId', e.target.value)}>
-              <option value="">Choose a car</option>
-              {vehicleOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </Field>
-          <Field
-            label="Type"
-            required
-            error={fields['type']}
-            hint={form.type === String(InsuranceCaseType.Casco)
-              ? 'Our casco repairs the car now; the company pays the 500-euro deductible.'
-              : 'The insurers decide who is at fault.'}
-          >
-            <select className={f.control} {...invalidProps(fields['type'])} value={form.type} onChange={(e) => set('type', e.target.value)}>
-              <option value={InsuranceCaseType.Usual}>{CASE_TYPE_LABEL[InsuranceCaseType.Usual]}</option>
-              <option value={InsuranceCaseType.Casco}>{CASE_TYPE_LABEL[InsuranceCaseType.Casco]}</option>
-            </select>
-          </Field>
-          <span className={styles.span}>
-            <Field label="What is damaged" required error={fields['damage']}>
-              <input
-                className={f.control}
-                {...invalidProps(fields['damage'])}
-                maxLength={200}
-                placeholder="For example Rear bumper dented"
-                value={form.damage}
-                onChange={(e) => set('damage', e.target.value)}
-              />
-            </Field>
-          </span>
-          <span className={styles.span}>
-            <Field label="Description" optional error={fields['description']}>
-              <textarea
-                className={f.control}
-                {...invalidProps(fields['description'])}
-                rows={3}
-                maxLength={4000}
-                placeholder="What happened, in as many words as needed"
-                value={form.description}
-                onChange={(e) => set('description', e.target.value)}
-              />
-            </Field>
-          </span>
-        </div>
-      </div>
-
-      <div className={dialogStyles.section}>
-        <p className={dialogStyles.sectionTitle}>When and where</p>
-        <div className={styles.grid}>
-          <Field label={form.timeIsWhenFound ? 'Found' : 'Happened'} required error={timeError}>
-            <input
-              type="datetime-local"
-              className={f.control}
-              {...invalidProps(timeError)}
-              value={form.happened}
-              onChange={(e) => setRentalKey('happened', e.target.value)}
-            />
-          </Field>
-        </div>
-        <CheckCard
-          label="We don’t know when"
-          hint="This is when it was found."
-          checked={form.timeIsWhenFound}
-          error={fields['timeIsWhenFound']}
-          onChange={(next) => set('timeIsWhenFound', next)}
-        />
-        <Field label={form.placeIsWhereFound ? 'Where it was found' : 'Place'} required error={fields['place']}>
-          <input
-            className={f.control}
-            {...invalidProps(fields['place'])}
-            maxLength={200}
-            value={form.place}
-            onChange={(e) => set('place', e.target.value)}
-          />
-        </Field>
-        <CheckCard
-          label="We don’t know where"
-          hint="This is where it was found."
-          checked={form.placeIsWhereFound}
-          error={fields['placeIsWhereFound']}
-          onChange={(next) => set('placeIsWhereFound', next)}
-        />
-      </div>
-
-      <div className={dialogStyles.section}>
-        <p className={dialogStyles.sectionTitle}>Driver</p>
-        <Field label="Driver" optional error={fields['driverId']} hint={driverHint(found, suggestionQuery ? plate : null)}>
-          <select className={f.control} {...invalidProps(fields['driverId'])} value={form.driverId} onChange={(e) => set('driverId', e.target.value)}>
-            <option value="">{several ? 'Choose who drove' : 'Not known'}</option>
-            {driverOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </Field>
-      </div>
-
-      <div className={dialogStyles.section}>
-        <p className={dialogStyles.sectionTitle}>Insurance</p>
-        <div className={styles.grid}>
-          <Field label="Our insurer" optional error={fields['ourInsurer']}>
-            <input className={f.control} {...invalidProps(fields['ourInsurer'])} maxLength={100} list="rw-insurers" value={form.ourInsurer} onChange={(e) => setInsurer('ourInsurer', e.target.value)} />
-          </Field>
-          <Field label="Claim number" optional error={fields['ourClaimNumber']}>
-            <input className={`${f.control} ${f.mono}`} {...invalidProps(fields['ourClaimNumber'])} maxLength={50} value={form.ourClaimNumber} onChange={(e) => set('ourClaimNumber', e.target.value)} />
-          </Field>
-          <Field label="The other party’s insurer" optional error={fields['otherInsurer']}>
-            <input className={f.control} {...invalidProps(fields['otherInsurer'])} maxLength={100} list="rw-insurers" value={form.otherInsurer} onChange={(e) => setInsurer('otherInsurer', e.target.value)} />
-          </Field>
-          <Field label="Claim number" optional error={fields['otherClaimNumber']}>
-            <input className={`${f.control} ${f.mono}`} {...invalidProps(fields['otherClaimNumber'])} maxLength={50} value={form.otherClaimNumber} onChange={(e) => set('otherClaimNumber', e.target.value)} />
-          </Field>
-          <span className={styles.span}>
-            <Field
-              label="Handled by"
-              optional
-              error={fields['handledBy']}
-              hint={our || other ? 'The insurer that handles the case, once the two have agreed.' : 'Offers the insurers filled in above.'}
-            >
-              <select className={f.control} {...invalidProps(fields['handledBy'])} value={form.handledBy} onChange={(e) => set('handledBy', e.target.value)}>
-                {handledOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </Field>
-          </span>
-        </div>
-        <datalist id="rw-insurers">
-          {(insurers.data ?? []).map((name) => <option key={name} value={name} />)}
-        </datalist>
-      </div>
-
-      {kase ? (
+    <>
+      <Dialog
+        title={kase ? 'Edit case' : 'Register case'}
+        description={kase ? caseTitle(kase) : from ? `Filled in from ${caseTitle(from)}, as its casco case.` : undefined}
+        icon="car_crash"
+        tone="accent"
+        width={720}
+        submitLabel={kase ? 'Save changes' : 'Register case'}
+        submitBlocked={kase ? null : photos.blocked}
+        busy={m.busy}
+        failure={m.failure}
+        footnote={kase
+          ? 'Status and Waiting for change only through an event.'
+          : 'After this, the status and who the case waits for change only through an event.'}
+        onClose={onClose}
+        onSubmit={() => m.submit(undefined)}
+        onRefresh={m.refresh}
+      >
         <div className={dialogStyles.section}>
-          <p className={dialogStyles.sectionTitle}>Decision</p>
+          <p className={dialogStyles.sectionTitle}>The damage</p>
           <div className={styles.grid}>
-            <Field label="At fault" optional error={fields['atFault']} hint="Set it once the decision is known.">
-              <select className={f.control} {...invalidProps(fields['atFault'])} value={form.atFault} onChange={(e) => set('atFault', e.target.value)}>
-                <option value="">Not decided yet</option>
-                {AT_FAULT_PARTIES.map((p) => <option key={p} value={p}>{AT_FAULT_LABEL[p]}</option>)}
+            <Field label="Car" required error={fields['vehicleId']}>
+              <select className={f.control} {...invalidProps(fields['vehicleId'])} value={form.vehicleId} onChange={(e) => setRentalKey('vehicleId', e.target.value)}>
+                <option value="">Choose a car</option>
+                {vehicleOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
+            <Field
+              label="Type"
+              required
+              error={fields['type']}
+              hint={form.type === String(InsuranceCaseType.Casco)
+                ? 'Our casco repairs the car now; the company pays the 500-euro deductible.'
+                : 'The insurers decide who is at fault.'}
+            >
+              <select className={f.control} {...invalidProps(fields['type'])} value={form.type} onChange={(e) => set('type', e.target.value)}>
+                <option value={InsuranceCaseType.Usual}>{CASE_TYPE_LABEL[InsuranceCaseType.Usual]}</option>
+                <option value={InsuranceCaseType.Casco}>{CASE_TYPE_LABEL[InsuranceCaseType.Casco]}</option>
+              </select>
+            </Field>
+            <span className={styles.span}>
+              <Field label="What is damaged" required error={fields['damage']}>
+                <input
+                  className={f.control}
+                  {...invalidProps(fields['damage'])}
+                  maxLength={200}
+                  placeholder="For example Rear bumper dented"
+                  value={form.damage}
+                  onChange={(e) => set('damage', e.target.value)}
+                />
+              </Field>
+            </span>
+            <span className={styles.span}>
+              <Field label="Description" optional error={fields['description']}>
+                <textarea
+                  className={f.control}
+                  {...invalidProps(fields['description'])}
+                  rows={3}
+                  maxLength={4000}
+                  placeholder="What happened, in as many words as needed"
+                  value={form.description}
+                  onChange={(e) => set('description', e.target.value)}
+                />
+              </Field>
+            </span>
           </div>
         </div>
-      ) : (
-        <>
-          <div className={dialogStyles.section}>
-            <p className={dialogStyles.sectionTitle}>Where it stands</p>
-            <div className={styles.grid}>
-              <Field label="Status" required error={fields['status']}>
-                <select className={f.control} {...invalidProps(fields['status'])} value={form.status} onChange={(e) => set('status', e.target.value)}>
-                  {CASE_STATUSES.map((s) => <option key={s} value={s}>{CASE_STATUS_LABEL[s]}</option>)}
+
+        <div className={dialogStyles.section}>
+          <p className={dialogStyles.sectionTitle}>When and where</p>
+          <div className={styles.grid}>
+            <Field label={form.timeIsWhenFound ? 'Found' : 'Happened'} required error={timeError}>
+              <input
+                type="datetime-local"
+                className={f.control}
+                {...invalidProps(timeError)}
+                value={form.happened}
+                onChange={(e) => setRentalKey('happened', e.target.value)}
+              />
+            </Field>
+          </div>
+          <CheckCard
+            label="We don’t know when"
+            hint="This is when it was found."
+            checked={form.timeIsWhenFound}
+            error={fields['timeIsWhenFound']}
+            onChange={(next) => set('timeIsWhenFound', next)}
+          />
+          <Field label={form.placeIsWhereFound ? 'Where it was found' : 'Place'} required error={fields['place']}>
+            <input
+              className={f.control}
+              {...invalidProps(fields['place'])}
+              maxLength={200}
+              value={form.place}
+              onChange={(e) => set('place', e.target.value)}
+            />
+          </Field>
+          <CheckCard
+            label="We don’t know where"
+            hint="This is where it was found."
+            checked={form.placeIsWhereFound}
+            error={fields['placeIsWhereFound']}
+            onChange={(next) => set('placeIsWhereFound', next)}
+          />
+        </div>
+
+        <div className={dialogStyles.section}>
+          <p className={dialogStyles.sectionTitle}>Driver</p>
+          <Field label="Driver" optional error={fields['driverId']} hint={driverHint(found, suggestionQuery ? plate : null)}>
+            <select className={f.control} {...invalidProps(fields['driverId'])} value={form.driverId} onChange={(e) => set('driverId', e.target.value)}>
+              <option value="">{several ? 'Choose who drove' : 'Not known'}</option>
+              {driverOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </Field>
+        </div>
+
+        <div className={dialogStyles.section}>
+          <p className={dialogStyles.sectionTitle}>Insurance</p>
+          <div className={styles.grid}>
+            <Field label="Our insurer" optional group error={fields['ourInsurerId']}>
+              {picker('ourInsurerId', 'Our insurer')}
+            </Field>
+            <Field label="Claim number" optional error={fields['ourClaimNumber']}>
+              <input className={`${f.control} ${f.mono}`} {...invalidProps(fields['ourClaimNumber'])} maxLength={50} value={form.ourClaimNumber} onChange={(e) => set('ourClaimNumber', e.target.value)} />
+            </Field>
+            <Field label="The other party’s insurer" optional group error={fields['otherInsurerId']}>
+              {picker('otherInsurerId', 'The other party’s insurer')}
+            </Field>
+            <Field label="Claim number" optional error={fields['otherClaimNumber']}>
+              <input className={`${f.control} ${f.mono}`} {...invalidProps(fields['otherClaimNumber'])} maxLength={50} value={form.otherClaimNumber} onChange={(e) => set('otherClaimNumber', e.target.value)} />
+            </Field>
+            <span className={styles.span}>
+              <Field
+                label="Handled by"
+                optional
+                error={fields['handledBy']}
+                hint={form.ourInsurerId || form.otherInsurerId ? 'The insurer that handles the case, once the two have agreed.' : 'Offers the insurers filled in above.'}
+              >
+                <select className={f.control} {...invalidProps(fields['handledBy'])} value={form.handledBy} onChange={(e) => set('handledBy', e.target.value)}>
+                  {handledOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </Field>
-              <Field label="Waiting for" required error={fields['waitingFor']}>
-                <select className={f.control} {...invalidProps(fields['waitingFor'])} value={form.waitingFor} onChange={(e) => set('waitingFor', e.target.value)}>
-                  {CASE_PARTIES.map((p) => <option key={p} value={p}>{CASE_PARTY_LABEL[p]}</option>)}
+            </span>
+          </div>
+        </div>
+
+        {kase ? (
+          <div className={dialogStyles.section}>
+            <p className={dialogStyles.sectionTitle}>Decision</p>
+            <div className={styles.grid}>
+              <Field label="At fault" optional error={fields['atFault']} hint="Set it once the decision is known.">
+                <select className={f.control} {...invalidProps(fields['atFault'])} value={form.atFault} onChange={(e) => set('atFault', e.target.value)}>
+                  <option value="">Not decided yet</option>
+                  {AT_FAULT_PARTIES.map((p) => <option key={p} value={p}>{AT_FAULT_LABEL[p]}</option>)}
                 </select>
               </Field>
             </div>
           </div>
-          <PhotosSection
-            photos={photos}
-            fields={fields}
-            sent={sent.current}
-            hint="Optional, several at once. Photos only: documents stay in the mailbox."
-          />
-        </>
-      )}
+        ) : (
+          <>
+            <div className={dialogStyles.section}>
+              <p className={dialogStyles.sectionTitle}>Where it stands</p>
+              <div className={styles.grid}>
+                <Field label="Status" required error={fields['status']}>
+                  <select className={f.control} {...invalidProps(fields['status'])} value={form.status} onChange={(e) => set('status', e.target.value)}>
+                    {CASE_STATUSES.map((s) => <option key={s} value={s}>{CASE_STATUS_LABEL[s]}</option>)}
+                  </select>
+                </Field>
+                <Field label="Waiting for" required error={fields['waitingFor']}>
+                  <select className={f.control} {...invalidProps(fields['waitingFor'])} value={form.waitingFor} onChange={(e) => set('waitingFor', e.target.value)}>
+                    {CASE_PARTIES.map((p) => <option key={p} value={p}>{CASE_PARTY_LABEL[p]}</option>)}
+                  </select>
+                </Field>
+              </div>
+            </div>
+            <PhotosSection
+              photos={photos}
+              fields={fields}
+              sent={sent.current}
+              hint="Optional, several at once. Photos only: documents stay in the mailbox."
+            />
+          </>
+        )}
 
-      <div className={dialogStyles.section}>
-        <p className={dialogStyles.sectionTitle}>Same accident</p>
-        <Field label="Same accident as" optional error={fields['sameAccidentCaseId']}>
-          <select className={f.control} {...invalidProps(fields['sameAccidentCaseId'])} value={form.sameAccidentCaseId} onChange={(e) => set('sameAccidentCaseId', e.target.value)}>
-            <option value="">No other case</option>
-            {sameOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </Field>
-      </div>
-    </Dialog>
+        <div className={dialogStyles.section}>
+          <p className={dialogStyles.sectionTitle}>Same accident</p>
+          <Field label="Same accident as" optional error={fields['sameAccidentCaseId']}>
+            <select className={f.control} {...invalidProps(fields['sameAccidentCaseId'])} value={form.sameAccidentCaseId} onChange={(e) => set('sameAccidentCaseId', e.target.value)}>
+              <option value="">No other case</option>
+              {sameOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </Field>
+        </div>
+      </Dialog>
+      {/* Add an insurer (F18-2d): its own window over the form, with its own Refresh, so a stale answer
+          there never re-seeds the case being filled in. */}
+      {adding ? (
+        <ReseedScope>
+          <InsurerForm
+            insurers={insurers.data}
+            initialName={adding.typed}
+            onUse={(insurer) => {
+              setInsurer(adding.key, insurer.id);
+              setAdding(null);
+            }}
+            onAdded={(insurer) => setInsurer(adding.key, insurer.id)}
+            onClose={() => setAdding(null)}
+          />
+        </ReseedScope>
+      ) : null}
+    </>
   );
 }
 

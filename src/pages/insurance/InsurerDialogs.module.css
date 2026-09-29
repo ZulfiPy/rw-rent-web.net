@@ -1,0 +1,29 @@
+/* The Add insurer and Edit insurer windows (Follow-up 18, F18-2c): the insurers of the list that look
+   like the name being typed, above the buttons. The fields, the sections and the sheet below 640 are
+   `src/ui`'s. */
+
+.alike {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px 12px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.alikeTitle { margin: 0; display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--fg-2); }
+.alikeIcon { font-size: 16px; color: var(--warn); }
+.alikeList { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.alikeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--fg);
+}
+.alikeRow:first-child { border-top: none; }
+.alikeName { min-width: 0; overflow-wrap: anywhere; }
+.alikeAction { margin-left: auto; flex: none; }

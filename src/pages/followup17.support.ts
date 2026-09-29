@@ -9,6 +9,12 @@ import type {
  * the refusals, and the deletions page’s vehicles and drivers. Typed as the DTOs, so a member the API
  * sends and `dto.ts` does not declare fails the typecheck. Only the tests import this module.
  *
+ * Follow-up 18 moved them to round 13’s contract: each insurer, a name in round 12, is the insurer
+ * round 13 gives for the same case (`rwrent_r13` freshly seeded on port 5003, 2026-09-29), and the
+ * insurer names of `GET /api/insurance-cases/insurers`, which round 13 removed, are gone. Round 13
+ * answered every other member of the seven cases and of the three views as here, but for the times
+ * and the tokens, which the seed sets afresh.
+ *
  * The seed’s times are relative to the moment it was seeded, so the tests read them with the clock
  * set to `CAPTURED_AT`, when the answers were given.
  */
@@ -258,7 +264,13 @@ export const view1Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05161",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -283,9 +295,21 @@ export const view1Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-08T05:35:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": null,
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-04417",
-      "otherInsurer": "Meridian Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+        "name": "Meridian Insurance",
+        "email": "claims@meridian-insurance.example",
+        "phoneNumber": "+372 600 2200",
+        "isActive": true
+      },
       "otherClaimNumber": "MI-2026-118305",
       "handledBy": 2,
       "status": 3,
@@ -308,9 +332,21 @@ export const view1Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05120",
-      "otherInsurer": "Northgate Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0003-4a7c-9a7c-000000000003",
+        "name": "Northgate Insurance",
+        "email": "claims@northgate.example",
+        "phoneNumber": null,
+        "isActive": true
+      },
       "otherClaimNumber": "NG-771204",
       "handledBy": 1,
       "status": 2,
@@ -333,7 +369,13 @@ export const view1Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-26T10:25:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Anete Kalnina",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05233",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -389,7 +431,13 @@ export const view2Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05161",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -425,7 +473,13 @@ export const view3Dita: PagedResponse<InsuranceCaseListItemResponse> = {
       "driverDisplayName": "Laura Ozola",
       "ourInsurer": null,
       "ourClaimNumber": null,
-      "otherInsurer": "Meridian Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+        "name": "Meridian Insurance",
+        "email": "claims@meridian-insurance.example",
+        "phoneNumber": "+372 600 2200",
+        "isActive": true
+      },
       "otherClaimNumber": "MI-2026-109877",
       "handledBy": 2,
       "status": 5,
@@ -504,7 +558,13 @@ export const view1Toms: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05161",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -529,9 +589,21 @@ export const view1Toms: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-08T05:35:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": null,
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-04417",
-      "otherInsurer": "Meridian Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+        "name": "Meridian Insurance",
+        "email": "claims@meridian-insurance.example",
+        "phoneNumber": "+372 600 2200",
+        "isActive": true
+      },
       "otherClaimNumber": "MI-2026-118305",
       "handledBy": 2,
       "status": 3,
@@ -554,9 +626,21 @@ export const view1Toms: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05120",
-      "otherInsurer": "Northgate Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0003-4a7c-9a7c-000000000003",
+        "name": "Northgate Insurance",
+        "email": "claims@northgate.example",
+        "phoneNumber": null,
+        "isActive": true
+      },
       "otherClaimNumber": "NG-771204",
       "handledBy": 1,
       "status": 2,
@@ -579,7 +663,13 @@ export const view1Toms: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-26T10:25:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Anete Kalnina",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05233",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -621,7 +711,13 @@ export const view1Casco: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05161",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -646,7 +742,13 @@ export const view1Casco: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-26T10:25:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Anete Kalnina",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05233",
       "otherInsurer": null,
       "otherClaimNumber": null,
@@ -680,9 +782,21 @@ export const view1Page2of2: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-08T05:35:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": null,
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-04417",
-      "otherInsurer": "Meridian Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+        "name": "Meridian Insurance",
+        "email": "claims@meridian-insurance.example",
+        "phoneNumber": "+372 600 2200",
+        "isActive": true
+      },
       "otherClaimNumber": "MI-2026-118305",
       "handledBy": 2,
       "status": 3,
@@ -705,9 +819,21 @@ export const view1Page2of2: PagedResponse<InsuranceCaseListItemResponse> = {
       "happenedAtUtc": "2026-09-22T14:50:00+00:00",
       "timeIsWhenFound": false,
       "driverDisplayName": "Kristine Vitola",
-      "ourInsurer": "Baltic Mutual",
+      "ourInsurer": {
+        "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+        "name": "Baltic Mutual",
+        "email": "claims@balticmutual.example",
+        "phoneNumber": "+371 6700 1100",
+        "isActive": true
+      },
       "ourClaimNumber": "BM-26-05120",
-      "otherInsurer": "Northgate Insurance",
+      "otherInsurer": {
+        "id": "a7c9e1f3-0003-4a7c-9a7c-000000000003",
+        "name": "Northgate Insurance",
+        "email": "claims@northgate.example",
+        "phoneNumber": null,
+        "isActive": true
+      },
       "otherClaimNumber": "NG-771204",
       "handledBy": 1,
       "status": 2,
@@ -748,9 +874,21 @@ export const caseKlmDita: InsuranceCaseResponse = {
     "startedAtUtc": "2026-08-28T08:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-04417",
-  "otherInsurer": "Meridian Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+    "name": "Meridian Insurance",
+    "email": "claims@meridian-insurance.example",
+    "phoneNumber": "+372 600 2200",
+    "isActive": true
+  },
   "otherClaimNumber": "MI-2026-118305",
   "handledBy": 2,
   "status": 3,
@@ -1041,9 +1179,21 @@ export const caseTklUsualDita: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-15T09:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-05120",
-  "otherInsurer": "Northgate Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0003-4a7c-9a7c-000000000003",
+    "name": "Northgate Insurance",
+    "email": "claims@northgate.example",
+    "phoneNumber": null,
+    "isActive": true
+  },
   "otherClaimNumber": "NG-771204",
   "handledBy": 1,
   "status": 2,
@@ -1136,7 +1286,13 @@ export const caseTklCascoDita: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-15T09:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-05161",
   "otherInsurer": null,
   "otherClaimNumber": null,
@@ -1227,7 +1383,13 @@ export const caseJlmDita: InsuranceCaseResponse = {
     "startedAtUtc": "2026-09-25T08:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-05233",
   "otherInsurer": null,
   "otherClaimNumber": null,
@@ -1330,7 +1492,13 @@ export const caseNdpDita: InsuranceCaseResponse = {
   },
   "ourInsurer": null,
   "ourClaimNumber": null,
-  "otherInsurer": "Meridian Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+    "name": "Meridian Insurance",
+    "email": "claims@meridian-insurance.example",
+    "phoneNumber": "+372 600 2200",
+    "isActive": true
+  },
   "otherClaimNumber": "MI-2026-109877",
   "handledBy": 2,
   "status": 5,
@@ -1499,9 +1667,21 @@ export const caseKlmToms: InsuranceCaseResponse = {
     "startedAtUtc": "2026-08-28T08:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-04417",
-  "otherInsurer": "Meridian Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+    "name": "Meridian Insurance",
+    "email": "claims@meridian-insurance.example",
+    "phoneNumber": "+372 600 2200",
+    "isActive": true
+  },
   "otherClaimNumber": "MI-2026-118305",
   "handledBy": 2,
   "status": 3,
@@ -1712,9 +1892,21 @@ export const caseKlmSigne: InsuranceCaseResponse = {
     "startedAtUtc": "2026-08-28T08:34:43.32608+00:00",
     "closedAtUtc": null
   },
-  "ourInsurer": "Baltic Mutual",
+  "ourInsurer": {
+    "id": "a7c9e1f3-0001-4a7c-9a7c-000000000001",
+    "name": "Baltic Mutual",
+    "email": "claims@balticmutual.example",
+    "phoneNumber": "+371 6700 1100",
+    "isActive": true
+  },
   "ourClaimNumber": "BM-26-04417",
-  "otherInsurer": "Meridian Insurance",
+  "otherInsurer": {
+    "id": "a7c9e1f3-0002-4a7c-9a7c-000000000002",
+    "name": "Meridian Insurance",
+    "email": "claims@meridian-insurance.example",
+    "phoneNumber": "+372 600 2200",
+    "isActive": true
+  },
   "otherClaimNumber": "MI-2026-118305",
   "handledBy": 2,
   "status": 3,
@@ -1912,12 +2104,6 @@ export const notFoundCase: ProblemDetails = {
   "detail": "This case no longer exists.",
   "code": "insurance_cases.not_found"
 };
-
-export const insurers: string[] = [
-  "Baltic Mutual",
-  "Meridian Insurance",
-  "Northgate Insurance"
-];
 
 export const choicesNew: InsuranceCaseLinkResponse[] = [
   {

@@ -2,7 +2,7 @@ import {
   AtFaultParty, InsuranceCaseDriverSituation, InsuranceCaseParty, InsuranceCaseStatus, InsuranceCaseType,
   InsurerSide,
   type Instant, type InsuranceCaseDriverSuggestionResponse, type InsuranceCaseEventResponse,
-  type InsuranceCaseRentalResponse,
+  type InsuranceCaseInsurerResponse, type InsuranceCaseRentalResponse,
 } from '@/api/dto';
 import { formatLocal, toDateOnlyLocal } from './datetime';
 
@@ -127,10 +127,11 @@ export function placeText(c: { place: string; timeIsWhenFound: boolean; placeIsW
   return c.place;
 }
 
+/** A case's two insurers, each one of the list by its name (round 13), and the side that handles it. */
 interface Insurers {
-  ourInsurer?: string | null;
+  ourInsurer?: InsuranceCaseInsurerResponse | null;
   ourClaimNumber?: string | null;
-  otherInsurer?: string | null;
+  otherInsurer?: InsuranceCaseInsurerResponse | null;
   otherClaimNumber?: string | null;
   handledBy?: InsurerSide | null;
 }
@@ -140,8 +141,8 @@ interface Insurers {
  * insurer is known and none is chosen; "Not reported" when none is known. `dim` for the last two.
  */
 export function handledInfo(c: Insurers): { text: string; sub: string; dim: boolean } {
-  if (c.handledBy === InsurerSide.Ours && c.ourInsurer) return { text: c.ourInsurer, sub: c.ourClaimNumber ?? '', dim: false };
-  if (c.handledBy === InsurerSide.Theirs && c.otherInsurer) return { text: c.otherInsurer, sub: c.otherClaimNumber ?? '', dim: false };
+  if (c.handledBy === InsurerSide.Ours && c.ourInsurer) return { text: c.ourInsurer.name, sub: c.ourClaimNumber ?? '', dim: false };
+  if (c.handledBy === InsurerSide.Theirs && c.otherInsurer) return { text: c.otherInsurer.name, sub: c.otherClaimNumber ?? '', dim: false };
   if (c.ourInsurer || c.otherInsurer) return { text: NOT_DECIDED, sub: '', dim: true };
   return { text: NOT_REPORTED, sub: '', dim: true };
 }
@@ -154,8 +155,8 @@ export function handledLine(c: Insurers): string {
 
 /** The Insurance panel's Handled by: "{insurer} (ours)", "{insurer} (the other party’s)", or the rest. */
 export function handledLong(c: Insurers): string {
-  if (c.handledBy === InsurerSide.Ours && c.ourInsurer) return `${c.ourInsurer} (ours)`;
-  if (c.handledBy === InsurerSide.Theirs && c.otherInsurer) return `${c.otherInsurer} (the other party’s)`;
+  if (c.handledBy === InsurerSide.Ours && c.ourInsurer) return `${c.ourInsurer.name} (ours)`;
+  if (c.handledBy === InsurerSide.Theirs && c.otherInsurer) return `${c.otherInsurer.name} (the other party’s)`;
   return handledInfo(c).text;
 }
 

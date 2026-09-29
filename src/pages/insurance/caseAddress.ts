@@ -76,9 +76,10 @@ export function filterValue(options: FilterOption[], value: string | null): numb
 /**
  * What every write of a case refreshes (F17-10): one prefix holds the case, the three views, the
  * counts, the Overview's card and tile and the navigation's count; the deletions page's candidates
- * follow a case that closes or reopens.
+ * follow a case that closes or reopens; and the insurers (Follow-up 18), whose list counts the open
+ * cases each one handles and the cases that name it.
  */
-export const CASE_REFRESH = [qk.insuranceCases.all, qk.recordDeletions.all] as const;
+export const CASE_REFRESH = [qk.insuranceCases.all, qk.recordDeletions.all, qk.insurers.all] as const;
 
 export const refreshCases = (client: QueryClient) =>
   Promise.all(CASE_REFRESH.map((queryKey) => client.invalidateQueries({ queryKey })));

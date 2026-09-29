@@ -56,8 +56,9 @@ export function deletionInvalidates(kind: DeletableKind): ReadonlyArray<readonly
     case RecordKind.Interruption:
       return [...page, qk.assignments.all, qk.interruptions.all];
     case RecordKind.Vehicle:
-      // Since round 12 a vehicle takes its insurance cases along (Follow-up 17).
-      return [...page, qk.vehicles.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all, qk.insuranceCases.all];
+      // Since round 12 a vehicle takes its insurance cases along (Follow-up 17), and with them what
+      // the insurers' list counts (Follow-up 18).
+      return [...page, qk.vehicles.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all, qk.insuranceCases.all, qk.insurers.all];
     case RecordKind.Customer:
       return [...page, qk.customers.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all];
     case RecordKind.Driver:

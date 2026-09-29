@@ -12,7 +12,8 @@ import type {
  * `InsuranceCases.Manage`. The server decides who may change a case (`canChange`) and who may
  * correct an entry (`canCorrect`), since when a case waits, when it was closed, its rental and the
  * other cases of its accident; nothing here judges a case. Every write answers with the case as the
- * reader reads it after the change.
+ * reader reads it after the change. Since round 13 a case names its insurers by their ids, from the
+ * list of `./insurers`, and reads them back as the list's insurers.
  */
 
 /** A photo the browser has made ready to send, under the name the person chose it by. */
@@ -44,9 +45,6 @@ export const listCases = (query: InsuranceCaseQuery) =>
 export const countCases = () => get<InsuranceCaseCountsResponse>('/api/insurance-cases/counts');
 
 export const getCase = (caseId: Uuid) => get<InsuranceCaseResponse>(`/api/insurance-cases/${caseId}`);
-
-/** The insurer names used on the cases, for the insurer fields' suggestions. */
-export const listInsurers = () => get<string[]>('/api/insurance-cases/insurers');
 
 /** The cases a case may name as its accident's, newest first. */
 export const listAccidentChoices = (query: InsuranceCaseAccidentChoicesQuery = {}) =>

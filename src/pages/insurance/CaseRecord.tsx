@@ -5,13 +5,14 @@ import { qk } from '@/api';
 import { getCase, photoUrl } from '@/api/insuranceCases';
 import {
   InsuranceCaseParty, InsuranceCaseType,
-  type InsuranceCaseEventResponse, type InsuranceCasePhotoResponse, type InsuranceCaseResponse, type Uuid,
+  type InsuranceCaseEventResponse, type InsuranceCaseInsurerResponse, type InsuranceCasePhotoResponse,
+  type InsuranceCaseResponse, type Uuid,
 } from '@/api/dto';
 import { isApiError, toFailure } from '@/api/problem';
 import {
   CASE_PARTY_LABEL, CASE_STATUS_LABEL, CASE_TYPE_LABEL, LOCAL_TIME_NOTE, atFaultText, caseTitle,
-  changeChips, createdByName, formatLocal, handledInfo, handledLong, laterText, lastChangedByName,
-  photosDescription, placeText, rentalSub, sinceText, whenLabel,
+  changeChips, createdByName, formatLocal, handledInfo, handledLong, laterText, lastChangedByName, mailHref,
+  photosDescription, placeText, rentalSub, sinceText, telHref, whenLabel,
 } from '@/format';
 import { useNarrow } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -24,6 +25,7 @@ import { recordStyles as shell } from '@/ui/RecordTabs';
 import { CASE_STATUS_DOT, CASE_STATUS_TONE, CASE_TYPE_DOT } from '@/ui/status';
 import { CaseDialogs, type CaseDialog } from './CaseDialogs';
 import { CaseStatusChip } from './InsuranceCases';
+import { OutOfUseChip } from './InsurerPicker';
 import { PhotoView, casePhotos } from './PhotoView';
 import { CASES_READ, caseHref, caseTabOf, casesHref, type CaseTab } from './caseAddress';
 import styles from './CaseRecord.module.css';
@@ -95,6 +97,23 @@ function Thumbs({ caseId, photos, size, onOpen }: {
         <Thumb key={photo.id} caseId={caseId} photo={photo} size={size} onOpen={() => onOpen(photo.id)} />
       ))}
     </div>
+  );
+}
+
+/**
+ * An insurer in the Insurance panel (Follow-up 18, F18-2e): its name, marked when it is out of use,
+ * and under it its email and phone as links when it has them.
+ */
+function InsurerValue({ insurer }: { insurer: InsuranceCaseInsurerResponse }) {
+  return (
+    <span className={styles.insurer}>
+      <span className={styles.insurerName}>
+        {insurer.name}
+        {insurer.isActive ? null : <OutOfUseChip />}
+      </span>
+      {insurer.email ? <a className={styles.insurerLink} href={mailHref(insurer.email)}>{insurer.email}</a> : null}
+      {insurer.phoneNumber ? <a className={styles.insurerLink} href={telHref(insurer.phoneNumber)}>{insurer.phoneNumber}</a> : null}
+    </span>
   );
 }
 
@@ -262,9 +281,9 @@ export function CaseRecord() {
   const insurance = kase ? (
     <Panel key="insurance" title="Insurance">
       <FactGrid columns={2}>
-        <Fact label="Our insurer" dim={!kase.ourInsurer}>{kase.ourInsurer || 'None'}</Fact>
+        <Fact label="Our insurer" dim={!kase.ourInsurer}>{kase.ourInsurer ? <InsurerValue insurer={kase.ourInsurer} /> : 'None'}</Fact>
         <Fact label="Claim number" mono={!!kase.ourClaimNumber} dim={!kase.ourClaimNumber}>{kase.ourClaimNumber || '—'}</Fact>
-        <Fact label="The other party’s insurer" dim={!kase.otherInsurer}>{kase.otherInsurer || 'Not known'}</Fact>
+        <Fact label="The other party’s insurer" dim={!kase.otherInsurer}>{kase.otherInsurer ? <InsurerValue insurer={kase.otherInsurer} /> : 'Not known'}</Fact>
         <Fact label="Claim number" mono={!!kase.otherClaimNumber} dim={!kase.otherClaimNumber}>{kase.otherClaimNumber || '—'}</Fact>
         <Fact label="Handled by" dim={!!handled?.dim} span="full">{handledLong(kase)}</Fact>
       </FactGrid>
