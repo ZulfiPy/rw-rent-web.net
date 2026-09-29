@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -31,6 +32,8 @@ import { CAPTURED_AT, caseHdvDita, caseKlmDita, countsDita, meDita, view1Dita } 
 const BAND = readRules(new URL('../ui/RecordHeader.module.css', import.meta.url));
 const LIST = readRules(new URL('./insurance/InsuranceCases.module.css', import.meta.url));
 const DESKTOP = '(min-width: 1024px)';
+const INSURERS = readRules(new URL('./insurance/Insurers.module.css', import.meta.url));
+const CASE = readRules(new URL('./insurance/CaseRecord.module.css', import.meta.url));
 
 /** The band's facts row as the render gives it: its opening tag. */
 const factsRow = (markup: string) => /<div class="_facts_[^"]*"[^>]*>/.exec(markup)?.[0] ?? '';
@@ -137,5 +140,28 @@ describe('F18-3: the Waiting for column on one line from 1024 up', () => {
     expect(values.map((v) => v[2])).toEqual(view1Dita.items.map((item) => waitText(item)));
     for (const [, classes] of values) expect(classes).toMatch(/_waitingText_/);
     expect(values.filter(([, classes]) => /_us_/.test(classes!)).map((v) => v[2])).toEqual(['Us · 2 days', 'Us · 21 hours']);
+  });
+});
+
+describe('what the browser found (the report, §4.3)', () => {
+  test('the Insurers page: Email and Phone fold under the name below 1280, the counts narrow, the open cases’ heading on two lines', () => {
+    expect(declared(INSURERS, '.table')).toEqual({ 'min-width': '0' });
+    expect(declared(INSURERS, '.cPhone')).toEqual({ width: '150px' });
+    expect(declared(INSURERS, '.cOpen')).toEqual({ width: '120px' });
+    expect(declared(INSURERS, '.cCases')).toEqual({ width: '80px' });
+    expect(declared(INSURERS, '.cActions')).toEqual({ width: '240px' });
+    expect(declared(INSURERS, '.table .cOpen')).toEqual({ 'white-space': 'normal' });
+    expect(declared(INSURERS, '.table', TABLET)).toEqual({ 'table-layout': 'fixed' });
+    expect(declared(INSURERS, '.cActions', TABLET)).toEqual({ width: '232px' });
+    const source = readFileSync(new URL('./insurance/Insurers.tsx', import.meta.url), 'utf8');
+    expect(source.match(/table\.foldWide/g)).toHaveLength(4);
+    expect(source.match(/table\.showWide/g)).toHaveLength(2);
+    expect(source).not.toMatch(/foldTablet|showTablet/);
+  });
+
+  test('a case’s insurer’s email and phone are quiet links, the accent only under the pointer', () => {
+    expect(declared(CASE, '.insurerLink')).toMatchObject({ color: 'var(--fg-2)' });
+    expect(declared(CASE, '.insurerLink:hover')).toEqual({ color: 'var(--accent)' });
+    expect(declared(INSURERS, '.contact')).toMatchObject({ color: 'var(--fg-2)' });
   });
 });

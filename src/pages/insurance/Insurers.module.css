@@ -1,24 +1,24 @@
-/* The Insurers page (Follow-up 18, F18-2b): the list's columns, the folded band and the phone card.
+/* The Insurers page (Follow-up 18, F18-2b): the list's columns, the folded bands and the phone card.
    Every value is a design token the app already uses; the list, table and card vocabularies are
    `src/ui`'s. */
 
-/* From 1024 up: Name and Email share the spare width; Phone, the two counts and the actions hold
-   theirs. */
-.table { min-width: 860px; }
+/* From 1280 up: Name and Email share the spare width; Phone, the two counts and the actions hold
+   theirs, the long heading of the open cases on two lines. Below 1280 Email and Phone fold under the
+   name (the shared `foldWide` / `showWide`, as Vehicles folds), so the name keeps its room at 1024. */
+.table { min-width: 0; }
 .cName { width: auto; }
 .cEmail { width: auto; }
-.cPhone { width: 160px; }
-.cOpen { width: 188px; }
-.cCases { width: 92px; }
-.cActions { width: 262px; }
+.cPhone { width: 150px; }
+.cOpen { width: 120px; }
+.cCases { width: 80px; }
+.cActions { width: 240px; }
+.table .cOpen { white-space: normal; }
 
-/* The folded band (768–1023): fixed layout; Email and Phone fold under the name (the shared
-   `foldTablet` / `showTablet`), the counts and the actions stay. */
+/* The portrait band (768–1023): fixed layout, the counts narrower, every action whole. */
 @media (max-width: 1023px) {
-  .table { table-layout: fixed; min-width: 0; }
-  .table th { white-space: normal; }
-  .cOpen { width: 120px; }
-  .cCases { width: 72px; }
+  .table { table-layout: fixed; }
+  .cOpen { width: 96px; }
+  .cCases { width: 64px; }
   .cActions { width: 232px; }
 }
 

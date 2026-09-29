@@ -226,8 +226,8 @@ export function Insurers() {
               <thead>
                 <tr>
                   <th scope="col" className={`${table.th} ${styles.cName}`}>Name</th>
-                  <th scope="col" className={`${table.th} ${styles.cEmail} ${table.foldTablet}`}>Email</th>
-                  <th scope="col" className={`${table.th} ${styles.cPhone} ${table.foldTablet}`}>Phone</th>
+                  <th scope="col" className={`${table.th} ${styles.cEmail} ${table.foldWide}`}>Email</th>
+                  <th scope="col" className={`${table.th} ${styles.cPhone} ${table.foldWide}`}>Phone</th>
                   <th scope="col" className={`${table.th} ${styles.cOpen}`}>Open cases it handles</th>
                   <th scope="col" className={`${table.th} ${styles.cCases}`}>Cases</th>
                   {manages ? (
@@ -243,13 +243,13 @@ export function Insurers() {
                     <td className={table.td}>
                       <span className={table.stack}>
                         <Name insurer={insurer} />
-                        {/* The folded band (768–1023): Email and Phone come under the name. */}
-                        {insurer.email ? <span className={`${table.sub} ${table.showTablet}`}><Email insurer={insurer} /></span> : null}
-                        {insurer.phoneNumber ? <span className={`${table.sub} ${table.showTablet}`}><Phone insurer={insurer} /></span> : null}
+                        {/* Below 1280: Email and Phone come under the name. */}
+                        {insurer.email ? <span className={`${table.sub} ${table.showWide}`}><Email insurer={insurer} /></span> : null}
+                        {insurer.phoneNumber ? <span className={`${table.sub} ${table.showWide}`}><Phone insurer={insurer} /></span> : null}
                       </span>
                     </td>
-                    <td className={`${table.td} ${table.foldTablet}`}><Email insurer={insurer} /></td>
-                    <td className={`${table.td} ${table.foldTablet}`}><Phone insurer={insurer} /></td>
+                    <td className={`${table.td} ${table.foldWide}`}><Email insurer={insurer} /></td>
+                    <td className={`${table.td} ${table.foldWide}`}><Phone insurer={insurer} /></td>
                     <td className={table.td}><OpenCases insurer={insurer} /></td>
                     <td className={table.td}><span className={styles.number}>{insurer.casesNamed}</span></td>
                     {manages ? (
