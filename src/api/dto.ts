@@ -1589,3 +1589,48 @@ export interface CorrectInsuranceCaseEventRequest {
 export interface InsuranceCaseNoteRequest {
   text?: string | null;
 }
+
+/* insurers (the backend's round 13) ---------------------------------------------------------------- */
+
+/**
+ * One insurer of the list the company keeps, so that a case names "absolutely the same insurer if it's
+ * the same insurer". `openCasesHandled` counts the open cases whose Handled by names the side it is
+ * on; `casesNamed` the cases that name it, open or closed, a case naming it on both sides once. Both
+ * are counted by the server. `isActive` false is out of use: gone from the picker, kept on its cases.
+ */
+export interface InsurerListItemResponse {
+  id: Uuid;
+  name: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  isActive: boolean;
+  openCasesHandled: number;
+  casesNamed: number;
+  concurrencyToken: Uuid;
+}
+
+/** One insurer, as its read and every write answer: the list's item with who added and last changed it. */
+export interface InsurerResponse extends InsurerListItemResponse {
+  createdAtUtc: Instant;
+  createdByDisplayName?: string | null;
+  updatedAtUtc?: Instant | null;
+  updatedByDisplayName?: string | null;
+}
+
+/** The whole list, not paged: IsActive true gives the insurers in use, false those out of use, absent all. */
+export type InsurerQuery = { IsActive?: boolean }
+
+/**
+ * Add insurer. The name is stored trimmed with every run of spaces one space, and no other insurer has
+ * it whatever the case of its letters; a blank email or phone number is stored as none.
+ */
+export interface CreateInsurerRequest {
+  name: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+}
+
+/** Edit insurer: the insurer as it should now be, with its token as the reader last saw it. */
+export interface UpdateInsurerRequest extends CreateInsurerRequest {
+  concurrencyToken: Uuid | null;
+}

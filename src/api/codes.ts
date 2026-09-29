@@ -140,6 +140,26 @@ const CASE_PHOTOS: Record<string, string> = {
 };
 
 /**
+ * The insurers the company keeps (the backend's round 13, Follow-up 18). A name that another insurer
+ * already has, whatever its letters or spaces, is a 409 that carries its field under `errors`; the
+ * table names it too, so it stands under Name either way.
+ */
+const INSURER_WRITE: Record<string, string> = {
+  'insurers.name_conflict': 'name',
+};
+
+/**
+ * A case's insurer that is not on the list, or that is out of use (round 13), always arrives with its
+ * field under `errors`: `OurInsurerId` or `OtherInsurerId` on a case's write, `HandledByInsurerId` on
+ * the list's filter. One code names either insurer, so the table can give it no one input; the shared
+ * mapping puts it under the field the API names. Listed so the catalogue test checks them too.
+ */
+const CARRIED_BY_ERRORS: readonly string[] = [
+  'insurance_cases.insurer_not_found',
+  'insurance_cases.insurer_out_of_use',
+];
+
+/**
  * Refusals the app knows and deliberately keeps form-level: they name no input, so they arrive as the
  * dialog's banner in the API's own sentence. The grant of the Record deleter role (round 9) is
  * refused for an address outside the company's domain, naming the domain, and on an installation
@@ -195,6 +215,8 @@ const BY_OP: Record<string, Record<string, string>> = {
   'profile-email': EMAIL_CHANGE,
   'task-create': TASK_WRITE,
   'task-edit': TASK_WRITE,
+  'insurer-create': INSURER_WRITE,
+  'insurer-edit': INSURER_WRITE,
   'case-register': { ...CASE_WRITE, ...CASE_PHOTOS },
   'case-edit': CASE_WRITE,
   'case-event-add': { ...CASE_TIME, ...CASE_PHOTOS },
@@ -218,8 +240,12 @@ export const KNOWN_CODES: readonly string[] = [
     ...Object.keys(GLOBAL),
     ...Object.values(BY_OP).flatMap((t) => Object.keys(t)),
     ...FORM_LEVEL,
+    ...CARRIED_BY_ERRORS,
   ]),
 ];
 
 /** The codes that stay form-level on purpose; none of them resolves to an input. */
 export const FORM_LEVEL_CODES: readonly string[] = FORM_LEVEL;
+
+/** The codes that always carry their field under `errors` and so need no entry of the table. */
+export const CARRIED_BY_ERRORS_CODES: readonly string[] = CARRIED_BY_ERRORS;

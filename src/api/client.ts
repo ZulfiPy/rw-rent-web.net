@@ -4,7 +4,7 @@ import type {
   DriversQuery, InterruptionsQuery, PagedQuery, RecordDeletionCandidatesQuery,
   RecordDeletionCountsQuery, RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery,
   SystemAdministratorTransferQuery, UsersQuery, VehiclesQuery, WorkTaskQuery, WorkTaskToDoQuery,
-  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery,
+  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery, InsurerQuery,
 } from './dto';
 
 /**
@@ -21,7 +21,7 @@ export type QueryContract = [
   AssertQuery<RecordDeletionCandidatesQuery>, AssertQuery<RecordDeletionCountsQuery>,
   AssertQuery<WorkTaskQuery>, AssertQuery<WorkTaskToDoQuery>,
   AssertQuery<InsuranceCaseQuery>, AssertQuery<InsuranceCaseDriverSuggestionQuery>,
-  AssertQuery<InsuranceCaseAccidentChoicesQuery>,
+  AssertQuery<InsuranceCaseAccidentChoicesQuery>, AssertQuery<InsurerQuery>,
 ];
 
 export const get = <T>(path: string, query?: Query) => transport().request<T>('GET', path, { query });

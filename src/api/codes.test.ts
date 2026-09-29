@@ -156,6 +156,12 @@ const BACKEND_CODES: readonly string[] = [
   'insurance_cases.photo_too_large',
   'insurance_cases.time_in_future',
   'insurance_cases.vehicle_not_available',
+  // round 13 (5) — InsuranceCaseErrors.cs and InsurerErrors.cs (Follow-up 18)
+  'insurance_cases.insurer_not_found',
+  'insurance_cases.insurer_out_of_use',
+  'insurers.concurrency_conflict',
+  'insurers.name_conflict',
+  'insurers.not_found',
 ];
 
 describe('every code the app knows is one the API sends', () => {

@@ -23,3 +23,4 @@ export * as overview from './overview';
 export * as recordDeletions from './recordDeletions';
 export * as tasks from './tasks';
 export * as insuranceCases from './insuranceCases';
+export * as insurers from './insurers';

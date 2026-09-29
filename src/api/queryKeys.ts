@@ -3,7 +3,7 @@ import type {
   DriversQuery, InterruptionsQuery, RecordDeletionCandidatesQuery, RecordDeletionShow, RecordKind,
   RentalAssignmentsQuery, SecurityAuditQuery, SessionsQuery, SystemAdministratorTransferQuery,
   UsersQuery, VehiclesQuery, PagedQuery, Uuid, WorkTaskQuery, WorkTaskToDoQuery,
-  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery,
+  InsuranceCaseAccidentChoicesQuery, InsuranceCaseDriverSuggestionQuery, InsuranceCaseQuery, InsurerQuery,
 } from './dto';
 
 /** One key factory per resource. Mutations invalidate by prefix: qk.users.all, qk.roles.of(id), … */
@@ -97,5 +97,15 @@ export const qk = {
     insurers: ['insurance-cases', 'insurers'] as const,
     accidentChoices: (q: InsuranceCaseAccidentChoicesQuery) => ['insurance-cases', 'accident-choices', q] as const,
     driverSuggestion: (q: InsuranceCaseDriverSuggestionQuery) => ['insurance-cases', 'driver-suggestion', q] as const,
+  },
+  /**
+   * The insurers the company keeps (Follow-up 18): one prefix for the list at each Show. Adding an
+   * insurer refreshes it; editing one, or putting it out of use or back, refreshes it and every case
+   * read, so a rename shows on the cases at once; every case write refreshes it too, since the list
+   * counts the cases each insurer handles and the cases that name it.
+   */
+  insurers: {
+    all: ['insurers'] as const,
+    list: (q: InsurerQuery) => ['insurers', 'list', q] as const,
   },
 };
