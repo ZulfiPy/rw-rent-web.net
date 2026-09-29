@@ -5,7 +5,7 @@ import { fieldMessages, toFailure } from '@/api/problem';
 import { CARRIED_BY_ERRORS_CODES, codeToField } from '@/api/codes';
 import type { InsurerListItemResponse, ProblemDetails } from '@/api/dto';
 import { CaseForm, cascoFormOf, registerRequest, updateRequest, blankCase } from './insurance/CaseDialogs';
-import { InsurerForm, createInsurerRequest, insurerRefusal, updateInsurerRequest } from './insurance/InsurerDialogs';
+import { InsurerForm, InsurerToggle, createInsurerRequest, insurerRefusal, updateInsurerRequest } from './insurance/InsurerDialogs';
 import { chosenInsurer, findKey, pickerItems } from './insurance/InsurerPicker';
 import { around, clearTaskRenders, count, refused, renderAs } from './followup12.harness';
 import { caseKlmDita, choicesKlm, choicesNew, meDita, pickDrivers, pickVehicles } from './followup17.support';
@@ -370,6 +370,38 @@ describe('the Add insurer and Edit insurer windows of the Insurers page (F18-2c)
     const gone = render(h(InsurerForm, { insurer: MERIDIAN, insurers: insurersAll, onClose: () => {} }), insurerNotFoundRefusal);
     expect(gone).toContain('The change was refused');
     expect(gone).toContain('This insurer does not exist.');
+  });
+});
+
+describe('Put out of use and Put back in use (F18-2b)', () => {
+  const toggle = (insurer: InsurerListItemResponse, body: ProblemDetails | null = null) =>
+    render(h(InsurerToggle, { insurer, onClose: () => {} }), body);
+
+  test('out of use: its words, the cases that keep it, Put out of use as the vehicle’s Deactivate is drawn', () => {
+    const markup = toggle(BALTIC);
+    expect(markup).toContain('aria-label="Put insurer out of use"');
+    expect(markup).toContain('style="max-width:480px"');
+    expect(markup).toContain('>Baltic Mutual will no longer be offered on a case.</p>');
+    expect(markup).toContain('The 4 cases that name it keep it, and an edit of one of them may keep it.');
+    expect(markup).toContain('It stays on the list, marked Out of use, and can be put back in use.');
+    expect(markup).toMatch(/data-tone="danger-solid"[^>]*>Put out of use<\/button>/);
+    expect(hook.ops).toEqual(['insurer-toggle']);
+    expect(toggle(byName(insurersAll, 'Northgate Insurance'))).toContain('The case that names it keeps it, and an edit of that case may keep it.');
+    expect(toggle({ ...pilotAdded })).toContain('No case names it.');
+  });
+
+  test('back in use: its words, nothing on the cases changes', () => {
+    const markup = toggle(HARBOUR);
+    expect(markup).toContain('aria-label="Put insurer back in use"');
+    expect(markup).toContain('>Old Harbour Insurance is offered on cases again.</p>');
+    expect(markup).toContain('The cases that name it are unchanged.');
+    expect(markup).toMatch(/data-tone="primary"[^>]*>Put back in use<\/button>/);
+  });
+
+  test('an insurer gone is a refused change in the API’s words', () => {
+    const markup = toggle(HARBOUR, insurerToggleNotFoundRefusal);
+    expect(markup).toContain('The change was refused');
+    expect(markup).toContain('This insurer does not exist.');
   });
 });
 

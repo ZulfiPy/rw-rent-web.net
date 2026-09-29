@@ -1,0 +1,35 @@
+/* The Insurers page (Follow-up 18, F18-2b): the list's columns, the folded band and the phone card.
+   Every value is a design token the app already uses; the list, table and card vocabularies are
+   `src/ui`'s. */
+
+/* From 1024 up: Name and Email share the spare width; Phone, the two counts and the actions hold
+   theirs. */
+.table { min-width: 860px; }
+.cName { width: auto; }
+.cEmail { width: auto; }
+.cPhone { width: 160px; }
+.cOpen { width: 188px; }
+.cCases { width: 92px; }
+.cActions { width: 262px; }
+
+/* The folded band (768–1023): fixed layout; Email and Phone fold under the name (the shared
+   `foldTablet` / `showTablet`), the counts and the actions stay. */
+@media (max-width: 1023px) {
+  .table { table-layout: fixed; min-width: 0; }
+  .table th { white-space: normal; }
+  .cOpen { width: 120px; }
+  .cCases { width: 72px; }
+  .cActions { width: 232px; }
+}
+
+.nameLine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.nameText { overflow-wrap: anywhere; }
+.contact { color: var(--fg-2); overflow-wrap: anywhere; }
+.contact:hover { color: var(--accent); }
+.number { font-family: var(--font-mono); font-size: 13px; color: var(--fg-2); }
+.openLink { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--accent); }
+.dim { color: var(--fg-4); }
+
+/* The phone card: the name with its mark, the facts in two columns, the actions under them. */
+.card { gap: 11px; }
+.cardFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { qk } from '@/api';
 import { listCases } from '@/api/insuranceCases';
 import { listInsurers } from '@/api/insurers';
@@ -31,8 +31,8 @@ import { useRowNav } from '@/ui/rowNav';
 import table from '@/ui/table.module.css';
 import { RegisterCaseDialog } from './CaseDialogs';
 import {
-  CASE_TABS, CASES_MANAGE, CASES_READ, STATUS_OPTIONS, TYPE_OPTIONS, WAITING_OPTIONS, caseHref, caseTabOf,
-  filterValue, handledOptions, useCaseCounts, type CaseTab, type CaseTabSpec,
+  CASE_TABS, CASES_MANAGE, CASES_READ, INSURERS_HREF, STATUS_OPTIONS, TYPE_OPTIONS, WAITING_OPTIONS, caseHref,
+  caseTabOf, filterValue, handledOptions, useCaseCounts, type CaseTab, type CaseTabSpec,
 } from './caseAddress';
 import styles from './InsuranceCases.module.css';
 
@@ -169,6 +169,7 @@ function CaseCard({ item, tab }: { item: InsuranceCaseListItemResponse; tab: Cas
 
 export function InsuranceCases() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const { can } = useAccess();
   const rowNav = useRowNav();
   const phone = useTier() === 'phone';
@@ -224,12 +225,18 @@ export function InsuranceCases() {
 
   const insurers = useQuery({ queryKey: qk.insurers.list({}), queryFn: () => listInsurers({}), enabled: allowed });
 
+  // Insurers beside Register case, for everyone who reads cases (Follow-up 18, F18-2b).
   const header = (
     <PageHeader
       title="Insurance cases"
       description={CASES_DESCRIPTION}
-      actionsKey={String(manages)}
-      actions={manages ? <Button label="Register case" icon="add" tone="primary" onClick={() => setRegistering(true)} /> : undefined}
+      actionsKey={`${allowed}-${manages}`}
+      actions={allowed ? (
+        <>
+          <Button label="Insurers" icon="shield" onClick={() => navigate(INSURERS_HREF)} />
+          {manages ? <Button label="Register case" icon="add" tone="primary" onClick={() => setRegistering(true)} /> : null}
+        </>
+      ) : undefined}
     />
   );
 

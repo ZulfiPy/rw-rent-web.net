@@ -10,6 +10,7 @@ import { Overview } from '@/pages/overview/Overview';
 import { NeedsAttention } from '@/pages/overview/NeedsAttention';
 import { InsuranceCases } from '@/pages/insurance/InsuranceCases';
 import { CaseRecord } from '@/pages/insurance/CaseRecord';
+import { Insurers } from '@/pages/insurance/Insurers';
 import { Tasks } from '@/pages/tasks/Tasks';
 import { TaskRecord } from '@/pages/tasks/TaskRecord';
 import { Assignments } from '@/pages/fleet/Assignments';
@@ -115,6 +116,15 @@ export const ROUTES: readonly AppRoute[] = [
     element: <InsuranceCases />,
     permission: 'InsuranceCases.Read',
     nav: { group: 'Operations', label: 'Insurance cases', icon: 'shield', badge: 'insurance' },
+  },
+  /*
+   * The insurers the company keeps (Follow-up 18): everyone who reads cases reads the list; the page
+   * is reached from Insurance cases' header, not from the navigation.
+   */
+  {
+    path: '/insurance-cases/insurers',
+    element: <Insurers />,
+    permission: 'InsuranceCases.Read',
   },
   {
     path: '/insurance-cases/:caseId',

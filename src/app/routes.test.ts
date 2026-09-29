@@ -383,6 +383,21 @@ describe('Insurance cases needs InsuranceCases.Read (Follow-up 17)', () => {
     }
   });
 
+  test('the Insurers page (Follow-up 18) is its own route, not a case’s page, by any spelling; it needs the same permission', () => {
+    for (const address of ['/insurance-cases/insurers', '/Insurance-Cases/Insurers', '/INSURANCE-CASES/INSURERS', '/insurance-cases/%69nsurers?show=out']) {
+      expect(land(address).path, address).toBe('/insurance-cases/insurers');
+      expect(permissionFor(address), address).toBe('InsuranceCases.Read');
+    }
+    for (const persona of [VIEWER, FLEET_MANAGER, COMPANY_PRINCIPAL, SYSTEM_ADMINISTRATOR]) {
+      expect(mayOpen('/insurance-cases/insurers', persona)).toBe(true);
+    }
+    for (const persona of [RECORD_DELETER, VIEWER.filter((permission) => !permission.startsWith('InsuranceCases.')), []]) {
+      expect(mayOpen('/insurance-cases/insurers', persona)).toBe(false);
+    }
+    // It is reached from Insurance cases' header, never from the navigation.
+    expect(NAV_GROUPS.flatMap((group) => group.items).map((item) => item.to)).not.toContain('/insurance-cases/insurers');
+  });
+
   test('the navigation offers Insurance cases with its count only to a holder', () => {
     const entry = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.to === '/insurance-cases');
     expect(entry).toMatchObject({ label: 'Insurance cases', icon: 'shield', permission: 'InsuranceCases.Read', badge: 'insurance' });

@@ -1,5 +1,8 @@
-import { createElement as h } from 'react';
+import { createElement as h, type ReactNode } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { PageHeaderModel } from '@/app/pageHeader';
 import { RecordKind, qk } from '@/api';
 import { deletionInvalidates } from './admin/DeleteRecordDialog';
 import { CASE_REFRESH } from './insurance/caseAddress';
@@ -8,9 +11,11 @@ import type { CurrentUserResponse, InsuranceCaseQuery, InsurerListItemResponse }
 import { around, clearTaskRenders, count, renderAs } from './followup12.harness';
 import { CaseRecord } from './insurance/CaseRecord';
 import { InsuranceCases } from './insurance/InsuranceCases';
+import { Insurers } from './insurance/Insurers';
 import { countsDita, meDita, meToms } from './followup17.support';
 import {
-  closedHandledByBaltic, handledUnknownRefusal, insurersAll, openHandledByBaltic, openHandledByHarbour, usHandledByBaltic,
+  closedHandledByBaltic, handledUnknownRefusal, insurersAll, insurersInUse, insurersOutOfUse, insurersToms, openHandledByBaltic,
+  openHandledByHarbour, usHandledByBaltic,
 } from './followup18.support';
 import {
   PRACTICE18_AT, insurersAllWithPilotOut, openHandledByPilot, practiceCaseOutOfUse, practiceCaseRenamed,
@@ -18,8 +23,22 @@ import {
 
 /**
  * Follow-up 18, rendered to markup from round 13's answers (`followup18.support.ts`) and the joint
- * check's (`followup18.practice.ts`): a case's insurers with their email and phone (F18-2e).
+ * check's (`followup18.practice.ts`): a case's insurers with their email and phone (F18-2e); the cases
+ * list's Handled by (F18-2f); the Insurers page and the button that opens it (F18-2b), hidden with the
+ * section (F18-2g); and what each write refreshes (F18-2a). The page header is the shell's, drawn
+ * from a model the page declares, so the model is read here.
  */
+const header = vi.hoisted(() => ({ last: null as PageHeaderModel | null }));
+vi.mock('@/app/pageHeader', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/app/pageHeader')>()),
+  usePageHeader: (model: PageHeaderModel) => { header.last = model; },
+}));
+
+/** The header's actions as the bar draws them. */
+const actions = () => (header.last?.actions
+  ? renderToStaticMarkup(h(MemoryRouter, null, header.last.actions as ReactNode))
+  : '');
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date(PRACTICE18_AT));
@@ -27,6 +46,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   clearTaskRenders();
+  header.last = null;
 });
 
 const casePage = (kase = practiceCaseRenamed, me = meDita) => renderAs(h(CaseRecord), {
@@ -205,5 +225,128 @@ describe('the cases list’s Handled by (F18-2f)', () => {
   test('while the list of insurers loads, a filter set shows as being read', () => {
     const { markup } = cases(`/insurance-cases?handled=${BALTIC}`, [[qk.insuranceCases.list(LIST(1, { HandledByInsurerId: BALTIC })), openHandledByBaltic]], null);
     expect(handledFilter(markup).shown).toBe('…');
+  });
+});
+
+/* the Insurers page -------------------------------------------------------------------------------- */
+
+const IN_USE = { IsActive: true };
+const OUT = { IsActive: false };
+
+const insurersPage = (at: string, me: CurrentUserResponse, data: Array<[readonly unknown[], unknown]>) =>
+  renderAs(h(Insurers), { at, route: '/insurance-cases/insurers', me, data });
+
+/** One insurer's row, by its name. */
+const insurerRow = (markup: string, name: string) => around(markup, `>${name}</span>`, 'tr');
+
+describe('the Insurers page (F18-2b)', () => {
+  test('its title, description and breadcrumb, Add insurer for a manager, Show at In use', () => {
+    const { markup } = insurersPage('/insurance-cases/insurers', meDita,
+      [[qk.insurers.list(IN_USE), insurersInUse], [qk.insurers.list({}), insurersAll]]);
+    expect(header.last?.title).toBe('Insurers');
+    expect(header.last?.description).toBe('The insurers the company works with. A case picks its insurers from this list.');
+    expect(header.last?.crumbs).toEqual([{ label: 'Insurance cases', to: '/insurance-cases' }, { label: 'Insurers' }]);
+    expect(actions()).toMatch(/data-tone="primary"[^>]*>.*add<\/span>Add insurer<\/button>/);
+    expect(markup).toMatch(/_selectLabel_[^"]*">Show<\/span><span class="_selectValue_[^"]*">In use</);
+    const show = around(markup, 'aria-label="Filter by show"', 'select');
+    expect([...show.matchAll(/<option value="([^"]*)"[^>]*>([^<]*)</g)].map((m) => [m[1], m[2]]))
+      .toEqual([['', 'In use'], ['out', 'Out of use'], ['all', 'All']]);
+    expect(markup).toContain('>3 insurers<');
+  });
+
+  test('the table: Name, Email, Phone, Open cases it handles and Cases, in the list’s order', () => {
+    const { markup } = insurersPage('/insurance-cases/insurers', meDita,
+      [[qk.insurers.list(IN_USE), insurersInUse], [qk.insurers.list({}), insurersAll]]);
+    const heads = [...markup.matchAll(/<th scope="col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+    expect(heads).toEqual(['Name', 'Email', 'Phone', 'Open cases it handles', 'Cases']);
+    expect([...markup.matchAll(/_nameText_[^"]*">([^<]*)</g)].map((m) => m[1])).toEqual(['Baltic Mutual', 'Meridian Insurance', 'Northgate Insurance']);
+    const baltic = insurerRow(markup, 'Baltic Mutual');
+    expect(baltic).toContain('href="mailto:claims@balticmutual.example">claims@balticmutual.example</a>');
+    expect(baltic).toContain('href="tel:+37167001100">+371 6700 1100</a>');
+    // Its three open cases: a link to the cases list filtered to it.
+    expect(baltic).toMatch(new RegExp(`href="/insurance-cases\\?handled=${BALTIC}"[^>]*>3</a>`));
+    expect(baltic).toMatch(/_number_[^"]*">4<\/span>/);
+    const northgate = insurerRow(markup, 'Northgate Insurance');
+    // No phone: a dash; no open case: a plain 0, no link.
+    expect(northgate).toMatch(/_dim_[^"]*">—<\/span>/);
+    expect(northgate).toMatch(/_number_[^"]*_dim_[^"]*">0<\/span>/);
+    expect(northgate).not.toContain('handled=');
+    // The manager's actions on each row.
+    for (const name of ['Baltic Mutual', 'Meridian Insurance', 'Northgate Insurance']) {
+      const row = insurerRow(markup, name);
+      expect(row).toMatch(/>edit<\/span>Edit<\/button>/);
+      expect(row).toMatch(/>toggle_off<\/span>Put out of use<\/button>/);
+    }
+    expect(markup).not.toContain('Out of use</span></span>');
+  });
+
+  test('Out of use: Old Harbour marked so, with Put back in use; All holds both kinds', () => {
+    const out = insurersPage('/insurance-cases/insurers?show=out', meDita,
+      [[qk.insurers.list(OUT), insurersOutOfUse], [qk.insurers.list({}), insurersAll]]).markup;
+    expect(out).toMatch(/_selectValue_[^"]*">Out of use</);
+    const harbour = insurerRow(out, 'Old Harbour Insurance');
+    expect(harbour).toMatch(/Old Harbour Insurance<\/span><span class="_chip_[^"]*" data-tone="mute">.*?Out of use<\/span>/);
+    expect(harbour).toMatch(/>toggle_on<\/span>Put back in use<\/button>/);
+    expect(out).toContain('>1 insurer<');
+    const all = insurersPage('/insurance-cases/insurers?show=all', meDita, [[qk.insurers.list({}), insurersAll]]).markup;
+    expect(all).toMatch(/_selectValue_[^"]*">All</);
+    expect(all).toContain('>4 insurers<');
+    expect(all).toContain('Put back in use');
+    expect(all).toContain('Put out of use');
+  });
+
+  test('a Viewer reads the list, with no action anywhere', () => {
+    const { markup } = insurersPage('/insurance-cases/insurers', meToms,
+      [[qk.insurers.list(IN_USE), insurersInUse], [qk.insurers.list({}), insurersToms]]);
+    expect(actions()).toBe('');
+    expect(markup).toContain('Baltic Mutual');
+    expect(markup).not.toContain('Edit</button>');
+    expect(markup).not.toContain('Put out of use');
+    expect(markup).not.toContain('Actions');
+  });
+
+  test('no insurer at all (the owner’s list starts empty): No insurers yet, with Add insurer for a manager only', () => {
+    const empty: Array<[readonly unknown[], unknown]> = [[qk.insurers.list(IN_USE), []], [qk.insurers.list({}), []]];
+    const dita = insurersPage('/insurance-cases/insurers', meDita, empty).markup;
+    expect(dita).toContain('>No insurers yet</p>');
+    expect(dita).toContain('Add the insurers the company works with.');
+    expect(dita).toMatch(/<button[^>]*>.*add<\/span>.*Add insurer<\/button>/s);
+    const toms = insurersPage('/insurance-cases/insurers', meToms, empty).markup;
+    expect(toms).toContain('>No insurers yet</p>');
+    expect(toms).not.toContain('Add insurer');
+  });
+
+  test('none in use while some are out of use: it says where they are; none out of use says so', () => {
+    const noneInUse = insurersPage('/insurance-cases/insurers', meDita,
+      [[qk.insurers.list(IN_USE), []], [qk.insurers.list({}), insurersOutOfUse]]).markup;
+    expect(noneInUse).toContain('>No insurers in use</p>');
+    expect(noneInUse).toContain('1 insurer out of use is under Out of use.');
+    expect(noneInUse).toContain('Show out of use');
+    const noneOut = insurersPage('/insurance-cases/insurers?show=out', meDita,
+      [[qk.insurers.list(OUT), []], [qk.insurers.list({}), insurersInUse]]).markup;
+    expect(noneOut).toContain('>No insurers out of use</p>');
+    expect(noneOut).toContain('Every insurer on the list is in use.');
+  });
+});
+
+describe('the Insurers button and the section’s permission (F18-2b, F18-2g)', () => {
+  test('Insurers beside Register case for everyone who reads cases; Register case only for a manager', () => {
+    cases('/insurance-cases', [[qk.insuranceCases.list(LIST(1)), openHandledByBaltic]]);
+    expect(actions()).toMatch(/shield<\/span>Insurers<\/button><button[^>]*data-tone="primary"[^>]*>.*Register case<\/button>/);
+    cases('/insurance-cases', [[qk.insuranceCases.list(LIST(1)), openHandledByBaltic]], insurersToms, meToms);
+    expect(actions()).toMatch(/shield<\/span>Insurers<\/button>$/);
+    expect(actions()).not.toContain('Register case');
+  });
+
+  test('without InsuranceCases.Read: no Insurers button, the page not available, and no insurer is asked for', () => {
+    const round11: CurrentUserResponse = { ...meDita, permissions: meDita.permissions.filter((p) => !p.startsWith('InsuranceCases.')) };
+    const list = renderAs(h(InsuranceCases), { at: '/insurance-cases', route: '/insurance-cases', me: round11 });
+    expect(actions()).toBe('');
+    const page = renderAs(h(Insurers), { at: '/insurance-cases/insurers', route: '/insurance-cases/insurers', me: round11 });
+    expect(page.markup).toContain('Not available to you');
+    for (const { client } of [list, page]) {
+      const asked = client.getQueryCache().findAll({ queryKey: qk.insurers.all });
+      expect(asked.every((query) => (query.options as { enabled?: unknown }).enabled === false), 'an insurer query was enabled').toBe(true);
+    }
   });
 });

@@ -194,7 +194,10 @@ describe('the Insurance cases list (F17-2)', () => {
     const { markup } = list('/insurance-cases', meToms, [[qk.insuranceCases.list(LIST(1)), view1Toms]]);
     expect(meToms.permissions).toContain('InsuranceCases.Read');
     expect(meToms.permissions).not.toContain('InsuranceCases.Manage');
-    expect(header.last?.actions).toBeUndefined();
+    // Follow-up 18: the Viewer's header holds Insurers, for everyone who reads cases, and still no Register case.
+    const actions = markupOf(header.last?.actions);
+    expect(actions).toContain('>Insurers</button>');
+    expect(actions).not.toContain('Register case');
     expect(count(markup, '<tr class="_row_')).toBe(5);
     const empty = list('/insurance-cases', meToms, [[qk.insuranceCases.list(LIST(1)), EMPTY_PAGE]]).markup;
     expect(empty).toContain('No open cases');

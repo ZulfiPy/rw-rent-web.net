@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { qk } from '@/api';
-import { createInsurer, updateInsurer } from '@/api/insurers';
+import { activateInsurer, createInsurer, deactivateInsurer, updateInsurer } from '@/api/insurers';
 import type {
   CreateInsurerRequest, InsurerListItemResponse, InsurerResponse, UpdateInsurerRequest,
 } from '@/api/dto';
@@ -8,7 +8,7 @@ import { isApiError, type Failure } from '@/api/problem';
 import { LOOKS_ALIKE, lookAlikes } from '@/format';
 import { useActionMutation } from '@/app/useActionMutation';
 import { Button } from '@/ui/Button';
-import { Dialog } from '@/ui/Dialog';
+import { Dialog, DialogNote, dialogStyles } from '@/ui/Dialog';
 import { Field, fieldStyles as f, invalidProps } from '@/ui/Field';
 import { OutOfUseChip } from './InsurerPicker';
 import styles from './InsurerDialogs.module.css';
@@ -190,6 +190,53 @@ export function InsurerForm({ insurer, insurers, initialName, onUse, onAdded, on
         />
       </Field>
       <LookAlikes found={found} onUse={onUse} />
+    </Dialog>
+  );
+}
+
+/**
+ * Put out of use, or Put back in use (F18-2b), through a confirmation window as a vehicle's Deactivate
+ * and Activate are, in the API's words. Out of use, the insurer stays on every case that names it and
+ * is no longer offered on a case; back in use, it is offered again. Neither is ever refused but for an
+ * insurer gone (a refused change) or a lost race (the stale banner with Refresh).
+ */
+export function InsurerToggle({ insurer, onClose }: { insurer: InsurerListItemResponse; onClose: () => void }) {
+  const out = insurer.isActive;
+  const m = useActionMutation({
+    op: 'insurer-toggle',
+    mutationFn: () => (out ? deactivateInsurer(insurer.id) : activateInsurer(insurer.id)),
+    invalidate: INSURER_CHANGE_REFRESH,
+    refusal: insurerRefusal,
+    onDone: onClose,
+  });
+  const named = insurer.casesNamed === 0
+    ? 'No case names it.'
+    : insurer.casesNamed === 1
+      ? 'The case that names it keeps it, and an edit of that case may keep it.'
+      : `The ${insurer.casesNamed} cases that name it keep it, and an edit of one of them may keep it.`;
+  return (
+    <Dialog
+      title={out ? 'Put insurer out of use' : 'Put insurer back in use'}
+      icon={out ? 'toggle_off' : 'toggle_on'}
+      tone={out ? 'bad' : 'ok'}
+      width={480}
+      description={out ? `${insurer.name} will no longer be offered on a case.` : `${insurer.name} is offered on cases again.`}
+      submitLabel={out ? 'Put out of use' : 'Put back in use'}
+      submitTone={out ? 'danger-solid' : 'primary'}
+      busy={m.busy}
+      failure={m.failure}
+      onClose={onClose}
+      onSubmit={() => m.submit(undefined)}
+      onRefresh={m.refresh}
+    >
+      {out ? (
+        <ul className={dialogStyles.consequences}>
+          <li className={dialogStyles.consequence}>{named}</li>
+          <li className={dialogStyles.consequence}>It stays on the list, marked Out of use, and can be put back in use.</li>
+        </ul>
+      ) : (
+        <DialogNote>The cases that name it are unchanged.</DialogNote>
+      )}
     </Dialog>
   );
 }

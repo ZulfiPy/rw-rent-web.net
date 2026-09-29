@@ -47,6 +47,9 @@ export const caseTabOf = (value: string | null | undefined): CaseTabSpec =>
 /** The list at a view: Open is the bare address. */
 export const casesHref = (tab: CaseTab = 'open') => (tab === 'open' ? '/insurance-cases' : `/insurance-cases?tab=${tab}`);
 
+/** The Insurers page (Follow-up 18, F18-2b), reached from the list's header. */
+export const INSURERS_HREF = '/insurance-cases/insurers';
+
 /** The Open view filtered to the cases an insurer handles (the Insurers page's link, F18-2f). */
 export const casesHandledByHref = (insurerId: Uuid) => `/insurance-cases?handled=${insurerId}`;
 
