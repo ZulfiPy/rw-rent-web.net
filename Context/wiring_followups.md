@@ -944,9 +944,15 @@ Insurance cases on real data.
 > `/Users/zulf/rw-rent-api/testing-scratch/backups/rwrent_check-before-V11-2026-09-29.dump`, and
 > `V11Insurers` applied to it alone: five insurers from the names typed (Baltic Mutual, Lolkastan,
 > Meridian Insurance, Northgate Insurance and RW-Rent OÜ, the last typed by the owner on 212 KBH's
-> case that day), every case linked as its names were. Restarting the practice API on round 13's
-> Release build was held by the session's safety check; the owner restarts it (or allows the
-> reviewer to), after which the reviewer checks 5174 signed in. **Open, the owner's decision:**
+> case that day), every case linked as its names were. Restarting the practice API was first held by
+> the session's safety check; the owner then asked the reviewer to run it. The first restart loaded
+> the settings without quoting the connection string, so its semicolons split it and the API reached
+> no database (sign-in answered 500); the reviewer quoted the settings and restarted it again: the
+> practice API on 5002 runs round 13's Release build over `rwrent_check`, its log without an error.
+> Signed in on 5174 as Dita, 7 of 7: the five insurers, offered by the list's Handled by; the usual
+> 770 HDV case showing Meridian Insurance and Lolkastan, and Edit case opening on it with Lolkastan
+> chosen (it blanked the app before the upgrade); the Insurers page with the five and no email or
+> phone yet; no page error; no request to 5001, 5173, 5003 or 5176. **Open, the owner's decision:**
 > F18-4 below.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
