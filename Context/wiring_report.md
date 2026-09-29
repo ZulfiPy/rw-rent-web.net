@@ -48,7 +48,7 @@
 | | |
 |---|---|
 | Commits | seven `Wiring 45` commits and this report's `Wiring 46`, on `feature/backend-wiring` (§9) |
-| Tests | 627 → **704**, all green: 77 new; 13 existing tests updated on purpose and two fixture files moved to round 13's contract (§2.8) |
+| Tests | 627 → **704**, all green: 77 new; 12 existing tests updated on purpose, with a shared list and the code catalogue, and two fixture files moved to round 13's contract (§2.8) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
 | Each commit alone | 0 type errors and the full suite green at each of the seven (§4.5) |
 | Planted breakages | **47 planted, 43 caught** by the suite; the four others are key and focus behaviours only a browser shows, three of them checked in the browser (§4.4) |
@@ -210,7 +210,7 @@
 
 ### 2.8 Tests
 
-**77 new tests, 13 existing ones updated on purpose**, with the lists the Follow-up 17 dialog tests
+**77 new tests, 12 existing ones updated on purpose**, with the list the Follow-up 17 dialog tests
 share and the code catalogue one test reads (627 → 704, 57 → 63 files). None was deleted, skipped or
 weakened.
 
@@ -618,12 +618,20 @@ refusal still says "Choose an insurer that is filled in."
    - One exception: F18-1's first edit of `RecordHeader.tsx` used `isValidElement` a moment before
      the next save imported it. On a record page open in either app at that instant, the page would
      have shown an error until the next save, a fraction of a second later.
-2. **The practice app on 5174 runs this code against round 12's API.** Its insurance pages show no
-   insurer names and have no insurer list until the reviewer upgrades the practice copy to round 13,
-   as the owner knows.
-   - After the upgrade, the names typed on its cases, among them the owner's "Lolkastan", become
-     insurers.
-   - The owner's 5001 is round 11, so its app offers no insurance section at all, as before.
+2. **The practice app on 5174 runs this code against round 12's API, which sends each insurer as a
+   name.** The practice copy's insurance pages do not work until the reviewer upgrades it to round 13,
+   as the owner knows. This was confirmed in a scratch copy by rendering a case as round 12 answers it:
+   - **Edit case on a case that names an insurer throws while it opens.** The picker reads the name of
+     an insurer that round 12 sends as plain text. The app has no error boundary, so the whole
+     practice app goes blank until the page is reloaded.
+   - A case's Insurance panel shows an Out of use mark with no name for each insurer.
+   - The list's Handled by column shows no name, the Insurers page cannot load its list, and Add an
+     insurer is refused.
+
+   No code was added for round 12's answers, since the upgrade replaces them. Until it, Edit case
+   should not be opened on 5174. After the upgrade, the names typed on the practice cases, among them
+   the owner's "Lolkastan", become insurers. The owner's 5001 is round 11 and grants no insurance
+   permission, so the owner's own app offers no insurance section at all, as before.
 3. **Observed, not changed: the cases list at 1024 px scrolls sideways by 8 px.** The table's floor
    of 920 px is wider than the 912 px frame. This predates this run: Follow-up 17 set 920, and this
    run left it.
