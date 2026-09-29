@@ -1,4 +1,4 @@
-import { Children, Fragment, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { usePageHeader, type PageHeaderModel } from '@/app/pageHeader';
 import { Chip } from './Chip';
 import type { Tone } from './status';
@@ -53,12 +53,16 @@ export function RecordHeader({
   // The desktop band's spacers are generated from the facts, whatever their count: one at each end
   // and one between every neighbouring pair (RecordHeader.module.css hides them below 1280).
   const facts = Children.toArray(children);
+  // When one fact has a line under its value, every fact stands from the top of the reserve, so the
+  // labels share one line and the values the line under it (Follow-up 18, F18-1). A band where no
+  // fact has one keeps its facts centred, as before.
+  const subLines = facts.some((fact) => isValidElement<{ sub?: unknown }>(fact) && !!fact.props.sub);
 
   return (
     <div className={styles.hero} data-stack={stackActions ? 'true' : undefined}>
       {chip ? <Chip tone={chip.tone} dot={chip.dot} size="hero">{chip.label}</Chip> : null}
       {facts.length ? (
-        <div className={styles.facts}>
+        <div className={styles.facts} data-sub-lines={subLines ? 'true' : undefined}>
           <span aria-hidden="true" className={styles.gapEnd} />
           {facts.map((fact, i) => (
             <Fragment key={i}>

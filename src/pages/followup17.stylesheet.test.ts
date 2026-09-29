@@ -14,10 +14,10 @@ const DIALOGS = readRules(new URL('./insurance/CaseDialogs.module.css', import.m
 const SHEET = '(max-width: 639px)';
 
 describe('the list’s columns', () => {
-  test('from 1024 up: Status 132, Waiting for 170, At fault 150, Closed 130, the text columns sharing the rest; never under 920', () => {
+  test('from 1024 up: Status 132, Waiting for 190 (Follow-up 18), At fault 150, Closed 130, the text columns sharing the rest; never under 920', () => {
     expect(declared(LIST, '.table')).toEqual({ 'min-width': '920px' });
     expect(declared(LIST, '.cStatus')).toEqual({ width: '132px' });
-    expect(declared(LIST, '.cWaiting')).toEqual({ width: '170px' });
+    expect(declared(LIST, '.cWaiting')).toEqual({ width: '190px' });
     expect(declared(LIST, '.cFault')).toEqual({ width: '150px' });
     expect(declared(LIST, '.cClosed')).toEqual({ width: '130px' });
     for (const auto of ['.cCase', '.cHandled', '.cLast']) expect(declared(LIST, auto)).toEqual({ width: 'auto' });

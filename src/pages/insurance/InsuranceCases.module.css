@@ -8,7 +8,10 @@
 .table { min-width: 920px; }
 .cCase { width: auto; }
 .cStatus { width: 132px; }
-.cWaiting { width: 170px; }
+/* Waiting for is as wide as its longest value, "Someone else · 59 minutes" (161px in Geist 13px), with
+   the cell's 14px each side, and each value stays on one line from 1024 up (Follow-up 18, F18-3). The
+   handover's 170px broke "Someone else · 21 hours" (143px) after the dot. */
+.cWaiting { width: 190px; }
 .cFault { width: 150px; }
 .cHandled { width: auto; }
 .cLast { width: auto; }
@@ -25,6 +28,10 @@
   .cWaiting { width: 121px; }
   .cFault { width: 107px; }
   .cClosed { width: 92px; }
+}
+
+@media (min-width: 1024px) {
+  .waitingText { white-space: nowrap; }
 }
 
 /* A cell's own text wraps anywhere rather than widening the table; the fold's ellipsis never cuts it. */

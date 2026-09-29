@@ -330,7 +330,7 @@ export function InsuranceCases() {
                         {closed ? (
                           <span className={`${styles.cellText} ${item.atFault ? '' : styles.dim}`}>{atFaultText(item.atFault)}</span>
                         ) : (
-                          <span className={waitsForUs(item) ? styles.us : undefined}>{waitText(item)}</span>
+                          <span className={waitsForUs(item) ? `${styles.us} ${styles.waitingText}` : styles.waitingText}>{waitText(item)}</span>
                         )}
                       </td>
                       <td className={`${table.td} ${table.foldTablet}`}>

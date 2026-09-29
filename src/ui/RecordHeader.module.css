@@ -39,6 +39,11 @@
   gap: 1px;
   min-width: 0;
 }
+/* A band where one fact has a line under its value (Follow-up 18, F18-1): every fact stands from the
+   top of the reserve, not its centre, so every label is on one line, every value on the line under
+   it and the lines under the values below that. The reserve keeps the band as tall as before, so the
+   chip and the buttons stay where they are. */
+.facts[data-sub-lines='true'] .fact { align-self: flex-start; justify-content: flex-start; }
 .factLabel {
   font-size: 10.5px;
   letter-spacing: .08em;
