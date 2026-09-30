@@ -69,16 +69,27 @@ describe('Recently deleted and the security audit', () => {
     expect(markup).toContain('Deleted record');
     expect(markup).toMatch(/>Damage<\/span><span[^>]*>Practice: front left door scratched</);
     expect(markup).toMatch(/>Status<\/span><span[^>]*>Closed</);
-    expect(markup).toContain('>Deleted photos<');
-    expect(markup).toContain('door-registered.png');
-    expect(markup).toContain('>Deleted events<');
-    expect(markup).toContain('>Event 1</p>');
-    expect(markup).toContain('Photos sent to the insurer');
-    expect(markup).toContain('door-sent.png');
-    expect(markup).toContain('>Event 2</p>');
-    expect(markup).toContain('Closed for practice');
-    expect(markup).toContain('>Deleted notes<');
-    expect(markup).toContain('Practice note of Follow-up 19.');
+    // Each panel read on its own: the raw payload further down holds every name too.
+    const panel = (title: string) => {
+      const at = markup.indexOf(`>${title}</h2>`);
+      expect(at, `no panel ${title}`).toBeGreaterThan(-1);
+      return markup.slice(at, markup.indexOf('</section>', at));
+    };
+    const photos = panel('Deleted photos');
+    expect(photos).toContain('>Photo 1</p>');
+    expect(photos).toContain('door-registered.png');
+    expect(photos).not.toContain('door-sent.png');
+    const events = panel('Deleted events');
+    const [first, second] = events.split('>Event 2</p>');
+    expect(first).toContain('>Event 1</p>');
+    expect(first).toContain('Photos sent to the insurer');
+    // The event's own photo, under it.
+    expect(first).toMatch(/_subGroupTitle_[^"]*">Photo 1<\/p>.*door-sent\.png/);
+    expect(second).toContain('Closed for practice');
+    expect(second).not.toContain('>Photo 1</p>');
+    const notes = panel('Deleted notes');
+    expect(notes).toContain('>Note 1</p>');
+    expect(notes).toContain('Practice note of Follow-up 19.');
     expect(markup).toContain('>Cleared accident links<');
     expect(markup).toContain('These cases named the deleted case as the same accident; the links were cleared and the cases stay.');
     expect(markup).toContain(copy.ClearedAccidentLinks[0]!.InsuranceCaseLabel);
