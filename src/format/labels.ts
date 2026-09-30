@@ -142,8 +142,9 @@ export const DELETION_REASON_LABEL: Record<RecordDeletionReason, string> = {
 };
 
 /**
- * A record's kind, as the Delete records page's tabs, dialog and history name it; an insurance case
- * is named only among the records that block a vehicle's deletion (round 12).
+ * A record's kind, as the Delete records page's tabs, dialog and history name it. An insurance case
+ * was first named only among the records that block a vehicle's deletion (round 12); since round 14
+ * it is a kind of its own there (Follow-up 19).
  */
 export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
   [RecordKind.RentalAssignment]: 'Rental assignment',
@@ -166,6 +167,8 @@ export const ENTITY_LABEL: Record<string, string> = {
   AssignmentDriverAuthorization: 'Driver authorisation',
   AssignmentInterruption: 'Interruption',
   Company: 'Company',
+  // An insurance case deleted on its own leaves its entry against the case (round 14, Follow-up 19).
+  InsuranceCase: 'Insurance case',
   RegistrationEmailConfirmationChallenge: 'Registration email confirmation',
   RentalAssignment: 'Rental assignment',
   SystemAdministratorTransfer: 'System Administrator transfer',
@@ -204,6 +207,8 @@ export const AUDIT_EVENTS: Array<[string, string[], string?]> = [
   ['Vehicle', ['Deleted']],
   ['Customer', ['Deleted']],
   ['Driver', ['Deleted']],
+  // A closed insurance case deleted on its own (round 14, Follow-up 19).
+  ['InsuranceCase', ['Deleted'], 'Insurance case'],
   ['SystemAdministrator', ['Bootstrapped', 'OfflineRecovery', 'TransferInitiated', 'TransferAccepted', 'TransferCancelled', 'TransferConfirmationRotated'], 'System Administrator'],
 ];
 

@@ -104,13 +104,21 @@ export function diffRows(
 /* the copy a deletion leaves (the backend's rounds 7 and 8) ------------------------------- */
 
 /**
- * The six event types a deletion on the Delete records page writes. `Company.Deleted` is not one of
- * them: it keeps its own identity snapshot and renders as before.
+ * The event types a deletion on the Delete records page writes: six, and since round 14 an insurance
+ * case's (Follow-up 19). `Company.Deleted` is not one of them: it keeps its own identity snapshot and
+ * renders as before.
  */
 export const RECORD_DELETION_EVENTS: readonly string[] = [
   'RentalAssignment.Deleted', 'DriverAuthorization.Deleted', 'Interruption.Deleted',
-  'Vehicle.Deleted', 'Customer.Deleted', 'Driver.Deleted',
+  'Vehicle.Deleted', 'Customer.Deleted', 'Driver.Deleted', 'InsuranceCase.Deleted',
 ];
+
+/**
+ * A closed insurance case deleted on its own (round 14). Its copy is the case itself, as a vehicle's
+ * entry keeps each of its cases, with its photos, events and notes at the top, and the cases that
+ * lost their accident link.
+ */
+export const INSURANCE_CASE_DELETED_EVENT = 'InsuranceCase.Deleted';
 
 /**
  * An authorization that went with a deleted driver (round 8), written against the rental it
@@ -170,6 +178,13 @@ export interface DeletedRecord {
   clearedAccidentLinks: ClearedCaseLink[];
   /** The insurance cases a deleted driver was cleared from; the cases stay. */
   clearedCaseDrivers: ClearedCaseLink[];
+  /**
+   * An insurance case deleted on its own (round 14): the photos it was registered with, its events
+   * with theirs, and its notes. Empty for every other kind.
+   */
+  photos: DeletedFact[][];
+  events: DeletedCaseEvent[];
+  notes: DeletedFact[][];
 }
 
 /** Shown by the entry's own Record and Removed-with facts and its Reason panel, never among the facts. */
@@ -259,32 +274,43 @@ function linksOf(value: unknown): ClearedLink[] | null {
   return links;
 }
 
+/** The lists a case's copy carries: the photos it was registered with, its events, its notes. */
+const CASE_PARTS = ['Photos', 'Events', 'Notes'];
+
 /**
- * The insurance cases that went with a vehicle (round 12): flat copies opening with their own label,
- * each carrying its photos, its events (each with its photos) and its notes; null when anything else.
+ * One insurance case's copy (round 12): a flat copy opening with its own label, carrying its photos,
+ * its events (each with its photos) and its notes; null when it is anything else. `lists` names the
+ * other lists the copy may hold: a case deleted on its own (round 14) holds the links it cleared.
  */
+function caseOf(item: unknown, lists: readonly string[] = []): DeletedCase | null {
+  if (!isObject(item)) return null;
+  if (Object.keys(item).some((key) => Array.isArray(item[key]) && !CASE_PARTS.includes(key) && !lists.includes(key))) return null;
+  const facts = factsOf(item, SHOWN_ELSEWHERE);
+  const photos = partsOf(item['Photos']);
+  const notes = partsOf(item['Notes']);
+  const eventList = item['Events'] ?? [];
+  if (!facts || !photos || !notes || !Array.isArray(eventList)) return null;
+  const events: DeletedCaseEvent[] = [];
+  for (const event of eventList) {
+    if (!isObject(event)) return null;
+    if (Object.keys(event).some((key) => Array.isArray(event[key]) && key !== 'Photos')) return null;
+    const eventFacts = factsOf(event);
+    const eventPhotos = partsOf(event['Photos']);
+    if (!eventFacts || !eventPhotos) return null;
+    events.push({ facts: eventFacts, photos: eventPhotos });
+  }
+  return { recordLabel: labelOf(item), facts, photos, events, notes };
+}
+
+/** The insurance cases that went with a vehicle (round 12), each read as `caseOf` reads one; null when anything else. */
 function casesOf(value: unknown): DeletedCase[] | null {
   if (value === undefined) return [];
   if (!Array.isArray(value)) return null;
   const cases: DeletedCase[] = [];
   for (const item of value) {
-    if (!isObject(item)) return null;
-    if (Object.keys(item).some((key) => Array.isArray(item[key]) && !['Photos', 'Events', 'Notes'].includes(key))) return null;
-    const facts = factsOf(item, SHOWN_ELSEWHERE);
-    const photos = partsOf(item['Photos']);
-    const notes = partsOf(item['Notes']);
-    const eventList = item['Events'] ?? [];
-    if (!facts || !photos || !notes || !Array.isArray(eventList)) return null;
-    const events: DeletedCaseEvent[] = [];
-    for (const event of eventList) {
-      if (!isObject(event)) return null;
-      if (Object.keys(event).some((key) => Array.isArray(event[key]) && key !== 'Photos')) return null;
-      const eventFacts = factsOf(event);
-      const eventPhotos = partsOf(event['Photos']);
-      if (!eventFacts || !eventPhotos) return null;
-      events.push({ facts: eventFacts, photos: eventPhotos });
-    }
-    cases.push({ recordLabel: labelOf(item), facts, photos, events, notes });
+    const kase = caseOf(item);
+    if (!kase) return null;
+    cases.push(kase);
   }
   return cases;
 }
@@ -302,9 +328,11 @@ function caseLinksOf(value: unknown): ClearedCaseLink[] | null {
 }
 
 /**
- * The copy of a deleted record, read from the entry's before-payload: the six `*.Deleted` events
- * (a rental's parts, round 8's rentals of a vehicle or a customer, a driver's authorizations and
- * cleared customer links), and round 8's flat copy of an authorization that went with its driver.
+ * The copy of a deleted record, read from the entry's before-payload: the `*.Deleted` events (a
+ * rental's parts, round 8's rentals of a vehicle or a customer, a driver's authorizations and
+ * cleared customer links, round 12's cases of a vehicle, and round 14's case deleted on its own with
+ * its photos, events, notes and cleared accident links), and round 8's flat copy of an authorization
+ * that went with its driver.
  * Anything this does not recognise — another event, an empty or unparseable payload, a member that
  * is neither a scalar nor one of the known lists in its known shape — answers null, and the entry
  * falls back to the ordinary payload views exactly as before.
@@ -315,8 +343,12 @@ export function deletedRecord(eventType: string | null | undefined, beforeJson: 
   const body = parse(beforeJson);
   if (!body || Object.keys(body).length === 0) return null;
 
-  const lists = removedWithDriver ? [] : COPY_LISTS;
+  const ownCase = eventType === INSURANCE_CASE_DELETED_EVENT;
+  const lists = removedWithDriver ? [] : ownCase ? [...CASE_PARTS, 'ClearedAccidentLinks'] : COPY_LISTS;
   if (Object.keys(body).some((key) => Array.isArray(body[key]) && !lists.includes(key))) return null;
+  // A case deleted on its own is one case's copy, read as a vehicle's entry reads each of its cases.
+  const kase = ownCase ? caseOf(body, ['ClearedAccidentLinks']) : null;
+  if (ownCase && !kase) return null;
 
   const facts = factsOf(body, SHOWN_ELSEWHERE);
   const authorizations = partsOf(body['Authorizations']);
@@ -343,5 +375,8 @@ export function deletedRecord(eventType: string | null | undefined, beforeJson: 
     insuranceCases,
     clearedAccidentLinks,
     clearedCaseDrivers,
+    photos: kase?.photos ?? [],
+    events: kase?.events ?? [],
+    notes: kase?.notes ?? [],
   };
 }

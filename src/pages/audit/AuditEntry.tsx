@@ -6,8 +6,8 @@ import { listUsers } from '@/api/users';
 import type { Uuid } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
-  LOCAL_TIME_NOTE, auditActorName, auditTargetName, deletedRecord, diffRows, entityLabel, eventLabel,
-  formatLocalStamp, isSystemActor, type DeletedFact,
+  INSURANCE_CASE_DELETED_EVENT, LOCAL_TIME_NOTE, auditActorName, auditTargetName, deletedRecord, diffRows,
+  entityLabel, eventLabel, formatLocalStamp, isSystemActor, type DeletedFact,
 } from '@/format';
 import { EmptyState } from '@/ui/EmptyState';
 import { Fact, FactGrid } from '@/ui/FactGrid';
@@ -75,6 +75,8 @@ export function AuditEntry() {
   const hasBefore = !!entry?.beforeJson;
   /** A deletion's copy of the record it removed (Follow-ups 8 and 9); null for every other entry. */
   const deleted = entry ? deletedRecord(entry.eventType, entry.beforeJson) : null;
+  /** An insurance case deleted on its own (round 14, Follow-up 19), not with its vehicle. */
+  const ownCase = entry?.eventType === INSURANCE_CASE_DELETED_EVENT;
 
   return (
     <div className={styles.page}>
@@ -140,6 +142,28 @@ export function AuditEntry() {
               ))}
             </Panel>
           ) : null}
+          {/* Round 14 (Follow-up 19): a case deleted on its own, read as a vehicle's entry reads each of its cases. */}
+          {deleted.photos.length > 0 ? (
+            <Panel title="Deleted photos" description="The photos the case was registered with. No picture is kept.">
+              {partGroups(deleted.photos, 'Photo')}
+            </Panel>
+          ) : null}
+          {deleted.events.length > 0 ? (
+            <Panel title="Deleted events" description="Each event with its photos. No picture is kept.">
+              {deleted.events.map((event, at) => (
+                <div key={`event-${at}`} className={styles.group}>
+                  <p className={styles.groupTitle}>Event {at + 1}</p>
+                  <FactGrid>{event.facts.map(factOf)}</FactGrid>
+                  {partGroups(event.photos, 'Photo', true)}
+                </div>
+              ))}
+            </Panel>
+          ) : null}
+          {deleted.notes.length > 0 ? (
+            <Panel title="Deleted notes">
+              {partGroups(deleted.notes, 'Note')}
+            </Panel>
+          ) : null}
           {deleted.clearedLinks.length > 0 ? (
             <Panel title="Cleared customer links" description="These customer records were linked to the driver; the links were cleared and the customers stay.">
               <FactGrid>
@@ -174,7 +198,12 @@ export function AuditEntry() {
             </Panel>
           ) : null}
           {deleted.clearedAccidentLinks.length > 0 ? (
-            <Panel title="Cleared accident links" description="These cases of other cars named a deleted case as their accident’s; the links were cleared and the cases stay.">
+            <Panel
+              title="Cleared accident links"
+              description={ownCase
+                ? 'These cases named the deleted case as the same accident; the links were cleared and the cases stay.'
+                : 'These cases of other cars named a deleted case as their accident’s; the links were cleared and the cases stay.'}
+            >
               <FactGrid>
                 {deleted.clearedAccidentLinks.map((link) => (
                   <Fact key={link.caseId} label="Insurance case" span="full">{link.label}</Fact>

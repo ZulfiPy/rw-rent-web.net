@@ -17,6 +17,7 @@ const BACKEND_EVENT_TYPES = [
   'Company.Created', 'Company.Deleted', 'Company.Updated',
   'Customer.Deleted', 'Driver.Deleted',
   'DriverAuthorization.Corrected', 'DriverAuthorization.Deleted', 'DriverAuthorization.RemovedWithDriver',
+  'InsuranceCase.Deleted',
   'Interruption.Corrected', 'Interruption.Deleted',
   'Registration.Activated', 'Registration.EmailConfirmationRotated', 'Registration.EmailConfirmed',
   'Registration.Expired', 'Registration.Rejected', 'Registration.Reopened',
@@ -36,7 +37,7 @@ const BACKEND_EVENT_TYPES = [
 const BACKEND_ENTITY_TYPES = [
   'ApplicationUser', 'ApplicationUserRoleAssignment', 'ApplicationUserSession',
   'AssignmentDriverAuthorization', 'AssignmentInterruption', 'Company', 'Customer', 'Driver',
-  'RegistrationEmailConfirmationChallenge', 'RentalAssignment', 'SystemAdministratorTransfer',
+  'InsuranceCase', 'RegistrationEmailConfirmationChallenge', 'RentalAssignment', 'SystemAdministratorTransfer',
   'Vehicle',
 ];
 
