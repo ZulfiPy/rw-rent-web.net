@@ -11,7 +11,8 @@ import styles from './InsurerPicker.module.css';
  * "Choose an insurer". Open, a find box with the focus, then Not chosen, then the insurers in use
  * whose names hold what is typed, the chosen one with a check; the case's own insurer of that side
  * stays offered and chosen even when it is out of use, marked so; and at the foot Add an insurer,
- * which opens the Add insurer window with what was typed. Arrows and Enter choose, Esc closes.
+ * which opens the Add insurer window with what was typed. The foot stays in view however long the
+ * list is, and only the lines above it scroll (Follow-up 19, F19-1). Arrows and Enter choose, Esc closes.
  *
  * The API decides whether an insurer may go on a case (INS-018): the picker only offers the ones that
  * can, and the refusal of one that could not lands under the picker all the same.

@@ -1,7 +1,7 @@
 /* The insurer picker of a case's form (Follow-up 18, F18-2d), from the mock-up the owner approved:
    closed, a control like the form's selects showing the chosen insurer; open, a list under it with a
-   find box, Not chosen, the insurers and Add an insurer at its foot. Every value is a design token the
-   app already uses. */
+   find box, Not chosen, the insurers and Add an insurer at its foot, always in view (Follow-up 19).
+   Every value is a design token the app already uses. */
 
 .picker { position: relative; min-width: 0; }
 
@@ -54,7 +54,19 @@
 }
 .find:focus { outline: none; border-color: var(--line-3); }
 
-.options { display: flex; flex-direction: column; margin: 0; padding: 0; max-height: 244px; overflow-y: auto; list-style: none; }
+/* Not chosen and the insurers scroll within 244px; Add an insurer stays at its foot (Follow-up 19, F19-1).
+   The arrows bring the line they reach into view above the foot, not under it: the foot is 34px and
+   its 4px of space. */
+.options {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  max-height: 244px;
+  overflow-y: auto;
+  scroll-padding-bottom: 38px;
+  list-style: none;
+}
 .option {
   display: flex;
   align-items: center;
@@ -70,11 +82,25 @@
 .optionName { min-width: 0; overflow-wrap: anywhere; }
 .none { color: var(--fg-3); }
 .check { flex: none; margin-left: auto; font-size: 17px; color: var(--accent); }
-/* Add an insurer: the list's foot, set off by a rule, in the accent. */
-.add { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 7px 7px; color: var(--accent); font-weight: 500; }
+/* Add an insurer: the list's foot, set off by a rule, in the accent. However long the list, it stays in
+   view at the bottom of the list (Follow-up 19, F19-1): the insurers scroll under it, and its opaque
+   ground, with its 4px of space above painted over by the shadow, hides them there. */
+.add {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 7px 7px;
+  background: var(--surface);
+  box-shadow: 0 -4px 0 var(--surface);
+  color: var(--accent);
+  font-weight: 500;
+}
 .addIcon { flex: none; font-size: 17px; }
 .empty { margin: 0; padding: 6px 10px; font-size: 12.5px; color: var(--fg-3); }
 
 @media (max-width: 639px) {
   .option { min-height: 44px; }
+  .options { scroll-padding-bottom: 48px; }
 }
