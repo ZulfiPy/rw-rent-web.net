@@ -1174,9 +1174,10 @@ should say so, is the owner's to raise; nothing is built for it now.
 > insurer; Add event, a note, a photo and the photo view; the Insurers page, its Show, Add insurer,
 > Edit and Put out of use; Casco case for this accident. The owner's findings are written here as F19
 > items. The follow-up is then built as one batch together with the app's half of the backend's
-> backlog item 32, the insurers on the Delete records page (decided by the owner on 2026-09-30: an
-> insurer that cases still name is blocked, the page listing those cases), after the backend's round
-> for item 32, so that the owner's real app is upgraded once with everything.
+> backlog item 26, an insurance case on the Delete records page (decided by the owner on 2026-09-30,
+> in place of deleting insurers, item 32, which the owner withdrew the same day), after the backend's
+> round for item 26, so that the owner's real app is upgraded once with everything. The desktop is
+> done: after F18-4 the owner found nothing more to change there ("the desktop version looks fine").
 
 Carried from §18, observed during its review: at 1024 px the cases list scrolls sideways by 8 px in a
 browser that draws classic scroll bars, and the list's toolbar takes a second row.
