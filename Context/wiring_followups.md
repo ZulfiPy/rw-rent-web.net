@@ -160,6 +160,13 @@ findings (§11) are the first work after the merge.
    the top while the content scrolls under them, about a quarter of the screen; every page is built so
    (the shell scrolls only the content). A proposal: on a phone the top of the page scrolls away with
    the content. App-wide; not part of Follow-up 14 unless the owner adds it.
+11. **On a real iPhone a tapped field zooms the page** (the reviewer, 2026-09-30, during Follow-up 19).
+   The app's fields draw their text at 13 px (`src/ui/Field.module.css`, the filters' search and
+   selects, the insurer picker's find box), and Safari on an iPhone zooms the page in when a field with
+   text under 16 px is tapped, and stays zoomed after it. The practice copy runs on the owner's Mac, so
+   it has not been seen; it matters once the app is used on phones. A proposal: on a phone the fields'
+   text is 16 px. App-wide; for when the app goes online (the backend's backlog item 6), unless the
+   owner wants it sooner.
 
 - **Found in Follow-up 17 (it predates it): the Drivers search on Delete records** says "Name,
   licence number or email", but neither that search nor the Drivers list finds a driver by licence
@@ -1165,7 +1172,8 @@ should say so, is the owner's to raise; nothing is built for it now.
 
 ## 19. Follow-up 19 — the owner's look at Insurance cases on the practice copy: the tablet and the phone
 
-> **Status: COLLECTING** (opened 2026-09-30). The owner looks at Insurance cases on the practice copy
+> **Status: COLLECTED 2026-09-30, one item (F19-1); to be specified with backlog item 26.** The owner
+> looked at Insurance cases on the practice copy
 > (5174 over round 13 on 5002, signed in as Dita) at the sizes of the Tasks review (§14): the iPad Pro
 > 11 upright (834 px, the tablet band 768–1023), the iPad Pro 11 sideways (1194 px, the desktop) and
 > the iPhone 16 Pro (402 px, the phone). What to look at: the cases list, its three tabs Open, Waiting
@@ -1181,3 +1189,30 @@ should say so, is the owner's to raise; nothing is built for it now.
 
 Carried from §18, observed during its review: at 1024 px the cases list scrolls sideways by 8 px in a
 browser that draws classic scroll bars, and the list's toolbar takes a second row.
+
+**The owner's look (2026-09-30): nothing to change on the tablet and the phone** ("I haven't found
+anything that I would like to change"). **The reviewer's own look** the same day, in a headless browser
+as Dita on 5174 with every write to 5002 blocked, at 402×874, 834×1194 and 1194×834 with touch, on
+every screen named above: nothing scrolls sideways anywhere, also with a 190-character case title, a
+200-character event title, a 100-character insurer name, a 50-character claim number and a long web
+address in a note; on the phone no button or field under 44 px outside the menu, the tab bar as wide
+as the list (370 px against 368), and the top of the page staying while the list scrolls, as on every
+other list (§16); every window fits with its buttons in view, the Add insurer window over Register
+case included. On the iPad the list folds to four columns and its toolbar puts Handled by on a second
+row; the owner found nothing to change there.
+
+- **F19-1. Add an insurer drops out of sight once the list of insurers is long** (the reviewer,
+  2026-09-30). The open picker holds its find box and one list that scrolls within 244 px: Not chosen,
+  the insurers, and Add an insurer as its last row (`src/pages/insurance/InsurerPicker.tsx`, the `li`
+  with `styles.add` inside the `ul` of `styles.options`). With six insurers on the practice copy (the
+  owner added Swedbank P&C Insurance AS during the review) the rows need 276 px, 356 on the phone where
+  a row is 44 px, so Add an insurer lies below the list's bottom edge at every size, the desktop at 1512
+  px included, and shows only once the list is scrolled to its end; a Mac, an iPad and an iPhone draw
+  no scroll bar until one scrolls, so nothing tells that it is there. Typing a name that no insurer
+  holds shortens the list and brings it back, which is why the checks of F18 and F18-4, which typed
+  first, did not meet it. With the owner's real list, likely ten insurers or more, it would be out of
+  sight every time the picker opens. **Wanted:** Add an insurer stays at the foot of the open list,
+  always in view, whatever the list's length and at every size, as the mock-up the owner approved has
+  it ("Add an insurer at its foot"); only Not chosen and the insurers scroll above it. It stays an
+  option of the list, the last one reached with the keyboard, and opens the Add insurer window as today.
+  Nothing else changes.
