@@ -1177,8 +1177,8 @@ should say so, is the owner's to raise; nothing is built for it now.
 
 ## 19. Follow-up 19 — the owner's look at Insurance cases on the practice copy: the tablet and the phone
 
-> **Status: COLLECTED 2026-09-30, one item (F19-1); to be specified with backlog item 26.** The owner
-> looked at Insurance cases on the practice copy
+> **Status: SPECIFIED 2026-09-30, two items (F19-1, F19-2); the owner sends it to the agent.** The
+> owner looked at Insurance cases on the practice copy
 > (5174 over round 13 on 5002, signed in as Dita) at the sizes of the Tasks review (§14): the iPad Pro
 > 11 upright (834 px, the tablet band 768–1023), the iPad Pro 11 sideways (1194 px, the desktop) and
 > the iPhone 16 Pro (402 px, the phone). What to look at: the cases list, its three tabs Open, Waiting
@@ -1221,3 +1221,44 @@ row; the owner found nothing to change there.
   it ("Add an insurer at its foot"); only Not chosen and the insurers scroll above it. It stays an
   option of the list, the last one reached with the keyboard, and opens the Add insurer window as today.
   Nothing else changes.
+- **F19-2. Insurance cases on the Delete records page** (the app's half of the backend's round 14,
+  backlog item 26; decided by the owner on 2026-09-30: a closed case can be deleted on its own, an open
+  one is closed first). Round 14, verified by the reviewer (`6239393`), serves the list
+  `GET /api/record-deletions/candidates/insurance-cases`, kind 7 in `POST /api/record-deletions`, the
+  block reason `InsuranceCaseIsOpen` (9), the takes `insuranceCaseEvents`, `insuranceCaseNotes`,
+  `insuranceCasePhotos` and `accidentLinksCleared` (a case's, and a car's: the cases of other cars that
+  name one of its cases), the answer's `deletedInsuranceCaseEventCount`,
+  `deletedInsuranceCaseNoteCount`, `deletedInsuranceCasePhotoCount` and `clearedAccidentLinkCount`, the
+  count `insuranceCases`, and the `InsuranceCase.Deleted` entry (the backend's
+  `Context/round14_report.md` §5). Today the page leaves the kind out (`DeletableKind` excludes it).
+  **Wanted:**
+  - a seventh tab, **Insurance cases**, last, with the shield icon the navigation gives Insurance
+    cases, and its count; its search reads "Plate, damage, driver, insurer or claim", as the cases
+    list's does; Show works as on the other tabs, "Out of use" listing the closed cases, and the
+    empty list under Out of use names the open insurance cases under Everything;
+  - each case shown as the other kinds show a record: on the table tiers its label linked to the
+    case's page, with its type and when it happened or was found under it; its status, with the chip
+    the cases list uses; when it was closed, or nothing while it is open; and the Deletion cell. On
+    the phone its card, titled with the label;
+  - an open case Blocked with the sentence "This insurance case is open. Close it first; then it can
+    be deleted", and no link beside it, since the row itself opens the case;
+  - what a deletion takes, in the page's words, each only when not zero: "Takes 2 events, 1 note and
+    2 photos with it" and "Clears the accident link of 1 insurance case";
+  - the delete window: its description line (the label, the type, and "Closed" with the date); its
+    consequences: the insurance case removed permanently; its events, notes and photos removed with
+    it, with their numbers; its car, driver, insurers and every other case staying as they are; the
+    cases that name it as the same accident losing that link and staying, with their number; the
+    audit line; the tick's hint naming the case and what goes with it; and the confirmation line after
+    the deletion, from the answer's counts;
+  - a car's delete window, its takes and its confirmation line also saying, when not zero, how many
+    cases of other cars lose their accident link;
+  - the security audit naming the event "Insurance case · Deleted" and reading its copy as it reads a
+    car's cases today (`src/format/auditPayload.ts`): the case's facts, its events with their photos,
+    its notes, and the cases that lost their link. Recently deleted already names the kind "Insurance
+    case".
+
+  The new members are optional in the app's types, as round 12's are: the owner's API on 5001 (round
+  11) and the practice API on 5002 (round 13) do not send them until the reviewer upgrades them, and
+  until then the new tab answers with its error on 5173 and 5174. Nothing else changes: the case's own
+  page gets no delete button (the owner's rule of one deletions page), and the other six tabs stay as
+  they are.
