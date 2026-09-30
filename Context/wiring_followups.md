@@ -952,8 +952,23 @@ Insurance cases on real data.
 > Signed in on 5174 as Dita, 7 of 7: the five insurers, offered by the list's Handled by; the usual
 > 770 HDV case showing Meridian Insurance and Lolkastan, and Edit case opening on it with Lolkastan
 > chosen (it blanked the app before the upgrade); the Insurers page with the five and no email or
-> phone yet; no page error; no request to 5001, 5173, 5003 or 5176. **F18-4 below: AUTHORISED by the
-> owner on 2026-09-30** ("yes, prepare the look-alike fix prompt"); the owner sends it to the agent.
+> phone yet; no page error; no request to 5001, 5173, 5003 or 5176. **F18-4 below: IMPLEMENTED
+> 2026-09-30, verified the same day** (`986a494` Wiring 47 and `0c2b9f2` Wiring 48, pushed, then
+> fast-forwarded into `main`; report §10), authorised by the owner that morning ("yes, prepare the
+> look-alike fix prompt"), who sent the prompt to the agent themselves. On the pushed state the
+> reviewer ran typecheck (clean) and 710 tests in 63 files (green), and read the change: one
+> condition in `looksAlike`'s word rule, and `COMMON_WORDS` compared through `insurerKey`. In a copy
+> outside the worktree the reviewer planted the breakage F18-4 asks for, the word rule no longer
+> skipping the common words (10 tests failed in 2 files, as the report says), and one of the
+> reviewer's own, only "insurance" skipped (2 failed); the suite was green again after each. Signed
+> in on 5174 as Dita, with every request to 5002 other than a read blocked, 15 of 15: on the
+> Insurers page, Add insurer with "Newco Insurance" showing no look-alike (Meridian Insurance and
+> Northgate Insurance before the fix), "BM" and "Baltic Mutual Insurance" showing Baltic Mutual
+> alone, "Northgate Insurance Group" showing Northgate Insurance; Edit insurer on Meridian
+> Insurance showing none, and renamed "Meridian Northgate" showing Northgate Insurance; in Edit
+> case on the usual 770 HDV case, the picker's Add an insurer with "Newco Insurance" showing none,
+> and with "Northgate Insurance Group" showing Northgate Insurance with Use this one; every window
+> cancelled, the five insurers unchanged, no page error, no request to 5001, 5173, 5003 or 5176.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
@@ -1112,7 +1127,7 @@ reviewer then checks it signed in.
   realistic names: "Newco Insurance" 7 look-alikes today, none with it; "Baltic Mutual Insurance" 8
   today, 2 with it (Baltic Mutual and BTA Baltic Insurance Company); "Meridian Insurance AS" 7, then
   1; "Pilot Insurance Group" 7, then 1; "BM", "Baltic" and "ERGO" unchanged. **Decided by the owner
-  (2026-09-30): built.** How: in `src/format/insurers.ts`, `looksAlike`'s word rule skips a word of
+  (2026-09-30): built; implemented and verified the same day (the status above).** How: in `src/format/insurers.ts`, `looksAlike`'s word rule skips a word of
   the name that is one of those common words, compared as `insurerKey` compares them (letter case and
   accents ignored, so "Apdrošināšana" is "apdrosinasana"); the rule that the name holds what is typed,
   and the initials, do not change. The Add insurer window of a case's picker and the Add and Edit
