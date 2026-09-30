@@ -1162,3 +1162,21 @@ actual end. On the practice copy: on 212 KBH's rental, authorise the driver from
 with the actual start on 19 August, then End assignment with Closed at 22 August. Whether a planned
 rental that was never started should show on a case, or whether a rental whose dates have passed
 should say so, is the owner's to raise; nothing is built for it now.
+
+## 19. Follow-up 19 — the owner's look at Insurance cases on the practice copy: the tablet and the phone
+
+> **Status: COLLECTING** (opened 2026-09-30). The owner looks at Insurance cases on the practice copy
+> (5174 over round 13 on 5002, signed in as Dita) at the sizes of the Tasks review (§14): the iPad Pro
+> 11 upright (834 px, the tablet band 768–1023), the iPad Pro 11 sideways (1194 px, the desktop) and
+> the iPhone 16 Pro (402 px, the phone). What to look at: the cases list, its three tabs Open, Waiting
+> for us and Closed, its filters with Handled by, and its search; a case page, its band, timeline,
+> photos, notes and Insurance panel; Register case and Edit case, with the insurer picker and Add an
+> insurer; Add event, a note, a photo and the photo view; the Insurers page, its Show, Add insurer,
+> Edit and Put out of use; Casco case for this accident. The owner's findings are written here as F19
+> items. The follow-up is then built as one batch together with the app's half of the backend's
+> backlog item 32, the insurers on the Delete records page (decided by the owner on 2026-09-30: an
+> insurer that cases still name is blocked, the page listing those cases), after the backend's round
+> for item 32, so that the owner's real app is upgraded once with everything.
+
+Carried from §18, observed during its review: at 1024 px the cases list scrolls sideways by 8 px in a
+browser that draws classic scroll bars, and the list's toolbar takes a second row.
