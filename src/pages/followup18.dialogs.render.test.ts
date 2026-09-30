@@ -329,7 +329,8 @@ describe('the Add insurer and Edit insurer windows of the Insurers page (F18-2c)
     expect(around(markup, '<span>Phone</span>', 'label')).toContain('maxLength="30"');
     const alike = around(markup, 'Already on the list, and looks alike', 'div');
     expect(alike).toContain('Meridian Insurance');
-    expect(alike).toContain('Northgate Insurance');
+    // "Insurance" is a common word (F18-4): Northgate Insurance does not look alike.
+    expect(alike).not.toContain('Northgate Insurance');
     expect(alike).not.toContain('Use this one');
     expect(markup).toContain('The insurer is on the list for everyone who works with cases.');
     expect(hook.ops).toEqual(['insurer-create']);
@@ -353,12 +354,15 @@ describe('the Add insurer and Edit insurer windows of the Insurers page (F18-2c)
     expect(around(markup, '<span>Name</span>', 'label')).toContain('value="Meridian Insurance"');
     expect(around(markup, '<span>Email</span>', 'label')).toContain('value="claims@meridian-insurance.example"');
     expect(around(markup, '<span>Phone</span>', 'label')).toContain('value="+372 600 2200"');
-    const alike = around(markup, 'Already on the list, and looks alike', 'div');
-    expect(alike).not.toContain('Meridian Insurance');
-    expect(alike).toContain('Northgate Insurance');
+    // Its own name brings no other insurer since F18-4: "Insurance" is a common word.
+    expect(markup).not.toContain('Already on the list, and looks alike');
     expect(markup).toContain('A new name shows at once on every case that names this insurer.');
     expect(markup).toMatch(/data-tone="primary"[^>]*>Save changes<\/button>/);
     expect(hook.ops).toEqual(['insurer-edit']);
+    const renamed = render(h(InsurerForm, { insurer: MERIDIAN, insurers: insurersAll, onClose: () => {}, initial: { name: 'Meridian Northgate' } }));
+    const alike = around(renamed, 'Already on the list, and looks alike', 'div');
+    expect(alike).not.toContain('Meridian Insurance');
+    expect(alike).toContain('Northgate Insurance');
   });
 
   test('refusals: the same name under Name, the three the validators give under theirs', () => {
@@ -454,5 +458,33 @@ describe('the insurers’ refusals land where they belong (F18-2a)', () => {
     for (const code of CARRIED_BY_ERRORS_CODES) {
       for (const op of ['case-register', 'case-edit', undefined]) expect(codeToField(code, op)).toBeUndefined();
     }
+  });
+});
+
+describe('the common words of insurers’ names in the three windows (F18-4)', () => {
+  const NONE = 'Already on the list, and looks alike';
+
+  test('with the seed’s list, "Newco Insurance" shows no look-alike in the Add insurer window of a case’s picker', () => {
+    const markup = render(register({ initialAdding: { key: 'otherInsurerId', typed: 'Newco Insurance' } }));
+    const window = markup.slice(markup.indexOf('aria-label="Add insurer"'));
+    expect(around(window, '<span>Name</span>', 'label')).toContain('value="Newco Insurance"');
+    expect(markup).not.toContain(NONE);
+    // A word that tells insurers apart still counts beside it.
+    const harbour = render(register({ initialAdding: { key: 'otherInsurerId', typed: 'Harbour Insurance' } }));
+    const alike = around(harbour, NONE, 'div');
+    expect(alike).toContain('Old Harbour Insurance');
+    expect(alike).not.toContain('Meridian Insurance');
+    expect(alike).not.toContain('Northgate Insurance');
+  });
+
+  test('the Insurers page’s Add insurer and Edit insurer windows the same', () => {
+    const add = render(h(InsurerForm, { insurers: insurersAll, onClose: () => {}, initial: { name: 'Newco Insurance' } }));
+    expect(around(add, '<span>Name</span>', 'label')).toContain('value="Newco Insurance"');
+    expect(add).not.toContain(NONE);
+    const edit = render(h(InsurerForm, { insurer: MERIDIAN, insurers: insurersAll, onClose: () => {}, initial: { name: 'Newco Insurance' } }));
+    expect(edit).toContain('aria-label="Edit insurer"');
+    expect(edit).not.toContain(NONE);
+    const group = render(h(InsurerForm, { insurers: insurersAll, onClose: () => {}, initial: { name: 'NEWCO INSURANCE GROUP' } }));
+    expect(group).not.toContain(NONE);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { holdsFind, insurerCount, insurerKey, lookAlikes, looksAlike, mailHref, telHref } from './insurers';
+import { COMMON_WORDS, holdsFind, insurerCount, insurerKey, lookAlikes, looksAlike, mailHref, telHref } from './insurers';
 
 /**
  * Follow-up 18, F18-2c and F18-2d: the two ways the app offers the insurers while a name is typed. The
@@ -45,7 +45,8 @@ describe('the insurers that look alike (F18-2c)', () => {
   });
 
   test('what is typed holds a word of four letters or more of its name', () => {
-    expect(alike('Baltic Mutual Insurance AS')).toEqual(['Baltic Mutual', 'Meridian Insurance', 'Northgate Insurance', 'Old Harbour Insurance']);
+    // "Insurance" is a common word (F18-4): it no longer brings every "… Insurance".
+    expect(alike('Baltic Mutual Insurance AS')).toEqual(['Baltic Mutual']);
     expect(alike('Northgate Group')).toEqual(['Northgate Insurance']);
     // "Old" has three letters: typing it inside another name does not bring Old Harbour.
     expect(alike('Bold Riga')).toEqual([]);
@@ -61,7 +62,7 @@ describe('the insurers that look alike (F18-2c)', () => {
   test('from two letters on, and never for a name that matches none of the three', () => {
     expect(alike('B')).toEqual([]);
     expect(alike(' ')).toEqual([]);
-    expect(alike('Pilot Insurance AS').length).toBe(3);
+    expect(alike('Pilot Insurance AS')).toEqual([]);
     expect(alike('Pilot')).toEqual([]);
   });
 
@@ -73,6 +74,62 @@ describe('the insurers that look alike (F18-2c)', () => {
   test('the list’s look-alikes in its order, an edited insurer not its own', () => {
     const list = SEED.map((name, n) => ({ id: `i-${n}`, name }));
     expect(lookAlikes(list, 'Insurance').map((i) => i.name)).toEqual(['Meridian Insurance', 'Northgate Insurance', 'Old Harbour Insurance']);
-    expect(lookAlikes(list, 'Meridian Insurance', 'i-1').map((i) => i.name)).toEqual(['Northgate Insurance', 'Old Harbour Insurance']);
+    expect(lookAlikes(list, 'Meridian Insurance', 'i-1').map((i) => i.name)).toEqual([]);
+    expect(lookAlikes(list, 'Meridian Northgate', 'i-1').map((i) => i.name)).toEqual(['Northgate Insurance']);
+    expect(lookAlikes(list, 'Meridian Northgate').map((i) => i.name)).toEqual(['Meridian Insurance', 'Northgate Insurance']);
+  });
+});
+
+describe('the common words of insurers’ names (F18-4)', () => {
+  /** The reviewer's ten names, as the owner's real list might hold them. */
+  const TEN = [
+    'Baltic Mutual', 'BTA Baltic Insurance Company', 'Meridian Insurance', 'Northgate Insurance', 'Old Harbour Insurance',
+    'Pilot Insurance Group', 'If P&C Insurance AS', 'ERGO Insurance SE', 'Salva Kindlustuse AS', 'LHV Kindlustus',
+  ];
+  const among = (list: readonly string[], typed: string) => list.filter((name) => looksAlike(name, typed));
+
+  test('the reviewer’s names: a common word no longer brings every insurer that holds it', () => {
+    // Before F18-4 the counts were 7, 8, 7, 7, 2 and 7.
+    expect(among(TEN, 'Newco Insurance')).toEqual([]);
+    expect(among(TEN, 'Baltic Mutual Insurance')).toEqual(['Baltic Mutual', 'BTA Baltic Insurance Company']);
+    expect(among(TEN, 'Meridian Insurance AS')).toEqual(['Meridian Insurance']);
+    expect(among(TEN, 'Pilot Insurance Group')).toEqual(['Pilot Insurance Group']);
+    expect(among(TEN, 'Salva Kindlustus')).toEqual(['Salva Kindlustuse AS']);
+    expect(among(TEN, 'Gjensidige Insurance Group')).toEqual([]);
+  });
+
+  test('the other two rules are unchanged: "BM", "Baltic" and "ERGO" show what they did', () => {
+    expect(among(TEN, 'BM')).toEqual(['Baltic Mutual']);
+    expect(among(TEN, 'Baltic')).toEqual(['Baltic Mutual', 'BTA Baltic Insurance Company']);
+    expect(among(TEN, 'ERGO')).toEqual(['ERGO Insurance SE']);
+    // A name that holds what is typed still counts, common word or not; so do the initials.
+    expect(among(TEN, 'insurance').length).toBe(7);
+    expect(among(TEN, 'Kindlustus')).toEqual(['Salva Kindlustuse AS', 'LHV Kindlustus']);
+    expect(among(TEN, 'MI')).toEqual(['Meridian Insurance']);
+    expect(among(TEN, 'LK')).toEqual(['LHV Kindlustus']);
+  });
+
+  test('every common word, with its accents or without, in capitals or not, is skipped', () => {
+    expect(COMMON_WORDS).toHaveLength(20);
+    for (const word of COMMON_WORDS) {
+      const plain = insurerKey(word);
+      for (const [inName, typed] of [[word, plain], [plain, word.toUpperCase()], [word.toUpperCase(), word], [plain, plain.toUpperCase()]]) {
+        expect(looksAlike(`Acme ${inName}`, `Newco ${typed}`), `${inName} typed as ${typed}`).toBe(false);
+      }
+    }
+    expect(insurerKey('Apdrošināšana')).toBe('apdrosinasana');
+    expect(looksAlike('BALTA Apdrošināšanas Akciju Sabiedrība', 'Newco apdrosinasanas')).toBe(false);
+    expect(looksAlike('Trygg Försäkring', 'NEWCO FORSAKRING')).toBe(false);
+    expect(looksAlike('Allianz Versicherung GmbH', 'Newco versicherung gmbh')).toBe(false);
+    // A word of the name that is not common still counts beside a common one.
+    expect(looksAlike('Lietuvos Draudimas', 'LIETUVOS draudimo')).toBe(true);
+    expect(looksAlike('Allianz Versicherung GmbH', 'Allianz Newco')).toBe(true);
+  });
+
+  test('the seed’s list and the practice copy’s: "Newco Insurance" looks like none of them', () => {
+    expect(alike('Newco Insurance')).toEqual([]);
+    const practice = ['Baltic Mutual', 'Lolkastan', 'Meridian Insurance', 'Northgate Insurance', 'RW-Rent OÜ'];
+    expect(among(practice, 'Newco Insurance')).toEqual([]);
+    expect(among(practice, 'Northgate Insurance Group')).toEqual(['Northgate Insurance']);
   });
 });

@@ -30,9 +30,23 @@ export const holdsFind = (name: string, find: string) => insurerKey(name).includ
 const wordsOf = (key: string) => key.split(' ').map((word) => word.replace(/[^\p{L}\p{N}]/gu, '')).filter(Boolean);
 
 /**
+ * The words that name the trade or the company's form (F18-4): so many insurers' names hold them that
+ * they tell no insurer apart. The shorter forms (AS, SE, OÜ, SIA, UAB, P&C) are under the word rule's
+ * four letters already.
+ */
+export const COMMON_WORDS = [
+  'insurance', 'insurer', 'assurance', 'reinsurance', 'kindlustus', 'kindlustuse', 'apdrošināšana', 'apdrošināšanas',
+  'draudimas', 'draudimo', 'vakuutus', 'forsikring', 'försäkring', 'versicherung', 'mutual', 'group', 'company',
+  'limited', 'holding', 'GmbH',
+] as const;
+/** The common words as a name's words are compared: "Apdrošināšana" is "apdrosinasana". */
+const COMMON = new Set<string>(COMMON_WORDS.map(insurerKey));
+
+/**
  * Whether an insurer looks like the name being typed (the mock-up the owner approved): its name holds
- * what is typed; what is typed holds a word of four letters or more of its name; or what is typed,
- * without spaces, is its name's initials, so "BM" shows Baltic Mutual. From two letters on.
+ * what is typed; what is typed holds a word of four letters or more of its name, other than a common
+ * word (F18-4), so "Newco Insurance" does not show every "… Insurance"; or what is typed, without
+ * spaces, is its name's initials, so "BM" shows Baltic Mutual. From two letters on.
  */
 export function looksAlike(name: string, typed: string): boolean {
   const t = insurerKey(typed);
@@ -41,7 +55,7 @@ export function looksAlike(name: string, typed: string): boolean {
   const n = insurerKey(name);
   if (n.includes(t)) return true;
   const words = wordsOf(n);
-  if (words.some((word) => word.length >= 4 && t.includes(word))) return true;
+  if (words.some((word) => word.length >= 4 && !COMMON.has(word) && t.includes(word))) return true;
   const initials = words.map((word) => word.charAt(0)).join('');
   return initials.length >= 2 && bare === initials;
 }
