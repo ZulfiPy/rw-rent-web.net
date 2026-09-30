@@ -154,6 +154,11 @@ findings (§11) are the first work after the merge.
    same day: the right to delete is given in a dialog of its own, not in the Grant role dialog, and
    it gets no prototype: it is described in a specification and judged in the app. Order: first the
    page for the administrator (§8 below), checked by the owner, then the giving of the right.
+   **The change history, decided by the owner on 2026-09-30: not before going live** ("I think this
+   solution is okay for now, we can go with it into production"). A record keeps showing who created
+   it and who changed it last, with the times (AUDIT-010), and the security audit keeps its events,
+   corrections and deletions. The full history, every change with its old and new value, stays here
+   for after going live; the backend's backlog item 6 holds the road to production.
 9. ~~An overdue due date is cut at the tablet width~~ — taken into Follow-up 14 (F14-2), 2026-09-25.
 10. **On a phone the top of every page stays pinned** (the reviewer's finding, 2026-09-25, from the
    owner's iPhone 16 Pro screenshots of Tasks): the title, its description and the main button stay at
