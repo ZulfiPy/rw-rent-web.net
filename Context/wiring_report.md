@@ -1,292 +1,227 @@
-# Frontend Wiring: Follow-up 18, the owner's desktop fixes to Insurance cases
+# Frontend Wiring: Follow-up 19, the app's half of round 14
 
-> Follow-up 18 (`Context/wiring_followups.md` §18): the band's labels on one line (F18-1), the insurers
-> as a list the company keeps (F18-2a to F18-2g), and the Waiting for column on one line (F18-3), built
-> on the backend's round 13 (`RWRentApi-wiring/Context/round13_report.md` §5, the contract). Frontend
-> only; the backend was not changed and not rebuilt, only run from its round 13 Release build. On
-> `feature/backend-wiring` in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer
-> fast-forwards `main` after verification. Written 2026-09-29. It replaces Follow-up 17's report, which
-> git history keeps.
+> Follow-up 19 (`Context/wiring_followups.md` §19): Add an insurer always in view at the foot of a
+> case's insurer picker (F19-1), and the insurance cases on the Delete records page (F19-2), built on
+> the backend's round 14 (`RWRentApi-wiring/Context/round14_report.md` §5, the contract). Frontend
+> only; the backend was not changed and not rebuilt, only run from its round 14 Release build. On
+> `feature/backend-wiring` in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the
+> reviewer fast-forwards `main` after verification. Written 2026-09-30. It replaces Follow-up 18's
+> report, which git history keeps.
 >
-> **The owner's side was never touched.** This run never opened 5173 or 5174, never signed in anywhere,
-> never called 5001 or 5002, never read or wrote `rwrent_v1` or `rwrent_check`, and never read Mailpit.
+> **The owner's side was never touched.** This run never opened 5173 or 5174, never signed in
+> anywhere, never called 5001 or 5002, never read or wrote `rwrent_v1` or `rwrent_check`, and never
+> read Mailpit.
 >
 > - Both of the owner's apps hot-reload from this worktree, so they showed this run's code as it was
->   written (§8, items 1 and 2). The owner's API on 5001 still answers round 11, which grants no
->   insurance permission, so the owner's app still offers no Insurance cases, no Insurers button and
->   asks for no insurer. The practice API on 5002 still answers round 12, so the practice app's
->   insurance pages do not work with this code until the reviewer upgrades the practice copy, as the
->   owner knows.
-> - Every live check used this run's own stack: round 13's API on 5003 over `rwrent_r13`, re-created and
->   seeded twice (§4.1), and this run's Vite on 5176 against it.
-> - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, on
->   5176 against 5003.**
->
-> **F18-4, added 2026-09-30, is §10:** the look-alikes no longer count the trade's common words. The
-> totals in §1 to §9 are Follow-up 18's; after F18-4 the suite holds 710 tests (§10.3).
+>   written (§8, item 1).
+> - **Their APIs are older than round 14.** The owner's API on 5001 answers round 11 and the practice
+>   API on 5002 round 13. Until the reviewer upgrades them, the new Insurance cases tab on the Delete
+>   records page shows no count, and its list shows its error, "The records could not be loaded" with
+>   "Not Found" and Retry (§8, item 2). Everything else on that page works as before.
+> - Every live check used this run's own stack: round 14's API on 5003 over `rwrent_r14`, re-created
+>   and seeded twice (§4.1), and this run's Vite on 5176 against it.
+> - **For the owner's reviewer: §5 lists the signed-in steps, on 5176 against 5003.**
 
 ## 1. Summary
 
-- **F18-1, the band's labels.** In a record's band where one fact has a line under its value, every
-  fact now stands from the top of its reserve, so the labels share one line, the values the line under
-  it, and the lines under the values the line below that. Measured at 1512 and 1024 px: on both 770 HDV
-  cases Driver, Handled by and At fault stood 9.1 px lower than Waiting for, Found or Happened and
-  Rental; they now stand level. The task page is fixed the same way. The user and rental-assignment
-  bands, where no fact has such a line, are unchanged, and no band changed its height.
-- **F18-3, Waiting for on one line.** The column is 190 px from 1024 up, as wide as its longest
-  value, and each value is kept on one line there.
-- **F18-2, the insurers.**
-  - A case's form picks each insurer from the list with a picker that has a find box. At the foot of
-    the picker, **Add an insurer** opens the Add insurer window over the form. That window shows the
-    insurers that look alike, and **Use this one** chooses one of them instead.
-  - A case's page shows each insurer's email and phone, and marks one that is out of use.
-  - The cases list gains **Handled by** on every view.
-  - The new **Insurers** page opens from a button beside Register case. It has Show, the counts, and
-    the links to the cases each insurer handles. A manager can Add insurer, Edit, and Put out of use
-    or back.
-  - All of it is hidden without `InsuranceCases.Read`.
-  - The API holds every rule. The app decides only which insurers it offers, and the API's refusals
-    land under the field they name.
+- **F19-1, Add an insurer always in view.** The open picker's list still scrolls within 244 px, but
+  Add an insurer now stays at its foot, over an opaque ground, whatever the list's length. Only Not
+  chosen and the insurers scroll above it, and the line the arrows reach always comes into view above
+  the foot, not under it. It is still the list's last option, reached last with the keyboard, and it
+  opens the Add insurer window as before.
+  - Measured with twelve insurers at 1512 px: without the fix, Add an insurer lay 202 px below the
+    list's bottom edge. Now it sits on that edge, and each of the twelve insurers reached with the
+    arrows stood clear above it. The same held at 402 px, where a line is 44 px.
+- **F19-2, insurance cases on the Delete records page.**
+  - **A seventh tab, Insurance cases**, last, with the navigation's shield and its count. Its search
+    reads "Plate, damage, driver, insurer or claim". Out of use lists the closed cases, and its empty
+    list names the open insurance cases under Everything.
+  - **Each case** shows its label linked to the case, with its type and when it happened or was found
+    under it; its status with the cases list's chip; when it was closed, or nothing while it is open;
+    and the Deletion cell. On the phone it is a card titled with the label.
+  - **An open case** is Blocked with "This insurance case is open. Close it first; then it can be
+    deleted", with nothing linked beside it, and its Delete does nothing.
+  - **What a deletion takes**, each only when not zero: "Takes 2 events, 1 note and 2 photos with it"
+    and "Clears the accident link of 1 insurance case".
+  - **The delete window** has its description line, its consequences with the numbers, the audit line
+    and the tick's hint. After the deletion, the confirmation line gives the answer's counts.
+  - **A car's** row, window and confirmation line also say, when not zero, how many cases of other
+    cars lose their accident link.
+  - **The security audit** names the event "Insurance case · Deleted" and its entity Insurance case,
+    and reads the copy as it reads a car's cases: the case's facts, its photos, its events with theirs,
+    its notes, and the cases that lost their link.
 
 | | |
 |---|---|
-| Commits | seven `Wiring 45` commits and this report's `Wiring 46`, on `feature/backend-wiring` (§9) |
-| Tests | 627 → **704**, all green: 77 new; 12 existing tests updated on purpose, with a shared list and the code catalogue, and two fixture files moved to round 13's contract (§2.8) |
+| Commits | four `Wiring 49` commits and this report's `Wiring 50`, on `feature/backend-wiring` (§9) |
+| Tests | 710 → **742**, all green: 32 new; 4 existing tests changed on purpose, and the backend's two catalogues one test file reads (§2.6) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
-| Each commit alone | 0 type errors and the full suite green at each of the seven (§4.5) |
-| Planted breakages | **47 planted, 43 caught** by the suite; the four others are key and focus behaviours only a browser shows, three of them checked in the browser (§4.4) |
-| Joint check | **25/25 twice**, each on a freshly seeded `rwrent_r13` through 5003 (§4.2) |
-| In a browser | the real pages at 1512, 1280, 1024, 834 and 402 px from a stand-in transport; the app on 5176 signed out against 5003 (§4.3) |
+| Each commit alone | 0 type errors and the full suite green at each of the four (§4.5) |
+| Planted breakages | **40 planted, 40 caught** on the final code; the first run caught 39, and the one missed made a test stronger (§4.4) |
+| Joint check | **21/21 twice**, each on a freshly seeded `rwrent_r14` through 5003 (§4.2) |
+| In a browser | the real pages at 1512, 1024, 834 and 402 px from a stand-in transport; the app on 5176 signed out against 5003 (§4.3) |
 
 ## 2. Implemented
 
-### 2.1 F18-1: the band's labels (`src/ui/RecordHeader.tsx`, `RecordHeader.module.css`)
+### 2.1 F19-1: the picker's foot (`src/pages/insurance/InsurerPicker.module.css`)
 
-- `RecordHeader` marks its facts row `data-sub-lines="true"` when one of its facts has a line under its
-  value. The stylesheet then stands every fact of that row from the top of the 54.5 px reserve,
-  `align-self` and `justify-content` both `flex-start`, instead of centring it.
-- The reserve is unchanged, so the band keeps its height. The chip and the buttons stay on the band's
-  centre line.
-- A band with no such line, like the user's and a rental's, carries no mark and is drawn as before.
-- The phone tier stacked its facts from the top already.
-- The four bands built of facts are those of a case, a task, a user and a rental assignment. Only the
-  first two have lines under values.
+- **Add an insurer** (`.add`) is `position: sticky; bottom: 0` inside the scrolling list, with
+  `z-index: 1`, the popover's own ground `var(--surface)`, and a 4 px shadow of that ground over its
+  4 px of space above the rule, so no insurer shows through as it scrolls under.
+- **The list** (`.options`) keeps its 244 px and gains `scroll-padding-bottom`: 38 px, the foot's
+  34 px line and its 4 px of space; 48 px on the phone, where a line is 44 px. The arrows bring the
+  line they reach into view with `scrollIntoView({ block: 'nearest' })`, which honours that padding,
+  so the line stops above the foot.
+- **Nothing else changed.** The markup is the same: one listbox, Add an insurer its last option, with
+  the same keys and the same window. Every picker test of Follow-up 18 passes unchanged.
 
-### 2.2 F18-3: the Waiting for column (`src/pages/insurance/InsuranceCases.module.css`, `InsuranceCases.tsx`)
+### 2.2 F19-2: the contract (`src/api`)
 
-- **The width.** `.cWaiting` goes from 170 to 190 px. The longest value the column can hold is
-  "Someone else · 59 minutes", which measures 161 px in Geist 13 px; with the cell's 14 px on each
-  side, the column needs 189 px.
-- **One line.** Each value carries `waitingText`, which keeps it on one line from 1024 up, so a
-  value can never break even in another font.
-- **The folded band.** At 768 to 1023 px the column keeps its 121 px, and a value may wrap there as
-  before.
-- **The table's floor stays 920 px.** The three text columns give up the 20 px between them.
+- `dto.ts`:
+  - `DeletableKind` is now every `RecordKind`, the insurance case included. Every table keyed by it
+    therefore had to gain a seventh entry, and the typecheck listed each one.
+  - The block reason `InsuranceCaseIsOpen` (9).
+  - `RecordDeletionTakes` gains `insuranceCaseEvents`, `insuranceCaseNotes`, `insuranceCasePhotos`
+    and `accidentLinksCleared`.
+  - The new `InsuranceCaseDeletionCandidateResponse`, with the eleven members round 14 sends.
+  - `RecordDeletionCandidateCountsResponse.insuranceCases`.
+  - `RecordDeletionResponse` gains `deletedInsuranceCaseEventCount`, `deletedInsuranceCaseNoteCount`,
+    `deletedInsuranceCasePhotoCount` and `clearedAccidentLinkCount`.
+  - The new members are optional, as round 12's are: an older API does not send them, and they read
+    as 0, or as no count on the tab.
+- `recordDeletions.ts`: the candidate list of kind 7 is `candidates/insurance-cases`.
 
-### 2.3 F18-2a: the contract (`src/api`, `src/format`)
+### 2.3 F19-2: the tab and its rows (`src/pages/admin/DeleteRecords.tsx`, `DeleteRecords.module.css`)
 
-- **`dto.ts`.**
-  - New types:
-    - `InsuranceCaseInsurerResponse`: `id`, `name`, `email`, `phoneNumber` and `isActive`.
-    - `InsurerListItemResponse`, with `openCasesHandled`, `casesNamed` and `concurrencyToken`.
-    - `InsurerResponse`, which adds who added the insurer and who last changed it.
-    - `InsurerQuery`, `CreateInsurerRequest` and `UpdateInsurerRequest`.
-  - A case and a list item now carry `ourInsurer` and `otherInsurer` as insurer objects or null.
-  - A registration's form and an edit's JSON send `ourInsurerId` and `otherInsurerId`.
-  - `InsuranceCaseQuery` gains `HandledByInsurerId`.
-- **`src/api/insurers.ts`** holds the six operations of `/api/insurers`.
-- **Removed.** `listInsurers` of `GET /api/insurance-cases/insurers`, its query key, the `rw-insurers`
-  datalist and the typed insurer fields are gone.
-- **`codes.ts`: where each refusal lands.**
-  - `insurers.name_conflict` stands under Name when a person adds or edits an insurer. It is a 409
-    that carries its field.
-  - `insurers.concurrency_conflict` is the stale banner with Refresh, matched by its suffix like the
-    other concurrency codes.
-  - `insurers.not_found` is a refused change in the API's words, through the windows' own
-    `insurerRefusal`.
-  - `insurance_cases.insurer_not_found` and `insurance_cases.insurer_out_of_use` always arrive with
-    their field under `errors`: `OurInsurerId`, `OtherInsurerId` or `HandledByInsurerId`. The shared
-    mapping puts each one under that field. One code names either insurer, so the table gives it no
-    single input. The table lists both codes, so the catalogue test checks them too.
-- **What each write refreshes.**
-  - Adding an insurer refreshes the insurers.
-  - Editing one, or putting it out of use or back, refreshes the insurers and every case read, so a
-    rename shows on the cases at once.
-  - Beyond the specification, every case write, and a vehicle's deletion, which takes its cases,
-    also refreshes the insurers, because the list counts the cases (§6, item 11).
-- **`src/format/insurers.ts`.**
-  - The words: Out of use, Choose an insurer, Not chosen, No insurers yet, the look-alike heading
-    and the page's description.
-  - The count: "1 insurer", "4 insurers".
-  - The mail and phone links.
-  - The two rules of a typed name, described in §2.4.
+- **The tab**: slug `insurance-cases`, label Insurance cases, icon `shield` (the navigation's), count
+  `insuranceCases`, search placeholder "Plate, damage, driver, insurer or claim". Show, Clear filters,
+  the pages and Refresh work as on the other tabs.
+- **The table**, with the vehicles' floor of 1020 px:
 
-### 2.4 F18-2c and F18-2d: the picker and the Add insurer window (`InsurerPicker.tsx`, `InsurerDialogs.tsx`, `CaseDialogs.tsx`)
+  | Column | From 1024 | Folded band (768–1023) | What it holds |
+  |---|---|---|---|
+  | Case | the rest | the rest | the label, linked to `/insurance-cases/:id`; under it the type and "Happened" or "Found" with the day, the cases list's own line |
+  | Status | 132 px | 120 px | the cases list's chip |
+  | Closed | 118 px | 84 px | the day it was closed, in the page's dim mono; empty while open |
+  | Deletion | 300 px | 213 px | the verdict, the block sentence, what a deletion takes |
 
-- **The picker**, for Our insurer and for The other party's insurer, in Register case, Edit case and
-  Casco case for this accident.
-  - Closed, it shows the chosen insurer, marked Out of use when it is, or "Choose an insurer".
-  - Open, it shows, in this order:
-    - a find box that takes the focus;
-    - Not chosen;
-    - the insurers in use whose names hold what is typed, in the list's order, the chosen one with a
-      check;
-    - on an edit, the case's own insurer of that side, even out of use, marked so;
-    - at the foot, Add an insurer.
-  - When the list is empty, "No insurers yet" stands above Add an insurer. When something is typed
-    and no insurer holds it, a line says so in the same place.
-  - The arrows start from the chosen line and move through the lines, Add an insurer included. Enter
-    chooses. Esc closes the list and gives the focus back to the control, without closing the
-    dialog. A press outside closes it, and so does Tab.
-  - What each key does is its own rule, `findKey`.
-- **Handled by** keeps its options from the two chosen insurers, for example "Our insurer · Baltic
-  Mutual". Clearing the side it names resets it; that is the rule `withInsurer`.
-- **Casco case for this accident** copies the usual case's own insurer, with Handled by Ours, only
-  while that insurer is in use.
-- **Add an insurer** opens the Add insurer window over the case's form.
-  - The window opens with what was typed in the find box, has its own Refresh, and never re-seeds
-    the case.
-  - Each look-alike in use carries Use this one, which chooses it on the case and closes the window.
-    One out of use is marked so, without the button.
-  - An insurer added is chosen on the case at once and is on the list for everyone.
-- **The Add insurer and Edit insurer windows.**
-  - Name is required, at most 100 characters. Email is optional, at most 254, typed as an email.
-    Phone is optional, at most 30.
-  - From two letters on, "Already on the list, and looks alike" lists the insurers that look alike
-    above the buttons. An insurer looks alike when its name holds what is typed, when what is typed
-    holds a word of four letters or more of its name (since F18-4, not a common word of the trade;
-    §10), or when what is typed, without spaces, is its name's initials. Letter case, accents and runs of spaces are ignored. An edited insurer is not a
-    look-alike of itself.
-  - Edit sends the insurer's token.
-- **Dialogs over dialogs** (`src/ui/Dialog.tsx`). When more than one modal is open, Esc now closes
-  only the one on top. So Esc in the Add insurer window leaves the case's form open. With a single
-  dialog, nothing changes. Besides the shared `Dialog`, only the photo view carries
-  `role="dialog" aria-modal="true"`, and it is always drawn after the case's dialogs.
+  Status is as wide as the cases list's at every band, not 71% of it, so its widest chip, Under
+  review, stays whole (§6, item 1).
+- **The phone card**: titled with the label, not in the plate's mono, and opening the case. Its line
+  under the title gives the type and time. Its verdict sits top right. Its facts are Status, and
+  Closed once closed. Then the block sentence or what goes, and Delete across the card. The title
+  takes the lines it needs, as the cases list's card does; the other six kinds keep their one cut
+  line (§6, item 3).
+- **An open case** is Blocked with reason 9. The API names no record for it, so nothing is linked
+  beside the sentence; the row itself opens the case.
+- **The empty list under Out of use** reads "11 open insurance cases are under Everything.", with
+  Show everything.
+- Recently deleted already named kind 7 "Insurance case".
 
-### 2.5 F18-2e: a case's page (`CaseRecord.tsx`)
+### 2.4 F19-2: the words (`src/format/recordDeletion.ts`, `src/pages/admin/DeleteRecordDialog.tsx`)
 
-- **The Insurance panel.** Each insurer shows its name, marked Out of use when it is, and under the
-  name its email as a mail link and its phone as a call link, when it has them.
-- **The links are quiet.** They use the ink of other secondary text and take the accent only under
-  the pointer (§6, item 12).
-- **Handled by**, in the band and in the list's column, shows the name as before.
+- **The block sentence**, reason 9: "This insurance case is open. Close it first; then it can be
+  deleted", the API's own sentence without its full stop, as the page writes every block. The
+  disabled Delete's title carries it with the full stop.
+- **What goes**, in the page's words, each only when not zero:
+  - a case: "Takes 2 events, 1 note and 2 photos with it. Clears the accident link of 1 insurance
+    case";
+  - a car: "Takes 1 insurance case with it. Clears the accident link of 1 insurance case".
+- **The delete window of a case:**
+  - its line: "770 HDV · Practice: front left door scratched · Usual · Closed 30 Sep";
+  - its consequences:
+    1. The insurance case is removed permanently.
+    2. Its 2 events, 1 note and 2 photos are removed with it. Or, when there are none: Nothing else
+       goes with it.
+    3. Its car, driver, insurers and every other case stay as they are.
+    4. The 1 insurance case that names it as the same accident loses that link and stays. For many:
+       "The 2 insurance cases that name it as the same accident lose that link and stay." Left out
+       when none does.
+    5. The audit line every kind ends with.
+  - the tick's hint: "This insurance case and the 2 events, 1 note and 2 photos cannot be restored
+    from the app."
+- **A car's window** gains, after its cases: "The accident link of 1 insurance case of another car
+  is cleared; that case stays." For many: "The accident links of 3 insurance cases of other cars are
+  cleared; those cases stay."
+- **The confirmation line**, from the answer's counts: "Insurance case deleted: 770 HDV · Practice:
+  front left door scratched. 2 events, 1 note and 2 photos went with it. The accident link of 1
+  insurance case was cleared. Written to the security audit." A car's line gains the same last
+  sentence. An answer without round 14's members reads exactly as before.
+- **What a case's deletion refreshes**: the page, the audit, the Overview, the cases, and the
+  insurers, whose list counts the cases each insurer handles and names.
 
-### 2.6 F18-2f: the cases list's Handled by (`InsuranceCases.tsx`, `caseAddress.ts`)
+### 2.5 F19-2: the security audit (`src/format/labels.ts`, `auditPayload.ts`, `src/pages/audit/AuditEntry.tsx`)
 
-- **Where it stands.** Handled by is a filter on every view. It stands beside Waiting for on Open,
-  and after Type on Closed.
-- **Its options.** Anyone comes first, then the insurers in use, then those out of use marked "·
-  Out of use", each group in the list's order.
-- **How it is sent.** It sends `HandledByInsurerId`. It lives in the address as `handled`, and is
-  kept and cleared like the other filters.
-- **An insurer the list does not hold.**
-  - The filter shows it as "Not on the list".
-  - The API's refusal stands under the filter: "This insurer does not exist."
-  - The list shows the filters' own empty state with Clear filters.
+- **The names.** The event catalogue gains `InsuranceCase.Deleted`, read as "Insurance case ·
+  Deleted" and offered in the Event type filter. The entity `InsuranceCase` is named Insurance case.
+  Without it, the entry's Entity and the list's chip would have shown the raw `InsuranceCase`.
+- **The copy.** A case deleted on its own holds the case itself at the top of the entry's copy, with
+  its `Photos`, `Events` and `Notes`, and `ClearedAccidentLinks`. The reading of one case moved into
+  its own `caseOf`, which reads a car's cases as before and now also this copy. Any other list at the
+  top still falls back to the raw payload, as does a car's copy with a case's lists at its top.
+- **The entry** shows, after Deleted record, three panels: Deleted photos (the photos the case was
+  registered with), Deleted events (each event with its photos under it) and Deleted notes. Then
+  Cleared accident links, which says "These cases named the deleted case as the same accident; the
+  links were cleared and the cases stay." A car's entry keeps its own words, "These cases of other
+  cars named a deleted case as their accident's".
 
-### 2.7 F18-2b and F18-2g: the Insurers page (`Insurers.tsx`)
+### 2.6 Tests
 
-- **How it opens.** The **Insurers** button stands beside Register case for everyone who reads
-  cases. It opens `/insurance-cases/insurers`, a route of its own that needs `InsuranceCases.Read`
-  and is not in the navigation.
-- **Its header.** The breadcrumb reads Insurance cases, Insurers. The description reads "The insurers
-  the company works with. A case picks its insurers from this list."
-- **Show.** It offers In use, the default, Out of use and All. The choice lives in the address.
-- **The table.**
-  - Name, with Out of use marked.
-  - Email, as a mail link.
-  - Phone, as a call link.
-  - Open cases it handles, a link that opens the Open view filtered to the insurer, or a plain 0.
-  - Cases, how many cases name the insurer.
-- **Actions.** With `InsuranceCases.Manage`: Add insurer in the header, and on each row Edit and
-  Put out of use or Put back in use. The last two go through a confirmation window drawn as a
-  vehicle's Deactivate and Activate are. Without the permission, no action appears anywhere.
-- **The empty states.**
-  - "No insurers yet" when the company has none, with Add insurer for a manager.
-  - "No insurers in use" when all are out of use.
-  - "No insurers out of use".
-- **Widths.**
-  - Below 1280 px, Email and Phone fold under the name, as Vehicles folds its columns.
-  - Below 768 px each insurer is the other lists' card.
-- **F18-2g.** Without `InsuranceCases.Read`, there is no Insurers button, the page reads "Not
-  available to you", and no insurer query is enabled.
+**32 new tests, 4 existing ones changed on purpose**, and the backend's two catalogues that
+`format/labels.test.ts` reads (710 → 742, 63 → 67 files). None was deleted, skipped or weakened.
 
-### 2.8 Tests
-
-**77 new tests, 12 existing ones updated on purpose**, with the list the Follow-up 17 dialog tests
-share and the code catalogue one test reads (627 → 704, 57 → 63 files). None was deleted, skipped or
-weakened.
-
-**The fixtures moved to round 13's contract.** `followup17.support.ts` and `followup17.practice.ts`
-held each insurer as a name, as round 12 answered.
-
-- **What changed.** The run captured round 13's answers for the same seven cases and three views
-  from a freshly seeded `rwrent_r13`. Each name in the two files became the insurer object round 13
-  gives for it: 31 values in the first file, 5 in the second.
-- **What stayed the same.** Round 13's answers matched Follow-up 17's in every other member, with 0
-  differences, apart from the times and tokens, which the seed sets afresh.
-- **What went.** The `insurers` fixture of the removed endpoint is gone.
-- **What did not change.** The deletions' audit copies stay as round 12 wrote them.
-
-Each file's header says this.
-
-**The tests updated on purpose:**
+**The tests changed on purpose:**
 
 | Test | Before | Now |
 |---|---|---|
-| `pages/followup17.stylesheet.test.ts` · "from 1024 up: … Waiting for 170 …" (renamed "… Waiting for 190 (Follow-up 18) …") | `.cWaiting` 170px | 190px |
-| `pages/followup17.dialogs.render.test.ts` · the dialogs' lists | the insurer names under `qk.insuranceCases.insurers` | round 13's list under `qk.insurers.list({})` |
-| same file · "a new case: the sections, …" | Our insurer a text input with `list="rw-insurers"` and `maxLength="100"`, the datalist of the three names | each picker shows "Choose an insurer"; no datalist |
-| same file · "the ticks turn the labels … Handled by's options" | the form seeded with `ourInsurer: 'Baltic Mutual'`, `otherInsurer: 'Meridian Insurance'` | seeded with their ids; the same options expected |
-| same file · "what Register case sends …" | `ourInsurer: 'Baltic Mutual'`, `otherInsurer: null` | `ourInsurerId: <Baltic Mutual's id>`, `otherInsurerId: null` |
-| same file · "Edit case: the case as its page read it …" | Our insurer's input holds `value="Baltic Mutual"` | the pickers show Baltic Mutual and Meridian Insurance |
-| same file · "what Edit case sends …" | the form's insurer names | their ids, and both ids sent |
-| same file · "Casco case for this accident …" | `value="Baltic Mutual"`, the other party's `value=""` | the pickers show Baltic Mutual and "Choose an insurer" |
-| `pages/followup17.render.test.ts` · "the photos by their entry, … the insurance …" | the insurer's name straight in the fact's value | the name leading the insurer's block (`_insurer_`), email and phone under it |
-| same file · "every write refreshes …" (renamed "… the deletions page and the insurers follow") | `qk.insuranceCases.insurers` among the refreshed keys | `qk.insurers.list({})` |
-| same file · "the Viewer reads the list with no Register case …" | the header has no action at all | the header holds Insurers and no Register case |
-| `format/insurance.test.ts` · "who handles it: …" | the insurers as names | the insurers as round 13's objects; the same words expected |
-| `api/codes.test.ts` · the backend's catalogue | round 12's codes | and round 13's five |
-| `api/insuranceCases.test.ts` · "each field under its member name …" | the form field `OurInsurer` | `OurInsurerId`, and none sent for the other side |
+| `api/recordDeletions.test.ts` · "each kind reads its own candidate list" | six paths | seven, `insurance-cases` last |
+| same file · "a cascade makes stale what went with the record…" | the page's three keys checked for the six kinds but an insurance case | for all seven kinds |
+| `format/recordDeletion.test.ts` · "every kind ends with the audit line…" | the six kinds but an insurance case | all seven |
+| `pages/followup17.deletions.render.test.ts` · "its refused deletion is worded by the API itself; a case is never offered as a kind to delete", renamed "…; since round 14 a case is a kind of its own, the seventh tab (Follow-up 19)" | six tabs, none of them Insurance cases | seven, the last Insurance cases with the shield and no count, since round 12's counts hold none; round 12's refusal of the kind is still read as that API gave it |
+| `format/labels.test.ts` · the backend's catalogues | its event types and entity types as before | with `InsuranceCase.Deleted` and `InsuranceCase`, which round 14 writes |
 
 **The new tests:**
 
 | File | Tests | What they hold |
 |---|---|---|
-| `pages/followup18.layout.test.ts` | 10 | F18-1: the band's mark with and without a line under a value, the stylesheet's rule, both 770 HDV cases and 552 KLM, a case still loading, two tasks, the user and rental bands unmarked; F18-3: 190 px with one line from 1024 up, the folded band as it was, every value carrying the class; the browser's two findings (§4.3) |
-| `api/insurers.test.ts` | 2 | the six operations as the transport receives them |
-| `format/insurers.test.ts` | 9 | the name's key, the count and links, the find box, the three look-alike rules, two letters, accents and case, an edited insurer |
-| `pages/followup18.dialogs.render.test.ts` | 32 | the picker's own rules and keys; Register case's pickers closed, open, filtered, empty, chosen, what it sends and its refusals under the right picker; Edit case keeping an insurer out of use and refused changing to one; Casco only in use; Add an insurer over the form with Use this one; Add and Edit insurer, what they send, their refusals, stale and gone; Put out of use and back, what each sends; where each insurer refusal lands |
-| `pages/followup18.render.test.ts` | 21 | a case's insurers with email and phone, out of use marked, for a manager and a Viewer; the list's Handled by on each view, set, out of use, refused, loading; the Insurers page as a manager, a Viewer, empty, none in use, none out of use; the Insurers button and the permission; what each write refreshes |
-| `pages/followup18.phone.render.test.ts` | 2 | the Insurers page's cards, a manager's and a Viewer's |
-| `app/routes.test.ts` | +1 | `/insurance-cases/insurers` is its own route by any spelling, needs `InsuranceCases.Read`, is not in the navigation |
+| `pages/followup19.picker.render.test.ts` | 5 | F19-1: the foot's rules; the scroll padding equal to the foot's height on the desktop and the phone; twelve insurers with Add an insurer the last option; the keys reaching it last; a short list and a reader who may not add, as before |
+| `pages/followup19.deletions.render.test.ts` | 17 | the tab, its count, search and columns; Out of use; the empty list; the search; an older API without count and with its error; a closed row, a found one and an open one; the Blocked sentence with nothing linked and its disabled Delete; the takes; the refusals; the Status column's widths; what a deletion refreshes; the window's line, consequences and hint, singular and plural; the confirmation line; a car's row, window and line |
+| `pages/followup19.phone.render.test.ts` | 5 | the cards: each titled with its label and opening its case, the title wrapping; a closed card and an open one; only a case's title wraps; Recently deleted's card |
+| `pages/followup19.audit.render.test.ts` | 5 | Recently deleted names the kind; the event's and entity's names and the filter; the entry's panels, each read on its own; the copy's shape and its fallbacks; a car's entry keeps its words |
 
-The new fixtures are round 13's answers as it gave them on 5003, typed as the DTOs.
+**The fixtures**, `pages/followup19.support.ts`, are round 14's answers from the joint check's first
+run (§4.2), typed as the DTOs, so a member the API sends and the types do not declare fails the
+typecheck:
 
-- **`followup18.support.ts`** holds the list at each Show, one insurer, each view filtered to Baltic
-  Mutual, and the refusals.
-- **`followup18.practice.ts`** holds the joint check's first run: Pilot Insurance AS added, renamed,
-  put out of use, on a case of 770 HDV.
+- the case list at Out of use, at Everything, and searched for "baltic";
+- the counts at both;
+- the vehicle list with the practice car;
+- the refusal of an open case;
+- the practice case's answer, the same deletion refused again, and its entry;
+- the practice car's answer and its entry;
+- Recently deleted.
 
 ## 3. Not implemented or partial
 
-Everything §18 asks for is built, F18-3 included. This run could not type the seed password into the
-app, so the steps that need it are in §5 for the reviewer.
+Everything §19 asks for is built. This run could not type the seed password into the app, so the
+steps that need it are in §5 for the reviewer.
 
 ## 4. Verification
 
 ### 4.1 The stack
 
-- **The API.** At the start, round 13's API ran on 5003, pid 86580, over `rwrent_r13` as round 13's
-  acceptance left it.
-  - The run used round 13's own scripts, copied into its scratchpad. They refuse any connection
-    string that does not name `rwrent_r13`, and stop only a process listening on 5003 that runs from
-    the backend worktree's `bin/Release`.
-  - With them, `rwrent_r13` was dropped, recreated, migrated with eleven migrations,
-    `V11Insurers` last, and seeded with four insurers and seven cases. The API was started on 5003.
-  - This was done twice: before the fixtures were captured, and again before the joint check's
-    second run.
-  - The backend worktree was not changed and not rebuilt. Its `bin/Release` is round 13's build.
+- **The API.** At the start, round 14's API ran on 5003, pid 82368, over `rwrent_r14`, as round 14's
+  acceptance and the reviewer's 28 checks left it.
+  - This run used round 14's own scripts, copied into its scratchpad. They refuse any connection
+    string that does not name `rwrent_r14`, or that mentions `rwrent_v1`, `rwrent_check` or
+    `rwrent_r13`. They stop only a process listening on 5003 that runs from the backend worktree's
+    `bin/Release` with `5003` on its command line.
+  - With them, `rwrent_r14` was dropped, recreated, migrated as it is (`V11Insurers` last) and
+    seeded: seven cases, two of them Closed, and four insurers. The API was started on 5003, pid 7134.
+  - This was done twice: before the fixtures were captured, and again before the joint check's second
+    run, pid 28391.
+  - The backend worktree was not changed and not rebuilt. It is clean at `6239393`, and its
+    `bin/Release` is round 14's build.
 - **The seed password** was passed through each command's environment only. It is in no file,
   script, log or report.
 - **The app.** This run's Vite ran on 5176 from this worktree, with
@@ -295,169 +230,145 @@ app, so the steps that need it are in §5 for the reviewer.
 - **The harness.** The real pages were served on 5175 from a folder outside both repositories,
   answered by a stand-in transport that sends nothing anywhere (§4.3).
 
-### 4.2 Through the API, 25/25 twice
+### 4.2 Through the API, 21/21 twice
 
-A script ran as the seeded people, against 5003 only. It sends exactly what the app sends: Add and
-Edit insurer as JSON with the insurer's token, Put out of use and back with no body, Register case
-as the form the app builds, Edit case as JSON, and the filter as `HandledByInsurerId`.
+A script ran as the seeded people against 5003 only: Dita and Karlis to make the practice records, the
+administrator for the deletions page, Signe for the audit.
 
 | Checks | What was proved |
 |---|---|
-| 1–3 | the list: the seed's four in the order of the names, with Baltic Mutual 3 open handled of 4 named, Meridian 1/2, Northgate 0/1, Old Harbour 0/0 out of use; the Viewer reads it, may not add one (403) |
-| 4–6 | Dita adds Pilot Insurance AS with email and phone (201); "  pilot   INSURANCE as " refused (409 `insurers.name_conflict` under Name); the list holds five in order |
-| 7–8 | Register case on 770 HDV naming Baltic Mutual and Pilot Insurance AS by their ids, handled by theirs: both named with email and phone; the list counts it |
-| 9–12 | the rename to Pilot Insurance Group with its token; the old token refused (409 `insurers.concurrency_conflict`); the case reads the new name at once; the list's search finds it by that name |
-| 13–21 | Put out of use (204); the Viewer may not put it back (403); Out of use lists Old Harbour and Pilot; the old case keeps it, marked out of use; a new case naming it refused (400 `insurer_out_of_use` under `OtherInsurerId`); Edit case changing only the damage keeps it (200); changing the other insurer to Old Harbour refused under `OtherInsurerId`; Handled by Pilot on Open finds the case while Pilot is out of use; Put back in use (204) |
-| 22–25 | Handled by Baltic Mutual on Open, Waiting for us and Closed gives each view's cases whose Handled by names it, in the view's order (3 on Open); an unknown insurer refused under `HandledByInsurerId`; putting out of use an unknown insurer 404; the counts at the end |
+| 1–2 | the setup: Dita's practice case on 770 HDV, registered with a photo, given a note and an event with a photo, then Closed, and a casco case of the same car naming it; Karlis's practice car P19 26C with a case, Closed, which a practice case of 444 WKS names as the same accident |
+| 3–4 | Out of use lists the four closed cases, all Ready; Everything lists eleven, the seven open ones Blocked with reason 9, count 1 and no records |
+| 5–7 | the takes: the practice case 2 events, 1 note, 2 photos and 1 link; P19 26C's case 1 link; 204 JLM's open case 2 events, 1 note and 2 photos |
+| 8–9 | the search "baltic" finds the four cases that name Baltic Mutual; the counts, 4 and 11, agree with the lists |
+| 10–11 | P19 26C is Ready, takes its case and clears the link of 1 case of another car; 770 HDV clears none, since only its own casco case names its practice case |
+| 12 | 204 JLM's open case is refused 409 `record_deletions.blocked` with the sentence |
+| 13–14 | the practice case deleted: 200 with 2 events, 1 note, 2 photos and 1 link, no case of a car; the same deletion again 404 `record_deletions.not_found` |
+| 15–17 | Signe reads the `InsuranceCase.Deleted` entry, written against the case; its copy holds 1 registration photo, 2 events with 1 photo between them, 1 note, the casco case's link and no picture; the casco case stays and names no accident |
+| 18–19 | P19 26C deleted: 1 case with it and 1 link cleared; its entry names 444 WKS's practice case |
+| 20–21 | Recently deleted lists the car, then the case of kind 7; the counts at the end, 9 cases and 10 vehicles |
 
-The first run's answers are the repository's `followup18.practice.ts`. The second run on a fresh seed
-passed the same 25 checks; its records are what 5003 holds now (§4.7).
+The first run's answers are the repository's `followup19.support.ts`. The second run, on a fresh seed,
+passed the same 21 checks, and its answers had the same members as the first run's, compared member by
+member. Then the script made the setup once more, for §5. Neither API log holds a failure or a 500;
+each holds the two query notes of older code that round 14's report names.
 
 ### 4.3 In a browser
 
 **The real pages** came from the app's own code in this worktree, served on 5175 by a stand-in
-transport. It answers from the recorded answers of §2.8 and sends no request anywhere. It holds the
-insurers in the page's memory, so Add, Edit and Put out of use could be tried, and a rename or out
-of use shows on the cases; every other write is refused. The built-in browser pane was used, never
-the owner's browser. After each resize the page was reloaded before measuring.
+transport. It answers from the recorded answers of §2.6 and sends no request anywhere. It keeps the
+deletions page's lists in the page's memory, so a deletion can be tried and its row leaves. The
+built-in browser pane was used, never the owner's browser. After each resize the page was reloaded
+before measuring.
 
-- **The band, F18-1.** Top edges in px, before, with the mark taken off, and now:
+- **F19-1, the picker, with twelve insurers**, in Register case, at 1512 px:
+  - The list is 244 px, holding 480 px of lines. Add an insurer sits at 729.8–763.8 px, on the list's
+    bottom edge at 763.8. With its fix taken off in the page, it lay at 965.8 px, 202 px below that
+    edge.
+  - ArrowDown from Not chosen to Add an insurer: each insurer stood clear above the foot, its bottom
+    at 725.8 px, 4 px above the foot's rule. The list scrolled from 32 px to 236 px, and Add an
+    insurer came last. ArrowUp back to Not chosen: each line in view, the list back at 0.
+  - At 402 px: the foot is 44 px and the padding 48 px. All twelve insurers stood clear, and Add an
+    insurer came last.
+- **The tab's table:**
 
-  | Page | Width | Label tops before | Now |
+  | Width | Case, Status, Closed, Deletion, actions | Rows | Sideways |
   |---|---|---|---|
-  | 770 HDV, the found case | 1512 | Waiting for, Found, Rental 183; Driver, Handled by, At fault 192.1 | all 183; values all 199.8; lines under values 220.3 |
-  | 770 HDV, the practice case | 1512 | Driver and At fault 9.1 lower | all 183 |
-  | Prepare 204 JLM, a task | 1512 | About and Progress 9.1 lower than Created by and Due | all 157 |
-  | Order two spare key fobs, a task with no Due line | 1512 | Due, About and Progress 9.1 lower | all 157 |
-  | the same four | 1024 | the same 9.1 px | level: 225.8, 261.8, 199.8, 205.8 |
-  | Toms's user page, a rental | 1512 and 1024 | level, no mark | unchanged, no mark |
+  | 1512 | 529, 132, 118, 300, 123 px | 68–124 px | none |
+  | 1024 | 347, 132, 118, 300, 123 px | 68–124 px | the table scrolls 108 px inside its 912 px frame, exactly as the Vehicles tab does (§8, item 3); the page itself does not |
+  | 834 | 255, 120, 84, 213, 118 px | 80–120 px | none; the widest chip, Under review, is 101 px within its 120 |
+  | 402 | eleven cards, none wider than 358 px | | none |
 
-  Every band kept its height, 84.5 px at 1512. The chip's centre stayed on the band's centre line.
-- **Waiting for, F18-3.** The browser measured the column at both widths:
-  - At 1512 it is 190 px. With "Someone else · 21 hours" and "Someone else · 59 minutes" written
-    into two rows, each stays on one line; the longest is 160 px wide, and the column stays at 190.
-  - At 1024 it is again 190 px. Every value is on one line, the longest possible included.
-- **The picker, in Register case and Edit case**, driven with the keyboard.
-  - Typing "insur", ArrowDown and Enter chose Northgate Insurance, and the focus went back to the
-    picker.
-  - Handled by then offered "Our insurer · Northgate Insurance".
-  - "Lolkastan" showed "No insurer on the list holds “Lolkastan”." above Add an insurer. ArrowDown
-    and Enter opened the Add insurer window over the form, with Lolkastan typed and the focus in
-    Name.
-  - Esc closed only that window, and the focus went back to the picker.
-  - ArrowDown on the closed picker opened it. Esc then closed the list, not the dialog.
-  - Add insurer added Lolkastan and chose it on the case at once.
-  - "Balt" and a click on Add an insurer showed Baltic Mutual with Use this one. Use this one chose
-    it and closed the window.
-  - In Edit case, an insurer out of use showed as chosen, with its mark, in the closed control and in
-    the open list. Old Harbour, also out of use, was not offered.
-- **The Insurers page.**
-  - Add insurer with "BM" showed Baltic Mutual as a look-alike.
-  - " baltic   MUTUAL" was refused under Name in the API's sentence.
-  - Put out of use on Pilot, then All, showed Pilot marked.
-  - Pilot's open-cases link opened the cases list filtered to it, with its one case.
-  - That case's page showed Pilot Insurance Group marked Out of use, with its email and phone.
-- **Widths of the Insurers page.**
-  - 1512: 328, 294, 150, 120, 80 and 240 px, the open cases' heading on two lines, rows 57 px.
-  - 1280: the first width with separate Email and Phone columns. Rows are 62 to 77 px.
-  - 1024: at first, Email was 77 px and rows were 97 to 140 px. **Found and fixed:** Email and Phone
-    now fold under the name below 1280. The name then gets 482 px and rows are 57 to 85 px.
-  - 834: the folded table fits 800 px.
-  - 402: cards, the manager's two actions each on half of a row.
-  - No width scrolls sideways.
-- **The Insurance panel's links.** At first they were in the accent red, and emails read like
-  warnings. **Found and fixed:** they are quiet now, as on the Insurers page.
-- **The light theme**: the Insurers page reads the same.
+- **Found and fixed: the phone card's title was cut to one line.** With an ellipsis, "444 WKS ·
+  Practice: the other car…" hid what was damaged, which is what tells two cases of one car apart. A
+  case's card title now wraps, as the cases list's card does: two lines each at 402 px, none cut.
+- **The delete window** of the practice case read as §2.4 gives it. Practice or test record, the tick
+  and Delete permanently then gave the confirmation line with its counts. The row left the list, the
+  tab's count went from 11 to 10, and Recently deleted listed "Insurance case · 770 HDV · Practice:
+  front left door scratched" first. The line's link opened the entry: Insurance case · Deleted, Entity
+  Insurance case, the Record line, then Deleted record, Deleted photos, Deleted events with Event 1's
+  photo under it, Deleted notes, Cleared accident links, Reason and Raw payload.
+- **P19 26C's window** read its case and "The accident link of 1 insurance case of another car is
+  cleared; that case stays."
+- **The tab strip** scrolls at 834 and 402 px. Opened straight on the seventh tab, the tab stands
+  partly past the strip's right edge (§8, item 4).
 - **The console** showed no error from the app.
 - **The app on 5176**, signed out, against 5003:
-  - `/insurance-cases/insurers` went to Sign in.
-  - Its only API request went to `http://localhost:5003/api/me`, which answered 401 as expected when
-    signed out.
+  - `/delete-records?kind=insurance-cases` went to Sign in.
+  - Its only API requests went to `http://localhost:5003/api/me`, which answered 401, as expected
+    when signed out.
   - It asked nothing of 5001 or 5002, and showed no module error.
 
-### 4.4 The planted breakages: 47 planted, 43 caught
+### 4.4 The planted breakages: 40 planted, 40 caught
 
 Each breakage changed one rule in a copy of the app outside the worktree, since the owner's apps
-hot-reload the worktree. The whole suite ran there, 704 tests, and the file was then written back.
+hot-reload the worktree. The whole suite ran there, 742 tests, and the file was then written back.
 
 | # | The breakage | Caught |
 |---|---|---|
-| C1 | the band never marks a line under a value | yes, 3 tests |
-| C2 | a marked band still centres its facts | yes |
-| C3 | Waiting for is 170px again | yes, 2 |
-| C4 | Waiting for's values may wrap on the desktop | yes |
-| C5 | a Waiting for value without its class | yes |
-| C6 | the picker offers insurers out of use | yes, 4 |
-| C7 | Edit case forgets the case's own other insurer | yes |
-| C8 | Casco case copies an insurer out of use | yes |
-| C9 | clearing a side keeps Handled by on it | yes |
-| C10 | Register case sends no insurer | yes, 3 |
-| C11 | the find box minds letter case | yes, 8 |
-| C12 | the initials no longer look alike | yes, 2 |
-| C13 | a word of three letters looks alike | yes |
-| C14 | look-alikes from one letter | yes, 2 |
-| C15 | an edited insurer is its own look-alike | yes |
-| C16 | Use this one on an insurer out of use | yes |
-| C17 | an insurer added is not chosen on the case | **no**: in the browser only |
-| C18 | editing an insurer does not refresh the cases | yes |
-| C19 | a case's write does not refresh the insurers | yes, 2 |
-| C20 | a vehicle's deletion does not refresh the insurers | yes |
-| C21 | Handled by is sent on Open only | yes |
-| C22 | Handled by lists the insurers out of use first | yes |
-| C23 | the Handled by refusal is not shown | yes |
-| C24 | the same name is a banner, not under Name | yes, 2 |
-| C25 | an insurer gone is an unknown failure | yes, 3 |
-| C26 | Insurers is offered to managers only | yes, 2 |
-| C27 | the Insurers page gives everyone who reads the actions | yes, 3 |
-| C28 | a count of 0 is a link too | yes |
-| C29 | Show opens on All | yes, 3 |
-| C30 | No insurers yet is read from the shown list | yes |
-| C31 | the arrows run past the last line | yes |
-| C32 | the arrows start from Not chosen, not the chosen insurer | yes |
-| C33 | Esc in the find box closes the dialog too | **no**: in the browser only |
-| C34 | Enter in the find box is not held back | **no**, and not visible anywhere (below) |
-| C35 | every dialog closes on Esc, the one under Add insurer included | **no**: in the browser only |
-| C36 | the picker's No insurers yet is never shown | yes |
-| C37 | the case's own insurer wins over the list's copy | yes |
-| C38 | a case's insurer out of use is not marked | yes |
-| C39 | a case's insurer's email is not a mail link | yes, 2 |
-| C40 | a phone link keeps its spaces | yes, 4 |
-| C41 | a case's insurer's links in the accent again | yes |
-| C42 | the Insurers page folds only below 1024 | yes |
-| C43 | Edit insurer sends no token | yes |
-| C44 | Handled by's options lose the insurer's name | yes, 2 |
-| C45 | the insurers are asked for without the permission | yes |
-| C46 | the Insurers route needs no permission | yes, 3 |
-| C47 | Put out of use calls the activation | yes, after its rule was made one of its own |
+| D1 | Add an insurer scrolls away with the list again | yes |
+| D2 | the arrows' line may stop under the foot | yes |
+| D3 | the foot's ground is see-through | yes |
+| D4 | on the phone the arrows' line may stop under the taller foot | yes |
+| D5 | the tab loses the navigation's shield | yes, 4 tests |
+| D6 | the tab shows the vehicles' count | yes, 3 |
+| D7 | the tab's search reads the vehicles' words | yes |
+| D8 | the empty list names closed cases under Everything | yes |
+| D9 | the tab reads the vehicles' list | yes |
+| D10 | an older API's missing count reads as 0 | yes, 2 |
+| D11 | the label opens the car, not the case | yes, 3 |
+| D12 | the line under the label loses its type and time | yes, 2 |
+| D13 | the status chip in one tone for every status | yes |
+| D14 | an open case shows a date under Closed | yes |
+| D15 | Status at 71% in the folded band cuts Under review | yes |
+| D16 | a case's card title is cut to one line again | yes |
+| D17 | an open case's card shows Closed with a dash | yes |
+| D18 | reason 9 goes unworded | yes, 3 |
+| D19 | reason 9 worded as a vehicle's | yes, 3 |
+| D20 | a case's events are not counted | yes, 8 |
+| D21 | the accident links are not said | yes, 4 |
+| D22 | photos are counted as notes | yes, 8 |
+| D23 | a case's parts leave every list | yes, 7 |
+| D24 | the window's line reads the status, not Closed with the date | yes |
+| D25 | the window forgets the cases naming it | yes, 2 |
+| D26 | the window forgets what stays | yes, 2 |
+| D27 | the window's parts line counts one thing as many | yes |
+| D28 | a case's deletion refreshes no case | yes |
+| D29 | a case's deletion leaves the insurers' counts stale | yes |
+| D30 | the confirmation line forgets the events | yes |
+| D31 | the confirmation line forgets the cleared links | yes, 2 |
+| D32 | a car's window forgets the links of other cars' cases | yes |
+| D33 | a car's window words the links as a case's | yes |
+| D34 | the event reads "Insurance Case · Deleted" | yes, 2 |
+| D35 | the entity reads InsuranceCase | yes, 3 |
+| D36 | the case's copy falls back to the raw payload | yes, 2 |
+| D37 | the case's registration photos are not read | yes, 2 |
+| D38 | the entry shows an event without its photos | yes, after its test was made stronger |
+| D39 | the entry says other cars for a case's own links | yes |
+| D40 | a vehicle's copy with a case's lists at its top is accepted | yes |
 
-- **C47** was not caught in the first run. The window's call was written inside the component. It is
-  now the rule `toggleInsurer`, with a test of what each case sends, and the final run caught C47.
-- **C9** was caught on the first run because the reset of Handled by had been made a rule of its own,
-  `withInsurer`, with its test, just before that run.
-- **C17, C33 and C35** are what happens after a press or a key. A server render cannot press either,
-  and the dialogs' hook is replaced in these tests. The browser checked all three (§4.3). §5 asks the
-  reviewer to check C17 signed in.
-- **C34** removes the guard that keeps Enter in the find box from sending the case's form. Nothing
-  shows the difference: the form has many fields and no submit button, so Enter never sends it. The
-  guard stays for a form that might one day have a single field.
+- **D38 was not caught in the first run.** The entry's test looked for the event's photo anywhere on
+  the page, and the Raw payload panel below names it too. The test now reads each panel on its own,
+  and checks that the photo stands under its event (`6e66bf4`). The final run, on the final code,
+  caught all 40.
+- **What only a browser shows**: that the foot stays in view as the list scrolls, and where the
+  arrows' line stops. The suite holds the rules that do it, D1 to D4, and the browser measured the
+  result (§4.3).
 
 ### 4.5 The test suite, and each commit
 
-- **The final state:** `npm run typecheck` clean; `npm test` **704 passed in 63 files**; `npm run build`
+- **The final state:** `npm run typecheck` clean; `npm test` **742 passed in 67 files**; `npm run build`
   built, with the chunk-size warning the build has had since before this run.
-- **Before the run** (`fce8f03`): typecheck clean, 627 passed in 57 files, the build as above.
+- **Before the run** (`302fb5e`): typecheck clean, 710 passed in 63 files.
 - **Each commit alone**, exported with `git archive` so nothing untracked came along, and run with the
   worktree's `node_modules`. Every one had 0 type errors and the whole suite green:
 
   | Commit | Tests |
   |---|---|
-  | `305140b` | 635 |
-  | `80aa369` | 646 |
-  | `8339a55` | 681 |
-  | `12436bf` | 686 |
-  | `a370aa7` | 700 |
-  | `0176a02` | 702 |
-  | `6e7b094` | 704 |
+  | `e3a3ccb` | 715 |
+  | `3bc73ad` | 737 |
+  | `9112e69` | 742 |
+  | `6e66bf4` | 742 |
 
 ### 4.6 The owner's side, untouched
 
@@ -467,318 +378,200 @@ hot-reload the worktree. The whole suite ran there, 704 tests, and the file was 
   | Port | Process | Started |
   |---|---|---|
   | 5001, the owner's API | pid 7505 | 2026-09-25 07:41 |
-  | 5002, the practice API | pid 59742 | 2026-09-27 12:41 |
+  | 5002, the practice API | pid 96963 | 2026-09-29 09:10 |
   | 5173, the owner's app | pid 24831 | 2026-09-16 07:58 |
   | 5174, the practice app | pid 58932 | 2026-09-27 12:33 |
 
-- **The databases.** Only the names of the databases were listed, to see that `rwrent_r13` existed.
-  `rwrent_v1` and `rwrent_check` were never addressed.
-- **The backend worktree** is clean at `5604c83`. It was only run, never built or changed. The main
+- **The databases.** Only `rwrent_r14` was addressed. `rwrent_v1` and `rwrent_check` were never
+  addressed, and `rwrent_r13` was left as it was.
+- **The backend worktree** is clean at `6239393`. It was only run, never built or changed. The main
   checkouts were not touched.
 - **Mailpit** was not read.
 
 ### 4.7 End state
 
-- **The API on 5003 is left running**, pid 72507, started 2026-09-29 07:55:39, from the backend
-  worktree's `bin/Release`, over `rwrent_r13`. It holds the seed and the joint check's second run
-  (§5.0).
+- **The API on 5003 is left running**, pid 28391, started 2026-09-30 15:30:44, from the backend
+  worktree's `bin/Release`, over `rwrent_r14`. It holds the seed, the joint check's second run and the
+  practice records made for §5 (§5.0).
 - **Nothing else runs.** This run's Vite on 5176 and its harness on 5175 are stopped, and nothing
   listens on either port. The workspace's launch entries are as they were before the run.
 
-## 5. For the owner's reviewer: the steps with the seed password
+## 5. For the owner's reviewer: the signed-in steps
 
 ### 5.0 Before and after
 
-- **The stack as this run leaves it:** the API on 5003 over `rwrent_r13`, holding the seed and the
-  joint check's second run.
-  - **Five insurers:**
-    - Baltic Mutual: 3 open cases handled, 5 cases.
-    - Meridian Insurance: 1 and 2.
-    - Northgate Insurance: 0 and 1.
-    - Old Harbour Insurance: out of use.
-    - Pilot Insurance Group: in use, added and renamed by Dita. It has
-      `claims@pilot-insurance.example` and `+372 600 7700`.
-  - **One practice case:** "770 HDV · Practice: the left mirror and its cover knocked off". It is
-    Reported and waiting for the insurer. Our insurer is Baltic Mutual. The other party's is Pilot
-    Insurance Group, which handles the case, with claim PI-18-0001.
-  - **The counts:** Open 6, Waiting for us 2, Closed 2.
+- **The stack as this run leaves it:** the API on 5003 over `rwrent_r14`.
+  - **Thirteen insurance cases, four of them Closed:**
+    - the seed's 400 NDP and 119 MPR;
+    - **"770 HDV · Practice: front left door scratched"**, Closed. It has a registration photo, a
+      note, an event with a photo and its closing event, and a casco case of the same car names it;
+    - **"P19 26C · Practice: the bonnet dented"**, Closed, with a photo. A practice case of 444 WKS
+      names it as the same accident.
+  - **The open ones:** the seed's five and four practice cases. Two practice cases appear twice each,
+    "444 WKS · Practice: the other car of the same accident" and "770 HDV · Practice: the casco claim
+    of the same door": the older one of each is from the second run, whose deletions left it naming
+    nothing.
+  - **Eleven vehicles**, among them the practice car **P19 26C · Fiat Panda 2020**, Ready.
+  - **Recently deleted:** the second run's P19 26C and its practice case of 770 HDV, by Arturs
+    Veidenbaums.
+  - **The seed's four insurers.**
 - **Start Vite on 5176 from this worktree.** The API trusts only that origin:
   `VITE_API_BASE_URL=http://localhost:5003 npm run dev -- --port 5176 --strictPort`
 - **Use a browser profile of its own**, never the owner's. The apps on 5173, 5174 and 5176 share
   `localhost`'s cookies, so signing in on 5176 in the owner's profile signs the owner out of 5173.
 - **The seeded people**, all with the seed password:
-  - Dita Smite and Karlis Zvaigzne, Fleet Managers;
-  - Signe Priede, Company Principal;
-  - Toms Rudzitis, Viewer.
+  - the administrator, Arturs Veidenbaums (`sysadmin@rwrent.example`), who may delete records;
+  - Dita Smite, Fleet Manager;
+  - Signe Priede, Company Principal, who reads the audit.
 
 ### 5.1 At 1512 px
 
-1. **Sign in as Dita and open Insurance cases.** Insurers stands beside Register case. The filters
-   read Type, Status, Waiting for and Handled by.
-   - Handled by Baltic Mutual on Open: 3 cases.
-   - Waiting for us: 1 case.
-   - Closed: "No results for these filters".
-   - Clear filters clears it.
-2. **Insurers.** The breadcrumb reads Insurance cases, Insurers.
-   - In use holds four insurers. Out of use holds Old Harbour, marked. All holds five.
-   - Baltic Mutual's "3" opens the Open view filtered to it.
-   - Northgate shows a plain 0.
-3. **Add insurer.**
-   - Type "BM": Baltic Mutual stands under "Already on the list, and looks alike", with no Use this
-     one here.
-   - Type " baltic   MUTUAL" and Add insurer: "Another insurer already has this name." appears under
-     Name.
-   - Add "Practice Insurance" with an email and a phone: it is on the list.
-4. **Edit, and out of use and back.**
-   - Edit Practice Insurance and rename it.
-   - Put it out of use, answering the window. It leaves In use and is under Out of use, marked.
-   - Put it back in use.
-5. **The practice case.**
-   - The band's labels are on one line; Driver and At fault are level with Waiting for.
-   - The Insurance panel shows Baltic Mutual and Pilot Insurance Group, each with its email and phone
-     as quiet links.
-6. **Edit case on the practice case, the other party's picker.**
-   - Pilot Insurance Group is chosen. Open the picker: the find box has the focus.
-   - The arrows move through the lines and Enter chooses. Esc closes the list and leaves the dialog
-     open.
-   - Cancel.
-7. **Out of use on a case.** Put Pilot Insurance Group out of use on the Insurers page, then open the
-   practice case.
-   - Pilot is marked Out of use.
-   - Edit case: Pilot is still chosen, marked. Change only What is damaged and save: it is saved.
-   - Register case: Pilot is not offered, and "Pilot" in the find box says no insurer holds it.
-   - Put Pilot back in use.
-8. **Add an insurer from Register case.**
-   - In the other party's picker type "Lolkastan", then choose Add an insurer. The window opens over
-     the form with Lolkastan typed.
-   - Esc closes only the window.
-   - Open it again and Add insurer: **Lolkastan is chosen on the case at once**, and Handled by offers
-     it.
-   - Cancel the case, and "Lolkastan" stays on the list.
-   - With "Balt" typed, Add an insurer offers Use this one on Baltic Mutual. It chooses Baltic Mutual
-     and closes the window.
-9. **Casco case for this accident on 552 KLM.** Our insurer is Baltic Mutual, with Handled by Ours.
-10. **Sign in as Toms.**
-    - Insurance cases has Insurers and no Register case.
-    - The Insurers page has no Add insurer, Edit or Put out of use.
-    - The practice case shows the insurers' emails and phones.
-11. **A task's page**, for example Prepare 204 JLM: Created by, Due, About and Progress stand on one
-    line. A user's page and a rental's band look as before.
+1. **Sign in as the administrator and open Delete records.** Seven tabs; the last is Insurance cases,
+   with the shield and 13.
+2. **Insurance cases.**
+   - Thirteen cases. The search box reads "Plate, damage, driver, insurer or claim".
+   - Show Out of use: four cases, all Ready, and the tab reads 4. Clear filters.
+3. **The practice case of 770 HDV, front left door.**
+   - Its label is a link, with "Usual · Happened 28 Sep" under it.
+   - The Closed chip, the day it was closed, and Ready.
+   - "Takes 2 events, 1 note and 2 photos with it. Clears the accident link of 1 insurance case".
+4. **204 JLM · Windscreen cracked by a stone.**
+   - Blocked, with "This insurance case is open. Close it first; then it can be deleted" and nothing
+     linked beside it.
+   - Its Delete does nothing, and its title gives the same sentence.
+   - "Takes 2 events, 1 note and 2 photos with it".
+5. **Click the practice case's label.** The case's page opens, with no delete button on it. Of the
+   two cases "770 HDV · Practice: the casco claim of the same door", note the one whose page lists
+   the practice case under Same accident. Go back.
+6. **Delete on the practice case.**
+   - The window's line: "770 HDV · Practice: front left door scratched · Usual · Closed 30 Sep".
+   - The five consequences of §2.4, and the tick's hint naming the 2 events, 1 note and 2 photos.
+   - Choose a reason, tick, and Delete permanently. The confirmation line reads: "Insurance case
+     deleted: … 2 events, 1 note and 2 photos went with it. The accident link of 1 insurance case was
+     cleared."
+   - The row leaves, the tab reads 12, and Recently deleted lists it first.
+7. **That casco case**, on Insurance cases: its page has no Same accident panel any more. It stays,
+   and only its link was cleared.
+8. **The confirmation line's link**, or Recently deleted's: the entry.
+   - Its title and Event read "Insurance case · Deleted"; Entity reads Insurance case.
+   - The panels: Deleted record, Deleted photos, Deleted events with the first event's photo under
+     it, Deleted notes, and Cleared accident links naming the casco case, with "These cases named the
+     deleted case as the same accident".
+9. **Vehicles, P19 26C.**
+   - "Takes 1 insurance case with it. Clears the accident link of 1 insurance case".
+   - Delete: the window says its 1 insurance case goes with it, and that "The accident link of 1
+     insurance case of another car is cleared; that case stays."
+   - Delete it. The confirmation line ends "1 insurance case went with it. The accident link of 1
+     insurance case was cleared."
+10. **Security audit, as Signe.** The Event type filter offers "Insurance case · Deleted". It finds
+    the case's entry, whose Entity chip reads Insurance case.
+11. **A case reopened after the list loaded.**
+    - As the administrator, open Insurance cases on Delete records.
+    - In another tab, as Dita, add an event that reopens "400 NDP · Right mirror broken by a passing
+      van".
+    - Back on the first tab, Delete it and confirm. The window says "This insurance case is open.
+      Close it first; then it can be deleted." with Refresh. Refresh shows it Blocked.
+12. **The picker, as Dita.**
+    - On the Insurers page, add three practice insurers. Six are then in use, and their lines need
+      more than the list's 244 px.
+    - Register case: open Our insurer. **Add an insurer stands at the foot of the list, in view,
+      before any scrolling.**
+    - Scroll the list: the insurers pass under it.
+    - With the arrows, go to the last insurer: it stands above the foot, whole. One more ArrowDown
+      reaches Add an insurer, and Enter opens the Add insurer window with what was typed.
+    - Cancel both windows.
 
-### 5.2 At 1024 px
+### 5.2 On the tablet and the phone
 
-1. On Open, every Waiting for value is on one line.
-2. The Insurers page folds Email and Phone under the name. Nothing scrolls sideways.
-3. On a case and on a task, the band's labels are level.
+1. **At 834 px**, on Insurance cases: the table folds to Case, Status, Closed and Deletion, and
+   nothing scrolls sideways. Under review's chip is whole on 552 KLM's case.
+2. **At 402 px:**
+   - Each case is a card whose title is the whole label, on as many lines as it needs.
+   - An open case's card gives the sentence in the warn ink, with nothing linked, and Delete across
+     the card does nothing.
+   - A closed case's card gives Status and Closed.
+   - Recently deleted's cards name "Insurance case · …".
+3. **At 402 px, the picker** with those six insurers: Add an insurer stays at the foot, and a 44 px
+   line reached with the arrows stops above it.
 
 ## 6. Decisions
 
 Choices this run made where the specification left room, each small to change:
 
-1. **The band's mark** is set by the band itself, when one of its facts has a line under its value.
-   So a case still loading, whose facts all read "—", stays centred until the case arrives.
-2. **Waiting for is 190 px**, the longest value's width with the cell's padding. It is never wrapped
-   from 1024 up.
-3. **The picker's find box** ignores letter case, accents and runs of spaces, as the look-alikes do.
-   - After typing, Enter takes the first insurer that holds what is typed.
-   - The arrows reach Add an insurer too.
-   - Tab and a press outside close the list.
-4. **When nothing on the list holds what is typed**, the picker says so in one line above Add an
-   insurer: "No insurer on the list holds “…”." The specification gave words only for an empty list.
-5. **The Add insurer window from a case** is its own window over the form, with its own Refresh.
-   Only the dialog on top closes on Esc.
-6. **The look-alikes** strip a word's marks before counting its letters, so "P&C" is "pc". Initials
-   need a name of two words or more. An edited insurer is not its own look-alike.
-7. **Add insurer sends the name as typed.** The server trims it and makes each run of spaces one
-   space. A blank email or phone goes as none.
-8. **The Insurers page's copy.** The empty states "No insurers in use", "N out of use are under Out
-   of use." with Show out of use, and "No insurers out of use" are this run's words. So are the lines
-   of the out-of-use window, from the API's own description: "Baltic Mutual will no longer be offered
-   on a case." and "The 4 cases that name it keep it, and an edit of one of them may keep it."
-9. **Handled by keeps an unknown insurer** from the address as an option of its own, "Not on the
-   list", so the filter shows what was asked and the API's refusal stands under it.
-10. **The Insurers page folds Email and Phone below 1280**, the line Vehicles folds at, not only below
-    1024.
-11. **Beyond the specification, every case write refreshes the insurers**, and so does a vehicle's
-    deletion, which takes its cases. The Insurers page counts cases, and those writes change the
-    counts.
-12. **Email and phone links are quiet**, in the ink of other secondary text with the accent under
-    the pointer, on a case's page and on the Insurers page. The Open cases count keeps the accent of
-    the app's record links.
-13. **Edit insurer's stale Refresh** reloads the list. The window reads the insurer from the list as
-    it renders, so Refresh re-seeds it from the fresh insurer.
+1. **Status is 132 px, and 120 px in the folded band**, as the cases list's is. The page's other
+   columns fold to 71%, which would leave 94 px and cut Under review, 101 px wide.
+2. **Closed holds the day alone**, "30 Sep", in the page's dim mono as its periods are. The column's
+   head says what it is.
+3. **A case's phone card title wraps**, as the cases list's card title does. What is damaged is what
+   tells two cases of one car apart, and on one cut line it was lost. The other six kinds keep their
+   one cut line.
+4. **The words §19 did not give**, in the page's existing voice:
+   - the window's second, third and fourth consequences, and "Nothing else goes with it." for a case
+     with no events, notes or photos;
+   - a car's line for the links, "The accident link of 1 insurance case of another car is cleared;
+     that case stays.";
+   - the confirmation's "The accident link of 1 insurance case was cleared.", as it says "The driver
+     link of 1 customer record was cleared.";
+   - the empty list's "11 open insurance cases are under Everything.".
+5. **An open case's window line would read its status**, "Casco · Repair". An open case never
+   reaches the window, since its Delete does nothing.
+6. **The picker's foot is sticky inside the one list**, rather than a second list under it. The
+   listbox, its keys, its ids and every test of Follow-up 18 stay as they were. The scroll padding is
+   what keeps the arrows' line above the foot.
+7. **The audit sets a case's own photos, events and notes as three panels at the top**, as a rental's
+   parts are, rather than one panel holding one case. A car's entry keeps its cases each in a group.
+8. **A case's deletion refreshes the insurers too**, beyond the page, the audit, the Overview and the
+   cases, since the Insurers page counts the cases each insurer handles and names.
 
 ## 7. Deviations
 
-None from §18. Handled by keeps its hint, "Offers the insurers filled in above.", since the API's
-refusal still says "Choose an insurer that is filled in."
+None from §19.
 
 ## 8. Open risks and observations
 
-1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was written.**
-   - Every new module existed before anything imported it.
-   - The old endpoint's function and query key were removed only after nothing used them.
-   - One exception: F18-1's first edit of `RecordHeader.tsx` used `isValidElement` a moment before
-     the next save imported it. On a record page open in either app at that instant, the page would
-     have shown an error until the next save, a fraction of a second later.
-2. **The practice app on 5174 runs this code against round 12's API, which sends each insurer as a
-   name.** The practice copy's insurance pages do not work until the reviewer upgrades it to round 13,
-   as the owner knows. This was confirmed in a scratch copy by rendering a case as round 12 answers it:
-   - **Edit case on a case that names an insurer throws while it opens.** The picker reads the name of
-     an insurer that round 12 sends as plain text. The app has no error boundary, so the whole
-     practice app goes blank until the page is reloaded.
-   - A case's Insurance panel shows an Out of use mark with no name for each insurer.
-   - The list's Handled by column shows no name, the Insurers page cannot load its list, and Add an
-     insurer is refused.
-
-   No code was added for round 12's answers, since the upgrade replaces them. Until it, Edit case
-   should not be opened on 5174. After the upgrade, the names typed on the practice cases, among them
-   the owner's "Lolkastan", become insurers. The owner's 5001 is round 11 and grants no insurance
-   permission, so the owner's own app offers no insurance section at all, as before.
-3. **Observed, not changed: the cases list at 1024 px scrolls sideways by 8 px.** The table's floor
-   of 920 px is wider than the 912 px frame. This predates this run: Follow-up 17 set 920, and this
-   run left it.
-4. **Observed, not changed: the list's toolbar takes a second row.** It does so when Handled by holds
-   a long insurer name, and at 1024 px in any case now that the toolbar has one more filter. A long
-   name is cut with an ellipsis at 170 px inside the filter, as the other filters' values are.
-5. **Three behaviours are held by the browser, not the suite:**
-   - an insurer added from a case is chosen on the case;
-   - Esc in the picker closes only the list;
-   - Esc in the Add insurer window closes only that window.
-
-   The browser checked all three here, and §5.1 steps 6 and 8 ask the reviewer to check them signed
-   in.
+1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was written.** Each module
+   existed before anything imported it. Twice a page read a style a fraction of a second before the
+   next save wrote it: Status's width and the case card's wrapping title. Either one read as no style
+   for that instant, with no error.
+2. **What 5173 and 5174 show until the reviewer upgrades their APIs to round 14:**
+   - On Delete records, the seventh tab, Insurance cases, shows no count. Opening it shows "The
+     records could not be loaded" with "Not Found" and Retry. An API without the route answers 404
+     with no body: 5003 answers so for a route it does not have, and a test renders exactly that.
+   - A car's row, window and line say nothing of accident links: the members are absent and read as
+     0.
+   - Nothing else changes there. The other six tabs, their deletions and the audit work as before,
+     and F19-1's picker needs nothing of the API.
+   - On 5173, whose API grants no insurance permission, the picker is not reachable at all, as before.
+3. **Observed, not changed: at 1024 px the page's tables scroll sideways inside their frame.** The
+   Insurance cases table and the Vehicles table both scroll 108 px: their floor is 1020 px and the
+   frame 912 px. The stylesheet's note says every table fits under the collapsed rail; at 1024 px
+   none of the widest does. This predates this run.
+4. **Observed, not changed: a tab at the end of the strip, opened straight from its address, stands
+   partly past the strip's edge.**
+   - The strip brings the active tab into view at its first paint, before the counts arrive, and the
+     counts then widen every tab.
+   - Opened on Insurance cases, the tab stood 129 px past the edge at 834 px and 127 px at 402 px.
+   - Drivers did the same before this run, 79 px at 834.
+   - A tap on a tab shows it whole. The strip is shared by every record page, so it was left as it
+     is. A fix would bring the active tab into view again once the counts arrive.
+5. **What the suite does not hold:** where the list's foot and the arrows' line stand as the list
+   scrolls. The rules that place them are tested; the browser measured the result (§4.3), and §5.1
+   step 12 asks the reviewer to look signed in.
 
 ## 9. Commits
 
-On `feature/backend-wiring`, after `fce8f03`, in this order:
+On `feature/backend-wiring`, after `302fb5e`, in this order:
 
-1. **`305140b`** Wiring 45: A record's band puts every label on one line when one fact has a line under its value, and the cases list keeps each Waiting for value on one line from 1024 px.
-   6 files (under `src/`): `pages/followup17.stylesheet.test.ts`; added `pages/followup18.layout.test.ts`; `pages/insurance/InsuranceCases.module.css`; `pages/insurance/InsuranceCases.tsx`; `ui/RecordHeader.module.css`; `ui/RecordHeader.tsx`.
+1. **`e3a3ccb`** Wiring 49: In a case's insurer picker, Add an insurer stays at the foot of the open list, always in view, and only Not chosen and the insurers scroll above it.
+   3 files (under `src/`): added `pages/followup19.picker.render.test.ts`; `pages/insurance/InsurerPicker.module.css`; `pages/insurance/InsurerPicker.tsx`.
 
-2. **`80aa369`** Wiring 45: The app learns the insurers the company keeps: their six operations and answers, their refusal codes, and the words and look-alike rules the windows use.
-   11 files (under `src/`): `api/client.ts`; `api/codes.test.ts`; `api/codes.ts`; `api/dto.ts`; `api/index.ts`; added `api/insurers.test.ts`; added `api/insurers.ts`; `api/queryKeys.ts`; `format/index.ts`; added `format/insurers.test.ts`; added `format/insurers.ts`.
+2. **`3bc73ad`** Wiring 49: The Delete records page gets a seventh tab, Insurance cases, where a closed case can be deleted with its events, notes and photos and an open one is Blocked until an event closes it, and a car's deletion also says which accident links it clears.
+   12 files (under `src/`): `api/dto.ts`; `api/recordDeletions.test.ts`; `api/recordDeletions.ts`; `format/recordDeletion.test.ts`; `format/recordDeletion.ts`; `pages/admin/DeleteRecordDialog.tsx`; `pages/admin/DeleteRecords.module.css`; `pages/admin/DeleteRecords.tsx`; `pages/followup17.deletions.render.test.ts`; added `pages/followup19.deletions.render.test.ts`; added `pages/followup19.phone.render.test.ts`; added `pages/followup19.support.ts`.
 
-3. **`8339a55`** Wiring 45: A case names its insurers from the list: the pickers of its form with Add an insurer in its own window, the insurer's email and phone on its page, and the tests and fixtures moved to round 13's contract.
-   24 files (under `src/`): `api/dto.ts`; `api/insuranceCases.test.ts`; `api/insuranceCases.ts`; `api/queryKeys.ts`; `format/insurance.test.ts`; `format/insurance.ts`; `pages/admin/DeleteRecordDialog.tsx`; `pages/followup17.dialogs.render.test.ts`; `pages/followup17.practice.ts`; `pages/followup17.render.test.ts`; `pages/followup17.support.ts`; added `pages/followup18.dialogs.render.test.ts`; added `pages/followup18.practice.ts`; added `pages/followup18.render.test.ts`; added `pages/followup18.support.ts`; `pages/insurance/CaseDialogs.tsx`; `pages/insurance/CaseRecord.module.css`; `pages/insurance/CaseRecord.tsx`; added `pages/insurance/InsurerDialogs.module.css`; added `pages/insurance/InsurerDialogs.tsx`; added `pages/insurance/InsurerPicker.module.css`; added `pages/insurance/InsurerPicker.tsx`; `pages/insurance/caseAddress.ts`; `ui/Dialog.tsx`.
+3. **`9112e69`** Wiring 49: The security audit names a case's deletion Insurance case · Deleted and reads its copy as it reads a car's cases: the case, its photos, its events with theirs, its notes, and the cases that lost their accident link.
+   5 files (under `src/`): `format/auditPayload.ts`; `format/labels.test.ts`; `format/labels.ts`; `pages/audit/AuditEntry.tsx`; added `pages/followup19.audit.render.test.ts`.
 
-4. **`12436bf`** Wiring 45: The cases list gains Handled by on every view, from the insurers the company keeps, with an unknown insurer refused under it.
-   4 files (under `src/`): `pages/followup18.render.test.ts`; `pages/insurance/InsuranceCases.module.css`; `pages/insurance/InsuranceCases.tsx`; `pages/insurance/caseAddress.ts`.
+4. **`6e66bf4`** Wiring 49: The audit entry's test reads each panel on its own, so an event shown without its photo is caught although the raw payload below still names it.
+   1 file: `src/pages/followup19.audit.render.test.ts`.
 
-5. **`a370aa7`** Wiring 45: The Insurers page opens from a button beside Register case: the list with Show, each insurer's open cases linked to the cases it handles, and for a manager Add insurer, Edit and Put out of use or back.
-   11 files (under `src/`): `app/routes.test.ts`; `app/routes.tsx`; `pages/followup17.render.test.ts`; `pages/followup18.dialogs.render.test.ts`; added `pages/followup18.phone.render.test.ts`; `pages/followup18.render.test.ts`; `pages/insurance/InsuranceCases.tsx`; `pages/insurance/InsurerDialogs.tsx`; added `pages/insurance/Insurers.module.css`; added `pages/insurance/Insurers.tsx`; `pages/insurance/caseAddress.ts`.
-
-6. **`0176a02`** Wiring 45: What the browser found: the Insurers page folds Email and Phone under the name below 1280 so the name keeps its room at 1024, and a case's insurer's email and phone are quiet links.
-   4 files (under `src/`): `pages/followup18.layout.test.ts`; `pages/insurance/CaseRecord.module.css`; `pages/insurance/Insurers.module.css`; `pages/insurance/Insurers.tsx`.
-
-7. **`6e7b094`** Wiring 45: What the planted breakages found: the reset of Handled by when its side is cleared and the call of Put out of use or back become rules of their own, each with its test.
-   3 files (under `src/`): `pages/followup18.dialogs.render.test.ts`; `pages/insurance/CaseDialogs.tsx`; `pages/insurance/InsurerDialogs.tsx`.
-
-8. **This report's commit**, `Wiring 46`: `Context/wiring_report.md`, rewritten.
-
-## 10. F18-4: the look-alikes skip the trade's common words
-
-> F18-4 in `Context/wiring_followups.md` §18, the reviewer's finding authorised by the owner on
-> 2026-09-30. Built on `c90642d`, written 2026-09-30. Frontend only.
-
-### 10.1 What changed (`src/format/insurers.ts`)
-
-- `looksAlike` has three rules. Only the second changed: what is typed holding a word of four letters
-  or more of the insurer's name. That word no longer counts when it is one of the trade's common
-  words: insurance, insurer, assurance, reinsurance, kindlustus, kindlustuse, apdrošināšana,
-  apdrošināšanas, draudimas, draudimo, vakuutus, forsikring, försäkring, versicherung, mutual, group,
-  company, limited, holding and GmbH. The shorter forms, AS, SE, OÜ, SIA, UAB and P&C, are under the
-  four letters already.
-- The list is `COMMON_WORDS`, written as F18-4 spells it. The rule compares it through `insurerKey`,
-  as it compares the name's words, so letter case and accents are ignored: "Apdrošināšana" is
-  "apdrosinasana" and "GmbH" is "gmbh".
-- The first rule, the name holding what is typed, and the third, the initials, did not change.
-  "Insurance" typed alone still lists every "… Insurance", "BM" still shows Baltic Mutual and "MI"
-  still shows Meridian Insurance.
-- The case picker's Add insurer window and the Insurers page's Add insurer and Edit insurer windows
-  all call `lookAlikes`, which calls `looksAlike`, so the three changed together. No other file
-  changed.
-
-With the seed's list, typing "Newco Insurance" showed Meridian Insurance, Northgate Insurance and Old
-Harbour Insurance; it now shows none. On the reviewer's ten names:
-
-| Typed | Before | After |
-|---|---|---|
-| Newco Insurance | 7 | none |
-| Baltic Mutual Insurance | 8 | Baltic Mutual, BTA Baltic Insurance Company |
-| Meridian Insurance AS | 7 | Meridian Insurance |
-| Pilot Insurance Group | 7 | Pilot Insurance Group |
-| Salva Kindlustus | 2 | Salva Kindlustuse AS |
-| Gjensidige Insurance Group | 7 | none |
-| BM, Baltic, ERGO | 1, 2, 1 | unchanged |
-
-### 10.2 The tests
-
-Six new tests:
-
-- `src/format/insurers.test.ts`, "the common words of insurers' names (F18-4)", 4 tests:
-  - the reviewer's ten names, each typed name with the exact insurers it shows;
-  - the other two rules unchanged: "BM", "Baltic", "ERGO", "insurance", "Kindlustus", "MI" and "LK";
-  - each of the 20 common words, with its accents and without, in capitals and not, on either side,
-    skipped; and a word that is not common, such as "Lietuvos" or "Allianz", still counting beside one;
-  - the seed's list and the practice copy's five names: "Newco Insurance" looks like none of them.
-- `src/pages/followup18.dialogs.render.test.ts`, "the common words of insurers' names in the three
-  windows (F18-4)", 2 tests, each with the seed's list:
-  - the case picker's Add insurer window, opened with "Newco Insurance" typed, shows no look-alike;
-    with "Harbour Insurance" it shows Old Harbour Insurance and neither Meridian nor Northgate;
-  - the Insurers page's Add insurer and Edit insurer windows with "Newco Insurance", and Add insurer
-    with "NEWCO INSURANCE GROUP", show none.
-
-Five existing tests changed on purpose:
-
-1. `format/insurers.test.ts`, "what is typed holds a word of four letters or more of its name":
-   "Baltic Mutual Insurance AS" showed all four seed insurers; it now shows Baltic Mutual only.
-2. `format/insurers.test.ts`, "from two letters on, and never for a name that matches none of the
-   three": "Pilot Insurance AS" showed 3 insurers; it now shows none.
-3. `format/insurers.test.ts`, "the list's look-alikes in its order, an edited insurer not its own":
-   "Meridian Insurance", editing Meridian, showed Northgate Insurance and Old Harbour Insurance; it now
-   shows none. So that an edited insurer not being its own look-alike is still tested, "Meridian
-   Northgate" now shows Northgate Insurance alone while Meridian is edited, and both otherwise.
-4. `followup18.dialogs.render.test.ts`, "Add insurer: Name required, Email and Phone optional, the
-   look-alikes only shown": "Meridian Insurance Group" showed Meridian Insurance and Northgate
-   Insurance; it now shows Meridian Insurance, and the test checks Northgate is absent.
-5. `followup18.dialogs.render.test.ts`, "Edit insurer: the insurer as the list read it, its own name
-   not a look-alike of itself": Edit insurer on Meridian Insurance showed Northgate Insurance; it now
-   shows no look-alike at all. A second render with the name changed to "Meridian Northgate" shows
-   Northgate Insurance and not Meridian.
-
-No test was deleted or skipped. 704 → **710** tests in 63 files.
-
-### 10.3 Verification
-
-- `npm run typecheck` clean; `npm test` **710 passed in 63 files**; the build green, written to a
-  scratch folder, with the same chunk-size warning as before.
-- **The planted breakages: 4 planted, 4 caught.** As in Follow-up 18, each was made in a copy outside
-  the worktree, taken fresh from it after the fix, and the whole suite ran there each time.
-
-  | | Breakage | Tests failed |
-  |---|---|---|
-  | B1 | the word rule stops skipping the common words | 10 in 2 files: the five tests changed on purpose, and five of the six new ones: the reviewer's names, the 20 words, the seed's and the practice copy's lists, and both tests of the three windows |
-  | B2 | the common words kept with their accents and capitals, not passed through `insurerKey` | 1: the 20 words |
-  | B3 | the common words dropped before the initials are taken | 3: "BM" no longer shows Baltic Mutual, since "Mutual" is common, nor "MI" Meridian Insurance |
-  | B4 | the common words dropped from what is typed instead of from the name | 2: "Insurance" typed alone shows nothing |
-
-  B1 is the breakage F18-4 asks for. B2 to B4 are the likely wrong ways of building it.
-- **No live look.** Nothing on any page moves; what the three windows show is proved by rendering
-  them with the seed's list. This run started no Vite, did not use 5003, and opened no browser.
-- **The practice copy.** F18-4 asks the reviewer to add "Newco Insurance" on 5174 and see Meridian
-  Insurance and Northgate Insurance before the fix and none after it. That step is left to the
-  reviewer, since this run never opens 5174. The practice app reloads from this worktree, so it has
-  shown the fix since `986a494` was saved. The "before" can no longer be seen there; the tests and B1
-  show it instead.
-- **The owner's side was untouched.** This run did not open 5173 or 5174, did not call 5001 or 5002,
-  and did not read or write `rwrent_v1` or `rwrent_check`. Both of the owner's apps reloaded the one
-  change to `src/format/insurers.ts`, which adds no import.
-
-### 10.4 Commits
-
-On `feature/backend-wiring`, after `c90642d`:
-
-1. **`986a494`** Wiring 47: The look-alikes of the Add insurer and Edit insurer windows no longer count the trade's common words, so "Newco Insurance" does not show every insurer named "… Insurance".
-   3 files (under `src/`): `format/insurers.ts`; `format/insurers.test.ts`; `pages/followup18.dialogs.render.test.ts`.
-2. **This section's commit**, `Wiring 48`: `Context/wiring_report.md`.
+5. **This report's commit**, `Wiring 50`: `Context/wiring_report.md`, rewritten.
