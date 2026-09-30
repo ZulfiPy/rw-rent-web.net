@@ -952,8 +952,8 @@ Insurance cases on real data.
 > Signed in on 5174 as Dita, 7 of 7: the five insurers, offered by the list's Handled by; the usual
 > 770 HDV case showing Meridian Insurance and Lolkastan, and Edit case opening on it with Lolkastan
 > chosen (it blanked the app before the upgrade); the Insurers page with the five and no email or
-> phone yet; no page error; no request to 5001, 5173, 5003 or 5176. **Open, the owner's decision:**
-> F18-4 below.
+> phone yet; no page error; no request to 5001, 5173, 5003 or 5176. **F18-4 below: AUTHORISED by the
+> owner on 2026-09-30** ("yes, prepare the look-alike fix prompt"); the owner sends it to the agent.
 
 On the Usual case of 770 HDV the owner used Casco case for this accident, and on the new Casco case
 wrote a note: the car is repaired through casco, and if the other car is ever found, the refund is
@@ -1111,8 +1111,18 @@ reviewer then checks it signed in.
   the list, "Baltic Mutual Insurance" would then look like nothing.) Tried by the reviewer on ten
   realistic names: "Newco Insurance" 7 look-alikes today, none with it; "Baltic Mutual Insurance" 8
   today, 2 with it (Baltic Mutual and BTA Baltic Insurance Company); "Meridian Insurance AS" 7, then
-  1; "Pilot Insurance Group" 7, then 1; "BM", "Baltic" and "ERGO" unchanged. Built only if the owner
-  agrees.
+  1; "Pilot Insurance Group" 7, then 1; "BM", "Baltic" and "ERGO" unchanged. **Decided by the owner
+  (2026-09-30): built.** How: in `src/format/insurers.ts`, `looksAlike`'s word rule skips a word of
+  the name that is one of those common words, compared as `insurerKey` compares them (letter case and
+  accents ignored, so "Apdrošināšana" is "apdrosinasana"); the rule that the name holds what is typed,
+  and the initials, do not change. The Add insurer window of a case's picker and the Add and Edit
+  insurer windows of the Insurers page use the same function, so all three change together. Tests:
+  the reviewer's ten names above with their counts, among them "Newco Insurance" with no look-alike
+  and "Baltic Mutual Insurance" with Baltic Mutual and BTA Baltic Insurance Company; the common words
+  with accents and capitals; the seed's list, where "Newco Insurance" shows no look-alike in the Add
+  insurer window; and a breakage that stops skipping the common words, which the tests must catch.
+  On the practice copy, where the list holds Meridian Insurance and Northgate Insurance, adding
+  "Newco Insurance" shows both as look-alikes before the fix and none after it.
 
 **Checked by the owner on the desktop, nothing to change (2026-09-29):** the Closed tab; the three
 tabs with filters that find nothing; registering a case with a driver.
