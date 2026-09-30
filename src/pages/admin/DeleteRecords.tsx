@@ -8,18 +8,18 @@ import {
 import {
   CustomerType, RecordDeletionShow, RecordDeletionState, RecordKind, type DeletableKind,
   type CustomerDeletionCandidateResponse, type DriverAuthorizationDeletionCandidateResponse,
-  type DriverDeletionCandidateResponse, type InterruptionDeletionCandidateResponse,
-  type PagedResponse, type RecordDeletionBlockingRecordResponse,
+  type DriverDeletionCandidateResponse, type InsuranceCaseDeletionCandidateResponse,
+  type InterruptionDeletionCandidateResponse, type PagedResponse, type RecordDeletionBlockingRecordResponse,
   type RecordDeletionCandidateCountsResponse, type RecordDeletionCandidatesQuery,
   type RecordDeletionInfo, type RecordDeletionListItemResponse, type RecordDeletionResponse,
   type RentalAssignmentDeletionCandidateResponse, type VehicleDeletionCandidateResponse,
 } from '@/api/dto';
 import { toFailure } from '@/api/problem';
 import {
-  ASSIGNMENT_STATUS_LABEL, BILLING_IMPACT_LABEL, CUSTOMER_TYPE_LABEL, INTERRUPTION_REASON_LABEL,
-  LOCAL_TIME_NOTE, RECORD_KIND_LABEL, STOP_REASON_LABEL, SYSTEM_ACTOR, authorizationDriver,
-  blockSentence, deletionPeriod, deletionReasonText, formatLocal, kindNoun, kindNouns, outOfUseEmpty,
-  partsText, rentalPeriod, takesSentence, wentWith, type DeletionTarget,
+  ASSIGNMENT_STATUS_LABEL, BILLING_IMPACT_LABEL, CASE_STATUS_LABEL, CUSTOMER_TYPE_LABEL,
+  INTERRUPTION_REASON_LABEL, LOCAL_TIME_NOTE, RECORD_KIND_LABEL, STOP_REASON_LABEL, SYSTEM_ACTOR,
+  authorizationDriver, blockSentence, caseSub, deletionPeriod, deletionReasonText, formatLocal, kindNoun,
+  kindNouns, outOfUseEmpty, partsText, rentalPeriod, takesSentence, wentWith, type DeletionTarget,
 } from '@/format';
 import { useTier } from '@/app/useViewport';
 import { useAccess } from '@/permissions/usePermissions';
@@ -31,7 +31,7 @@ import { PageHeader } from '@/ui/PageHeader';
 import { Pagination } from '@/ui/Pagination';
 import { Panel } from '@/ui/Panel';
 import { RecordBanner, RecordTabs, recordStyles as shell } from '@/ui/RecordTabs';
-import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE } from '@/ui/status';
+import { ASSIGNMENT_STATUS_DOT, ASSIGNMENT_STATUS_TONE, CASE_STATUS_DOT, CASE_STATUS_TONE } from '@/ui/status';
 import cards from '@/ui/cards.module.css';
 import filters from '@/ui/Filters.module.css';
 import list from '@/ui/list.module.css';
@@ -43,9 +43,11 @@ import styles from './DeleteRecords.module.css';
 /**
  * Delete records (Follow-up 8): the page for removing, for good, records the company no longer
  * needs — the System Administrator's, and since Follow-up 10 a Record deleter's, whom the
- * administrator gives the right. A port of the handover: the bad-tone banner, the six-kind tab strip with
- * its counts, the filter row, one table per kind with the server's verdict on every row, the phone
- * cards that carry their own action, the delete dialog, and Recently deleted.
+ * administrator gives the right. A port of the handover: the bad-tone banner, the tab strip of the
+ * kinds with their counts, the filter row, one table per kind with the server's verdict on every row,
+ * the phone cards that carry their own action, the delete dialog, and Recently deleted. Since
+ * Follow-up 19 (the backend's round 14) a seventh tab, Insurance cases, deletes a closed case on its
+ * own; an open one is Blocked until an event closes it.
  *
  * The server decides. Whether a row is Ready or Blocked, why, which running rentals are in the way,
  * and what a deletion would take along all come from the API (rounds 7 and 8; Follow-up 9); this page
@@ -69,7 +71,7 @@ interface KindTab {
   search: string;
 }
 
-/** The six kinds in the switch's order, with each one's search as the API reads it. */
+/** The kinds in the switch's order, with each one's search as the API reads it. */
 const KINDS: readonly KindTab[] = [
   { kind: RecordKind.RentalAssignment, slug: 'rental-assignments', label: 'Rental assignments', icon: 'assignment', count: 'rentalAssignments', search: 'Plate, VIN or customer name' },
   { kind: RecordKind.DriverAuthorization, slug: 'driver-authorizations', label: 'Driver authorizations', icon: 'key', count: 'driverAuthorizations', search: 'Driver, plate or customer name' },
@@ -78,6 +80,8 @@ const KINDS: readonly KindTab[] = [
   { kind: RecordKind.Vehicle, slug: 'vehicles', label: 'Vehicles', icon: 'directions_car', count: 'vehicles', search: 'Plate, VIN, make or model' },
   { kind: RecordKind.Customer, slug: 'customers', label: 'Customers', icon: 'contacts', count: 'customers', search: 'Name, identifier or email' },
   { kind: RecordKind.Driver, slug: 'drivers', label: 'Drivers', icon: 'badge', count: 'drivers', search: 'Name, licence number or email' },
+  // Round 14 (Follow-up 19): the navigation's icon for Insurance cases, and the cases list's own search.
+  { kind: RecordKind.InsuranceCase, slug: 'insurance-cases', label: 'Insurance cases', icon: 'shield', count: 'insuranceCases', search: 'Plate, damage, driver, insurer or claim' },
 ];
 
 /** Show's value in the URL for "Out of use"; without it the page shows Everything. */
@@ -182,6 +186,8 @@ interface Row {
   cells: ReactNode[];
   title: string;
   titleMono?: boolean;
+  /** The card's title takes the lines it needs instead of one cut line: a case's label (Follow-up 19). */
+  titleWraps?: boolean;
   sub: string;
   facts: Fact[];
   deletion: RecordDeletionInfo;
@@ -423,6 +429,49 @@ const DRIVERS: Spec<DriverDeletionCandidateResponse> = {
   },
 };
 
+/** "22 Sep": when a case was closed, in the list rows' dim mono. */
+const closedDay = (iso: string) => formatLocal(iso, 'dateShort');
+
+/**
+ * An insurance case (round 14, Follow-up 19): its label linked to the case, with its type and when it
+ * happened or was found under it; its status with the cases list's chip; when it was closed, or
+ * nothing while it is open. An open case is Blocked with a sentence and no record beside it: the row
+ * is the case, and it opens it.
+ */
+const CASES: Spec<InsuranceCaseDeletionCandidateResponse> = {
+  tableClass: styles.records ?? '',
+  columns: [
+    { label: 'Case', className: styles.wide ?? '' },
+    { label: 'Status', className: styles.cStatus ?? '' },
+    { label: 'Closed', className: styles.c118 ?? '' },
+    { label: 'Deletion', className: styles.c300 ?? '' },
+  ],
+  row: (c) => {
+    const open = `/insurance-cases/${c.id}`;
+    return {
+      id: c.id,
+      open,
+      cells: [
+        <span className={table.stack}>
+          <span className={table.wrap}>{name(c.recordLabel, open)}</span>
+          <span className={`${table.sub} ${table.oneLine}`}>{caseSub(c)}</span>
+        </span>,
+        <Chip tone={CASE_STATUS_TONE[c.status]} dot={CASE_STATUS_DOT[c.status]}>{CASE_STATUS_LABEL[c.status]}</Chip>,
+        c.closedAtUtc ? periodCell(closedDay(c.closedAtUtc)) : null,
+      ],
+      title: c.recordLabel,
+      // What is damaged tells two cases of one car apart, so the whole label shows, as on the cases list's card.
+      titleWraps: true,
+      sub: caseSub(c),
+      facts: [
+        { label: 'Status', value: CASE_STATUS_LABEL[c.status] },
+        ...(c.closedAtUtc ? [{ label: 'Closed', value: closedDay(c.closedAtUtc), mono: true }] : []),
+      ],
+      deletion: c.deletion,
+    };
+  },
+};
+
 /**
  * Each kind's spec. The page reads one kind's list at a time and its cache key carries the kind, so
  * the rows handed to a spec are always that spec's own; the one widening below says so once.
@@ -434,6 +483,7 @@ const SPECS: Record<DeletableKind, Spec<never>> = {
   [RecordKind.Vehicle]: VEHICLES,
   [RecordKind.Customer]: CUSTOMERS,
   [RecordKind.Driver]: DRIVERS,
+  [RecordKind.InsuranceCase]: CASES,
 };
 
 const rowOf = (kind: DeletableKind, value: AnyCandidate): Row =>
@@ -613,7 +663,10 @@ export function DeleteRecords() {
               <div key={row.id} className={cards.card}>
                 <div className={cards.head}>
                   <span className={cards.heading}>
-                    <Link to={row.open} className={`${cards.title} ${styles.cardTitle} ${row.titleMono ? cards.cardPlate : ''}`}>
+                    <Link
+                      to={row.open}
+                      className={`${cards.title} ${styles.cardTitle} ${row.titleMono ? cards.cardPlate : ''} ${row.titleWraps ? styles.cardTitleWraps : ''}`}
+                    >
                       {row.title}
                     </Link>
                     <span className={`${cards.sub} ${styles.cardSub}`}>{row.sub}</span>

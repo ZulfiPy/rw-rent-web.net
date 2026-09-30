@@ -78,6 +78,8 @@ describe('the lists', () => {
       [RecordKind.Vehicle]: 'vehicles',
       [RecordKind.Customer]: 'customers',
       [RecordKind.Driver]: 'drivers',
+      // Round 14 (Follow-up 19): an insurance case has a list of its own.
+      [RecordKind.InsuranceCase]: 'insurance-cases',
     });
   });
 });
@@ -93,8 +95,8 @@ describe('what a deletion makes stale (Follow-up 9)', () => {
     has(RecordKind.Customer, qk.customers.all, qk.assignments.all, qk.interruptions.all, qk.drivers.all);
     // A driver takes authorizations off rentals and clears a customer's link.
     has(RecordKind.Driver, qk.drivers.all, qk.customers.all, qk.assignments.all);
-    // Every kind the page deletes; an insurance case (round 12) is never one of them.
-    for (const kind of Object.values(RecordKind).filter((k): k is DeletableKind => k !== RecordKind.InsuranceCase)) {
+    // Every kind the page deletes, an insurance case among them since round 14 (Follow-up 19).
+    for (const kind of Object.values(RecordKind) as DeletableKind[]) {
       has(kind, qk.recordDeletions.all, qk.audit.all, qk.overview);
     }
   });

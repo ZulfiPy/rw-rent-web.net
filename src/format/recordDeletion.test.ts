@@ -119,8 +119,8 @@ describe('the dialog', () => {
   });
 
   test('every kind ends with the audit line; a vehicle, a customer and a driver say what they take along', () => {
-    // Every kind the page deletes; an insurance case (round 12) is never one of them.
-    for (const kind of Object.values(RecordKind).filter((k): k is DeletableKind => k !== RecordKind.InsuranceCase)) {
+    // Every kind the page deletes, an insurance case among them since round 14 (Follow-up 19).
+    for (const kind of Object.values(RecordKind) as DeletableKind[]) {
       expect(deletionConsequences(kind, takes(0, 0, 0)).at(-1)).toBe(AUDIT_CONSEQUENCE);
     }
     expect(deletionConsequences(RecordKind.Vehicle, vehicleWithRentals.deletion.takes)).toEqual([

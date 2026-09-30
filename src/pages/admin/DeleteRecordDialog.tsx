@@ -44,7 +44,8 @@ export function deletionFormBlocked(form: DeletionForm): string | null {
  * the overview, and that kind's ordinary queries, growing with what the deletion takes along
  * (§9, 5). A rental takes its parts with it and frees its vehicle; a vehicle or a customer takes
  * rentals with their authorizations and interruptions, which the drivers' histories list; a driver
- * takes authorizations off rentals and clears a customer's link.
+ * takes authorizations off rentals and clears a customer's link; an insurance case (round 14) takes
+ * its events, notes and photos and clears the links of the cases naming it.
  */
 export function deletionInvalidates(kind: DeletableKind): ReadonlyArray<readonly unknown[]> {
   const page = [qk.recordDeletions.all, qk.audit.all, qk.overview];
@@ -64,6 +65,10 @@ export function deletionInvalidates(kind: DeletableKind): ReadonlyArray<readonly
     case RecordKind.Driver:
       // Since round 12 a driver is cleared from their insurance cases (Follow-up 17).
       return [...page, qk.drivers.all, qk.customers.all, qk.assignments.all, qk.insuranceCases.all];
+    case RecordKind.InsuranceCase:
+      // Round 14 (Follow-up 19): the case leaves the cases list, its counts and the cases naming it,
+      // and the insurers' list counts the cases each insurer handles and the cases that name it.
+      return [...page, qk.insuranceCases.all, qk.insurers.all];
   }
 }
 

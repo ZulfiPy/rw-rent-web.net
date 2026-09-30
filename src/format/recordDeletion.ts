@@ -1,19 +1,22 @@
 import {
   AssignmentStatus, RecordDeletionBlockReason, RecordKind, type DeletableKind,
   type CustomerDeletionCandidateResponse, type DriverAuthorizationDeletionCandidateResponse,
-  type DriverDeletionCandidateResponse, type InterruptionDeletionCandidateResponse,
+  type DriverDeletionCandidateResponse, type InsuranceCaseDeletionCandidateResponse,
+  type InterruptionDeletionCandidateResponse,
   type RecordDeletionBlockResponse, type RecordDeletionReason, type RecordDeletionResponse,
   type RecordDeletionTakes, type RentalAssignmentDeletionCandidateResponse,
   type VehicleDeletionCandidateResponse,
 } from '@/api/dto';
 import { formatLocal } from './datetime';
+import { CASE_STATUS_LABEL, CASE_TYPE_LABEL, closedText } from './insurance';
 import {
   CUSTOMER_TYPE_LABEL, DELETION_REASON_LABEL, INTERRUPTION_REASON_LABEL, RECORD_KIND_LABEL,
 } from './labels';
 
 /**
- * The words of the Delete records page (Follow-up 8, Follow-up 9 for the backend's round 8, and
- * Follow-up 17 for its round 12: a vehicle's insurance cases and a driver's),
+ * The words of the Delete records page (Follow-up 8, Follow-up 9 for the backend's round 8,
+ * Follow-up 17 for its round 12: a vehicle's insurance cases and a driver's, and Follow-up 19 for its
+ * round 14: an insurance case deleted on its own, and the accident links a deletion clears),
  * from the handover's copy deck and the ledger's §9. The server decides whether a record is Ready
  * or Blocked, why, and what a deletion would take along; everything here only puts its answer into
  * sentences. Nothing here judges a record.
@@ -33,7 +36,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 /**
  * A record of each kind that is not out of use, in the words of the API's Show filter (round 7):
  * out of use is a cancelled or ended rental, a stopped authorization, an ended interruption, an
- * inactive vehicle, customer or driver.
+ * inactive vehicle, customer or driver, and since round 14 a closed insurance case.
  */
 const IN_USE: Record<DeletableKind, [one: string, many: string]> = {
   [RecordKind.RentalAssignment]: ['planned or active rental assignment', 'planned or active rental assignments'],
@@ -42,6 +45,7 @@ const IN_USE: Record<DeletableKind, [one: string, many: string]> = {
   [RecordKind.Vehicle]: ['active vehicle', 'active vehicles'],
   [RecordKind.Customer]: ['active customer', 'active customers'],
   [RecordKind.Driver]: ['active driver', 'active drivers'],
+  [RecordKind.InsuranceCase]: ['open insurance case', 'open insurance cases'],
 };
 
 /**
@@ -62,7 +66,8 @@ const referredNoun = (kind: RecordKind) => (kind === RecordKind.Customer ? 'cust
 /**
  * One block, worded for the row it blocks (§9, 2). The count comes from the server; the records in
  * the way, linked beside the sentence, are running rentals or, since round 12, a vehicle's open
- * insurance cases, in the API's own words for that reason.
+ * insurance cases, in the API's own words for that reason. An open case itself (round 14) names no
+ * record: the row is the case, and it opens it.
  */
 function blockClause(kind: RecordKind, block: RecordDeletionBlockResponse): string {
   switch (block.reason) {
@@ -82,6 +87,8 @@ function blockClause(kind: RecordKind, block: RecordDeletionBlockResponse): stri
       return block.count === 1
         ? 'one of its insurance cases is open. Close it first; then the vehicle can be deleted with its cases'
         : `${block.count} of its insurance cases are open. Close them first; then the vehicle can be deleted with its cases`;
+    case RecordDeletionBlockReason.InsuranceCaseIsOpen:
+      return 'this insurance case is open. Close it first; then it can be deleted';
     default:
       return '';
   }
@@ -98,17 +105,32 @@ export function blockSentence(kind: RecordKind, blocks: readonly RecordDeletionB
   return blocks.map((block) => blockClause(kind, block)).filter(Boolean).map(capital).join('. ');
 }
 
+/** "2 events, 1 note and 2 photos": the words joined, the last one with "and". */
+const listed = (bits: readonly string[]) => (bits.length > 1 ? `${bits.slice(0, -1).join(', ')} and ${bits.at(-1)}` : bits[0] ?? '');
+
+/** What goes with an insurance case deleted on its own (round 14), each only when not zero. */
+type CaseParts = Pick<RecordDeletionTakes, 'insuranceCaseEvents' | 'insuranceCaseNotes' | 'insuranceCasePhotos'>;
+
+function casePartsList(takes: CaseParts): string[] {
+  const bits: string[] = [];
+  if (takes.insuranceCaseEvents) bits.push(plural(takes.insuranceCaseEvents, 'event', 'events'));
+  if (takes.insuranceCaseNotes) bits.push(plural(takes.insuranceCaseNotes, 'note', 'notes'));
+  if (takes.insuranceCasePhotos) bits.push(plural(takes.insuranceCasePhotos, 'photo', 'photos'));
+  return bits;
+}
+
 /**
- * "2 rental assignments, 3 driver authorizations, 1 interruption and 2 insurance cases" — only the
- * counts that are not zero. An API before round 12 sends no insurance cases; they count as none.
+ * "2 rental assignments, 3 driver authorizations, 1 interruption and 2 insurance cases", or a case's
+ * "2 events, 1 note and 2 photos" — only the counts that are not zero. An API before round 12 sends
+ * no insurance cases, and one before round 14 no events, notes or photos; they count as none.
  */
-function recordsList(takes: Pick<RecordDeletionTakes, 'rentalAssignments' | 'driverAuthorizations' | 'interruptions' | 'insuranceCases'>): string {
+function recordsList(takes: Pick<RecordDeletionTakes, 'rentalAssignments' | 'driverAuthorizations' | 'interruptions' | 'insuranceCases'> & CaseParts): string {
   const bits: string[] = [];
   if (takes.rentalAssignments) bits.push(plural(takes.rentalAssignments, 'rental assignment', 'rental assignments'));
   if (takes.driverAuthorizations) bits.push(plural(takes.driverAuthorizations, 'driver authorization', 'driver authorizations'));
   if (takes.interruptions) bits.push(plural(takes.interruptions, 'interruption', 'interruptions'));
   if (takes.insuranceCases) bits.push(insuranceCases(takes.insuranceCases));
-  return bits.length > 1 ? `${bits.slice(0, -1).join(', ')} and ${bits.at(-1)}` : bits[0] ?? '';
+  return listed([...bits, ...casePartsList(takes)]);
 }
 
 const customerRecords = (n: number) => plural(n, 'customer record', 'customer records');
@@ -116,8 +138,9 @@ const insuranceCases = (n: number) => plural(n, 'insurance case', 'insurance cas
 
 /**
  * What a deletion takes along, from the server's `takes` (§9, 2): the records that go, then the
- * customer links it clears, each only when not zero, or that nothing else goes. Like the block
- * sentence, no full stop at the end.
+ * links it clears, each only when not zero, or that nothing else goes. Like the block sentence, no
+ * full stop at the end. A case's accident links (round 14) are cleared by a case's deletion and by
+ * a car's: the cases naming it, or naming one of the car's cases from another car.
  */
 export function takesSentence(takes: RecordDeletionTakes): string {
   const lines: string[] = [];
@@ -125,6 +148,7 @@ export function takesSentence(takes: RecordDeletionTakes): string {
   if (records) lines.push(`Takes ${records} with it`);
   if (takes.customerLinksCleared) lines.push(`Clears the driver link of ${customerRecords(takes.customerLinksCleared)}`);
   if (takes.insuranceCaseDriversCleared) lines.push(`Clears the driver of ${insuranceCases(takes.insuranceCaseDriversCleared)}`);
+  if (takes.accidentLinksCleared) lines.push(`Clears the accident link of ${insuranceCases(takes.accidentLinksCleared)}`);
   return lines.length ? lines.join('. ') : 'Nothing else goes with it';
 }
 
@@ -158,7 +182,8 @@ export type DeletionTarget =
   | { kind: typeof RecordKind.Interruption; value: InterruptionDeletionCandidateResponse }
   | { kind: typeof RecordKind.Vehicle; value: VehicleDeletionCandidateResponse }
   | { kind: typeof RecordKind.Customer; value: CustomerDeletionCandidateResponse }
-  | { kind: typeof RecordKind.Driver; value: DriverDeletionCandidateResponse };
+  | { kind: typeof RecordKind.Driver; value: DriverDeletionCandidateResponse }
+  | { kind: typeof RecordKind.InsuranceCase; value: InsuranceCaseDeletionCandidateResponse };
 
 /** The dialog's description line: the record, as a person recognises it, and where it stands. */
 export function candidateDescription(row: DeletionTarget): string {
@@ -191,6 +216,11 @@ export function candidateDescription(row: DeletionTarget): string {
     case RecordKind.Driver: {
       const d = row.value;
       return `${d.firstName} ${d.lastName} · ${d.driverLicenseNumber} · ${state(d.isActive)}`;
+    }
+    case RecordKind.InsuranceCase: {
+      // "Closed 12 Sep" once closed; an open case never reaches the dialog, but reads by its status.
+      const c = row.value;
+      return `${c.recordLabel} · ${CASE_TYPE_LABEL[c.type]} · ${c.closedAtUtc ? closedText(c.closedAtUtc) : CASE_STATUS_LABEL[c.status]}`;
     }
   }
 }
@@ -229,6 +259,28 @@ function casesLine(n: number): string {
     : `Its ${n} insurance cases, with their events, notes and photos, are removed with it.`;
 }
 
+/** The cases of other cars that named one of a deleted vehicle's cases as the same accident (round 14). */
+function otherCarsLinksLine(n: number): string {
+  return n === 1
+    ? 'The accident link of 1 insurance case of another car is cleared; that case stays.'
+    : `The accident links of ${n} insurance cases of other cars are cleared; those cases stay.`;
+}
+
+/** A case's own events, notes and photos (round 14): "Its 2 events, 1 note and 2 photos are removed with it." */
+function casePartsLine(takes: CaseParts): string | null {
+  const bits = casePartsList(takes);
+  if (!bits.length) return null;
+  const n = (takes.insuranceCaseEvents ?? 0) + (takes.insuranceCaseNotes ?? 0) + (takes.insuranceCasePhotos ?? 0);
+  return `Its ${listed(bits)} ${n === 1 ? 'is' : 'are'} removed with it.`;
+}
+
+/** The cases that named a deleted case as the same accident (round 14): they lose that link and stay. */
+function namingCasesLine(n: number): string {
+  return n === 1
+    ? 'The 1 insurance case that names it as the same accident loses that link and stays.'
+    : `The ${n} insurance cases that name it as the same accident lose that link and stay.`;
+}
+
 /**
  * What a deletion does, in the dialog's consequence box (§9, 4), built from the row's `takes` with
  * exact counts. Every kind ends with the audit line.
@@ -261,15 +313,18 @@ export function deletionConsequences(kind: DeletableKind, takes: RecordDeletionT
     case RecordKind.Customer: {
       // The record being deleted is one side of every rental it takes; only the other sides stay.
       const others = kind === RecordKind.Vehicle ? 'customers and drivers' : 'vehicles and drivers';
-      // A vehicle's insurance cases go with it (round 12); a customer has none.
+      // A vehicle's insurance cases go with it (round 12); a customer has none. Since round 14 the
+      // cases of other cars that name one of them lose that link.
       const cases = kind === RecordKind.Vehicle ? takes.insuranceCases ?? 0 : 0;
+      const links = kind === RecordKind.Vehicle ? takes.accidentLinksCleared ?? 0 : 0;
       return [
         `The ${noun} is removed permanently.`,
         ...(takes.rentalAssignments
           ? [rentalsLine(takes), `The ${others} of ${takes.rentalAssignments === 1 ? 'that rental' : 'those rentals'} stay as they are.`]
           : []),
         ...(cases ? [casesLine(cases)] : []),
-        ...(takes.rentalAssignments || cases ? [] : [NOTHING_ELSE]),
+        ...(links ? [otherCarsLinksLine(links)] : []),
+        ...(takes.rentalAssignments || cases || links ? [] : [NOTHING_ELSE]),
         AUDIT_CONSEQUENCE,
       ];
     }
@@ -297,6 +352,18 @@ export function deletionConsequences(kind: DeletableKind, takes: RecordDeletionT
       if (!a && !links && !cases) lines.push(NOTHING_ELSE);
       return [...lines, AUDIT_CONSEQUENCE];
     }
+    case RecordKind.InsuranceCase: {
+      // Round 14: a closed case goes with its events, notes and photos; the cases naming it stay.
+      const parts = casePartsLine(takes);
+      const links = takes.accidentLinksCleared ?? 0;
+      return [
+        'The insurance case is removed permanently.',
+        parts ?? NOTHING_ELSE,
+        'Its car, driver, insurers and every other case stay as they are.',
+        ...(links ? [namingCasesLine(links)] : []),
+        AUDIT_CONSEQUENCE,
+      ];
+    }
   }
 }
 
@@ -323,6 +390,9 @@ export function wentWith(done: RecordDeletionResponse): string | null {
     driverAuthorizations: done.deletedAuthorizationCount,
     interruptions: done.deletedInterruptionCount,
     insuranceCases: done.deletedInsuranceCaseCount ?? 0,
+    insuranceCaseEvents: done.deletedInsuranceCaseEventCount ?? 0,
+    insuranceCaseNotes: done.deletedInsuranceCaseNoteCount ?? 0,
+    insuranceCasePhotos: done.deletedInsuranceCasePhotoCount ?? 0,
   });
   if (records) lines.push(`${capital(records)} went with it.`);
   if (done.clearedCustomerLinkCount) {
@@ -330,6 +400,9 @@ export function wentWith(done: RecordDeletionResponse): string | null {
   }
   if (done.clearedInsuranceCaseDriverCount) {
     lines.push(`The driver of ${insuranceCases(done.clearedInsuranceCaseDriverCount)} was cleared.`);
+  }
+  if (done.clearedAccidentLinkCount) {
+    lines.push(`The accident link of ${insuranceCases(done.clearedAccidentLinkCount)} was cleared.`);
   }
   return lines.length ? lines.join(' ') : null;
 }

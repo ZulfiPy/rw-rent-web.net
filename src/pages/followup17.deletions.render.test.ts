@@ -88,14 +88,17 @@ describe('a vehicle with an open insurance case is Blocked with reason 8', () =>
     expect(takesSentence(practiceCarReady.deletion.takes)).toBe('Takes 1 insurance case with it');
   });
 
-  test('its refused deletion is worded by the API itself; a case is never offered as a kind to delete', () => {
+  test('its refused deletion is worded by the API itself; since round 14 a case is a kind of its own, the seventh tab (Follow-up 19)', () => {
     expect(deletionRefusal(practiceCarBlockedRefusal.code, practiceCarBlockedRefusal.detail)).toEqual({
       title: 'One of its insurance cases is open. Close it first; then the vehicle can be deleted with its cases.',
       detail: 'Refresh the list.',
     });
     const markup = list(RecordKind.Vehicle, 'vehicles', deletionVehicles.items);
-    expect(markup.match(/role="tab"/g)).toHaveLength(6);
-    expect(markup).not.toMatch(/role="tab"[^>]*>.*Insurance case/);
+    // Before Follow-up 19: six tabs, none of them Insurance cases.
+    expect(markup.match(/role="tab"/g)).toHaveLength(7);
+    // Last, with the navigation's shield; round 12's counts hold no insurance cases, so no count shows.
+    expect(markup).toMatch(/role="tab"[^>]*><span[^>]*>shield<\/span>Insurance cases<\/button><\/div>/);
+    // Round 12's refusal of the kind, as that API gave it; round 14 no longer sends it.
     expect(deleteCaseKindRefusal.detail).toBe('An insurance case is deleted only together with its vehicle.');
   });
 });

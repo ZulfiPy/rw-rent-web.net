@@ -3,7 +3,7 @@ import {
   RecordKind,
   type CustomerDeletionCandidateResponse, type DeletableKind, type DeleteRecordRequest,
   type DriverAuthorizationDeletionCandidateResponse, type DriverDeletionCandidateResponse,
-  type InterruptionDeletionCandidateResponse, type PagedQuery, type PagedResponse,
+  type InsuranceCaseDeletionCandidateResponse, type InterruptionDeletionCandidateResponse, type PagedQuery, type PagedResponse,
   type RecordDeletionCandidateCountsResponse, type RecordDeletionCandidatesQuery,
   type RecordDeletionCountsQuery, type RecordDeletionListItemResponse, type RecordDeletionResponse,
   type RentalAssignmentDeletionCandidateResponse, type VehicleDeletionCandidateResponse,
@@ -22,11 +22,12 @@ export interface CandidateByKind {
   [RecordKind.Vehicle]: VehicleDeletionCandidateResponse;
   [RecordKind.Customer]: CustomerDeletionCandidateResponse;
   [RecordKind.Driver]: DriverDeletionCandidateResponse;
+  [RecordKind.InsuranceCase]: InsuranceCaseDeletionCandidateResponse;
 }
 
 export type AnyCandidate = CandidateByKind[DeletableKind];
 
-/** The path segment of each kind's candidate list; an insurance case has none (round 12). */
+/** The path segment of each kind's candidate list; an insurance case's since round 14 (Follow-up 19). */
 export const CANDIDATE_PATH: Record<DeletableKind, string> = {
   [RecordKind.RentalAssignment]: 'rental-assignments',
   [RecordKind.DriverAuthorization]: 'driver-authorizations',
@@ -34,13 +35,17 @@ export const CANDIDATE_PATH: Record<DeletableKind, string> = {
   [RecordKind.Vehicle]: 'vehicles',
   [RecordKind.Customer]: 'customers',
   [RecordKind.Driver]: 'drivers',
+  [RecordKind.InsuranceCase]: 'insurance-cases',
 };
 
 /** One kind's candidates: newest created first, filtered by Show and searched as that kind's list is. */
 export const listCandidates = <K extends DeletableKind>(kind: K, query: RecordDeletionCandidatesQuery = {}) =>
   get<PagedResponse<CandidateByKind[K]>>(`/api/record-deletions/candidates/${CANDIDATE_PATH[kind]}`, query);
 
-/** The six totals under the filter, for the tab strip. The search does not narrow them. */
+/**
+ * The totals under the filter, for the tab strip: six, and since round 14 the insurance cases. The
+ * search does not narrow them.
+ */
 export const countCandidates = (query: RecordDeletionCountsQuery = {}) =>
   get<RecordDeletionCandidateCountsResponse>('/api/record-deletions/candidates/counts', query);
 

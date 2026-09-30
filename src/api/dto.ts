@@ -868,9 +868,9 @@ export interface OverviewSummaryResponse {
 /* record deletions (the backend's rounds 7 and 8) ----------------------- */
 
 /**
- * The kinds of record the Delete records page knows. The first six can be deleted; an insurance case
- * (round 12) appears only among the records that block a vehicle's deletion, and a deletion naming
- * it is refused: a case goes only with its vehicle.
+ * The kinds of record the Delete records page knows, each one a tab. An insurance case (round 12)
+ * first appeared only among the records that block a vehicle's deletion; since round 14 a closed
+ * case is deleted on its own too (Follow-up 19).
  */
 export const RecordKind = {
   RentalAssignment: 1,
@@ -883,8 +883,11 @@ export const RecordKind = {
 } as const;
 export type RecordKind = (typeof RecordKind)[keyof typeof RecordKind];
 
-/** The six kinds the page offers to delete: every kind but an insurance case. */
-export type DeletableKind = Exclude<RecordKind, typeof RecordKind.InsuranceCase>;
+/**
+ * The kinds the page offers to delete: every kind since round 14, an insurance case included
+ * (Follow-up 19). Before, it was every kind but that one.
+ */
+export type DeletableKind = RecordKind;
 
 export const RecordDeletionReason = {
   EnteredByMistake: 1,
@@ -914,6 +917,8 @@ export const RecordDeletionBlockReason = {
   DriverHoldsOnlyOpenAuthorizationOfRunningRental: 7,
   /** A vehicle one of whose insurance cases is open (round 12): it has to be closed first. */
   HasOpenInsuranceCase: 8,
+  /** An insurance case that is open (round 14): it has to be closed, by an event, first. */
+  InsuranceCaseIsOpen: 9,
 } as const;
 export type RecordDeletionBlockReason =
   (typeof RecordDeletionBlockReason)[keyof typeof RecordDeletionBlockReason];
@@ -959,6 +964,19 @@ export interface RecordDeletionTakes {
   insuranceCases?: number;
   /** The insurance cases whose driver a driver's deletion would clear; the cases stay (round 12). */
   insuranceCaseDriversCleared?: number;
+  /**
+   * An insurance case's own events, notes and photos, which go with it (round 14); 0 for every other
+   * kind. Absent from an API before round 14, and read as 0 then.
+   */
+  insuranceCaseEvents?: number;
+  insuranceCaseNotes?: number;
+  insuranceCasePhotos?: number;
+  /**
+   * The insurance cases that name the deleted one as the same accident and lose that link (round
+   * 14): for a case, the cases naming it; for a vehicle, the cases of other cars naming one of its
+   * cases. The cases stay.
+   */
+  accidentLinksCleared?: number;
 }
 
 export interface RecordDeletionInfo {
@@ -1067,6 +1085,27 @@ export interface DriverDeletionCandidateResponse {
   deletion: RecordDeletionInfo;
 }
 
+/**
+ * An insurance case on the deletions page (round 14): Ready once Closed, Blocked with reason 9 while
+ * open. Projected from the cases list's own rows, so `closedAtUtc` is the time the cases list shows.
+ */
+export interface InsuranceCaseDeletionCandidateResponse {
+  id: Uuid;
+  /** "<plate> · <what is damaged>", as every surface names a case. */
+  recordLabel: string;
+  vehicleId: Uuid;
+  vehiclePlateNumber: string;
+  type: InsuranceCaseType;
+  damage: string;
+  status: InsuranceCaseStatus;
+  happenedAtUtc: Instant;
+  /** The time is when the damage was found, not when it happened. */
+  timeIsWhenFound: boolean;
+  /** Null while the case is open. */
+  closedAtUtc?: Instant | null;
+  deletion: RecordDeletionInfo;
+}
+
 /** Newest created first, then id; SortBy and SortDirection are ignored. */
 export type RecordDeletionCandidatesQuery = PagedQuery & { Show?: RecordDeletionShow }
 
@@ -1080,6 +1119,8 @@ export interface RecordDeletionCandidateCountsResponse {
   vehicles: number;
   customers: number;
   drivers: number;
+  /** Round 14; absent from an API before it, and the tab then shows no count. */
+  insuranceCases?: number;
 }
 
 /** One deletion that was made, newest first; Search, SortBy and SortDirection are ignored. */
@@ -1126,6 +1167,15 @@ export interface RecordDeletionResponse {
   deletedInsuranceCaseCount?: number;
   /** The insurance cases whose driver a deleted driver was; 0 otherwise (round 12). */
   clearedInsuranceCaseDriverCount?: number;
+  /**
+   * The events, notes and photos that went with an insurance case deleted on its own; 0 otherwise
+   * (round 14). Absent from an API before round 14, and read as 0 then.
+   */
+  deletedInsuranceCaseEventCount?: number;
+  deletedInsuranceCaseNoteCount?: number;
+  deletedInsuranceCasePhotoCount?: number;
+  /** The insurance cases that lost their accident link, by a case's deletion or a car's (round 14). */
+  clearedAccidentLinkCount?: number;
 }
 
 /* tasks (the backend's round 10) ----------------------------------------- */

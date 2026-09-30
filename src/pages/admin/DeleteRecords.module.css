@@ -1,6 +1,7 @@
-/* The Delete records page (Follow-up 8): the handover's six column sets, its blocker links, the
-   phone card that carries its own action, and the confirmation line. Every value is a design token
-   the app already uses; the list, table and card vocabularies come from `src/ui`. */
+/* The Delete records page (Follow-up 8): the handover's six column sets and, since Follow-up 19,
+   the insurance cases', its blocker links, the phone card that carries its own action, and the
+   confirmation line. Every value is a design token the app already uses; the list, table and card
+   vocabularies come from `src/ui`. */
 
 /* Each kind's table holds its own min-width from 1024 up, all under the collapsed-rail width, so
    nothing pans. */
@@ -24,6 +25,9 @@
 .c220 { width: 220px; }
 .c254 { width: 254px; }
 .c300 { width: 300px; }
+/* An insurance case's status (Follow-up 19), as wide as the cases list's: its widest chip, Under
+   review, whole at every band. */
+.cStatus { width: 132px; }
 /* The row's Delete… keeps its whole label at every band. */
 .actions { width: 118px; }
 
@@ -46,6 +50,7 @@
   .c220 { width: 156px; }
   .c254 { width: 180px; }
   .c300 { width: 213px; }
+  .cStatus { width: 120px; }
 }
 
 /* The records that stand in the way, under a Blocked chip's reason: quiet underlined links. */
@@ -71,6 +76,9 @@
   text-overflow: ellipsis;
 }
 .cardTitle:hover { color: var(--fg); text-decoration: none; border-bottom-color: currentColor; }
+/* An insurance case's card (Follow-up 19): its label on as many lines as it needs, as the cases
+   list's card has it, since what is damaged is what tells two cases of one car apart. */
+.cardTitleWraps { white-space: normal; overflow-wrap: anywhere; text-wrap: pretty; }
 .cardSub { white-space: nowrap; }
 .cardReason { margin: 0; font-size: 12px; line-height: 1.45; color: var(--warn); text-wrap: pretty; }
 /* What a deletion takes along (Follow-up 9): the quiet line under the verdict on a card. */
