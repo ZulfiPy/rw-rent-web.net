@@ -21,6 +21,9 @@
 >   seeded twice (§4.1), and this run's Vite on 5176 against it.
 > - **For the owner's reviewer: §5 lists the steps that need the seed password typed into the app, on
 >   5176 against 5003.**
+>
+> **F18-4, added 2026-09-30, is §10:** the look-alikes no longer count the trade's common words. The
+> totals in §1 to §9 are Follow-up 18's; after F18-4 the suite holds 710 tests (§10.3).
 
 ## 1. Summary
 
@@ -151,8 +154,8 @@
     Phone is optional, at most 30.
   - From two letters on, "Already on the list, and looks alike" lists the insurers that look alike
     above the buttons. An insurer looks alike when its name holds what is typed, when what is typed
-    holds a word of four letters or more of its name, or when what is typed, without spaces, is its
-    name's initials. Letter case, accents and runs of spaces are ignored. An edited insurer is not a
+    holds a word of four letters or more of its name (since F18-4, not a common word of the trade;
+    §10), or when what is typed, without spaces, is its name's initials. Letter case, accents and runs of spaces are ignored. An edited insurer is not a
     look-alike of itself.
   - Edit sends the insurer's token.
 - **Dialogs over dialogs** (`src/ui/Dialog.tsx`). When more than one modal is open, Esc now closes
@@ -672,3 +675,110 @@ On `feature/backend-wiring`, after `fce8f03`, in this order:
    3 files (under `src/`): `pages/followup18.dialogs.render.test.ts`; `pages/insurance/CaseDialogs.tsx`; `pages/insurance/InsurerDialogs.tsx`.
 
 8. **This report's commit**, `Wiring 46`: `Context/wiring_report.md`, rewritten.
+
+## 10. F18-4: the look-alikes skip the trade's common words
+
+> F18-4 in `Context/wiring_followups.md` §18, the reviewer's finding authorised by the owner on
+> 2026-09-30. Built on `c90642d`, written 2026-09-30. Frontend only.
+
+### 10.1 What changed (`src/format/insurers.ts`)
+
+- `looksAlike` has three rules. Only the second changed: what is typed holding a word of four letters
+  or more of the insurer's name. That word no longer counts when it is one of the trade's common
+  words: insurance, insurer, assurance, reinsurance, kindlustus, kindlustuse, apdrošināšana,
+  apdrošināšanas, draudimas, draudimo, vakuutus, forsikring, försäkring, versicherung, mutual, group,
+  company, limited, holding and GmbH. The shorter forms, AS, SE, OÜ, SIA, UAB and P&C, are under the
+  four letters already.
+- The list is `COMMON_WORDS`, written as F18-4 spells it. The rule compares it through `insurerKey`,
+  as it compares the name's words, so letter case and accents are ignored: "Apdrošināšana" is
+  "apdrosinasana" and "GmbH" is "gmbh".
+- The first rule, the name holding what is typed, and the third, the initials, did not change.
+  "Insurance" typed alone still lists every "… Insurance", "BM" still shows Baltic Mutual and "MI"
+  still shows Meridian Insurance.
+- The case picker's Add insurer window and the Insurers page's Add insurer and Edit insurer windows
+  all call `lookAlikes`, which calls `looksAlike`, so the three changed together. No other file
+  changed.
+
+With the seed's list, typing "Newco Insurance" showed Meridian Insurance, Northgate Insurance and Old
+Harbour Insurance; it now shows none. On the reviewer's ten names:
+
+| Typed | Before | After |
+|---|---|---|
+| Newco Insurance | 7 | none |
+| Baltic Mutual Insurance | 8 | Baltic Mutual, BTA Baltic Insurance Company |
+| Meridian Insurance AS | 7 | Meridian Insurance |
+| Pilot Insurance Group | 7 | Pilot Insurance Group |
+| Salva Kindlustus | 2 | Salva Kindlustuse AS |
+| Gjensidige Insurance Group | 7 | none |
+| BM, Baltic, ERGO | 1, 2, 1 | unchanged |
+
+### 10.2 The tests
+
+Six new tests:
+
+- `src/format/insurers.test.ts`, "the common words of insurers' names (F18-4)", 4 tests:
+  - the reviewer's ten names, each typed name with the exact insurers it shows;
+  - the other two rules unchanged: "BM", "Baltic", "ERGO", "insurance", "Kindlustus", "MI" and "LK";
+  - each of the 20 common words, with its accents and without, in capitals and not, on either side,
+    skipped; and a word that is not common, such as "Lietuvos" or "Allianz", still counting beside one;
+  - the seed's list and the practice copy's five names: "Newco Insurance" looks like none of them.
+- `src/pages/followup18.dialogs.render.test.ts`, "the common words of insurers' names in the three
+  windows (F18-4)", 2 tests, each with the seed's list:
+  - the case picker's Add insurer window, opened with "Newco Insurance" typed, shows no look-alike;
+    with "Harbour Insurance" it shows Old Harbour Insurance and neither Meridian nor Northgate;
+  - the Insurers page's Add insurer and Edit insurer windows with "Newco Insurance", and Add insurer
+    with "NEWCO INSURANCE GROUP", show none.
+
+Five existing tests changed on purpose:
+
+1. `format/insurers.test.ts`, "what is typed holds a word of four letters or more of its name":
+   "Baltic Mutual Insurance AS" showed all four seed insurers; it now shows Baltic Mutual only.
+2. `format/insurers.test.ts`, "from two letters on, and never for a name that matches none of the
+   three": "Pilot Insurance AS" showed 3 insurers; it now shows none.
+3. `format/insurers.test.ts`, "the list's look-alikes in its order, an edited insurer not its own":
+   "Meridian Insurance", editing Meridian, showed Northgate Insurance and Old Harbour Insurance; it now
+   shows none. So that an edited insurer not being its own look-alike is still tested, "Meridian
+   Northgate" now shows Northgate Insurance alone while Meridian is edited, and both otherwise.
+4. `followup18.dialogs.render.test.ts`, "Add insurer: Name required, Email and Phone optional, the
+   look-alikes only shown": "Meridian Insurance Group" showed Meridian Insurance and Northgate
+   Insurance; it now shows Meridian Insurance, and the test checks Northgate is absent.
+5. `followup18.dialogs.render.test.ts`, "Edit insurer: the insurer as the list read it, its own name
+   not a look-alike of itself": Edit insurer on Meridian Insurance showed Northgate Insurance; it now
+   shows no look-alike at all. A second render with the name changed to "Meridian Northgate" shows
+   Northgate Insurance and not Meridian.
+
+No test was deleted or skipped. 704 → **710** tests in 63 files.
+
+### 10.3 Verification
+
+- `npm run typecheck` clean; `npm test` **710 passed in 63 files**; the build green, written to a
+  scratch folder, with the same chunk-size warning as before.
+- **The planted breakages: 4 planted, 4 caught.** As in Follow-up 18, each was made in a copy outside
+  the worktree, taken fresh from it after the fix, and the whole suite ran there each time.
+
+  | | Breakage | Tests failed |
+  |---|---|---|
+  | B1 | the word rule stops skipping the common words | 10 in 2 files: the five tests changed on purpose, and five of the six new ones: the reviewer's names, the 20 words, the seed's and the practice copy's lists, and both tests of the three windows |
+  | B2 | the common words kept with their accents and capitals, not passed through `insurerKey` | 1: the 20 words |
+  | B3 | the common words dropped before the initials are taken | 3: "BM" no longer shows Baltic Mutual, since "Mutual" is common, nor "MI" Meridian Insurance |
+  | B4 | the common words dropped from what is typed instead of from the name | 2: "Insurance" typed alone shows nothing |
+
+  B1 is the breakage F18-4 asks for. B2 to B4 are the likely wrong ways of building it.
+- **No live look.** Nothing on any page moves; what the three windows show is proved by rendering
+  them with the seed's list. This run started no Vite, did not use 5003, and opened no browser.
+- **The practice copy.** F18-4 asks the reviewer to add "Newco Insurance" on 5174 and see Meridian
+  Insurance and Northgate Insurance before the fix and none after it. That step is left to the
+  reviewer, since this run never opens 5174. The practice app reloads from this worktree, so it has
+  shown the fix since `986a494` was saved. The "before" can no longer be seen there; the tests and B1
+  show it instead.
+- **The owner's side was untouched.** This run did not open 5173 or 5174, did not call 5001 or 5002,
+  and did not read or write `rwrent_v1` or `rwrent_check`. Both of the owner's apps reloaded the one
+  change to `src/format/insurers.ts`, which adds no import.
+
+### 10.4 Commits
+
+On `feature/backend-wiring`, after `c90642d`:
+
+1. **`986a494`** Wiring 47: The look-alikes of the Add insurer and Edit insurer windows no longer count the trade's common words, so "Newco Insurance" does not show every insurer named "… Insurance".
+   3 files (under `src/`): `format/insurers.ts`; `format/insurers.test.ts`; `pages/followup18.dialogs.render.test.ts`.
+2. **This section's commit**, `Wiring 48`: `Context/wiring_report.md`.
