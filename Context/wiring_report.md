@@ -479,6 +479,7 @@ hot-reload the worktree. The whole suite ran there, 742 tests, and the file was 
     - Scroll the list: the insurers pass under it.
     - With the arrows, go to the last insurer: it stands above the foot, whole. One more ArrowDown
       reaches Add an insurer, and Enter opens the Add insurer window with what was typed.
+    - Do the same in Safari on the Mac, with the keyboard (§8, item 6).
     - Cancel both windows.
 
 ### 5.2 On the tablet and the phone
@@ -491,8 +492,9 @@ hot-reload the worktree. The whole suite ran there, 742 tests, and the file was 
      the card does nothing.
    - A closed case's card gives Status and Closed.
    - Recently deleted's cards name "Insurance case · …".
-3. **At 402 px, the picker** with those six insurers: Add an insurer stays at the foot, and a 44 px
-   line reached with the arrows stops above it.
+3. **On the iPhone, the picker** with those six insurers: Add an insurer stands at the foot as the
+   list opens, and stays there while a finger scrolls the insurers under it. A tap on it opens the
+   Add insurer window.
 
 ## 6. Decisions
 
@@ -557,6 +559,14 @@ None from §19.
 5. **What the suite does not hold:** where the list's foot and the arrows' line stand as the list
    scrolls. The rules that place them are tested; the browser measured the result (§4.3), and §5.1
    step 12 asks the reviewer to look signed in.
+6. **Safari was not measured.** The built-in browser pane is Chromium; the owner's Mac, iPad and
+   iPhone use Safari.
+   - The foot stays in view by `position: sticky`, which Safari has long supported.
+   - The arrows' line stops above the foot because `scrollIntoView` honours the list's
+     `scroll-padding-bottom`. Safari's support for that is newer.
+   - On a Safari that does not honour it, the foot still stays in view, and only a line reached with
+     the arrows could stop under it until the next key. On a phone or tablet the arrows are not used.
+   - §5.1 step 12 asks for a look in Safari with the keyboard.
 
 ## 9. Commits
 
@@ -574,4 +584,4 @@ On `feature/backend-wiring`, after `302fb5e`, in this order:
 4. **`6e66bf4`** Wiring 49: The audit entry's test reads each panel on its own, so an event shown without its photo is caught although the raw payload below still names it.
    1 file: `src/pages/followup19.audit.render.test.ts`.
 
-5. **This report's commit**, `Wiring 50`: `Context/wiring_report.md`, rewritten.
+5. **This report's commits**, `Wiring 50`: `Context/wiring_report.md`, rewritten, then its Safari note and the reviewer's Safari and touch steps.
