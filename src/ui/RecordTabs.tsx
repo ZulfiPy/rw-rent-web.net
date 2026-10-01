@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import styles from './record.module.css';
+import { tabStrip, type Fade, type TabStrip } from './tabStrip';
 
 export interface RecordTab<T extends string> {
   id: T;
@@ -8,13 +9,11 @@ export interface RecordTab<T extends string> {
   count?: number | undefined;
 }
 
-type Fade = 'none' | 'start' | 'end' | 'both';
-
 /**
  * The record tab strip. The selected tab lives in the URL, so a deep link opens the same view.
  * On the phone tier the strip is wider than the screen: it scrolls with no scrollbar, the active
- * tab is always brought fully into view, and the clipped edge fades so what is cut off reads as
- * more rather than as the end of the strip.
+ * tab is always brought fully into view, also once its counts have widened the tabs, and the clipped
+ * edge fades so what is cut off reads as more rather than as the end of the strip.
  */
 export function RecordTabs<T extends string>({ tabs, active, onSelect, compact }: {
   tabs: Array<RecordTab<T>>;
@@ -28,57 +27,30 @@ export function RecordTabs<T extends string>({ tabs, active, onSelect, compact }
   compact?: boolean;
 }) {
   const strip = useRef<HTMLDivElement>(null);
+  const control = useRef<TabStrip | null>(null);
   const opened = useRef(false);
   const [fade, setFade] = useState<Fade>('none');
 
-  const syncFade = useCallback(() => {
-    const el = strip.current;
-    if (!el) return;
-    const start = el.scrollLeft > 1;
-    const end = el.scrollWidth - el.clientWidth - el.scrollLeft > 1;
-    setFade(start && end ? 'both' : start ? 'start' : end ? 'end' : 'none');
-  }, []);
-
-  // The active tab, whole: the first paint of a deep link lands on it without a slide, a later
-  // change slides. Measured against the strip's own box, which `offsetLeft` would not give us.
+  // What the strip does in the browser (`tabStrip`): the active tab whole, the cut edge faded. It starts
+  // before the first seat below, which effects of one component run in the order they are written.
   useLayoutEffect(() => {
     const el = strip.current;
-    const tab = el?.querySelector<HTMLElement>('[aria-selected="true"]');
-    if (el && tab) {
-      const pad = 22;
-      const box = el.getBoundingClientRect();
-      const seat = tab.getBoundingClientRect();
-      const delta = seat.left < box.left + pad
-        ? seat.left - box.left - pad
-        : seat.right > box.right - pad
-          ? seat.right - box.right + pad
-          : 0;
-      if (delta) {
-        const next = Math.max(0, Math.min(el.scrollLeft + delta, el.scrollWidth - el.clientWidth));
-        if (typeof el.scrollTo === 'function') {
-          el.scrollTo({ left: next, behavior: opened.current ? 'smooth' : 'auto' });
-        } else {
-          el.scrollLeft = next;
-        }
-      }
-    }
-    opened.current = true;
-    syncFade();
-  }, [active, tabs.length, syncFade]);
-
-  useEffect(() => {
-    const el = strip.current;
     if (!el) return;
-    el.addEventListener('scroll', syncFade, { passive: true });
-    window.addEventListener('resize', syncFade);
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncFade);
-    observer?.observe(el);
+    const started = tabStrip(el, setFade);
+    control.current = started;
     return () => {
-      el.removeEventListener('scroll', syncFade);
-      window.removeEventListener('resize', syncFade);
-      observer?.disconnect();
+      started.stop();
+      control.current = null;
     };
-  }, [syncFade]);
+  }, []);
+
+  // The active tab, whole: the first paint of a deep link lands on it without a slide, a later change
+  // slides. When the tabs change width afterwards, their counts arriving among them, `tabStrip` seats
+  // it again without a slide, unless the person has scrolled the strip (Follow-up 20, F20-2).
+  useLayoutEffect(() => {
+    control.current?.seat(opened.current);
+    opened.current = true;
+  }, [active, tabs.length]);
 
   return (
     <div ref={strip} className={styles.tabs} role="tablist" data-fade={fade} data-compact={compact ? 'true' : undefined}>
