@@ -50,6 +50,11 @@
   border: none;
   cursor: pointer;
 }
+/* On the phone the chosen driver, or "Search active drivers", is the field's text, 16px as every
+   field's is there (Follow-up 20, F20-1). */
+@media (max-width: 767px) {
+  .searchValue { font-size: 16px; }
+}
 .add {
   display: flex;
   align-items: center;

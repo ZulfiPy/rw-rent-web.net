@@ -15,6 +15,16 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-2); text-decoration: underline; }
 button { font-family: inherit; font-size: inherit; line-height: inherit; cursor: pointer; margin: 0; }
 input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+/* On the phone tier every field a person types into or picks from draws its text at 16px: Safari on
+   an iPhone zooms the whole page in when a field under 16px is tapped, and leaves it zoomed
+   (Follow-up 20, F20-1). The rule names the fields by kind, so a field added later has it too. It is
+   `!important` because each module's own class sets its field's size and would otherwise win, as the
+   reduced-motion rule below must win. Checkboxes, radios and the photo picker are not typed into;
+   labels, hints and buttons keep their sizes, and from 768 up nothing changes. A select drawn
+   transparent over its own shown value is a field too: that value is set to 16px in its module. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea { font-size: 16px !important; }
+}
 table { border-collapse: collapse; }
 *:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 
