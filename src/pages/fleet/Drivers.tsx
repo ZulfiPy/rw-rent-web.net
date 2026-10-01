@@ -89,7 +89,7 @@ export function Drivers() {
         <div className={filters.toolbar}>
           <SearchInput
             value={search}
-            placeholder="First name, last name or email"
+            placeholder="Name, licence number or email"
             maxLength={50}
             onChange={(next) => patch({ search: next })}
           />
