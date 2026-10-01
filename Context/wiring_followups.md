@@ -1177,8 +1177,31 @@ should say so, is the owner's to raise; nothing is built for it now.
 
 ## 19. Follow-up 19 — the owner's look at Insurance cases on the practice copy: the tablet and the phone
 
-> **Status: SPECIFIED 2026-09-30, two items (F19-1, F19-2); the owner sends it to the agent.** The
-> owner looked at Insurance cases on the practice copy
+> **Status: IMPLEMENTED 2026-10-01, verified the same day** (app `e3a3ccb`, `3bc73ad`, `9112e69`,
+> `6e66bf4` Wiring 49 and `2512305`, `1bb583e` Wiring 50, on `feature/backend-wiring`, pushed and level
+> with GitHub, then fast-forwarded into `main`; report `Context/wiring_report.md`). The owner sent the
+> prompt to the agent themselves. On the pushed state the reviewer ran typecheck (clean), 742 tests in
+> 67 files (green) and the build, read the change, and planted two breakages in a copy outside the
+> worktree, each caught: an open case's sentence left out (3 tests) and Add an insurer no longer held
+> at the foot (1 test). F19-1 on the practice copy, by the reviewer's own measurement of the defect
+> (`f19-picker.js`, unchanged, as Dita on 5174 with every write blocked, six insurers): Add an insurer
+> inside the open list and in view at 402, 834, 1194 and 1512 px, in Register case and Edit case, the
+> last insurer passing under it. F19-2 signed in as the administrator on a Vite of the reviewer's own
+> on 5176 over round 14's API on 5003, 19 checks: seven tabs, Insurance cases last with 13; its search
+> words; Out of use the four closed cases, all Ready; the practice case's row (its label linked, "Usual ·
+> Happened 28 Sep", Closed, 30 Sep, Ready, "Takes 2 events, 1 note and 2 photos with it. Clears the
+> accident link of 1 insurance case"); 204 JLM Blocked with the sentence, nothing linked, Delete inert;
+> the window's line and five consequences; the case deleted through it, the confirmation line with its
+> counts, the tab at 12, Recently deleted naming it first; the audit entry "Insurance case · Deleted"
+> with Deleted events, notes, photos and Cleared accident links; P19 26C's row, window ("The accident
+> link of 1 insurance case of another car is cleared; that case stays.") and deletion with its
+> confirmation; at 402 px the cards with whole titles and the sentence, nothing scrolling sideways;
+> Signe's Event type filter offering "Insurance case · Deleted"; no page error and no request to 5001,
+> 5002, 5173 or 5174. Not measured: Safari, since only Chromium is installed for the reviewer's
+> browser; the foot holds by `position: sticky`, which Safari supports, and only the arrows' line rests
+> on `scroll-padding-bottom`. Seen, for the small fixes before going live: opened straight on its
+> address, the last tab of the strip stands partly past the strip's edge on the phone (the report's §8
+> item 4; Drivers did the same before). The owner looked at Insurance cases on the practice copy
 > (5174 over round 13 on 5002, signed in as Dita) at the sizes of the Tasks review (§14): the iPad Pro
 > 11 upright (834 px, the tablet band 768–1023), the iPad Pro 11 sideways (1194 px, the desktop) and
 > the iPhone 16 Pro (402 px, the phone). What to look at: the cases list, its three tabs Open, Waiting
