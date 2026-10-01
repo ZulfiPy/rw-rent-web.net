@@ -132,7 +132,9 @@ describe('F20-2: the active tab whole once its counts arrive', () => {
     strip.scrolled();
     strip.resize(counted(BEFORE));
     const seat = strip.seatOfActive();
-    expect(seat.right).toBe(LEFT + WIDTH - SEAT_PAD);
+    // The room is the strip's 22px, read here as a number, not from the module that keeps it.
+    expect(SEAT_PAD).toBe(22);
+    expect(seat.right).toBe(LEFT + WIDTH - 22);
     expect(strip.scrollTo.mock.calls.map(([options]) => options.behavior)).toEqual(['auto', 'auto']);
   });
 
