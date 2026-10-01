@@ -1,587 +1,376 @@
-# Frontend Wiring: Follow-up 19, the app's half of round 14
+# Frontend Wiring: Follow-up 20, the small fixes before going live, the app's half
 
-> Follow-up 19 (`Context/wiring_followups.md` §19): Add an insurer always in view at the foot of a
-> case's insurer picker (F19-1), and the insurance cases on the Delete records page (F19-2), built on
-> the backend's round 14 (`RWRentApi-wiring/Context/round14_report.md` §5, the contract). Frontend
-> only; the backend was not changed and not rebuilt, only run from its round 14 Release build. On
-> `feature/backend-wiring` in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the
-> reviewer fast-forwards `main` after verification. Written 2026-09-30. It replaces Follow-up 18's
-> report, which git history keeps.
+> Follow-up 20 (`Context/wiring_followups.md` §20): every field at 16 px on a phone (F20-1), the tab
+> strip's active tab whole once its counts arrive (F20-2), and the drivers list's search naming the
+> licence number (F20-3), after the backend's round 15 (`RWRentApi-wiring/Context/round15_report.md`
+> §5). Frontend only: nothing in `RWRentApi-wiring` was changed or rebuilt. On `feature/backend-wiring`
+> in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main`
+> after verification. Written 2026-10-01. It replaces Follow-up 19's report, which git history keeps.
 >
-> **The owner's side was never touched.** This run never opened 5173 or 5174, never signed in
-> anywhere, never called 5001 or 5002, never read or wrote `rwrent_v1` or `rwrent_check`, and never
-> read Mailpit.
+> **The owner's side was never touched.** This run never opened 5173 or 5174, never called 5001 or
+> 5002, and never read or wrote `rwrent_v1` or `rwrent_check`.
 >
-> - Both of the owner's apps hot-reload from this worktree, so they showed this run's code as it was
->   written (§8, item 1).
-> - **Their APIs are older than round 14.** The owner's API on 5001 answers round 11 and the practice
->   API on 5002 round 13. Until the reviewer upgrades them, the new Insurance cases tab on the Delete
->   records page shows no count, and its list shows its error, "The records could not be loaded" with
->   "Not Found" and Retry (§8, item 2). Everything else on that page works as before.
-> - Every live check used this run's own stack: round 14's API on 5003 over `rwrent_r14`, re-created
->   and seeded twice (§4.1), and this run's Vite on 5176 against it.
-> - **For the owner's reviewer: §5 lists the signed-in steps, on 5176 against 5003.**
+> - Both of the owner's apps hot-reload from this worktree, so they show this run's code (§8, item 1).
+> - Every live look used this run's own stack: round 15's API on 5003, left running by round 15, and
+>   this run's Vite on 5176 against it, besides a harness of the real pages on 5175 (§4.1).
+> - **For the owner's reviewer: §5 lists the signed-in steps, on 5176 against 5003, with a phone step
+>   for F20-1 and for F20-2.**
 
 ## 1. Summary
 
-- **F19-1, Add an insurer always in view.** The open picker's list still scrolls within 244 px, but
-  Add an insurer now stays at its foot, over an opaque ground, whatever the list's length. Only Not
-  chosen and the insurers scroll above it, and the line the arrows reach always comes into view above
-  the foot, not under it. It is still the list's last option, reached last with the keyboard, and it
-  opens the Add insurer window as before.
-  - Measured with twelve insurers at 1512 px: without the fix, Add an insurer lay 202 px below the
-    list's bottom edge. Now it sits on that edge, and each of the twelve insurers reached with the
-    arrows stood clear above it. The same held at 402 px, where a line is 44 px.
-- **F19-2, insurance cases on the Delete records page.**
-  - **A seventh tab, Insurance cases**, last, with the navigation's shield and its count. Its search
-    reads "Plate, damage, driver, insurer or claim". Out of use lists the closed cases, and its empty
-    list names the open insurance cases under Everything.
-  - **Each case** shows its label linked to the case, with its type and when it happened or was found
-    under it; its status with the cases list's chip; when it was closed, or nothing while it is open;
-    and the Deletion cell. On the phone it is a card titled with the label.
-  - **An open case** is Blocked with "This insurance case is open. Close it first; then it can be
-    deleted", with nothing linked beside it, and its Delete does nothing.
-  - **What a deletion takes**, each only when not zero: "Takes 2 events, 1 note and 2 photos with it"
-    and "Clears the accident link of 1 insurance case".
-  - **The delete window** has its description line, its consequences with the numbers, the audit line
-    and the tick's hint. After the deletion, the confirmation line gives the answer's counts.
-  - **A car's** row, window and confirmation line also say, when not zero, how many cases of other
-    cars lose their accident link.
-  - **The security audit** names the event "Insurance case · Deleted" and its entity Insurance case,
-    and reads the copy as it reads a car's cases: the case's facts, its photos, its events with theirs,
-    its notes, and the cases that lost their link.
+- **F20-1, a field's text is 16 px on a phone.** Below 768 px every text field, select and text area
+  of the app draws its text at 16 px, so Safari on an iPhone has no reason to zoom the page when one
+  is tapped. That is one rule in the base stylesheet, naming the fields by kind, so a field added later
+  has it too.
+  - The filters, the page size and the driver pick show their value in a span over a transparent
+    select; those values are 16 px on the phone too, and their labels keep their sizes.
+  - Checkboxes, radios and the photo picker are not typed into and keep their sizes, as do labels,
+    hints and buttons. From 768 px up nothing changes.
+  - Measured at 402 px: the 19 fields of the insurance cases list with its Register case form open are
+    all 16 px; at 768 px and above they keep their old 12.5 to 14 px. The sign-in page's two fields on
+    5176 grew from 40 to 43 px tall, which is what the larger text needs.
+- **F20-2, the active tab whole once its counts arrive.** Whenever the tabs change width, the strip
+  brings the active tab whole into view again, without a slide, unless the person has already scrolled
+  it. Every page with the strip gains it, since they all draw the one component.
+  - Measured at 402 px on Delete records opened straight on Insurance cases, its counts held back 6
+    seconds: before, the tab stood 127 px past the strip's edge once the counts arrived. Now, in the
+    very frame they arrived, the strip moved from 644 to 776 without a slide, and the tab stands whole.
+  - Scrolled by the person before the counts arrive, the strip stays where they put it.
+  - A click on another tab still slides to it, and the bold that widens the chosen tab in that frame
+    does not cut the slide short.
+  - Repeated on the final code, where the page's font also narrowed the tabs after the first seat: at
+    the first frame the strip moved from 645 to 776 without a slide, the tab whole.
+- **F20-3, the drivers list's search.** It reads "Name, licence number or email", as the API searches
+  it since round 15 and as the Delete records page's Drivers tab already said. Through 5003, "ae-118"
+  finds Anete Kalnina, LV-AE-118440, on both lists.
 
 | | |
 |---|---|
-| Commits | four `Wiring 49` commits and this report's `Wiring 50`, on `feature/backend-wiring` (§9) |
-| Tests | 710 → **742**, all green: 32 new; 4 existing tests changed on purpose, and the backend's two catalogues one test file reads (§2.6) |
+| Commits | five `Wiring 51` commits and this report's `Wiring 52`, on `feature/backend-wiring` (§9) |
+| Tests | 742 before, **761** now, all green: 19 new, none changed (§2.4) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
-| Each commit alone | 0 type errors and the full suite green at each of the four (§4.5) |
-| Planted breakages | **40 planted, 40 caught** on the final code; the first run caught 39, and the one missed made a test stronger (§4.4) |
-| Joint check | **21/21 twice**, each on a freshly seeded `rwrent_r14` through 5003 (§4.2) |
-| In a browser | the real pages at 1512, 1024, 834 and 402 px from a stand-in transport; the app on 5176 signed out against 5003 (§4.3) |
+| Each commit alone | 0 type errors and the full suite green at each of the five (§4.4) |
+| Planted breakages | **32 planted, 32 caught**: 13 for F20-1, 16 for F20-2, 3 for F20-3; one test made stronger after the first run (§4.3) |
+| In a browser | the real pages at 402, 767, 768, 1024 and 1512 px from a stand-in transport; the app on 5176 signed out against 5003 (§4.2) |
+| Safari | **not measured**: this Mac has no Xcode, so no iOS Simulator (§8, item 2) |
 
 ## 2. Implemented
 
-### 2.1 F19-1: the picker's foot (`src/pages/insurance/InsurerPicker.module.css`)
+### 2.1 F20-1: the fields (`src/styles/base.css` and three modules)
 
-- **Add an insurer** (`.add`) is `position: sticky; bottom: 0` inside the scrolling list, with
-  `z-index: 1`, the popover's own ground `var(--surface)`, and a 4 px shadow of that ground over its
-  4 px of space above the rule, so no insurer shows through as it scrolls under.
-- **The list** (`.options`) keeps its 244 px and gains `scroll-padding-bottom`: 38 px, the foot's
-  34 px line and its 4 px of space; 48 px on the phone, where a line is 44 px. The arrows bring the
-  line they reach into view with `scrollIntoView({ block: 'nearest' })`, which honours that padding,
-  so the line stops above the foot.
-- **Nothing else changed.** The markup is the same: one listbox, Add an insurer its last option, with
-  the same keys and the same window. Every picker test of Follow-up 18 passes unchanged.
+- **The rule**, in the base stylesheet under `@media (max-width: 767px)`:
+  `input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea { font-size: 16px !important; }`.
+  - It is `!important` because every module's own class sets its field's size, `.control` 13 px,
+    the filters' `.input` 13.5 px, the picker's `.find` 13 px and so on, and a class outranks an
+    element selector. The reduced-motion rule in the same file is written the same way for the same
+    reason.
+  - It names the fields by kind, so it reaches every field of the app's 18 components that draw one,
+    105 of their 110 inputs, selects and text areas, and any field added later. The five it leaves out
+    are 3 checkboxes, 1 radio and the photo picker's file input.
+  - It reaches the transparent selects too: the filters', the page size's and the driver pick's. They
+    inherited 14 px or 12.5 px, and they are what Safari measures when one is tapped.
+- **The values shown over those selects**, each in its own module under the same query:
+  `Filters.module.css` `.selectValue, .moreValue`, `Pagination.module.css` `.sizeValue` and
+  `NewAssignment.module.css` `.searchValue`, all 16 px. They are what the reviewer saw at 13 px as
+  "the filters' selects". The filter's name beside its value, "Per page", and the extra filter's name
+  above it keep their sizes.
+- Nothing else of a field changes: its padding, border and height rules are as they were, so it grows
+  only by the larger line.
 
-### 2.2 F19-2: the contract (`src/api`)
+### 2.2 F20-2: the strip (`src/ui/tabStrip.ts`, new, and `src/ui/RecordTabs.tsx`)
 
-- `dto.ts`:
-  - `DeletableKind` is now every `RecordKind`, the insurance case included. Every table keyed by it
-    therefore had to gain a seventh entry, and the typecheck listed each one.
-  - The block reason `InsuranceCaseIsOpen` (9).
-  - `RecordDeletionTakes` gains `insuranceCaseEvents`, `insuranceCaseNotes`, `insuranceCasePhotos`
-    and `accidentLinksCleared`.
-  - The new `InsuranceCaseDeletionCandidateResponse`, with the eleven members round 14 sends.
-  - `RecordDeletionCandidateCountsResponse.insuranceCases`.
-  - `RecordDeletionResponse` gains `deletedInsuranceCaseEventCount`, `deletedInsuranceCaseNoteCount`,
-    `deletedInsuranceCasePhotoCount` and `clearedAccidentLinkCount`.
-  - The new members are optional, as round 12's are: an older API does not send them, and they read
-    as 0, or as no count on the tab.
-- `recordDeletions.ts`: the candidate list of kind 7 is `candidates/insurance-cases`.
+- **What the strip does in the browser moved into `tabStrip`**, a function started on the strip's
+  element, as `revealFirstInvalid` is for a dialog. `RecordTabs` starts it once in a layout effect,
+  stops it when it goes, and seats the active tab on each choice, the first without a slide. It draws
+  exactly the markup it drew.
+- **What stayed:** the first paint of a deep link lands on the active tab without a slide, a later
+  choice slides, the tab keeps 22 px from the strip's edges, and the cut edge fades as before.
+- **New:** a `ResizeObserver` on the tab buttons themselves. When their widths change, the counts
+  arriving among them, fonts loading too, the active tab is seated again without a slide.
+- **The person's scroll** is a scroll of the strip while their finger is on it, or a wheel turned
+  sideways over it. From then on, a change of width never moves the strip. A wheel that mostly scrolls
+  the page, and a tap, are not the person scrolling the strip.
+- **A choice's bold:** choosing a tab sets it in bold, which widens it and narrows the one left, in
+  the frame its slide starts. The slide is already heading where the wider tab stands whole, so a
+  change of width that asks for the same place leaves it to finish.
+- **Only a slide is waited for.** An instant seat stands where it stops as it is sent. The browser may
+  then keep it short of where it was sent, as when the page's font narrows the tabs, so waiting for it
+  could keep a later change of width from seating the tab; the strip does not wait for it.
+- **React's development mode starts every effect twice.** The second start must not take the first
+  start's scroll for the person's, or the counts would never seat the tab on 5173 and 5174, which run
+  in that mode. Only a finger or a sideways wheel makes a scroll the person's, so that cannot happen;
+  a test starts the strip twice.
 
-### 2.3 F19-2: the tab and its rows (`src/pages/admin/DeleteRecords.tsx`, `DeleteRecords.module.css`)
+### 2.3 F20-3: the words (`src/pages/fleet/Drivers.tsx`)
 
-- **The tab**: slug `insurance-cases`, label Insurance cases, icon `shield` (the navigation's), count
-  `insuranceCases`, search placeholder "Plate, damage, driver, insurer or claim". Show, Clear filters,
-  the pages and Refresh work as on the other tabs.
-- **The table**, with the vehicles' floor of 1020 px:
+The drivers list's search placeholder, which `SearchInput` also gives as the box's name, reads "Name,
+licence number or email". Its cap stays 50. The Delete records page keeps its own copy of the same
+words, and a test renders both pages and compares them.
 
-  | Column | From 1024 | Folded band (768–1023) | What it holds |
-  |---|---|---|---|
-  | Case | the rest | the rest | the label, linked to `/insurance-cases/:id`; under it the type and "Happened" or "Found" with the day, the cases list's own line |
-  | Status | 132 px | 120 px | the cases list's chip |
-  | Closed | 118 px | 84 px | the day it was closed, in the page's dim mono; empty while open |
-  | Deletion | 300 px | 213 px | the verdict, the block sentence, what a deletion takes |
+### 2.4 Tests
 
-  Status is as wide as the cases list's at every band, not 71% of it, so its widest chip, Under
-  review, stays whole (§6, item 1).
-- **The phone card**: titled with the label, not in the plate's mono, and opening the case. Its line
-  under the title gives the type and time. Its verdict sits top right. Its facts are Status, and
-  Closed once closed. Then the block sentence or what goes, and Delete across the card. The title
-  takes the lines it needs, as the cases list's card does; the other six kinds keep their one cut
-  line (§6, item 3).
-- **An open case** is Blocked with reason 9. The API names no record for it, so nothing is linked
-  beside the sentence; the row itself opens the case.
-- **The empty list under Out of use** reads "11 open insurance cases are under Everything.", with
-  Show everything.
-- Recently deleted already named kind 7 "Insurance case".
+**19 new test cases, none changed** (742 before, 761 now). Each new file reads one item:
 
-### 2.4 F19-2: the words (`src/format/recordDeletion.ts`, `src/pages/admin/DeleteRecordDialog.tsx`)
-
-- **The block sentence**, reason 9: "This insurance case is open. Close it first; then it can be
-  deleted", the API's own sentence without its full stop, as the page writes every block. The
-  disabled Delete's title carries it with the full stop.
-- **What goes**, in the page's words, each only when not zero:
-  - a case: "Takes 2 events, 1 note and 2 photos with it. Clears the accident link of 1 insurance
-    case";
-  - a car: "Takes 1 insurance case with it. Clears the accident link of 1 insurance case".
-- **The delete window of a case:**
-  - its line: "770 HDV · Practice: front left door scratched · Usual · Closed 30 Sep";
-  - its consequences:
-    1. The insurance case is removed permanently.
-    2. Its 2 events, 1 note and 2 photos are removed with it. Or, when there are none: Nothing else
-       goes with it.
-    3. Its car, driver, insurers and every other case stay as they are.
-    4. The 1 insurance case that names it as the same accident loses that link and stays. For many:
-       "The 2 insurance cases that name it as the same accident lose that link and stay." Left out
-       when none does.
-    5. The audit line every kind ends with.
-  - the tick's hint: "This insurance case and the 2 events, 1 note and 2 photos cannot be restored
-    from the app."
-- **A car's window** gains, after its cases: "The accident link of 1 insurance case of another car
-  is cleared; that case stays." For many: "The accident links of 3 insurance cases of other cars are
-  cleared; those cases stay."
-- **The confirmation line**, from the answer's counts: "Insurance case deleted: 770 HDV · Practice:
-  front left door scratched. 2 events, 1 note and 2 photos went with it. The accident link of 1
-  insurance case was cleared. Written to the security audit." A car's line gains the same last
-  sentence. An answer without round 14's members reads exactly as before.
-- **What a case's deletion refreshes**: the page, the audit, the Overview, the cases, and the
-  insurers, whose list counts the cases each insurer handles and names.
-
-### 2.5 F19-2: the security audit (`src/format/labels.ts`, `auditPayload.ts`, `src/pages/audit/AuditEntry.tsx`)
-
-- **The names.** The event catalogue gains `InsuranceCase.Deleted`, read as "Insurance case ·
-  Deleted" and offered in the Event type filter. The entity `InsuranceCase` is named Insurance case.
-  Without it, the entry's Entity and the list's chip would have shown the raw `InsuranceCase`.
-- **The copy.** A case deleted on its own holds the case itself at the top of the entry's copy, with
-  its `Photos`, `Events` and `Notes`, and `ClearedAccidentLinks`. The reading of one case moved into
-  its own `caseOf`, which reads a car's cases as before and now also this copy. Any other list at the
-  top still falls back to the raw payload, as does a car's copy with a case's lists at its top.
-- **The entry** shows, after Deleted record, three panels: Deleted photos (the photos the case was
-  registered with), Deleted events (each event with its photos under it) and Deleted notes. Then
-  Cleared accident links, which says "These cases named the deleted case as the same accident; the
-  links were cleared and the cases stay." A car's entry keeps its own words, "These cases of other
-  cars named a deleted case as their accident's".
-
-### 2.6 Tests
-
-**32 new tests, 4 existing ones changed on purpose**, and the backend's two catalogues that
-`format/labels.test.ts` reads (710 → 742, 63 → 67 files). None was deleted, skipped or weakened.
-
-**The tests changed on purpose:**
-
-| Test | Before | Now |
+| File | Cases | What they hold |
 |---|---|---|
-| `api/recordDeletions.test.ts` · "each kind reads its own candidate list" | six paths | seven, `insurance-cases` last |
-| same file · "a cascade makes stale what went with the record…" | the page's three keys checked for the six kinds but an insurance case | for all seven kinds |
-| `format/recordDeletion.test.ts` · "every kind ends with the audit line…" | the six kinds but an insurance case | all seven |
-| `pages/followup17.deletions.render.test.ts` · "its refused deletion is worded by the API itself; a case is never offered as a kind to delete", renamed "…; since round 14 a case is a kind of its own, the seventh tab (Follow-up 19)" | six tabs, none of them Insurance cases | seven, the last Insurance cases with the shield and no count, since round 12's counts hold none; round 12's refusal of the kind is still read as that API gave it |
-| `format/labels.test.ts` · the backend's catalogues | its event types and entity types as before | with `InsuranceCase.Deleted` and `InsuranceCase`, which round 14 writes |
+| `pages/followup20.fields.test.ts` | 5 | the base rule exactly, in the phone query only; every `<input>`, `<select>` and `<textarea>` in the app's components read from the source, only checkboxes, radios and the photo picker left out, and the prop-typed input's union read too; no other `!important` size anywhere; the four shown values at 16 px on the phone and their old sizes above, their labels unchanged; the app's transparent selects being exactly those |
+| `pages/followup20.strip.test.ts` | 12 | the strip played as the browser holds it: the Delete records page's seven tabs at 402 px, their boxes from their widths and the scroll, the observer fired as the browser fires it. A deep link; the counts widening the tabs; a tab in the middle keeping 22 px; a finger's scroll; a tap and a page-scrolling wheel; a sideways wheel; a click's bold; an instant seat the browser moves as the tabs narrow; a tab already whole; React's double start; stopping; and `RecordTabs` read for its wiring |
+| `pages/followup20.drivers.render.test.ts` | 2 | the drivers list's words, shown and spoken, its cap 50; the Delete records page's Drivers tab rendering the same words |
 
-**The new tests:**
-
-| File | Tests | What they hold |
-|---|---|---|
-| `pages/followup19.picker.render.test.ts` | 5 | F19-1: the foot's rules; the scroll padding equal to the foot's height on the desktop and the phone; twelve insurers with Add an insurer the last option; the keys reaching it last; a short list and a reader who may not add, as before |
-| `pages/followup19.deletions.render.test.ts` | 17 | the tab, its count, search and columns; Out of use; the empty list; the search; an older API without count and with its error; a closed row, a found one and an open one; the Blocked sentence with nothing linked and its disabled Delete; the takes; the refusals; the Status column's widths; what a deletion refreshes; the window's line, consequences and hint, singular and plural; the confirmation line; a car's row, window and line |
-| `pages/followup19.phone.render.test.ts` | 5 | the cards: each titled with its label and opening its case, the title wrapping; a closed card and an open one; only a case's title wraps; Recently deleted's card |
-| `pages/followup19.audit.render.test.ts` | 5 | Recently deleted names the kind; the event's and entity's names and the filter; the entry's panels, each read on its own; the copy's shape and its fallbacks; a car's entry keeps its words |
-
-**The fixtures**, `pages/followup19.support.ts`, are round 14's answers from the joint check's first
-run (§4.2), typed as the DTOs, so a member the API sends and the types do not declare fails the
-typecheck:
-
-- the case list at Out of use, at Everything, and searched for "baltic";
-- the counts at both;
-- the vehicle list with the practice car;
-- the refusal of an open case;
-- the practice case's answer, the same deletion refused again, and its entry;
-- the practice car's answer and its entry;
-- Recently deleted.
+`RecordTabs`'s effects do not run in a server render, so its wiring is read from its source, as
+Follow-up 16's test reads which pages draw it. The browser measurements in §4.2 are the proof that it
+runs.
 
 ## 3. Not implemented or partial
 
-Everything §19 asks for is built. This run could not type the seed password into the app, so the
-steps that need it are in §5 for the reviewer.
+Nothing of §20. Safari's zoom itself could not be measured here (§8, item 2).
 
 ## 4. Verification
 
 ### 4.1 The stack
 
-- **The API.** At the start, round 14's API ran on 5003, pid 82368, over `rwrent_r14`, as round 14's
-  acceptance and the reviewer's 28 checks left it.
-  - This run used round 14's own scripts, copied into its scratchpad. They refuse any connection
-    string that does not name `rwrent_r14`, or that mentions `rwrent_v1`, `rwrent_check` or
-    `rwrent_r13`. They stop only a process listening on 5003 that runs from the backend worktree's
-    `bin/Release` with `5003` on its command line.
-  - With them, `rwrent_r14` was dropped, recreated, migrated as it is (`V11Insurers` last) and
-    seeded: seven cases, two of them Closed, and four insurers. The API was started on 5003, pid 7134.
-  - This was done twice: before the fixtures were captured, and again before the joint check's second
-    run, pid 28391.
-  - The backend worktree was not changed and not rebuilt. It is clean at `6239393`, and its
-    `bin/Release` is round 14's build.
-- **The seed password** was passed through each command's environment only. It is in no file,
-  script, log or report.
-- **The app.** This run's Vite ran on 5176 from this worktree, with
-  `VITE_API_BASE_URL=http://localhost:5003`. It was started from a launch entry outside both
-  repositories, which is now removed.
-- **The harness.** The real pages were served on 5175 from a folder outside both repositories,
-  answered by a stand-in transport that sends nothing anywhere (§4.3).
+- **The API:** round 15's, on 5003, pid 55167, started 2026-10-01 07:02:47 from the backend
+  worktree's `bin/Release`, over `rwrent_r15`, as round 15 left it. This run only read through it: the
+  sign-in page's one request, and the drivers searched as Dita and the administrator (§4.2).
+- **The app:** this run's Vite on 5176 from this worktree, with `VITE_API_BASE_URL=http://localhost:5003`.
+- **The harness:** Follow-up 19's, on 5175, with the app's real pages from this worktree and a
+  stand-in transport that sends nothing anywhere. It gained `?slow=` to hold every count back that
+  long, and a log of every scroll the strip was sent and every size its tabs reported.
+- Both ran from launch entries added to the workspace's `.claude/launch.json` for the run and removed
+  after it; the file is as it was.
 
-### 4.2 Through the API, 21/21 twice
+### 4.2 In a browser
 
-A script ran as the seeded people against 5003 only: Dita and Karlis to make the practice records, the
-administrator for the deletions page, Signe for the audit.
+**F20-2, Delete records at 402 px, opened straight on Insurance cases:**
 
-| Checks | What was proved |
+| What | Measured |
 |---|---|
-| 1–2 | the setup: Dita's practice case on 770 HDV, registered with a photo, given a note and an event with a photo, then Closed, and a casco case of the same car naming it; Karlis's practice car P19 26C with a case, Closed, which a practice case of 444 WKS names as the same accident |
-| 3–4 | Out of use lists the four closed cases, all Ready; Everything lists eleven, the seven open ones Blocked with reason 9, count 1 and no records |
-| 5–7 | the takes: the practice case 2 events, 1 note, 2 photos and 1 link; P19 26C's case 1 link; 204 JLM's open case 2 events, 1 note and 2 photos |
-| 8–9 | the search "baltic" finds the four cases that name Baltic Mutual; the counts, 4 and 11, agree with the lists |
-| 10–11 | P19 26C is Ready, takes its case and clears the link of 1 case of another car; 770 HDV clears none, since only its own casco case names its practice case |
-| 12 | 204 JLM's open case is refused 409 `record_deletions.blocked` with the sentence |
-| 13–14 | the practice case deleted: 200 with 2 events, 1 note, 2 photos and 1 link, no case of a car; the same deletion again 404 `record_deletions.not_found` |
-| 15–17 | Signe reads the `InsuranceCase.Deleted` entry, written against the case; its copy holds 1 registration photo, 2 events with 1 photo between them, 1 note, the casco case's link and no picture; the casco case stays and names no accident |
-| 18–19 | P19 26C deleted: 1 case with it and 1 link cleared; its entry names 444 WKS's practice case |
-| 20–21 | Recently deleted lists the car, then the case of kind 7; the counts at the end, 9 cases and 10 vehicles |
+| The first paint, counts held 6 s | seated at 150 ms without a slide, at the strip's end, 644; the tab 4.7 px inside the edge |
+| The counts arrive, at 6.18 s | in that frame the seven tabs reported their new widths, 171, 171, 121, 100, 108, 84 and 151 px, and the strip moved 644 to 776 without a slide; the tab 4.7 px inside the edge, at the strip's end |
+| The counts in, no frame yet | with the counts laid out and no frame run yet, so before the observer could act, the tab stood 126.8 px past the edge: where it stayed before this fix, as Follow-up 19 measured, 127 |
+| Counts in 30 ms | seated at 644 at 157 ms, then at 776 at 211 ms, both without a slide |
+| The person first, counts held 9 s | a sideways wheel at 4.8 s moved the strip to 344; at 9.17 s the tabs reported their widths and nothing moved the strip; it stayed at 344 |
+| A click on Customers, nobody's scroll | one slide, 766 to 674; in that frame Customers' bold widened it 108 to 110 px and Insurance cases narrowed 151 to 149, and no second scroll followed; Customers ends 22 px inside the left edge |
 
-The first run's answers are the repository's `followup19.support.ts`. The second run, on a fresh seed,
-passed the same 21 checks, and its answers had the same members as the first run's, compared member by
-member. Then the script made the setup once more, for §5. Neither API log holds a failure or a 500;
-each holds the two query notes of older code that round 14's report names.
+| On the final code, `746d572` | the first seat was sent to 944 under the fallback font; the page's font then narrowed the tabs and the browser held the strip at 645. At the first frame drawn the tabs reported their counted widths and the strip moved 645 to 776 without a slide; the tab 4.7 px inside the edge |
 
-### 4.3 In a browser
+- The browser pane renders only while it is shown. While it was hidden, no frame ran and no observer
+  fired, and a screenshot drew one frame; the last row's frame was such a screenshot.
+- **The person's finger was not seen in a browser.** The pane's clicks arrive as a mouse's, even at
+  a phone's width, so the person's scroll above was a sideways wheel. A finger's scroll is held by
+  the strip's tests with a stand-in strip; §5.2 step 3 asks the reviewer to swipe.
 
-**The real pages** came from the app's own code in this worktree, served on 5175 by a stand-in
-transport. It answers from the recorded answers of §2.6 and sends no request anywhere. It keeps the
-deletions page's lists in the page's memory, so a deletion can be tried and its row leaves. The
-built-in browser pane was used, never the owner's browser. After each resize the page was reloaded
-before measuring.
+**F20-1, at 402 px:**
 
-- **F19-1, the picker, with twelve insurers**, in Register case, at 1512 px:
-  - The list is 244 px, holding 480 px of lines. Add an insurer sits at 729.8–763.8 px, on the list's
-    bottom edge at 763.8. With its fix taken off in the page, it lay at 965.8 px, 202 px below that
-    edge.
-  - ArrowDown from Not chosen to Add an insurer: each insurer stood clear above the foot, its bottom
-    at 725.8 px, 4 px above the foot's rule. The list scrolled from 32 px to 236 px, and Add an
-    insurer came last. ArrowUp back to Not chosen: each line in view, the list back at 0.
-  - At 402 px: the foot is 44 px and the padding 48 px. All twelve insurers stood clear, and Add an
-    insurer came last.
-- **The tab's table:**
+- **The insurance cases list:** the search box and the 5 transparent selects at 16 px; the shown
+  values at 16 px; their labels and "Per page" at 12.5 px.
+- **Register case:** 4 text fields, the time, 7 selects and the text area at 16 px; its 2 checkboxes
+  14 px and the photo picker's input 13 px, as before. The labels at 12.5 px.
+- **At 767 px** all 19 fields of the page are 16 px. **At 768, 1024 and 1512 px** they are as before:
+  13 px in the form, 13.5 px the search, 14 px and 12.5 px the transparent selects, 13 px and 12.5 px
+  the shown values.
+- **The sign-in page on 5176**, signed out against 5003: the email and password fields are 16 px and
+  43 px tall at 402 px, 14 px and 40 px at 1024 px. Its only API request went to
+  `http://localhost:5003/api/me`, which answered 401, as expected.
 
-  | Width | Case, Status, Closed, Deletion, actions | Rows | Sideways |
-  |---|---|---|---|
-  | 1512 | 529, 132, 118, 300, 123 px | 68–124 px | none |
-  | 1024 | 347, 132, 118, 300, 123 px | 68–124 px | the table scrolls 108 px inside its 912 px frame, exactly as the Vehicles tab does (§8, item 3); the page itself does not |
-  | 834 | 255, 120, 84, 213, 118 px | 80–120 px | none; the widest chip, Under review, is 101 px within its 120 |
-  | 402 | eleven cards, none wider than 358 px | | none |
+**F20-3:**
 
-- **Found and fixed: the phone card's title was cut to one line.** With an ellipsis, "444 WKS ·
-  Practice: the other car…" hid what was damaged, which is what tells two cases of one car apart. A
-  case's card title now wraps, as the cases list's card does: two lines each at 402 px, none cut.
-- **The delete window** of the practice case read as §2.4 gives it. Practice or test record, the tick
-  and Delete permanently then gave the confirmation line with its counts. The row left the list, the
-  tab's count went from 11 to 10, and Recently deleted listed "Insurance case · 770 HDV · Practice:
-  front left door scratched" first. The line's link opened the entry: Insurance case · Deleted, Entity
-  Insurance case, the Record line, then Deleted record, Deleted photos, Deleted events with Event 1's
-  photo under it, Deleted notes, Cleared accident links, Reason and Raw payload.
-- **P19 26C's window** read its case and "The accident link of 1 insurance case of another car is
-  cleared; that case stays."
-- **The tab strip** scrolls at 834 and 402 px. Opened straight on the seventh tab, the tab stands
-  partly past the strip's right edge (§8, item 4).
-- **The console** showed no error from the app.
-- **The app on 5176**, signed out, against 5003:
-  - `/delete-records?kind=insurance-cases` went to Sign in.
-  - Its only API requests went to `http://localhost:5003/api/me`, which answered 401, as expected
-    when signed out.
-  - It asked nothing of 5001 or 5002, and showed no module error.
+- **The drivers list** in the harness reads "Name, licence number or email", spoken the same, cap 50.
+- **Through 5003**, read-only, as Dita: "ae-118", "LV-AE-118440", "kalnina" and "anete.kalnina" each
+  find Anete Kalnina, LV-AE-118440, alone. As the administrator, the Delete records page's drivers
+  find her by "ae-118" too.
 
-### 4.4 The planted breakages: 40 planted, 40 caught
+### 4.3 The planted breakages: 32 planted, 32 caught
 
-Each breakage changed one rule in a copy of the app outside the worktree, since the owner's apps
-hot-reload the worktree. The whole suite ran there, 742 tests, and the file was then written back.
+Each changed one rule in a copy of the commit taken with `git archive`, never the worktree; the whole
+suite and the typecheck ran in the copy; the file was then written back fresh, and the copy ran clean
+at the end. F20-1's and F20-3's ran on `7a9e363`, whose files for them are final, 760 green at the
+end; the strip's sixteen ran again on the final `746d572`, 761 green at the end, and those are the
+results below.
 
-| # | The breakage | Caught |
+| # | The breakage | Caught by |
 |---|---|---|
-| D1 | Add an insurer scrolls away with the list again | yes |
-| D2 | the arrows' line may stop under the foot | yes |
-| D3 | the foot's ground is see-through | yes |
-| D4 | on the phone the arrows' line may stop under the taller foot | yes |
-| D5 | the tab loses the navigation's shield | yes, 4 tests |
-| D6 | the tab shows the vehicles' count | yes, 3 |
-| D7 | the tab's search reads the vehicles' words | yes |
-| D8 | the empty list names closed cases under Everything | yes |
-| D9 | the tab reads the vehicles' list | yes |
-| D10 | an older API's missing count reads as 0 | yes, 2 |
-| D11 | the label opens the car, not the case | yes, 3 |
-| D12 | the line under the label loses its type and time | yes, 2 |
-| D13 | the status chip in one tone for every status | yes |
-| D14 | an open case shows a date under Closed | yes |
-| D15 | Status at 71% in the folded band cuts Under review | yes |
-| D16 | a case's card title is cut to one line again | yes |
-| D17 | an open case's card shows Closed with a dash | yes |
-| D18 | reason 9 goes unworded | yes, 3 |
-| D19 | reason 9 worded as a vehicle's | yes, 3 |
-| D20 | a case's events are not counted | yes, 8 |
-| D21 | the accident links are not said | yes, 4 |
-| D22 | photos are counted as notes | yes, 8 |
-| D23 | a case's parts leave every list | yes, 7 |
-| D24 | the window's line reads the status, not Closed with the date | yes |
-| D25 | the window forgets the cases naming it | yes, 2 |
-| D26 | the window forgets what stays | yes, 2 |
-| D27 | the window's parts line counts one thing as many | yes |
-| D28 | a case's deletion refreshes no case | yes |
-| D29 | a case's deletion leaves the insurers' counts stale | yes |
-| D30 | the confirmation line forgets the events | yes |
-| D31 | the confirmation line forgets the cleared links | yes, 2 |
-| D32 | a car's window forgets the links of other cars' cases | yes |
-| D33 | a car's window words the links as a case's | yes |
-| D34 | the event reads "Insurance Case · Deleted" | yes, 2 |
-| D35 | the entity reads InsuranceCase | yes, 3 |
-| D36 | the case's copy falls back to the raw payload | yes, 2 |
-| D37 | the case's registration photos are not read | yes, 2 |
-| D38 | the entry shows an event without its photos | yes, after its test was made stronger |
-| D39 | the entry says other cars for a case's own links | yes |
-| D40 | a vehicle's copy with a case's lists at its top is accepted | yes |
+| A1 | the base rule is gone | the base rule's test; the `!important` test |
+| A2 | the rule without `!important` | the same two |
+| A3 | the rule on every tier | the same two |
+| A4 | the tablet gets it too | the same two |
+| A5 | selects left out | the same two |
+| A6 | text areas left out | the same two |
+| A7 | checkboxes given 16 px too | the same two |
+| A8 | the date fields left out | the same two |
+| A9 | a filter's shown value stays 13 px | the shown values' test |
+| A10 | the page size's shown value as before | the same |
+| A11 | the driver pick's shown value at 15 px | the same |
+| A12 | a field's own class outranks the rule | the `!important` test |
+| A13 | a filter's label grows with its value | the shown values' test |
+| B1 | a change of width does not seat the tab | 6 of the strip's tests |
+| B2 | the second seat slides | the same 6 |
+| B3 | the tabs' widths are not watched | the same 6 |
+| B4 | the person's scroll is ignored | the finger's and the sideways wheel's tests |
+| B5 | a finger's scroll is not the person's | the finger's test |
+| B6 | a finger once down stays on the strip | the tap's test |
+| B7 | every wheel is the person's, the page's scroll too | the tap and page wheel's test |
+| B8 | a sideways wheel is not the person's | the sideways wheel's test |
+| B9 | the bold of a click cuts the slide short | the click's test |
+| B10 | any scroll the app is not heading for is the person's | the same 6, React's double start among them |
+| B11 | a deep link slides | the deep link's, the middle tab's and the double start's tests |
+| B12 | stopped, it still hears the wheel | the stopping test |
+| B13 | the room from the edge is 0 | the deep link's, the middle tab's, the counts' and the double start's tests |
+| B14 | `RecordTabs` never starts the strip | the wiring's test |
+| B15 | `RecordTabs` seats only once | the wiring's test |
+| B16 | an instant seat is waited for as a slide is | the instant seat's test |
+| C1 | the old words back | both of F20-3's tests |
+| C2 | the words leave out the licence | both |
+| C3 | the Delete records page's words drift | the comparing test |
 
-- **D38 was not caught in the first run.** The entry's test looked for the event's photo anywhere on
-  the page, and the Raw payload panel below names it too. The test now reads each panel on its own,
-  and checks that the photo stands under its event (`6e66bf4`). The final run, on the final code,
-  caught all 40.
-- **What only a browser shows**: that the foot stays in view as the list scrolls, and where the
-  arrows' line stops. The suite holds the rules that do it, D1 to D4, and the browser measured the
-  result (§4.3).
+- **One test made stronger:** in the first run B13 was caught, but not by the test written for the
+  room, which read the 22 px from the module it was planted in. That test now reads 22 itself, in its
+  own commit `43a9e79`.
+- **B16** is the line `746d572` changed, put back.
+- B4, B5, B7, B11 and B14 also left a type error, an unused name; each was caught by a failing test
+  besides.
 
-### 4.5 The test suite, and each commit
+### 4.4 The test suite, and each commit
 
-- **The final state:** `npm run typecheck` clean; `npm test` **742 passed in 67 files**; `npm run build`
-  built, with the chunk-size warning the build has had since before this run.
-- **Before the run** (`302fb5e`): typecheck clean, 710 passed in 63 files.
-- **Each commit alone**, exported with `git archive` so nothing untracked came along, and run with the
-  worktree's `node_modules`. Every one had 0 type errors and the whole suite green:
+- `npx vitest run`: **761 passed**, 70 files. `tsc -b --noEmit`: 0 errors.
+- `vite build` into a scratch folder: green, with the chunk-size warning that predates this run.
+- Each commit exported alone with `git archive`, typechecked and tested:
 
-  | Commit | Tests |
-  |---|---|
-  | `e3a3ccb` | 715 |
-  | `3bc73ad` | 737 |
-  | `9112e69` | 742 |
-  | `6e66bf4` | 742 |
+| Commit | Type errors | Tests |
+|---|---|---|
+| `8516839` | 0 | 747 |
+| `b07f5b6` | 0 | 758 |
+| `7a9e363` | 0 | 760 |
+| `43a9e79` | 0 | 760 |
+| `746d572` | 0 | 761 |
 
-### 4.6 The owner's side, untouched
+### 4.5 The owner's side, untouched
 
-- **The owner's apps and APIs** ran throughout on their own processes, and this run sent no request
-  to any of them. It read who listens on each port with `lsof`.
+- 5001 is pid 43055 and 5002 pid 42710, as before; neither was called.
+- 5173 is pid 24831 and 5174 pid 58932, as before; neither was opened.
+- `rwrent_v1` and `rwrent_check` were never addressed, and nothing in `RWRentApi-wiring` changed.
 
-  | Port | Process | Started |
-  |---|---|---|
-  | 5001, the owner's API | pid 7505 | 2026-09-25 07:41 |
-  | 5002, the practice API | pid 96963 | 2026-09-29 09:10 |
-  | 5173, the owner's app | pid 24831 | 2026-09-16 07:58 |
-  | 5174, the practice app | pid 58932 | 2026-09-27 12:33 |
+### 4.6 End state
 
-- **The databases.** Only `rwrent_r14` was addressed. `rwrent_v1` and `rwrent_check` were never
-  addressed, and `rwrent_r13` was left as it was.
-- **The backend worktree** is clean at `6239393`. It was only run, never built or changed. The main
-  checkouts were not touched.
-- **Mailpit** was not read.
-
-### 4.7 End state
-
-- **The API on 5003 is left running**, pid 28391, started 2026-09-30 15:30:44, from the backend
-  worktree's `bin/Release`, over `rwrent_r14`. It holds the seed, the joint check's second run and the
-  practice records made for §5 (§5.0).
-- **Nothing else runs.** This run's Vite on 5176 and its harness on 5175 are stopped, and nothing
-  listens on either port. The workspace's launch entries are as they were before the run.
+- **The API on 5003 is left running**, pid 55167, over `rwrent_r15`, as round 15 left it. This run
+  added only the sessions of its own sign-ins as Dita and the administrator.
+- **Nothing else of this run runs.** The Vite on 5176 and the harness on 5175 are stopped, and nothing
+  listens on either port.
 
 ## 5. For the owner's reviewer: the signed-in steps
 
-### 5.0 Before and after
+### 5.0 Before you start
 
-- **The stack as this run leaves it:** the API on 5003 over `rwrent_r14`.
-  - **Thirteen insurance cases, four of them Closed:**
-    - the seed's 400 NDP and 119 MPR;
-    - **"770 HDV · Practice: front left door scratched"**, Closed. It has a registration photo, a
-      note, an event with a photo and its closing event, and a casco case of the same car names it;
-    - **"P19 26C · Practice: the bonnet dented"**, Closed, with a photo. A practice case of 444 WKS
-      names it as the same accident.
-  - **The open ones:** the seed's five and four practice cases. Two practice cases appear twice each,
-    "444 WKS · Practice: the other car of the same accident" and "770 HDV · Practice: the casco claim
-    of the same door": the older one of each is from the second run, whose deletions left it naming
-    nothing.
-  - **Eleven vehicles**, among them the practice car **P19 26C · Fiat Panda 2020**, Ready.
-  - **Recently deleted:** the second run's P19 26C and its practice case of 770 HDV, by Arturs
-    Veidenbaums.
-  - **The seed's four insurers.**
+- **The stack:** the API on 5003 over `rwrent_r15`, round 15's seed and its acceptance's records.
 - **Start Vite on 5176 from this worktree.** The API trusts only that origin:
   `VITE_API_BASE_URL=http://localhost:5003 npm run dev -- --port 5176 --strictPort`
 - **Use a browser profile of its own**, never the owner's. The apps on 5173, 5174 and 5176 share
   `localhost`'s cookies, so signing in on 5176 in the owner's profile signs the owner out of 5173.
-- **The seeded people**, all with the seed password:
-  - the administrator, Arturs Veidenbaums (`sysadmin@rwrent.example`), who may delete records;
-  - Dita Smite, Fleet Manager;
-  - Signe Priede, Company Principal, who reads the audit.
+- **The seeded people**, all with the seed password: the administrator, Arturs Veidenbaums
+  (`sysadmin@rwrent.example`), who may delete records; Dita Smite, Fleet Manager.
 
 ### 5.1 At 1512 px
 
-1. **Sign in as the administrator and open Delete records.** Seven tabs; the last is Insurance cases,
-   with the shield and 13.
-2. **Insurance cases.**
-   - Thirteen cases. The search box reads "Plate, damage, driver, insurer or claim".
-   - Show Out of use: four cases, all Ready, and the tab reads 4. Clear filters.
-3. **The practice case of 770 HDV, front left door.**
-   - Its label is a link, with "Usual · Happened 28 Sep" under it.
-   - The Closed chip, the day it was closed, and Ready.
-   - "Takes 2 events, 1 note and 2 photos with it. Clears the accident link of 1 insurance case".
-4. **204 JLM · Windscreen cracked by a stone.**
-   - Blocked, with "This insurance case is open. Close it first; then it can be deleted" and nothing
-     linked beside it.
-   - Its Delete does nothing, and its title gives the same sentence.
-   - "Takes 2 events, 1 note and 2 photos with it".
-5. **Click the practice case's label.** The case's page opens, with no delete button on it. Of the
-   two cases "770 HDV · Practice: the casco claim of the same door", note the one whose page lists
-   the practice case under Same accident. Go back.
-6. **Delete on the practice case.**
-   - The window's line: "770 HDV · Practice: front left door scratched · Usual · Closed 30 Sep".
-   - The five consequences of §2.4, and the tick's hint naming the 2 events, 1 note and 2 photos.
-   - Choose a reason, tick, and Delete permanently. The confirmation line reads: "Insurance case
-     deleted: … 2 events, 1 note and 2 photos went with it. The accident link of 1 insurance case was
-     cleared."
-   - The row leaves, the tab reads 12, and Recently deleted lists it first.
-7. **That casco case**, on Insurance cases: its page has no Same accident panel any more. It stays,
-   and only its link was cleared.
-8. **The confirmation line's link**, or Recently deleted's: the entry.
-   - Its title and Event read "Insurance case · Deleted"; Entity reads Insurance case.
-   - The panels: Deleted record, Deleted photos, Deleted events with the first event's photo under
-     it, Deleted notes, and Cleared accident links naming the casco case, with "These cases named the
-     deleted case as the same accident".
-9. **Vehicles, P19 26C.**
-   - "Takes 1 insurance case with it. Clears the accident link of 1 insurance case".
-   - Delete: the window says its 1 insurance case goes with it, and that "The accident link of 1
-     insurance case of another car is cleared; that case stays."
-   - Delete it. The confirmation line ends "1 insurance case went with it. The accident link of 1
-     insurance case was cleared."
-10. **Security audit, as Signe.** The Event type filter offers "Insurance case · Deleted". It finds
-    the case's entry, whose Entity chip reads Insurance case.
-11. **A case reopened after the list loaded.**
-    - As the administrator, open Insurance cases on Delete records.
-    - In another tab, as Dita, add an event that reopens "400 NDP · Right mirror broken by a passing
-      van".
-    - Back on the first tab, Delete it and confirm. The window says "This insurance case is open.
-      Close it first; then it can be deleted." with Refresh. Refresh shows it Blocked.
-12. **The picker, as Dita.**
-    - On the Insurers page, add three practice insurers. Six are then in use, and their lines need
-      more than the list's 244 px.
-    - Register case: open Our insurer. **Add an insurer stands at the foot of the list, in view,
-      before any scrolling.**
-    - Scroll the list: the insurers pass under it.
-    - With the arrows, go to the last insurer: it stands above the foot, whole. One more ArrowDown
-      reaches Add an insurer, and Enter opens the Add insurer window with what was typed.
-    - Do the same in Safari on the Mac, with the keyboard (§8, item 6).
-    - Cancel both windows.
+1. **Sign in as Dita and open Drivers.** The search reads "Name, licence number or email".
+2. **Type `ae-118`.** Anete Kalnina alone, licence LV-AE-118440. Type `kalnina`: the same. Clear it.
+3. **Register case, from Insurance cases.** The fields' text is as before, 13 px; nothing moved.
+   Cancel.
+4. **Sign out, and in as the administrator. Delete records, Drivers.** The search reads the same
+   words; `ae-118` finds Anete Kalnina.
+5. **The strip at this width:** all seven tabs fit, and choosing one changes nothing but the choice.
 
-### 5.2 On the tablet and the phone
+### 5.2 On the phone
 
-1. **At 834 px**, on Insurance cases: the table folds to Case, Status, Closed and Deletion, and
-   nothing scrolls sideways. Under review's chip is whole on 552 KLM's case.
-2. **At 402 px:**
-   - Each case is a card whose title is the whole label, on as many lines as it needs.
-   - An open case's card gives the sentence in the warn ink, with nothing linked, and Delete across
-     the card does nothing.
-   - A closed case's card gives Status and Closed.
-   - Recently deleted's cards name "Insurance case · …".
-3. **On the iPhone, the picker** with those six insurers: Add an insurer stands at the foot as the
-   list opens, and stays there while a finger scrolls the insurers under it. A tap on it opens the
-   Add insurer window.
+At 402 px, in the browser's device mode, with its network throttled to Slow 4G so the counts come
+late:
+
+1. **F20-2, a deep link.** As the administrator, open `http://localhost:5176/delete-records?kind=insurance-cases`
+   and reload. Insurance cases, the last tab, stands whole at the strip's right end before its count
+   arrives, and still whole once every tab shows its count, with no slide.
+2. **The same for Drivers:** `?kind=drivers`. Drivers stands whole, its count beside it.
+3. **The person first.** Reload on Insurance cases and, before the counts arrive, swipe the strip to
+   the right so the first tabs show. When the counts arrive, the strip stays where the finger left it.
+4. **A tap on another tab** slides to it, as before, and it ends whole.
+5. **F20-1.** Tap the search box, a filter, Per page, and in Register case each kind of field. In the
+   inspector each field's computed size is 16 px; the labels, hints and buttons are as before. Signed
+   out, the sign-in page's two fields are 16 px.
+
+**On an iPhone, on the first day the app is reached from one:** tap the drivers list's search, a
+filter, and a field of Register case. The page does not zoom in; before this run it did, and stayed
+zoomed. An iPhone cannot reach `localhost:5176` on the Mac, so this step waits for a reachable address,
+or for Xcode's iOS Simulator on the Mac (§8, item 2).
 
 ## 6. Decisions
 
 Choices this run made where the specification left room, each small to change:
 
-1. **Status is 132 px, and 120 px in the folded band**, as the cases list's is. The page's other
-   columns fold to 71%, which would leave 94 px and cut Under review, 101 px wide.
-2. **Closed holds the day alone**, "30 Sep", in the page's dim mono as its periods are. The column's
-   head says what it is.
-3. **A case's phone card title wraps**, as the cases list's card title does. What is damaged is what
-   tells two cases of one car apart, and on one cut line it was lost. The other six kinds keep their
-   one cut line.
-4. **The words §19 did not give**, in the page's existing voice:
-   - the window's second, third and fourth consequences, and "Nothing else goes with it." for a case
-     with no events, notes or photos;
-   - a car's line for the links, "The accident link of 1 insurance case of another car is cleared;
-     that case stays.";
-   - the confirmation's "The accident link of 1 insurance case was cleared.", as it says "The driver
-     link of 1 customer record was cleared.";
-   - the empty list's "11 open insurance cases are under Everything.".
-5. **An open case's window line would read its status**, "Casco · Repair". An open case never
-   reaches the window, since its Delete does nothing.
-6. **The picker's foot is sticky inside the one list**, rather than a second list under it. The
-   listbox, its keys, its ids and every test of Follow-up 18 stay as they were. The scroll padding is
-   what keeps the arrows' line above the foot.
-7. **The audit sets a case's own photos, events and notes as three panels at the top**, as a rental's
-   parts are, rather than one panel holding one case. A car's entry keeps its cases each in a group.
-8. **A case's deletion refreshes the insurers too**, beyond the page, the audit, the Overview and the
-   cases, since the Insurers page counts the cases each insurer handles and names.
+1. **One base rule, naming the fields by kind, with `!important`,** rather than 16 px in each field's
+   own module. It reaches every field there is and every field to come; a test holds that nothing
+   else in the app sets a size with `!important`.
+2. **The values shown over transparent selects are 16 px too.** The rule alone would stop the zoom,
+   since Safari measures the select itself; but those values are the selects' text as a person reads
+   it, which §20 counts as "the filters' selects" at 13 px.
+3. **The strip's behaviour is a plain function, `tabStrip`, the component its one caller,** so its
+   rules can be played in node with a stand-in strip.
+4. **The person's scroll is a finger's or a sideways wheel's.** The strip's scroll events alone cannot
+   tell the person from the app: React's development mode starts the strip twice, and the second start
+   would take the first one's scroll for the person's. Keyboard scrolling of the strip is not counted;
+   a phone has none.
+5. **Once the person has scrolled the strip, a change of width never moves it again** while the page
+   is open. A choice still slides to the chosen tab, as before.
+6. **The observer watches the tabs, not the strip.** A change of the strip's own width, a rotated
+   phone, is not a change of the tabs, and §20 asks for nothing there.
+7. **The Delete records page keeps its own copy of the drivers' words,** untouched; a test compares the
+   two pages' rendered words.
 
 ## 7. Deviations
 
-None from §19.
+None from §20.
 
 ## 8. Open risks and observations
 
-1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was written.** Each module
-   existed before anything imported it. Twice a page read a style a fraction of a second before the
-   next save wrote it: Status's width and the case card's wrapping title. Either one read as no style
-   for that instant, with no error.
-2. **What 5173 and 5174 show until the reviewer upgrades their APIs to round 14:**
-   - On Delete records, the seventh tab, Insurance cases, shows no count. Opening it shows "The
-     records could not be loaded" with "Not Found" and Retry. An API without the route answers 404
-     with no body: 5003 answers so for a route it does not have, and a test renders exactly that.
-   - A car's row, window and line say nothing of accident links: the members are absent and read as
-     0.
-   - Nothing else changes there. The other six tabs, their deletions and the audit work as before,
-     and F19-1's picker needs nothing of the API.
-   - On 5173, whose API grants no insurance permission, the picker is not reachable at all, as before.
-3. **Observed, not changed: at 1024 px the page's tables scroll sideways inside their frame.** The
-   Insurance cases table and the Vehicles table both scroll 108 px: their floor is 1020 px and the
-   frame 912 px. The stylesheet's note says every table fits under the collapsed rail; at 1024 px
-   none of the widest does. This predates this run.
-4. **Observed, not changed: a tab at the end of the strip, opened straight from its address, stands
-   partly past the strip's edge.**
-   - The strip brings the active tab into view at its first paint, before the counts arrive, and the
-     counts then widen every tab.
-   - Opened on Insurance cases, the tab stood 129 px past the edge at 834 px and 127 px at 402 px.
-   - Drivers did the same before this run, 79 px at 834.
-   - A tap on a tab shows it whole. The strip is shared by every record page, so it was left as it
-     is. A fix would bring the active tab into view again once the counts arrive.
-5. **What the suite does not hold:** where the list's foot and the arrows' line stand as the list
-   scrolls. The rules that place them are tested; the browser measured the result (§4.3), and §5.1
-   step 12 asks the reviewer to look signed in.
-6. **Safari was not measured.** The built-in browser pane is Chromium; the owner's Mac, iPad and
-   iPhone use Safari.
-   - The foot stays in view by `position: sticky`, which Safari has long supported.
-   - The arrows' line stops above the foot because `scrollIntoView` honours the list's
-     `scroll-padding-bottom`. Safari's support for that is newer.
-   - On a Safari that does not honour it, the foot still stays in view, and only a line reached with
-     the arrows could stop under it until the next key. On a phone or tablet the arrows are not used.
-   - §5.1 step 12 asks for a look in Safari with the keyboard.
+1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was saved.** Each file was written
+   whole, swapped in at once, after its typecheck and tests ran in a scratch copy, and `tabStrip.ts`
+   before the `RecordTabs.tsx` that imports it.
+   - F20-1 and F20-2 need nothing of an API, and show there as here.
+   - Their APIs run round 14, whose drivers search finds by name and email only. Until the reviewer
+     upgrades them to round 15, their drivers list's search names the licence number before it finds
+     a driver by one.
+2. **Safari was not measured.** This Mac has the command line tools but no Xcode, so no iOS Simulator;
+   the built-in browser pane is Chromium, and Safari on a Mac does not zoom into fields.
+   - Safari on an iPhone zooms when a field whose text is under 16 px is focused. Every field is now 16
+     px on the phone tier, as computed in Chromium; the rule is plain CSS, which Safari reads the same.
+   - §5.2 gives the reviewer the iPhone step for the day the app is reachable from one.
+3. **A field on the phone is a few pixels taller**, 3 px for the sign-in page's; the toolbar's filters
+   keep their 35 px and only their values grow, so a filter with a long value is wider. Whether a
+   toolbar now wraps a filter onto another line where it did not was not compared.
+4. **The user record page has its own strip**, older than the shared one, with no seating of the
+   active tab at all: Account, Roles and Sessions, three short tabs. It is not the shared strip, so §20
+   does not reach it, and it was left as it is; how it stands on a phone was not measured here.
+5. **The two compact strips**, Tasks' and Insurance cases', fit the phone whole and never scroll, so
+   the re-seat finds nothing to move there.
+6. **What the suite does not hold:** that the browser fires the observer when the counts land. The
+   rules are tested with a stand-in strip and the wiring is read from the source; the browser measured
+   the result (§4.2). A finger's scroll was seen only with the stand-in strip; §5.2 step 3 is its look
+   in a browser.
 
 ## 9. Commits
 
-On `feature/backend-wiring`, after `302fb5e`, in this order:
+On `feature/backend-wiring`, after `05662ed`, in this order:
 
-1. **`e3a3ccb`** Wiring 49: In a case's insurer picker, Add an insurer stays at the foot of the open list, always in view, and only Not chosen and the insurers scroll above it.
-   3 files (under `src/`): added `pages/followup19.picker.render.test.ts`; `pages/insurance/InsurerPicker.module.css`; `pages/insurance/InsurerPicker.tsx`.
+1. **`8516839`** Wiring 51: On a phone every text field, select and text area draws its text at 16 px, so Safari never zooms the page when one is tapped, and a select drawn over its value shows that value at 16 px too.
+   5 files (under `src/`): `pages/fleet/NewAssignment.module.css`; added `pages/followup20.fields.test.ts`; `styles/base.css`; `ui/Filters.module.css`; `ui/Pagination.module.css`.
 
-2. **`3bc73ad`** Wiring 49: The Delete records page gets a seventh tab, Insurance cases, where a closed case can be deleted with its events, notes and photos and an open one is Blocked until an event closes it, and a car's deletion also says which accident links it clears.
-   12 files (under `src/`): `api/dto.ts`; `api/recordDeletions.test.ts`; `api/recordDeletions.ts`; `format/recordDeletion.test.ts`; `format/recordDeletion.ts`; `pages/admin/DeleteRecordDialog.tsx`; `pages/admin/DeleteRecords.module.css`; `pages/admin/DeleteRecords.tsx`; `pages/followup17.deletions.render.test.ts`; added `pages/followup19.deletions.render.test.ts`; added `pages/followup19.phone.render.test.ts`; added `pages/followup19.support.ts`.
+2. **`b07f5b6`** Wiring 51: The tab strip brings its active tab whole into view again whenever the tabs change width, its counts arriving among them, without a slide, unless the person has already scrolled the strip.
+   3 files (under `src/`): added `pages/followup20.strip.test.ts`; `ui/RecordTabs.tsx`; added `ui/tabStrip.ts`.
 
-3. **`9112e69`** Wiring 49: The security audit names a case's deletion Insurance case · Deleted and reads its copy as it reads a car's cases: the case, its photos, its events with theirs, its notes, and the cases that lost their accident link.
-   5 files (under `src/`): `format/auditPayload.ts`; `format/labels.test.ts`; `format/labels.ts`; `pages/audit/AuditEntry.tsx`; added `pages/followup19.audit.render.test.ts`.
+3. **`7a9e363`** Wiring 51: The drivers list's search reads Name, licence number or email, as the API now searches it and as the Delete records page already says.
+   2 files (under `src/`): `pages/fleet/Drivers.tsx`; added `pages/followup20.drivers.render.test.ts`.
 
-4. **`6e66bf4`** Wiring 49: The audit entry's test reads each panel on its own, so an event shown without its photo is caught although the raw payload below still names it.
-   1 file: `src/pages/followup19.audit.render.test.ts`.
+4. **`43a9e79`** Wiring 51: The strip's test reads the active tab's room from the edge as 22 px itself, so a strip seated without that room is caught by the test written for it.
+   1 file: `src/pages/followup20.strip.test.ts`.
 
-5. **This report's commits**, `Wiring 50`: `Context/wiring_report.md`, rewritten, then its Safari note and the reviewer's Safari and touch steps.
+5. **`746d572`** Wiring 51: The strip waits only for its own slides, so an instant seat the browser moves as the tabs narrow never keeps a later change of width from seating the active tab.
+   2 files (under `src/`): `pages/followup20.strip.test.ts`; `ui/tabStrip.ts`.
+
+6. **This report's commit**, `Wiring 52`: `Context/wiring_report.md`, rewritten.
