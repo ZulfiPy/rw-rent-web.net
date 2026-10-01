@@ -1201,7 +1201,10 @@ should say so, is the owner's to raise; nothing is built for it now.
 > browser; the foot holds by `position: sticky`, which Safari supports, and only the arrows' line rests
 > on `scroll-padding-bottom`. Seen, for the small fixes before going live: opened straight on its
 > address, the last tab of the strip stands partly past the strip's edge on the phone (the report's §8
-> item 4; Drivers did the same before). The owner looked at Insurance cases on the practice copy
+> item 4; Drivers did the same before). **Since 2026-10-01 both of the owner's APIs run round 14**
+> (the backend's backlog item 6): the practice API on 5002 restarted, the owner's on 5001 upgraded with
+> `V10InsuranceCases` and `V11Insurers` after a backup, so the new tab works on 5174 and 5173 and the
+> owner's real insurers list starts empty. The owner looked at Insurance cases on the practice copy
 > (5174 over round 13 on 5002, signed in as Dita) at the sizes of the Tasks review (§14): the iPad Pro
 > 11 upright (834 px, the tablet band 768–1023), the iPad Pro 11 sideways (1194 px, the desktop) and
 > the iPhone 16 Pro (402 px, the phone). What to look at: the cases list, its three tabs Open, Waiting
