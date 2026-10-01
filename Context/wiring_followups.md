@@ -165,7 +165,8 @@ findings (§11) are the first work after the merge.
    the top while the content scrolls under them, about a quarter of the screen; every page is built so
    (the shell scrolls only the content). A proposal: on a phone the top of the page scrolls away with
    the content. App-wide; not part of Follow-up 14 unless the owner adds it.
-11. **On a real iPhone a tapped field zooms the page** (the reviewer, 2026-09-30, during Follow-up 19).
+11. **On a real iPhone a tapped field zooms the page** (the reviewer, 2026-09-30, during Follow-up 19; taken into
+   Follow-up 20, F20-1, on 2026-10-01).
    The app's fields draw their text at 13 px (`src/ui/Field.module.css`, the filters' search and
    selects, the insurer picker's find box), and Safari on an iPhone zooms the page in when a field with
    text under 16 px is tapped, and stays zoomed after it. The practice copy runs on the owner's Mac, so
@@ -173,7 +174,8 @@ findings (§11) are the first work after the merge.
    text is 16 px. App-wide; for when the app goes online (the backend's backlog item 6), unless the
    owner wants it sooner.
 
-- **Found in Follow-up 17 (it predates it): the Drivers search on Delete records** says "Name,
+- **Found in Follow-up 17 (it predates it; taken into the backend's round 15 and Follow-up 20, F20-3, on
+  2026-10-01): the Drivers search on Delete records** says "Name,
   licence number or email", but neither that search nor the Drivers list finds a driver by licence
   number; both find one by name and email. Either the backend searches the licence number too, or the
   placeholder drops it. Not scheduled.
@@ -1288,3 +1290,33 @@ row; the owner found nothing to change there.
   until then the new tab answers with its error on 5173 and 5174. Nothing else changes: the case's own
   page gets no delete button (the owner's rule of one deletions page), and the other six tabs stay as
   they are.
+
+## 20. Follow-up 20 — the small fixes before going live: the app's half
+
+> **Status: SPECIFIED 2026-10-01** at the owner's word ("yes, write the small fixes"), the app's half
+> of the block of small fixes on the road to production (the backend's backlog item 6). One side at a
+> time: the backend's round 15 (`RWRentApi-wiring/Context/round15_spec_and_plan.md`) goes first; this
+> follow-up's prompt follows once round 15 is verified, since F20-3 rests on it.
+
+- **F20-1. On a phone, a field's text is 16 px** (the reviewer, 2026-09-30; §4 item 11). The app's
+  fields draw their text at 13 px (`src/ui/Field.module.css`, the filters' search and selects in
+  `src/ui/Filters.module.css`, the insurer picker's find box, the account screens' fields), and Safari
+  on an iPhone zooms the whole page in when a field with text under 16 px is tapped, and leaves it
+  zoomed. The practice copy runs on the owner's Mac, so it has not been seen; it will be on the first
+  day the app is used on a phone. **Wanted:** on the phone tier, below 768 px, every text field, select
+  and text area of the app draws its text at 16 px, so tapping one never zooms the page. Labels,
+  hints, buttons, checkboxes and the tablet and desktop tiers stay as they are; a field may grow by
+  what the larger text needs, nothing more.
+- **F20-2. The tab strip's active tab whole once its counts arrive** (Follow-up 19's report §8 item
+  4, and the reviewer's own phone screenshot). `src/ui/RecordTabs.tsx` brings the active tab into view
+  at its first paint, before the counts arrive; the counts then widen every tab, and a tab at the end of
+  the strip, opened straight from its address, stands partly past the strip's edge (Insurance cases by
+  127 px at 402 px, Drivers too before Follow-up 19). **Wanted:** whenever the tabs change width while
+  a tab is active, its counts arriving among them, the active tab is brought whole into view again,
+  without a slide, unless the person has already scrolled the strip; every page with the strip gains
+  it, and nothing else of the strip changes.
+- **F20-3. The drivers list's search names the licence number** (once the backend's round 15 searches
+  it). The drivers list's search reads "First name, last name or email"; after round 15 it also finds a
+  driver by the licence number, as the Delete records page's Drivers tab already promises ("Name,
+  licence number or email"). **Wanted:** the drivers list's search reads "Name, licence number or
+  email", as the Delete records page's does.
