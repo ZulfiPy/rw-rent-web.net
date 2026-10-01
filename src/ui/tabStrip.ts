@@ -51,7 +51,10 @@ export function seatFor(strip: HTMLElement): number | null {
 
 /** Starts the strip's behaviour on its element; `onFade` hears which edges are cut off. */
 export function tabStrip(strip: HTMLElement, onFade: (fade: Fade) => void): TabStrip {
-  /** Where the app's own last scroll of the strip is heading, until it gets there. */
+  /**
+   * Where the app's own slide is heading, until it gets there. An instant scroll stands where it
+   * stops as it is sent, the browser keeping it within the strip, so nothing of it is left to wait for.
+   */
   let heading: number | null = null;
   /** A finger is on the strip. */
   let touching = false;
@@ -65,7 +68,7 @@ export function tabStrip(strip: HTMLElement, onFade: (fade: Fade) => void): TabS
   };
 
   const scrollTo = (left: number, slide: boolean) => {
-    heading = left;
+    heading = slide ? left : null;
     if (typeof strip.scrollTo === 'function') {
       strip.scrollTo({ left, behavior: slide ? 'smooth' : 'auto' });
     } else {

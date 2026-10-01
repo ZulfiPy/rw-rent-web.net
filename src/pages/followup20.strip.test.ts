@@ -202,6 +202,23 @@ describe('F20-2: the active tab whole once its counts arrive', () => {
     expect(whole(strip.seatOfActive())).toBe(true);
   });
 
+  test('an instant seat the browser moves on, as the tabs narrow, leaves nothing to wait for', () => {
+    const strip = stripAt(BEFORE, INSURANCE_CASES);
+    tabStrip(strip.el, onFade).seat(false);
+    const first = strip.scrollTo.mock.lastCall![0].left!;
+    // The page's font arrives: every tab narrows, and the browser keeps the scroll within the strip.
+    const narrow = BEFORE.map((w) => w - 10);
+    strip.state.widths = narrow;
+    strip.state.scrollLeft = Math.min(strip.state.scrollLeft, strip.el.scrollWidth - WIDTH);
+    strip.scrolled();
+    strip.resize(narrow);
+    expect(strip.state.scrollLeft).toBeLessThan(first);
+    // The tabs widen back to where the first seat was sent: the tab is seated again there.
+    strip.resize(BEFORE);
+    expect(strip.scrollTo).toHaveBeenLastCalledWith({ left: first, behavior: 'auto' });
+    expect(whole(strip.seatOfActive())).toBe(true);
+  });
+
   test('a change of width while the active tab stands whole moves nothing', () => {
     const strip = stripAt(BEFORE, 0);
     tabStrip(strip.el, onFade).seat(false);
