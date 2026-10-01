@@ -1305,8 +1305,8 @@ row; the owner found nothing to change there.
 >
 > Left open: Safari on an iPhone is not measured, since this Mac has no iOS Simulator; tap a search,
 > a filter and a Register case field on the first day the app is reachable from an iPhone. The
-> owner's apps on 5173 and 5174 already show this follow-up; until their APIs run round 15, their
-> drivers search names the licence number before it finds a driver by one.
+> owner's apps on 5173 and 5174 show this follow-up, and at the owner's word both of their APIs moved
+> to round 15 the same day, so their drivers search finds a driver by the licence number too.
 
 - **F20-1. On a phone, a field's text is 16 px** (the reviewer, 2026-09-30; §4 item 11). The app's
   fields draw their text at 13 px (`src/ui/Field.module.css`, the filters' search and selects in
