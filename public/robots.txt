@@ -1,0 +1,6 @@
+# RW-Rent is a private tool, and no search engine lists it: every page says noindex.
+# A robot has to be able to read a page to see that, so none is refused here; a robot that is
+# refused may still list the bare address. A messenger's robot reads the page for the preview of a
+# sent link.
+User-agent: *
+Allow: /

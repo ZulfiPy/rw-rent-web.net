@@ -13,6 +13,25 @@ npm run typecheck
 
 The backend has to be running first; see "Running the app" below.
 
+## The link preview and the icons
+
+What a messenger shows for a sent link, and the browser's and the phone's icons, are real files of
+`public/`, which the build copies beside the page: `og-image.png`, `favicon.svg`, `favicon.ico`,
+`apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` and `robots.txt`. The
+page's tags in `index.html` name them.
+
+The pictures are drawn from the pages in `brand/` by one command, which needs the network for the
+two typefaces and Playwright's Chromium from the testing folder beside the repositories:
+
+```
+node brand/make.cjs
+```
+
+It writes the five pictures into `public/` and their fingerprints into `brand/made.json`; a test
+fails when a source and its picture no longer match. `favicon.svg`, `site.webmanifest` and
+`robots.txt` are written by hand. `robots.txt` refuses no robot: every page says `noindex`, which a
+robot can only see in a page it may read.
+
 ## Running the app
 
 The API and its seeded database come first. From the backend's main folder and worktree:

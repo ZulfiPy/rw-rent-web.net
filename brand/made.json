@@ -1,0 +1,15 @@
+{
+  "command": "node brand/make.cjs",
+  "sources": {
+    "og-image.html": "d9b0b6dd5abc22fbd4d3fcdc78e70aa9d09c86eb8e29e053d2c9dab3017aa39e",
+    "icon.html": "3a975c3b8e7ab499c96f76b787d9ed2bf1d1f454cd68fe698174005e3ebc45a7",
+    "make.cjs": "c7f43ee506e3f347f112c90ca283302dd05f3339d0dd66b8d5b7cbfea752945c"
+  },
+  "files": {
+    "og-image.png": "475f2dd2569c4a6156295d8baa957a8febaf923272833e281e7e79d2d2005728",
+    "apple-touch-icon.png": "1e7070a190fbd77473b6e905cb86f717281b35e07eb5f383cedd7a51be5427e1",
+    "icon-192.png": "77fcfb5ee763cdc59770a532e7da36987c3bd22f9c7eca787e7d6a113a4d70ff",
+    "icon-512.png": "79b8e0d6b77cc9ae9fb3f92edd4d0b36bcd7df613482acd00336881068d8ff04",
+    "favicon.ico": "9a547279c4155ca9794d332bebade612da09b99172bce65d41d1b467237b35a3"
+  }
+}
