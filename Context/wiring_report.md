@@ -1,243 +1,237 @@
-# Frontend Wiring: Follow-up 21, what a stranger sees
+# Frontend Wiring: Follow-up 22, the app speaks to a person
 
-> Follow-up 21 (`Context/wiring_followups.md` §21): a link's preview with the name, a sentence and a
-> picture, the icons, the manifest and no search listing (F21-1); the public pages' foot without the
-> sessions' sentence (F21-2); the sign-in page's introduction (F21-3); and no technical line on the
-> public message screens (F21-4). The backend's half is its round 16
-> (`RWRentApi-wiring/Context/round16_report.md`), built in the same run. On `feature/backend-wiring`
-> in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main`
-> after verification. Written 2026-10-02. It replaces Follow-up 20's report, which git history keeps.
->
-> **One change to §21, decided by the owner on 2026-10-02 during this run:** `robots.txt` refuses no
-> robot, where §21 has it refuse every one (§7). The reviewer corrects the specification afterwards.
+> Follow-up 22 (`Context/wiring_followups.md` §22): the phone number's Estonian example (F22-1), the
+> screen shown when the server cannot be reached (F22-2), the facts only a developer reads off the
+> record pages (F22-3), and no sentence a person reads naming the API, the backend, an endpoint, a
+> payload, HTTP or a status number (F22-4). The app only: nothing in `RWRentApi-wiring` changed but the
+> latest message. On `feature/backend-wiring` in this worktree
+> (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main` after
+> verification. Written 2026-10-02. It replaces Follow-up 21's report, which git history keeps.
 >
 > **The owner's side was never touched.** This run never opened 5173 or 5174, never called 5001 or
 > 5002, and never read or wrote `rwrent_v1` or `rwrent_check`. Nothing was sent to the server, to
-> `https://rw-rent.net` or to `https://api.rw-rent.net`.
+> `https://rw-rent.net` or to `https://api.rw-rent.net`, and nothing under `deploy/` or of the
+> deployment's documents was changed.
 >
-> - Both of the owner's apps hot-reload from this worktree, so they show this run's code and files
->   (§8, item 1).
+> - Both of the owner's apps hot-reload from this worktree, so they show this run's words (§8, item 1).
 > - Every live look used this run's own stack: round 16's API on 5003 over `rwrent_r16`, this run's
->   Vite on 5176 against it, and the built app served from a scratch folder on 5175 (§4.1).
-> - **For the reviewer: §5 lists how each thing of F21-1 is seen**, the tags, the picture, the icons
->   and the files answered as themselves, and the public pages' steps.
+>   Vite on 5176 against it, a second Vite on 5177 pointed at a port where nothing answers, and the
+>   harness of the real pages on 5175 (§4.1).
+> - **For the reviewer: §2.5 lists every sentence changed, before and after, with its file, and §5
+>   lists the signed-in steps on 5176 against 5003.**
 
 ## 1. Summary
 
-- **F21-1, a link to the app shows its name, a sentence and a picture.**
-  - `index.html` carries the description, the Open Graph and Twitter tags, the theme colour, the
-    icons, the manifest and `noindex`.
-  - The picture, `og-image.png`, is 1200 by 630 in the app's dark look: the monogram in the brand's
-    red, "RW-Rent" in the wordmark's type, and "Control at every turn." in the display type, over the
-    sign-in page's monogram pattern. It is made from `brand/og-image.html` by one command,
-    `node brand/make.cjs`.
-  - The tab's icon is an SVG of the monogram, with a `favicon.ico` holding 16, 32 and 48 for browsers
-    that ask for one. The iPhone's home-screen icon is 180 by 180 on the dark ground, and the
-    manifest names the app and its 192 and 512 icons.
-  - Every one of these is a real file of `public/`, which the build copies beside the page. Asked
-    for by its address, each is answered as itself, on Vite and on the built app.
-  - `robots.txt` refuses no robot, and the page says `noindex`: the owner's decision (§7).
-- **F21-2.** The public pages' foot reads "RW-Rent operations platform · v1.0.0".
-- **F21-3.** The sign-in page's introduction is "Fleet and rental operations for RW-Rent."
-- **F21-4.** No public message screen shows a technical line, whatever the API answered. The note
-  under a link's form reads "This link works once. It has been removed from this page's address."
+- **F22-1.** Create account shows `+372 5000 0000` as the phone number's example. No other field of
+  the app shows a country's example.
+- **F22-2.** When the server cannot be reached the app shows "RW-Rent cannot be reached right now"
+  and "Check your internet connection and reload this page. If it stays like this, try again in a
+  few minutes.", and nothing under them. The error's own text is no longer shown.
+- **F22-3.** The rental's page no longer shows the concurrency token, and the user's page no longer
+  shows the security version. What the app sends with a correction did not change. The audit entry's
+  last panel is titled "The entry as stored".
+- **F22-4.** No sentence a person reads names the API, the backend, an endpoint, a payload, HTTP,
+  JSON, a UUID, concurrency or a status number.
+  - The eight §22 lists read as it words them.
+  - Reading every text of the app found six more texts of the kind, in four places, reworded the
+    same plain way: the Profile's "Your effective access" window, the note on ending a user's
+    session, the note on activating a rental nobody may drive yet, and the audit entry's panel for
+    values it cannot set out.
+  - A test reads every text of the app, 6,707 of them, and fails on any of those words, the rightful
+    exceptions aside, each named in the test with what it is.
 
 | | |
 |---|---|
-| Commits | two `Wiring 53` commits and this report's `Wiring 54`, on `feature/backend-wiring` (§9) |
-| Tests | 761 before, **786** now, all green: 25 new, 1 changed on purpose (§2.5) |
+| Commits | two `Wiring 55` commits and this report's `Wiring 56`, on `feature/backend-wiring` (§9) |
+| Texts changed | **22**: 4 removed with their two facts, 18 reworded or replaced (§2.5) |
+| Tests | 786 before, **807** now, all green: 21 new, 4 changed on purpose (§2.6) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
 | Each commit alone | 0 type errors and the full suite green at each of the two (§4.4) |
-| Planted breakages | **37 planted, 37 caught**: 26 for F21-1, 4 for F21-2 and F21-3, 5 for F21-4, 2 for what stays (§4.3) |
-| In a browser | the public pages on 5176 against 5003, a link the real API refuses among them; each file asked for by its address on 5176 and on the built app (§4.2) |
-| A messenger | **not seen**: no messenger can read this Mac, and the live site has the old page until it is deployed (§8, item 2) |
+| Planted breakages | **29 planted, 29 caught**, at least one for each item; one control, the word in a comment only, rightly let through (§4.3) |
+| In a browser | Create account on 5176 against 5003; the unreachable screen with nothing answering; the rental, the user and an audit entry through the harness (§4.2) |
 
 ## 2. Implemented
 
-### 2.1 F21-1: the page's tags (`index.html`)
+### 2.1 F22-1 (`src/pages/account/Register.tsx`)
 
-| Tag | Value |
-|---|---|
-| `description` | Fleet and rental operations for RW-Rent: vehicles, rentals, drivers, customers and insurance cases in one place. |
-| `robots` | `noindex` |
-| `theme-color` | `#0A0A0B`, the dark theme's canvas |
-| `og:type`, `og:site_name`, `og:title` | `website`, `RW-Rent`, `RW-Rent` |
-| `og:description` | the description |
-| `og:url` | `https://rw-rent.net/` |
-| `og:image` and its `type`, `width`, `height`, `alt` | `https://rw-rent.net/og-image.png`, `image/png`, `1200`, `630`, "RW-Rent. Control at every turn." |
-| `twitter:card`, `title`, `description`, `image`, `image:alt` | `summary_large_image` and the same name, sentence, picture and text |
-| `link rel="icon"` | `/favicon.ico` with `sizes="48x48"`, then `/favicon.svg` as `image/svg+xml` |
-| `link rel="apple-touch-icon"` | `/apple-touch-icon.png` |
-| `link rel="manifest"` | `/site.webmanifest` |
+The phone field's placeholder is `+372 5000 0000`. A test reads every text of the app for a
+country's calling code and finds this one alone.
 
-A messenger's robot runs no script, so these stand in the page as it is written, the same for every
-address of the app. The picture's and the page's addresses are whole ones, as a messenger wants.
+### 2.2 F22-2 (`src/App.tsx`, `src/App.module.css`)
 
-### 2.2 F21-1: the files (`public/`, new) and their sources (`brand/`, new)
+- The screen's title and body are §22's. The line under them, which showed the error's own text,
+  "Failed to fetch" or "HTTP 502", is gone, and its style with it.
+- The screen is shown as before, when asking who is signed in fails with anything but "not signed
+  in": the request never arriving, or a server on the way answering in the API's place.
 
-| File | What it is | Made from |
-|---|---|---|
-| `og-image.png` | 1200 by 630, 101,922 bytes | `brand/og-image.html`, by the command |
-| `apple-touch-icon.png` | 180 by 180, the monogram on the dark ground | `brand/icon.html`, by the command |
-| `icon-192.png`, `icon-512.png` | the manifest's icons, the same drawing | `brand/icon.html`, by the command |
-| `favicon.ico` | 16, 32 and 48, each a PNG with no ground | `brand/icon.html?ground=none`, by the command |
-| `favicon.svg` | the monogram's two paths in the brand's red | written by hand |
-| `site.webmanifest` | the name, the description, the colours and the three icons | written by hand |
-| `robots.txt` | `User-agent: *`, `Allow: /`, with the reason above them | written by hand |
+### 2.3 F22-3 (`AssignmentRecord.tsx`, `UserRecord.tsx`, `AuditEntry.tsx`)
 
-- **The one command:** `node brand/make.cjs`. It opens each source page in Chromium at the picture's
-  size and takes its picture. Chromium comes with Playwright from
-  `/Users/zulf/rw-rent-api/testing-scratch/node_modules`, or from the folder `RWRENT_PLAYWRIGHT`
-  names; this project gained no dependency.
-- **The typefaces** are the sign-in page's own: Poppins 600 for the name, as the wordmark is set, and
-  Michroma for the line. They come from Google's servers, as the app's do, so the command needs the
-  network. It stops, rather than draw the name in another face, if either has not loaded.
-- **`brand/made.json`** holds the fingerprints of the three sources and the five files the command
-  wrote. A test compares them with the repository, so a source changed without the command run
-  again, or a picture changed by hand, fails the suite. Run twice here, the command made the same
-  bytes.
-- **The monogram** is drawn from the same two paths as the sign-in page's logo, and the colours are
-  the dark theme's; tests hold both equal to `AuthLayout.tsx` and `tokens.css`.
-- **Everything of the picture that matters stands in its middle 630 by 630,** which is what a
-  messenger keeps when it cuts a picture square.
-- `README.md` gained a short section on these files and the command.
+- **The rental's Privileged corrections panel** lost the fact "Concurrency token" with its hint. It
+  keeps "Last changed". Both corrections still send the token with the request, as before.
+- **The user's Account panel** lost the fact "Security version" with its hint. Six facts are left,
+  and the panel now sets them three to a row: with four to a row, as it was, the two places the wide
+  fact filled stood empty.
+- **The audit entry's last panel** is titled "The entry as stored". Its stored content is shown as it
+  is stored, as before.
 
-### 2.3 F21-2 and F21-3 (`src/pages/account/AuthLayout.tsx`, `SignIn.tsx`)
+### 2.4 F22-4
 
-- The foot lost its second dot and "Sessions expire after 2 h idle, 12 h absolute".
-- The sign-in page's introduction lost "Your session stays signed in on this browser until it
-  expires."
-- Unchanged, as §21 says: the art's two lines; the Profile page's and the user record's sentence
-  about sessions; the "Session expired" screen.
+- **The eight sentences §22 lists** read as it words them, in the files it names.
+- **Found by reading every text the app holds,** and reworded the same way with no change of meaning:
+  - the Profile's "Your effective access" window named the frontend and `GET /api/me`;
+  - the note on ending one of a user's sessions named the endpoint, as the suspend note did;
+  - the note on activating a rental with no authorized driver named the api;
+  - the audit entry's panel for an entry whose values it cannot set out was titled "Payload" and
+    spoke of an "Unrecognised payload shape" and "raw values".
+- **How the reading was done:** a script walked every source file with the TypeScript parser and
+  listed each string, each template's words and each piece of JSX text: 6,712 texts in 128 files, the
+  imports' paths aside.
+  Those with a named word were read one by one; the rest were searched for other words of the same
+  kind, which §8 item 2 lists.
 
-### 2.4 F21-4 (`outcomes.ts`, `AuthLayout.tsx` and four pages)
+### 2.5 Every sentence changed, before and after
 
-- **The mono line is gone from the screens that had one:** "code:
-  registration_confirmation_token_unusable", "code: password_reset_token_unusable" and "HTTP 429 ·
-  retry-after: 60 s".
-- **No page can hand a screen a code any more.** The message screen, `AuthOutcome`, no longer takes
-  a line, and the four link pages no longer pass the API's code to it: the registration's
-  confirmation, the email change, the password reset and the transfer. The line's style is removed.
-- Each screen's title, body, facts and actions are as they were. "Too many attempts" keeps its body.
-- The note under a link's form, `TokenNote`, reads "This link works once. It has been removed from
-  this page's address."
+All paths are under `src/`.
 
-### 2.5 Tests
+| # | Item | File | Before | After |
+|---|---|---|---|---|
+| 1 | F22-1 | `pages/account/Register.tsx` | +371 20 000 000 | +372 5000 0000 |
+| 2 | F22-2 | `App.tsx` | The API did not answer | RW-Rent cannot be reached right now |
+| 3 | F22-2 | `App.tsx` | The app could not reach the RW-Rent API. Start it and reload this page. | Check your internet connection and reload this page. If it stays like this, try again in a few minutes. |
+| 4 | F22-3 | `pages/fleet/AssignmentRecord.tsx` | Concurrency token | removed with its fact |
+| 5 | F22-3 | `pages/fleet/AssignmentRecord.tsx` | Sent with each correction; a stale token returns 409 Conflict. | removed with its fact |
+| 6 | F22-3 | `pages/users/UserRecord.tsx` | Security version | removed with its fact |
+| 7 | F22-3 | `pages/users/UserRecord.tsx` | Increments on credential and access changes. | removed with its fact |
+| 8 | F22-3 | `pages/audit/AuditEntry.tsx` | Raw payload | The entry as stored |
+| 9 | F22-4 | `api/problem.ts` | The API refused this change because the record no longer accepts it. | This change was refused because the record no longer accepts it. |
+| 10 | F22-4 | `pages/users/UserDialogs.tsx` | Signing in stops immediately and every active session ends. The endpoint takes no reason, so none is recorded. | Signing in stops immediately and every active session ends. No reason is asked for here, so none is recorded. |
+| 11 | F22-4 | `pages/admin/CompanyProfile.tsx` | If any user, vehicle, customer, driver or assignment references the Company, the API refuses the delete with a conflict. | If any user, vehicle, customer, driver or assignment refers to the Company, the delete is refused. |
+| 12 | F22-4 | `pages/fleet/Vehicles.tsx` | Exact year; the API accepts 1900 or later. | Exact year, 1900 or later. |
+| 13 | F22-4 | `pages/fleet/AssignmentDialogs.tsx` | Closes the assignment. Open driver authorizations are stopped by the backend. | Closes the assignment. Open driver authorizations are stopped with it. |
+| 14 | F22-4 | `pages/account/Profile.tsx` | What the API reports for your account right now. | Your roles and what they allow, as they are right now. |
+| 15 | F22-4 | `pages/fleet/FleetDialogs.tsx` | The API rejects a driver link on a business customer. | A business customer cannot be linked to a driver. |
+| 16 | F22-4 | `pages/account/Profile.tsx` | A successful change refreshes your session. | You stay signed in after the change. |
+| 17 | F22-4, found | `pages/account/Profile.tsx` | The frontend renders actions from the permissions returned by GET /api/me, not from role names. | What you can do in the app follows these permissions, not the names of your roles. |
+| 18 | F22-4, found | `pages/users/UserDialogs.tsx` | The session ends at once and is recorded as “Revoked by administrator”. The endpoint takes no reason, so the audit entry records none. | The session ends at once and is recorded as “Revoked by administrator”. No reason is asked for here, so the audit entry records none. |
+| 19 | F22-4, found | `pages/fleet/AssignmentDialogs.tsx` | No driver is authorized yet. The api refuses activation until this assignment has coverage. | No driver is authorized yet. Activation is refused until this assignment has coverage. |
+| 20 | F22-4, found | `pages/audit/AuditEntry.tsx` | Payload, a panel's title | Recorded values |
+| 21 | F22-4, found | `pages/audit/AuditEntry.tsx` | Parsing, that panel's one label | Reading |
+| 22 | F22-4, found | `pages/audit/AuditEntry.tsx` | Unrecognised payload shape — see the raw values below | These values could not be set out here. See the entry as stored, below. |
 
-**25 new test cases, 1 changed on purpose** (761 before, 786 now).
+The list was made by comparing every text of the app at `7e29926` with every text now: these 22 and
+nothing else changed, but for the dash that stood for a missing token, which went with its fact.
+
+### 2.6 Tests
+
+**21 new test cases, 4 changed on purpose** (786 before, 807 now).
 
 | File | Cases | What they hold |
 |---|---|---|
-| `pages/followup21.preview.test.ts` | 16 | the page's tags read as a robot reads them, each value and each once; the picture's size from its own bytes, equal to the tags', and its ground; the picture's source: the paths, the name's type, the line, the colours; the icon links and the theme colour; the SVG's paths; the `.ico`'s three sizes, each a PNG with no ground; the iPhone's icon; the manifest whole, each icon a file of the size it says; `noindex`; `robots.txt`'s two rules; `public/` holding exactly these eight files; every file the page names existing; the fingerprints of `brand/made.json` |
-| `pages/followup21.public.render.test.ts` | 9 | nine public pages rendered: each foot's two texts and one dot; the version's type and the art's lines; the sign-in introduction; every message screen with its title, facts and actions and no line; the three that had one; a dead link in a person's words on three pages; no page passing a line, read from the sources; the note's words on two forms; what stays |
+| `pages/followup22.words.test.ts` | 6 | every text of the app read with the TypeScript parser: none holds a named word, the rightful exceptions aside; each exception still needed and no more of them; the error's own message never reaching a screen for an answer of the API; each of the 22 sentences of §2.5, the new one in its file and the old one nowhere; the one country's example |
+| `pages/followup22.render.test.ts` | 9 | Create account's placeholder; the unreachable screen alone, and the app showing it for a request that never arrived and for a 502, with no error text; the rental's corrections panel without the token, both corrections still sending it; the user's Account panel without the version, six facts three to a row; the audit entry's last panel and its panel for values it cannot set out |
+| `pages/followup22.sentences.render.test.ts` | 6 | the refusal with no message of its own; the suspend and end-session notes; ending a rental and activating one nobody may drive; the year's hint; a business customer's linked driver; the Profile's Access panel |
 
-**Changed on purpose:** `pages/account/outcomes.test.ts`, "names the refusal code on the two link
-screens", expected the dead confirmation link's and the dead reset link's line to contain `code:`.
-It is now "carries no technical line on any screen": no screen has such a line, none of their words
-reads like a code, and "Too many attempts" keeps its body.
+**The rightful exceptions,** each named in the test: the addresses the app calls, in `src/api/`, and
+six single texts. Those are the type `application/json` it sends requests in; the ending
+`.concurrency_conflict` of a code it compares; the member name `ConcurrencyToken` in the audit's
+stored content; an error's own message for the programmer's console, `HTTP` and the status; a
+programmer's mistake caught at start; and the 500-euro deductible, a sum of money.
+
+**Changed on purpose,** all four for sentence 22:
+
+| Test | Expected before | Expects now |
+|---|---|---|
+| `followup8.render.test.ts`, "a copy the reader does not recognise falls back to the ordinary payload views" | the markup contains "Unrecognised payload shape" | it contains "These values could not be set out here." |
+| `followup9.render.test.ts`, two cases, and `followup19.audit.render.test.ts`, one | the markup does not contain "Unrecognised payload shape" | it does not contain "These values could not be set out here." |
+
+The last three still passed with the old words, which no longer exist anywhere; they were changed so
+that they go on saying something.
 
 ## 3. Not implemented or partial
 
-Nothing of §21, with the one change of §7. What a messenger shows could not be seen here (§8, item 2).
+Nothing of §22. Other sentences that sound written for a developer, without any of the words §22
+names, were left and are listed in §8 item 2.
 
 ## 4. Verification
 
 ### 4.1 The stack
 
-- **The API:** round 16's, on 5003 over `rwrent_r16` (the backend's report §7).
+- **The API:** round 16's, on 5003, pid 84422, over `rwrent_r16`, as round 16 left it.
 - **The app:** this run's Vite on 5176 from this worktree, with `VITE_API_BASE_URL=http://localhost:5003`.
-- **The built app:** `vite build` into a scratch folder, served by `vite preview` on 5175.
-- Both ran from launch entries added to the workspace's `.claude/launch.json` for the run and removed
-  after it; the file is as it was. Both are stopped.
+- **Nothing answering:** a second Vite on 5177 with `VITE_API_BASE_URL=http://localhost:5999`, a port
+  nothing listens on.
+- **The harness:** Follow-up 20's, on 5175, the app's real pages from this worktree with a stand-in
+  transport that sends nothing anywhere.
+- All three ran from launch entries added to the workspace's `.claude/launch.json` for the run and
+  removed after it; the file is as it was. All three are stopped.
 
-### 4.2 In a browser and by address
+### 4.2 In a browser
 
-**Each file asked for by its address,** on 5176 and on the built app on 5175, the same on both:
+- **Create account on 5176, signed out, against 5003:** the phone field's example reads
+  `+372 5000 0000`. The page's only API request went to `http://localhost:5003/api/me`, 401.
+- **The unreachable screen on 5177:** the app asked `http://localhost:5999/api/me`, got no answer,
+  and showed "RW-Rent cannot be reached right now", the body, and nothing in the mono type.
+- **Through the harness, as the administrator:**
+  - the rental's Corrections tab: Privileged corrections shows its two buttons, "Last changed" with
+    the person and the time, and the warning; no token;
+  - the user's page: Account shows First name, Last name, Login email, then Email ownership, Phone,
+    Company, with no empty place. With four to a row the picture showed a grey gap, which is why the
+    row is three.
+- **Through the harness, as the Principal:** an audit entry's panels end with "Reason" and "The entry
+  as stored".
+- **Not looked at in a browser:** the dialogs of §2.5's sentences 10 to 19. They need a sign-in on
+  5176, which §5 gives the reviewer; the tests render each one.
 
-| Address | Answered with | The bytes |
-|---|---|---|
-| `/og-image.png` | 200 `image/png`, 101,922 bytes | the file's own |
-| `/favicon.svg` | 200 `image/svg+xml`, 1,037 bytes | the file's own |
-| `/favicon.ico` | 200 `image/x-icon`, 3,305 bytes | the file's own |
-| `/apple-touch-icon.png` | 200 `image/png`, 3,288 bytes | the file's own |
-| `/icon-192.png` | 200 `image/png`, 3,536 bytes | the file's own |
-| `/icon-512.png` | 200 `image/png`, 9,300 bytes | the file's own |
-| `/site.webmanifest` | 200 `application/manifest+json`, 566 bytes | the file's own |
-| `/robots.txt` | 200 `text/plain`, 314 bytes | the file's own |
-| `/no-such-file.png`, `/drivers` | 200 `text/html` | the app's page, as before for an address with no file |
-
-**The pages on 5176, signed out, against 5003:**
-
-- **Sign in:** the introduction "Fleet and rental operations for RW-Rent."; the foot "RW-Rent
-  operations platform · v1.0.0"; the art's "Control at every turn." The browser read all 18 tags and
-  4 links of §2.1 from the page, fetched the icons, the manifest, the picture and `robots.txt` with
-  their types, and read the manifest's name and three icons.
-- **`/confirm-registration-email` with a made-up link:** the real API refused it, 400. The screen
-  reads "This confirmation link cannot be used", its body, "Confirmation links are valid for 24 hours
-  and work once.", and its two actions. Nothing on it is in the mono type, and no code is shown.
-- **`/reset-password` and `/accept-administrator-transfer` with a made-up link:** each form's note
-  reads "This link works once. It has been removed from this page's address."
-- **Not looked at in a browser:** the dead reset link's screen and the dead transfer link's, which
-  need a password typed into the form, and "Too many attempts", which needs the API to answer 429.
-  The tests render all three.
-
-### 4.3 The planted breakages: 37 planted, 37 caught
+### 4.3 The planted breakages: 29 planted, 29 caught
 
 Each changed one thing in a copy of the commit taken with `git archive`, never the worktree; the
 whole suite and the typecheck ran in the copy; the files were then written back, and the copy ran
-clean at the end, 786 green. A breakage counts as caught only when a test failed.
+clean at the end, 807 green. A breakage counts as caught only when a test failed.
 
 | # | The breakage | Caught by |
 |---|---|---|
-| P1 | the page has no description | the title and description |
-| P2 | the picture's address is not a whole one | the Open Graph tags; the files named |
-| P3 | `og:url` names the address planned before | the Open Graph tags |
-| P4 | the tags give the picture another width | the Open Graph tags; the picture's size |
-| P5 | the Twitter card is the small one | the Twitter tags |
-| P6 | the site's name is not given | the Open Graph tags |
-| P7 | the preview's sentence is another than the page's | the Open Graph tags |
-| P8 | the picture has no text for it | the Open Graph tags |
-| P9 | the Twitter tags name another picture | the Twitter tags; the files named |
-| P10 | the picture is not 1200 by 630 | the picture's size; the fingerprints |
-| P11 | the picture was changed by hand after the command made it | the picture's test; the fingerprints |
-| P12 | the source's line changed and the picture was not made again | the source's test; the fingerprints |
-| P13 | the source sets the name in another type | the source's test; the fingerprints |
-| P14 | the picture is gone | four tests |
-| P15 | the tab's SVG icon lost a path | the SVG's test |
-| P16 | the page names no `.ico` | the links; the files named |
-| P17 | the iPhone's icon is not 180 by 180 | the iPhone's icon; the fingerprints |
-| P18 | the page names no home-screen icon | the links; the files named |
-| P19 | the theme colour is not the app's dark ground | the links and theme colour |
-| P20 | the manifest names the app "RWRent" | the manifest |
-| P21 | the manifest names an icon that is not there | the manifest |
-| P22 | the page names no manifest | the links; the files named |
-| P23 | the icons' source draws on a white ground | the icons' source; the fingerprints |
-| P24 | the page does not say `noindex` | the `noindex` test |
-| P25 | `robots.txt` refuses every robot | the `robots.txt` test |
-| P26 | the build takes its public files from another folder | the test of `public/` |
-| Q1 | the sessions' sentence is back in the foot | the foot's test |
-| Q2 | the foot loses its version | the foot's two tests |
-| Q3 | the sign-in page speaks of the session again | the introduction's test |
-| Q4 | the art's line is gone | the art's test; the picture's source test |
-| Q5 | a message screen draws a technical line again | four tests |
-| Q6 | "Too many attempts" shows the HTTP status again | the screens' test; the outcomes' test |
-| Q7 | a link page shows the API's code in the screen's body | the link pages' test; the sources' test |
-| Q8 | the note under a link's form speaks of a token again | the note's test |
-| Q9 | "Too many attempts" loses the sentence that the pause is short | the three screens' test; the outcomes' test |
-| Q10 | the Profile page no longer explains sessions | the test of what stays |
-| Q11 | the expired-session screen no longer says why | the same |
+| M1 | the Latvian example is back on Create account | the render test; the sentences' list; the one example |
+| M2 | another field gains a country's example | the one example; the sentences' list |
+| M3 | the unreachable screen's old title is back | the screen's three tests; the words test |
+| M4 | the screen tells the person to start the server | the screen's three tests; the sentences' list |
+| M5 | the error's own text is shown under the body again | the screen's three tests |
+| M6 | the concurrency token is back on the rental's page | the corrections panel's test; the words test |
+| M7 | the security version is back on the user's page | the Account panel's test; the sentences' list |
+| M8 | the audit entry's panel is titled "Raw payload" again | the panel's test; the words test |
+| M9 | a correction no longer sends the token | the test of what a correction sends |
+| M10 | the user's Account panel keeps four to a row | the Account panel's test |
+| M11 | the audit entry's unreadable values are a "payload shape" again | its test; `followup8`'s; the words test |
+| M12 | a refusal without a message names the API | its test; the words test |
+| M13 | suspending a user names the endpoint | the notes' test; the words test |
+| M14 | deleting the Company names the API and a conflict | the words test; the sentences' list |
+| M15 | the year's hint names the API | its test; the words test |
+| M16 | ending a rental names the backend | its test; the words test |
+| M17 | the Access panel names the API | its test; the words test |
+| M18 | a business customer's driver link names the API | its test; the words test |
+| M19 | changing the password speaks of refreshing the session | the sentences' list |
+| M20 | "Your effective access" names the frontend and `GET /api/me` | the words test; the sentences' list |
+| M21 | ending a session names the endpoint | the notes' test; the words test |
+| M22 | activating a rental names the api | its test; the words test |
+| M23 | a page's description newly names the API | the words test |
+| M24 | a placeholder newly names a payload | the words test; a test of the Tasks page |
+| M25 | a sentence gains a status number, 409 | the words test; the sentences' list |
+| M26 | a label names JSON | the words test |
+| M27 | a label names a UUID | the words test |
+| M28 | a message names concurrency | the words test; four tests of the stale banner |
+| M29 | a message names HTTP | the words test |
+
+**The control, not a breakage:** the words "API", "concurrency", "HTTP" and "JSON payload" put into a
+comment only. The suite stayed green, 807, as it should: a comment is not a text a person reads.
 
 ### 4.4 The test suite, and each commit
 
-- `npx vitest run`: **786 passed**, 72 files. `tsc -b --noEmit`: 0 errors.
-- `vite build` into a scratch folder: green, with the chunk-size warning that predates this run; the
-  eight files stand beside `index.html` in the build.
+- `npx vitest run`: **807 passed**, 75 files. `tsc -b --noEmit`: 0 errors.
 - Each commit exported alone with `git archive`, typechecked and tested:
 
 | Commit | Type errors | Tests |
 |---|---|---|
-| `be37ced` | 0 | 777 |
-| `c4ac55d` | 0 | 786 |
+| `39bf489` | 0 | 795 |
+| `d2ecee8` | 0 | 807 |
 
 ### 4.5 The owner's side, untouched
 
@@ -247,124 +241,131 @@ clean at the end, 786 green. A breakage counts as caught only when a test failed
 
 ### 4.6 End state
 
-- **The API on 5003 is left running**, round 16's, over `rwrent_r16` (the backend's report §7).
-- **Nothing else of this run runs.** The Vite on 5176 and the built app on 5175 are stopped.
+- **The API on 5003 is left running**, pid 84422, over `rwrent_r16`. This run signed in there as the
+  administrator, Dita and Signe once, to read what the reviewer's steps name, and wrote nothing else.
+- **Nothing else of this run runs.** Nothing listens on 5175, 5176 or 5177.
 
-## 5. For the reviewer: how each thing is seen
+## 5. For the reviewer: the signed-in steps
 
 ### 5.0 Before you start
 
-- **Start Vite on 5176 from this worktree:**
+- **The stack:** the API on 5003 over `rwrent_r16`, round 16's seed and its practice registrations.
+- **Start Vite on 5176 from this worktree.** The API trusts only that origin:
   `VITE_API_BASE_URL=http://localhost:5003 npm run dev -- --port 5176 --strictPort`
-- No sign-in is needed for anything below but §5.2 step 6.
+- **Use a browser profile of its own**, never the owner's. The apps on 5173, 5174 and 5176 share
+  `localhost`'s cookies, so signing in on 5176 in the owner's profile signs the owner out of 5173.
+- **The seeded people**, all with the seed password: the administrator, Arturs Veidenbaums
+  (`sysadmin@rwrent.example`); Signe Priede, Company Principal; Dita Smite, Fleet Manager.
 
-### 5.1 F21-1
+### 5.1 Signed out
 
-1. **The tags.** `curl -s http://localhost:5176/ | grep -E 'description|robots|theme-color|og:|twitter:|rel="(icon|apple-touch-icon|manifest)"'`
-   prints the tags of §2.1; or View Source on any page of the app.
-2. **The picture.** Open `http://localhost:5176/og-image.png`: 1200 by 630, the dark ground, the red
-   monogram, "RW-Rent", "Control at every turn."
-3. **The picture's source and the one command.** Open `brand/og-image.html` in a browser: the same
-   drawing. Then `node brand/make.cjs`, and `git status` shows nothing changed: the same bytes.
-4. **The icons.**
-   - The tab of any page shows the red monogram.
-   - `http://localhost:5176/favicon.svg` and `/favicon.ico` open as the monogram.
-   - `http://localhost:5176/apple-touch-icon.png` is the monogram on the dark ground, 180 by 180.
-   - On an iPhone, once the app is deployed: Share, Add to Home Screen shows that icon and "RW-Rent".
-5. **The manifest.** In the browser's tools, Application, Manifest: the name RW-Rent, the dark
-   colours, three icons, no warning.
-6. **The files answered as themselves.** For each of `og-image.png`, `favicon.svg`, `favicon.ico`,
-   `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest`, `robots.txt`:
-   `curl -sI http://localhost:5176/<file>` answers 200 with the type of §4.2, not `text/html`.
-7. **The same in the build.** `npx vite build --outDir /tmp/rwrent-build` puts the eight files beside
-   `index.html`; `npx vite preview --outDir /tmp/rwrent-build --port 5175` answers them the same way.
-8. **No search listing.** `curl -s http://localhost:5176/robots.txt` allows every robot, and the
-   page's tags hold `robots` `noindex`.
-9. **After deployment, on the live site,** which this run did not touch:
-   - the same `curl -sI` for each file against `https://rw-rent.net/`, where Caddy answers them;
-     look at the manifest's type there;
-   - a link to `https://rw-rent.net` sent in a messenger shows "RW-Rent", the sentence and the
-     picture. A messenger that showed the old preview keeps it for a while: Telegram's `@WebpageBot`,
-     LinkedIn's Post Inspector and Facebook's Sharing Debugger read the page again.
+1. **Create account**, `http://localhost:5176/register`: the phone field's example is
+   `+372 5000 0000`.
+2. **The unreachable screen.** Start a second Vite that points at nothing:
+   `VITE_API_BASE_URL=http://localhost:5999 npm run dev -- --port 5177 --strictPort`, and open
+   `http://localhost:5177`. "RW-Rent cannot be reached right now", its body, and no line under them.
+   Stop it again.
 
-### 5.2 F21-2 to F21-4
+### 5.2 As Dita
 
-1. **Sign in**, `http://localhost:5176/sign-in`: under the heading, "Fleet and rental operations for
-   RW-Rent." and nothing more; at the foot, "RW-Rent operations platform · v1.0.0"; the art's two
-   lines as before.
-2. **Create one, Forgot password?:** the same foot.
-3. **A dead confirmation link**, `http://localhost:5176/confirm-registration-email#anything`: "This
-   confirmation link cannot be used", its body, its fact and two buttons; no grey box with a code.
-4. **A reset link's form**, `http://localhost:5176/reset-password#anything`: the note under the form
-   reads "This link works once. It has been removed from this page's address." Type any address and a
-   password of twelve characters or more and send: "This reset link cannot be used", with no code.
-5. **A transfer link's form**, `http://localhost:5176/accept-administrator-transfer#anything`: the
-   same note.
-6. **Signed in, Profile:** its Sessions panel still says "Sessions end after two hours idle or twelve
-   hours in total."
+3. **Vehicles, More filters:** under Manufacturing year, "Exact year, 1900 or later."
+4. **Rental assignments, the planned rental of 444 WKS, Martins Ozols: Activate.** The note reads
+   "No driver is authorized yet. Activation is refused until this assignment has coverage." Cancel.
+5. **The active rental of 482 TKL, Baltic Freight Partners: End assignment.** Under the title,
+   "Closes the assignment. Open driver authorizations are stopped with it." Cancel.
+6. **Customers, Baltic Freight Partners, Edit:** under Linked driver, "A business customer cannot be
+   linked to a driver." Cancel.
+7. **Your profile.**
+   - The Access panel: "Your roles and what they allow, as they are right now."
+   - Show permissions: "What you can do in the app follows these permissions, not the names of your
+     roles." Close.
+   - Change password: "You stay signed in after the change." Cancel.
+
+### 5.3 As Signe
+
+8. **Users, Toms Rudzitis.** The Account panel holds six facts in two rows of three: First name, Last
+   name, Login email, then Email ownership, Phone, Company. No "Security version".
+9. **Suspend:** the note reads "Signing in stops immediately and every active session ends. No
+   reason is asked for here, so none is recorded." Cancel.
+10. **Users, Dita Smite, Sessions, the action that ends one session:** "The session ends at once and is recorded
+    as “Revoked by administrator”. No reason is asked for here, so the audit entry records none."
+    Cancel.
+11. **Security audit, any entry:** the last panel is titled "The entry as stored", with Before and
+    After as they are stored and the line that the history is append-only.
+
+### 5.4 As the administrator
+
+12. **Rental assignments, any rental, Corrections:** Privileged corrections shows Correct parties,
+    Correct timeline, "Last changed" and the warning. No "Concurrency token".
+13. **Correct timeline on it, with a reason, and save:** it saves, so the token still goes with the
+    request. Or cancel, and take the test's word for it.
+14. **Company, Delete Company:** "If any user, vehicle, customer, driver or assignment refers to the
+    Company, the delete is refused." Cancel.
 
 ## 6. Decisions
 
 Choices this run made where the specification left room, each small to change:
 
-1. **The picture's composition:** the monogram and the name side by side, a short accent rule, the
-   line under it, all centred, over the sign-in page's monogram pattern fading towards the middle.
-2. **The name is set in Poppins 600,** which is what the sign-in page's wordmark is set in; the line
-   in Michroma, as on that page.
-3. **The tab's icon has no ground**, the red monogram alone, which reads on a light and on a dark
-   tab; the home-screen and manifest icons stand on the dark ground, the monogram 56% of the square,
-   so rounded corners cut none of it.
-4. **`favicon.ico` holds PNGs** at 16, 32 and 48, which every browser that asks for the file reads.
-5. **The manifest** gives the name, the short name, the description, the start address, the two
-   colours and the icons, and no `display`: added to a home screen, the app opens in the browser as
-   it does now.
-6. **The picture's text** for those who cannot see it: "RW-Rent. Control at every turn."
-7. **`brand/made.json`** and its test, so a picture and its source cannot drift apart unnoticed.
-8. **The screen's line was removed, not hidden:** `Outcome` has no `meta`, `AuthOutcome` takes none,
-   and the unused style is gone, so no later page can show a code there by passing one.
+1. **What counts as a text a person reads:** every string, template and piece of JSX text in the
+   app's source, the tests and their fixtures aside, comments not included. Reading all of them
+   costs a handful of named exceptions and leaves no doubt about what was skipped.
+2. **A status number** is one of HTTP's own: 400, 401, 403, 404, 405, 408, 409, 410, 413, 415, 422,
+   429, 500, 502, 503, 504. So "1900 or later" and "100 items" are numbers, and "the 500-euro
+   deductible" is the one sum of money that had to be named.
+3. **The wording of the six texts found,** §2.5's 17 to 22, in the manner of §22's eight: the same
+   fact, without the machine. Sentence 18 follows §22's own words for the suspend note.
+4. **The audit entry's panel for values it cannot set out** is titled "Recorded values", the title
+   the same place carries when it can set them out, and points at "the entry as stored, below", the
+   panel's new name.
+5. **The user's Account panel sets three facts to a row.** §22 asks only that the fact goes; the gap
+   it left was seen in the browser and closed.
+6. **The unreachable screen takes no text at all** from the error, and its mono style is removed, so
+   no later change can show one there by passing it.
 
 ## 7. Deviations
 
-1. **`robots.txt` refuses no robot.** §21 has it refuse every robot and says a messenger's preview
-   works all the same. The two do not hold together: the robots of X, LinkedIn and Telegram obey
-   `robots.txt`, and Facebook's mostly does, so a refusal of every robot would leave a link sent
-   there without its name, sentence and picture; WhatsApp, iMessage and Slack do not read the file.
-   Asked, the owner decided: "Let every robot in: robots.txt allows all, and the page keeps noindex.
-   A search engine has to be able to read the page to see noindex; one that is refused can still
-   list the bare address. So the preview works in every messenger and no search engine lists the
-   app. Record it in your report as a change to §21; the reviewer corrects the specification
-   afterwards." Built so: `User-agent: *`, `Allow: /`, and `noindex` in the page.
+None from §22.
 
 ## 8. Open risks and observations
 
 1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was saved,** each file swapped
-   in whole after the suite passed in a scratch copy, the new files before the page that names them.
-   Their pages now carry the tags and show the tab's icon; `index.html`'s change reloaded any open
-   page once.
-2. **What a messenger shows was not seen.** A messenger's robot cannot reach this Mac, and the live
-   site carries the old page until the deployment agent deploys this. §5.1 step 9 is the look after
-   that. Messengers keep a preview they have already made for some time.
-3. **The preview is the same for every address of the app.** The tags stand in the one page a robot
-   reads; a link to a driver or a rental previews as RW-Rent, not as that record, which a stranger
-   could not open anyway.
-4. **`noindex` is in the page, not in the files.** A search engine that reads the page lists
-   nothing of it. The picture and the icons carry no such word themselves; a header on them would be
-   Caddy's, the deployment's, if it is ever wanted.
-5. **The theme colour is the dark ground** for everyone, also for a person who chose the light
-   theme: the page names one colour before any script runs.
-6. **The command needs the network and the testing folder's Chromium.** On another machine it needs
-   Playwright from somewhere, named by `RWRENT_PLAYWRIGHT`. The pictures are committed, so nothing
-   but changing a picture needs the command.
-7. **Left for later, as §21 says:** the fonts and the icon font still come from Google's servers.
+   in whole after the suite passed in a scratch copy.
+2. **Sentences that still sound written for a developer, left because they hold none of the words
+   §22 names.** Each is one the owner may want reworded in a later follow-up:
+   - **A permission's code name** in fourteen "no access" lines, such as "Reading drivers needs
+     Drivers.Read." and "This area needs SystemAdministration.Transfer.", on the lists and record
+     pages of vehicles, customers, drivers, rentals, registrations, the Company, the security audit
+     and the administrator's page.
+   - **"Server sessions"**, a panel's title on the user's page, and "Ends this server session
+     immediately." on the Profile.
+   - **"token"**: "Consuming the single-use token from your link. This takes a moment." on the two
+     checking screens; "Completing the reset needs the account email, the link token and your new
+     password."; "Issues a fresh single-use token and invalidates the previous one." and "Withdraws
+     the pending transfer and invalidates its token." on the administrator's page.
+   - **"in one request"**: "Starts a new authorization as this one stops, in one request."
+   - **"Entity id"**, a label on the audit entry.
+3. **The browser's and a server's own words can still reach a form,** though not the unreachable
+   screen:
+   - a request that never arrives shows the browser's text in the form's alert, "Failed to fetch" in
+     Chrome and "Load failed" in Safari; the sign-in page has its own plain sentence for it but shows
+     the browser's first;
+   - a server on the way that answers for the API with no sentence gives the status's name, such as
+     "Bad Gateway", and one that answers with a page instead of data gives the parser's complaint.
+   Both are rare on the live site and outside §22's words. One plain sentence for every answer that
+   is not the API's own would close them.
+4. **The security audit's stored content still names what it names,** as §22 says it stays: its
+   members, "ConcurrencyToken" among them, are shown as stored in "The entry as stored".
+5. **What the suite does not hold:** that a sentence without any named word is plain. The words test
+   holds the words; whether a new sentence speaks to a person is still a reader's judgement.
 
 ## 9. Commits
 
-On `feature/backend-wiring`, after `6eac246`, in this order:
+On `feature/backend-wiring`, after `7e29926`, in this order:
 
-1. **`be37ced`** Wiring 53: A link to the app shows its name, a sentence and a picture, the app has its tab icon, home-screen icon, theme colour and manifest, and no search engine lists it: the page's tags, real files in public, and the pictures made from the pages in brand by one command.
-   15 files: `README.md`; `index.html`; added `brand/icon.html`, `brand/made.json`, `brand/make.cjs`, `brand/og-image.html`; added `public/apple-touch-icon.png`, `public/favicon.ico`, `public/favicon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/og-image.png`, `public/robots.txt`, `public/site.webmanifest`; added `src/pages/followup21.preview.test.ts`.
+1. **`39bf489`** Wiring 55: The phone number's example on Create account is Estonian, the screen shown when the server cannot be reached speaks to a person and shows no technical line, and the rental's concurrency token and the user's security version leave their pages, the audit entry's last panel titled The entry as stored.
+   10 files (under `src/`): `App.module.css`; `App.tsx`; `pages/account/Register.tsx`; `pages/audit/AuditEntry.tsx`; `pages/fleet/AssignmentRecord.tsx`; `pages/users/UserRecord.tsx`; `pages/followup8.render.test.ts`; `pages/followup9.render.test.ts`; `pages/followup19.audit.render.test.ts`; added `pages/followup22.render.test.ts`.
 
-2. **`c4ac55d`** Wiring 53: The public pages' foot and the sign-in page's introduction say nothing of sessions, no public message screen shows a technical line, and the note under a link's form speaks of the link.
-   10 files (under `src/pages/`): `account/AcceptAdministratorTransfer.tsx`; `account/Auth.module.css`; `account/AuthLayout.tsx`; `account/ConfirmEmailChange.tsx`; `account/ConfirmRegistrationEmail.tsx`; `account/ResetPassword.tsx`; `account/SignIn.tsx`; `account/outcomes.test.ts`; `account/outcomes.ts`; added `followup21.public.render.test.ts`.
+2. **`d2ecee8`** Wiring 55: No sentence a person reads names the API, the backend, an endpoint or a status number: the eight the specification lists and three more found by reading every text of the app are reworded plainly, and a test reads every text to keep it so.
+   9 files (under `src/`): `api/problem.ts`; `pages/account/Profile.tsx`; `pages/admin/CompanyProfile.tsx`; `pages/fleet/AssignmentDialogs.tsx`; `pages/fleet/FleetDialogs.tsx`; `pages/fleet/Vehicles.tsx`; `pages/users/UserDialogs.tsx`; added `pages/followup22.sentences.render.test.ts` and `pages/followup22.words.test.ts`.
 
-3. **This report's commit**, `Wiring 54`: `Context/wiring_report.md`, rewritten.
+3. **This report's commit**, `Wiring 56`: `Context/wiring_report.md`, rewritten.
