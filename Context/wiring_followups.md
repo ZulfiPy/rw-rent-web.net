@@ -168,6 +168,12 @@ findings (§11) are the first work after the merge.
 11. ~~On a real iPhone a tapped field zooms the page~~ — done in Follow-up 20 (F20-1), verified
    2026-10-01: on a phone every field's text is 16 px. Safari on an iPhone itself is looked at on the
    first day the app is reachable from one (§20).
+12. **The fonts and the icon font are fetched from Google's servers** (the reviewer, 2026-10-02, with the app
+   online): `index.html` links `fonts.googleapis.com` for Michroma, Geist, Geist Mono, Poppins and Material
+   Symbols. Every visitor's browser therefore tells Google its address, the app depends on a third
+   party to draw its text and icons, and a strict content policy cannot be set. A proposal: the font
+   files served from the app's own address. A follow-up of its own, since every page's look must be
+   compared before and after; not scheduled.
 
 - ~~**Found in Follow-up 17: the Drivers search on Delete records** promised the licence number, which
   neither drivers search found~~ — done 2026-10-01: the backend's round 15 searches the licence number
@@ -1330,3 +1336,48 @@ row; the owner found nothing to change there.
   driver by the licence number, as the Delete records page's Drivers tab already promises ("Name,
   licence number or email"). **Wanted:** the drivers list's search reads "Name, licence number or
   email", as the Delete records page's does.
+
+## 21. Follow-up 21 — what a stranger sees: the link preview and the public pages
+
+> **Status: SPECIFIED 2026-10-02** at the owner's word, the day the app went online with sample data.
+> The owner sent the address to a friend and wants a link to look professional ("the photo of the page,
+> its description, everything we need to provide in metadata"), the sessions' sentence gone from the
+> sign-in page ("it's not needed information"; the version may stay), and whatever else was meant for
+> development gone from what people see. The backend's half is its round 16.
+>
+> What the reviewer found on the live site, 2026-10-02: a link-preview robot gets only the title
+> "RW-Rent", no description, no picture; `/favicon.ico`, `/robots.txt`, `/apple-touch-icon.png` and
+> `/site.webmanifest` answer with the app's own page, since no such files exist. The text the owner's
+> friend quoted ("cross-continental RV rent company") is nowhere in either repository nor on the live
+> page: with nothing to show, whatever drew that preview made it up.
+
+- **F21-1. A link to the app shows its name, a sentence and a picture.** `index.html` gains:
+  - the description, "Fleet and rental operations for RW-Rent: vehicles, rentals, drivers, customers
+    and insurance cases in one place.";
+  - the Open Graph and Twitter tags a messenger reads: type `website`, site name and title "RW-Rent",
+    that description, the address `https://rw-rent.net/`, a large picture
+    `https://rw-rent.net/og-image.png` with its width, height and a text for it;
+  - the picture itself, 1200 by 630, in the app's dark look: the monogram, the name "RW-Rent" in the
+    wordmark's type, and the sign-in page's line "Control at every turn."; its source (the page or
+    drawing it is made from) kept in the repository with the one command that makes it again;
+  - the browser tab's icon (an SVG of the monogram and a PNG or ICO for browsers that want one), the
+    iPhone's home-screen icon (180 by 180, on the app's dark ground), the theme colour, and a web
+    manifest with the name and the icons;
+  - `robots.txt` refusing every robot, and `noindex` in the page: the app is a private tool and is not
+    listed by search engines; a messenger's preview of a sent link works all the same.
+  Every one of these files is a real file of the build, answered as itself, not as the app's page.
+- **F21-2. The public pages' foot reads "RW-Rent operations platform · v1.0.0".** The sentence
+  "Sessions expire after 2 h idle, 12 h absolute" goes, with its dot.
+- **F21-3. The sign-in page's introduction is "Fleet and rental operations for RW-Rent."** The
+  sentence about the session staying signed in goes.
+- **F21-4. No technical line on the public message screens.** The mono line under a message's body goes
+  from every public screen: "code: registration_confirmation_token_unusable", "code:
+  password_reset_token_unusable", "HTTP 429 · retry-after: 60 s", and any code the API returned. The
+  message's title, body, facts and actions stay as they are; "Too many attempts" keeps its body, which
+  already says the pause is short. The note under a link's form reads "This link works once. It has
+  been removed from this page's address." instead of the sentence about a single-use token.
+- **Stays as it is:** the Profile page's and the user record's sentence about sessions, which explains
+  the list beside it; the "session expired" screen, which answers why the person was signed out; the
+  sign-in page's art and its two lines.
+
+Left for later (§4 item 12): the fonts and the icon font come from Google's servers.
