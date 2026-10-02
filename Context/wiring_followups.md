@@ -1395,3 +1395,46 @@ row; the owner found nothing to change there.
   sign-in page's art and its two lines.
 
 Left for later (§4 item 12): the fonts and the icon font come from Google's servers.
+
+## 22. Follow-up 22 — the app speaks to a person, and to an Estonian company
+
+> **Status: SPECIFIED 2026-10-02** at the owner's word, on the live site's Create account page: "placeholder
+> have to be +372 and what else is needed". The reviewer then read every sentence the app shows for the
+> same kind of leftover: words written for the people who built it. App only; nothing for the backend.
+
+- **F22-1. The phone number's example is Estonian.** Create account shows `+371 20 000 000`, Latvia's
+  code; the company is Estonian. **Wanted:** `+372 5000 0000`. No other field of the app shows a
+  country's example.
+- **F22-2. The screen shown when the server cannot be reached speaks to a person.** `App.tsx` reads "The
+  API did not answer" and "The app could not reach the RW-Rent API. Start it and reload this page.",
+  with the error's own text under it: an instruction for a developer's machine. **Wanted:** the title
+  "RW-Rent cannot be reached right now", the body "Check your internet connection and reload this
+  page. If it stays like this, try again in a few minutes.", and no technical line.
+- **F22-3. Facts only a developer reads leave the record pages.** The rental's page shows a
+  "Concurrency token" with "Sent with each correction; a stale token returns 409 Conflict."; the user's
+  page shows a "Security version" with "Increments on credential and access changes." **Wanted:** both
+  facts gone from the pages; what the app sends with a correction does not change. The audit entry's
+  panel "Raw payload" is titled "The entry as stored".
+- **F22-4. No sentence a person reads names the API, the backend, an endpoint, a payload, HTTP or a
+  status number.** The ones the reviewer found, each with its wording:
+
+  | Where | Now | Wanted |
+  | --- | --- | --- |
+  | a refusal without a message of its own (`api/problem.ts`) | The API refused this change because the record no longer accepts it. | This change was refused because the record no longer accepts it. |
+  | suspending a user (`UserDialogs.tsx`) | …every active session ends. The endpoint takes no reason, so none is recorded. | …every active session ends. No reason is asked for here, so none is recorded. |
+  | deleting the Company (`CompanyProfile.tsx`) | …references the Company, the API refuses the delete with a conflict. | …refers to the Company, the delete is refused. |
+  | a vehicle's year, the list's filter (`Vehicles.tsx`) | Exact year; the API accepts 1900 or later. | Exact year, 1900 or later. |
+  | ending a rental (`AssignmentDialogs.tsx`) | Open driver authorizations are stopped by the backend. | Open driver authorizations are stopped with it. |
+  | the Profile's Access panel (`Profile.tsx`) | What the API reports for your account right now. | Your roles and what they allow, as they are right now. |
+  | a customer's linked driver (`FleetDialogs.tsx`) | The API rejects a driver link on a business customer. | A business customer cannot be linked to a driver. |
+  | changing the password (`Profile.tsx`) | A successful change refreshes your session. | You stay signed in after the change. |
+
+  **And every other such sentence the app holds:** the agent reads all of what the app shows (titles,
+  bodies, descriptions, hints, notes, labels, placeholders, empty states, buttons) and rewords each
+  sentence of this kind in the same plain way, changing no meaning. A test keeps it so: no sentence a
+  person reads holds "API", "backend", "endpoint", "payload", "HTTP", "JSON", "UUID", "concurrency" or
+  a three-digit status number, with the few rightful exceptions named in the test. The report lists
+  every sentence changed, before and after.
+- **Stays as it is:** "The record leaves the database" on the Delete records page, which a person
+  understands; the security audit's entries and their stored content; error messages that come from
+  the API, which round 15 already wrote for a person.
