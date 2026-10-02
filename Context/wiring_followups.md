@@ -1347,7 +1347,8 @@ row; the owner found nothing to change there.
 > itself with its own type, a made-up confirmation link refused with no technical line, the note on
 > the link forms, on a phone too; the picture and the icons looked at. One change to this section,
 > decided by the owner during the run: `robots.txt` refuses no robot (F21-1). What a messenger shows
-> is seen only once the deployment agent has put this version online.
+> is seen only once the deployment agent has put this version online: done on 2026-10-02, the files and
+> tags seen on `https://rw-rent.net` by the reviewer; the look in a messenger is the owner's.
 >
 > Specified at the owner's word, the day the app went online with sample data.
 > The owner sent the address to a friend and wants a link to look professional ("the photo of the page,
