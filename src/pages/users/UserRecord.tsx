@@ -271,16 +271,14 @@ export function UserRecord() {
               <Button label="Correct name" icon="shield" tone="warn" small onClick={() => setDialog({ kind: 'correct-name' })} />
             ) : undefined}
           >
-            <FactGrid columns={4}>
+            {/* Six facts, three to a row: the grid's tracks are pinned so that none is left empty. */}
+            <FactGrid columns={3}>
               <Fact label="First name">{u?.firstName ?? EMPTY}</Fact>
               <Fact label="Last name">{u?.lastName ?? EMPTY}</Fact>
               <Fact label="Login email">{u?.email ?? EMPTY}</Fact>
               <Fact label="Email ownership">{u ? (u.emailConfirmed ? 'Confirmed' : 'Not confirmed') : EMPTY}</Fact>
               <Fact label="Phone" mono>{u?.phoneNumber ?? EMPTY}</Fact>
               <Fact label="Company" dim={!u?.companyId}>{u?.companyId ? companyName : 'Not assigned'}</Fact>
-              <Fact label="Security version" span={2} mono hint="Increments on credential and access changes.">
-                {u?.securityVersion ?? EMPTY}
-              </Fact>
             </FactGrid>
           </Panel>
 

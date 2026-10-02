@@ -192,7 +192,7 @@ describe('the security audit reads round 8’s entries', () => {
     // The Ended rental's authorization and interruption, and the Planned one's authorization.
     expect(markup.match(/>Authorization \d</g)).toHaveLength(2);
     expect(markup.match(/>Interruption \d</g)).toHaveLength(1);
-    expect(markup).not.toContain('Unrecognised payload shape');
+    expect(markup).not.toContain('These values could not be set out here.');
   });
 
   test('a driver’s entry shows their authorizations and the cleared customer link', () => {
@@ -212,7 +212,7 @@ describe('the security audit reads round 8’s entries', () => {
     expect(fact(markup, 'Removed with driver')).toContain(driver);
     expect(fact(markup, 'Record')).toMatch(/Arta Skuja · F9G /);
     expect(markup).toContain('Deleted record');
-    expect(markup).not.toContain('Unrecognised payload shape');
+    expect(markup).not.toContain('These values could not be set out here.');
   });
 });
 

@@ -106,7 +106,7 @@ export function Register() {
               autoComplete="tel"
               inputMode="tel"
               maxLength={30}
-              placeholder="+371 20 000 000"
+              placeholder="+372 5000 0000"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               {...invalidProps(failure.fields['phoneNumber'])}

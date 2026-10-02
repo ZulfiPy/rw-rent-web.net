@@ -236,10 +236,10 @@ export function AuditEntry() {
       ) : null}
 
       {!deleted && diff === null && entry ? (
-        <Panel title="Payload">
+        <Panel title="Recorded values">
           <FactGrid>
-            <Fact label="Parsing" dim span="full">
-              Unrecognised payload shape — see the raw values below
+            <Fact label="Reading" dim span="full">
+              These values could not be set out here. See the entry as stored, below.
             </Fact>
           </FactGrid>
         </Panel>
@@ -254,7 +254,7 @@ export function AuditEntry() {
       </Panel>
 
       <Panel
-        title="Raw payload"
+        title="The entry as stored"
         note="Audit history is append-only; entries cannot be edited or deleted."
         noteIcon="lock"
       >

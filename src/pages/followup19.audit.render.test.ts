@@ -95,7 +95,7 @@ describe('Recently deleted and the security audit', () => {
     expect(markup).toContain(copy.ClearedAccidentLinks[0]!.InsuranceCaseLabel);
     // The deleted-record view, not the raw fallback.
     expect(markup).not.toContain('Recorded values');
-    expect(markup).not.toContain('Unrecognised payload shape');
+    expect(markup).not.toContain('These values could not be set out here.');
   });
 
   test('the copy’s shape: its lists at the top, each part once, never among the facts; anything else falls back as before', () => {

@@ -569,13 +569,6 @@ export function AssignmentRecord() {
             noteIcon="warning"
           >
             <FactGrid>
-              <Fact
-                label="Concurrency token"
-                mono
-                hint="Sent with each correction; a stale token returns 409 Conflict."
-              >
-                {a?.concurrencyToken ?? '—'}
-              </Fact>
               <Fact label="Last changed" dim sub={a?.updatedAtUtc ? formatLocal(a.updatedAtUtc) : null}>
                 {a ? lastChangedByName(a) : '—'}
               </Fact>

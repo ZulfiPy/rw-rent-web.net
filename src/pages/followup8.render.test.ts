@@ -382,6 +382,6 @@ describe('the two additions to the security audit', () => {
     const markup = entry({ ...rentalEntry, beforeJson: '{"RecordLabel":"x","Other":[1]}' });
     expect(markup).not.toContain('Deleted record');
     expect(markup).not.toContain('>Record<');
-    expect(markup).toContain('Unrecognised payload shape');
+    expect(markup).toContain('These values could not be set out here.');
   });
 });

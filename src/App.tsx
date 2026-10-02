@@ -18,16 +18,21 @@ import { AccessPending } from './pages/account/AccessPending';
 import { EmptyState } from './ui/EmptyState';
 import styles from './App.module.css';
 
-function Unreachable({ message }: { message: string }) {
+/**
+ * Shown when the server cannot be reached at all. It speaks to the person in front of it, who can
+ * check their connection and wait, and shows no technical line: what went wrong on the way is not
+ * theirs to read (Follow-up 22, F22-2).
+ */
+export function Unreachable() {
   return (
     <main className={styles.centre}>
       <div className={styles.card}>
         <span data-icon aria-hidden="true" className={styles.icon}>cloud_off</span>
-        <h1 className={styles.title}>The API did not answer</h1>
+        <h1 className={styles.title}>RW-Rent cannot be reached right now</h1>
         <p className={styles.body}>
-          The app could not reach the RW-Rent API. Start it and reload this page.
+          Check your internet connection and reload this page. If it stays like this, try again in a
+          few minutes.
         </p>
-        <p className={styles.mail}>{message}</p>
       </div>
     </main>
   );
@@ -131,9 +136,9 @@ function Workspace() {
 }
 
 export function App() {
-  const { status, error } = useAccess();
+  const { status } = useAccess();
 
-  if (status === 'unreachable') return <Unreachable message={error ?? ''} />;
+  if (status === 'unreachable') return <Unreachable />;
 
   return (
     <>
