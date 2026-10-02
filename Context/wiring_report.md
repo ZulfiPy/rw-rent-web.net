@@ -1,376 +1,370 @@
-# Frontend Wiring: Follow-up 20, the small fixes before going live, the app's half
+# Frontend Wiring: Follow-up 21, what a stranger sees
 
-> Follow-up 20 (`Context/wiring_followups.md` §20): every field at 16 px on a phone (F20-1), the tab
-> strip's active tab whole once its counts arrive (F20-2), and the drivers list's search naming the
-> licence number (F20-3), after the backend's round 15 (`RWRentApi-wiring/Context/round15_report.md`
-> §5). Frontend only: nothing in `RWRentApi-wiring` was changed or rebuilt. On `feature/backend-wiring`
+> Follow-up 21 (`Context/wiring_followups.md` §21): a link's preview with the name, a sentence and a
+> picture, the icons, the manifest and no search listing (F21-1); the public pages' foot without the
+> sessions' sentence (F21-2); the sign-in page's introduction (F21-3); and no technical line on the
+> public message screens (F21-4). The backend's half is its round 16
+> (`RWRentApi-wiring/Context/round16_report.md`), built in the same run. On `feature/backend-wiring`
 > in this worktree (`/Users/zulf/rw-rent-api/rw-rent-web-wiring`); the reviewer fast-forwards `main`
-> after verification. Written 2026-10-01. It replaces Follow-up 19's report, which git history keeps.
+> after verification. Written 2026-10-02. It replaces Follow-up 20's report, which git history keeps.
+>
+> **One change to §21, decided by the owner on 2026-10-02 during this run:** `robots.txt` refuses no
+> robot, where §21 has it refuse every one (§7). The reviewer corrects the specification afterwards.
 >
 > **The owner's side was never touched.** This run never opened 5173 or 5174, never called 5001 or
-> 5002, and never read or wrote `rwrent_v1` or `rwrent_check`.
+> 5002, and never read or wrote `rwrent_v1` or `rwrent_check`. Nothing was sent to the server, to
+> `https://rw-rent.net` or to `https://api.rw-rent.net`.
 >
-> - Both of the owner's apps hot-reload from this worktree, so they show this run's code (§8, item 1).
-> - Every live look used this run's own stack: round 15's API on 5003, left running by round 15, and
->   this run's Vite on 5176 against it, besides a harness of the real pages on 5175 (§4.1).
-> - **For the owner's reviewer: §5 lists the signed-in steps, on 5176 against 5003, with a phone step
->   for F20-1 and for F20-2.**
+> - Both of the owner's apps hot-reload from this worktree, so they show this run's code and files
+>   (§8, item 1).
+> - Every live look used this run's own stack: round 16's API on 5003 over `rwrent_r16`, this run's
+>   Vite on 5176 against it, and the built app served from a scratch folder on 5175 (§4.1).
+> - **For the reviewer: §5 lists how each thing of F21-1 is seen**, the tags, the picture, the icons
+>   and the files answered as themselves, and the public pages' steps.
 
 ## 1. Summary
 
-- **F20-1, a field's text is 16 px on a phone.** Below 768 px every text field, select and text area
-  of the app draws its text at 16 px, so Safari on an iPhone has no reason to zoom the page when one
-  is tapped. That is one rule in the base stylesheet, naming the fields by kind, so a field added later
-  has it too.
-  - The filters, the page size and the driver pick show their value in a span over a transparent
-    select; those values are 16 px on the phone too, and their labels keep their sizes.
-  - Checkboxes, radios and the photo picker are not typed into and keep their sizes, as do labels,
-    hints and buttons. From 768 px up nothing changes.
-  - Measured at 402 px: the 19 fields of the insurance cases list with its Register case form open are
-    all 16 px; at 768 px and above they keep their old 12.5 to 14 px. The sign-in page's two fields on
-    5176 grew from 40 to 43 px tall, which is what the larger text needs.
-- **F20-2, the active tab whole once its counts arrive.** Whenever the tabs change width, the strip
-  brings the active tab whole into view again, without a slide, unless the person has already scrolled
-  it. Every page with the strip gains it, since they all draw the one component.
-  - Measured at 402 px on Delete records opened straight on Insurance cases, its counts held back 6
-    seconds: before, the tab stood 127 px past the strip's edge once the counts arrived. Now, in the
-    very frame they arrived, the strip moved from 644 to 776 without a slide, and the tab stands whole.
-  - Scrolled by the person before the counts arrive, the strip stays where they put it.
-  - A click on another tab still slides to it, and the bold that widens the chosen tab in that frame
-    does not cut the slide short.
-  - Repeated on the final code, where the page's font also narrowed the tabs after the first seat: at
-    the first frame the strip moved from 645 to 776 without a slide, the tab whole.
-- **F20-3, the drivers list's search.** It reads "Name, licence number or email", as the API searches
-  it since round 15 and as the Delete records page's Drivers tab already said. Through 5003, "ae-118"
-  finds Anete Kalnina, LV-AE-118440, on both lists.
+- **F21-1, a link to the app shows its name, a sentence and a picture.**
+  - `index.html` carries the description, the Open Graph and Twitter tags, the theme colour, the
+    icons, the manifest and `noindex`.
+  - The picture, `og-image.png`, is 1200 by 630 in the app's dark look: the monogram in the brand's
+    red, "RW-Rent" in the wordmark's type, and "Control at every turn." in the display type, over the
+    sign-in page's monogram pattern. It is made from `brand/og-image.html` by one command,
+    `node brand/make.cjs`.
+  - The tab's icon is an SVG of the monogram, with a `favicon.ico` holding 16, 32 and 48 for browsers
+    that ask for one. The iPhone's home-screen icon is 180 by 180 on the dark ground, and the
+    manifest names the app and its 192 and 512 icons.
+  - Every one of these is a real file of `public/`, which the build copies beside the page. Asked
+    for by its address, each is answered as itself, on Vite and on the built app.
+  - `robots.txt` refuses no robot, and the page says `noindex`: the owner's decision (§7).
+- **F21-2.** The public pages' foot reads "RW-Rent operations platform · v1.0.0".
+- **F21-3.** The sign-in page's introduction is "Fleet and rental operations for RW-Rent."
+- **F21-4.** No public message screen shows a technical line, whatever the API answered. The note
+  under a link's form reads "This link works once. It has been removed from this page's address."
 
 | | |
 |---|---|
-| Commits | five `Wiring 51` commits and this report's `Wiring 52`, on `feature/backend-wiring` (§9) |
-| Tests | 742 before, **761** now, all green: 19 new, none changed (§2.4) |
+| Commits | two `Wiring 53` commits and this report's `Wiring 54`, on `feature/backend-wiring` (§9) |
+| Tests | 761 before, **786** now, all green: 25 new, 1 changed on purpose (§2.5) |
 | Typecheck, build | green; the build's chunk-size warning predates this run |
-| Each commit alone | 0 type errors and the full suite green at each of the five (§4.4) |
-| Planted breakages | **32 planted, 32 caught**: 13 for F20-1, 16 for F20-2, 3 for F20-3; one test made stronger after the first run (§4.3) |
-| In a browser | the real pages at 402, 767, 768, 1024 and 1512 px from a stand-in transport; the app on 5176 signed out against 5003 (§4.2) |
-| Safari | **not measured**: this Mac has no Xcode, so no iOS Simulator (§8, item 2) |
+| Each commit alone | 0 type errors and the full suite green at each of the two (§4.4) |
+| Planted breakages | **37 planted, 37 caught**: 26 for F21-1, 4 for F21-2 and F21-3, 5 for F21-4, 2 for what stays (§4.3) |
+| In a browser | the public pages on 5176 against 5003, a link the real API refuses among them; each file asked for by its address on 5176 and on the built app (§4.2) |
+| A messenger | **not seen**: no messenger can read this Mac, and the live site has the old page until it is deployed (§8, item 2) |
 
 ## 2. Implemented
 
-### 2.1 F20-1: the fields (`src/styles/base.css` and three modules)
+### 2.1 F21-1: the page's tags (`index.html`)
 
-- **The rule**, in the base stylesheet under `@media (max-width: 767px)`:
-  `input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea { font-size: 16px !important; }`.
-  - It is `!important` because every module's own class sets its field's size, `.control` 13 px,
-    the filters' `.input` 13.5 px, the picker's `.find` 13 px and so on, and a class outranks an
-    element selector. The reduced-motion rule in the same file is written the same way for the same
-    reason.
-  - It names the fields by kind, so it reaches every field of the app's 18 components that draw one,
-    105 of their 110 inputs, selects and text areas, and any field added later. The five it leaves out
-    are 3 checkboxes, 1 radio and the photo picker's file input.
-  - It reaches the transparent selects too: the filters', the page size's and the driver pick's. They
-    inherited 14 px or 12.5 px, and they are what Safari measures when one is tapped.
-- **The values shown over those selects**, each in its own module under the same query:
-  `Filters.module.css` `.selectValue, .moreValue`, `Pagination.module.css` `.sizeValue` and
-  `NewAssignment.module.css` `.searchValue`, all 16 px. They are what the reviewer saw at 13 px as
-  "the filters' selects". The filter's name beside its value, "Per page", and the extra filter's name
-  above it keep their sizes.
-- Nothing else of a field changes: its padding, border and height rules are as they were, so it grows
-  only by the larger line.
+| Tag | Value |
+|---|---|
+| `description` | Fleet and rental operations for RW-Rent: vehicles, rentals, drivers, customers and insurance cases in one place. |
+| `robots` | `noindex` |
+| `theme-color` | `#0A0A0B`, the dark theme's canvas |
+| `og:type`, `og:site_name`, `og:title` | `website`, `RW-Rent`, `RW-Rent` |
+| `og:description` | the description |
+| `og:url` | `https://rw-rent.net/` |
+| `og:image` and its `type`, `width`, `height`, `alt` | `https://rw-rent.net/og-image.png`, `image/png`, `1200`, `630`, "RW-Rent. Control at every turn." |
+| `twitter:card`, `title`, `description`, `image`, `image:alt` | `summary_large_image` and the same name, sentence, picture and text |
+| `link rel="icon"` | `/favicon.ico` with `sizes="48x48"`, then `/favicon.svg` as `image/svg+xml` |
+| `link rel="apple-touch-icon"` | `/apple-touch-icon.png` |
+| `link rel="manifest"` | `/site.webmanifest` |
 
-### 2.2 F20-2: the strip (`src/ui/tabStrip.ts`, new, and `src/ui/RecordTabs.tsx`)
+A messenger's robot runs no script, so these stand in the page as it is written, the same for every
+address of the app. The picture's and the page's addresses are whole ones, as a messenger wants.
 
-- **What the strip does in the browser moved into `tabStrip`**, a function started on the strip's
-  element, as `revealFirstInvalid` is for a dialog. `RecordTabs` starts it once in a layout effect,
-  stops it when it goes, and seats the active tab on each choice, the first without a slide. It draws
-  exactly the markup it drew.
-- **What stayed:** the first paint of a deep link lands on the active tab without a slide, a later
-  choice slides, the tab keeps 22 px from the strip's edges, and the cut edge fades as before.
-- **New:** a `ResizeObserver` on the tab buttons themselves. When their widths change, the counts
-  arriving among them, fonts loading too, the active tab is seated again without a slide.
-- **The person's scroll** is a scroll of the strip while their finger is on it, or a wheel turned
-  sideways over it. From then on, a change of width never moves the strip. A wheel that mostly scrolls
-  the page, and a tap, are not the person scrolling the strip.
-- **A choice's bold:** choosing a tab sets it in bold, which widens it and narrows the one left, in
-  the frame its slide starts. The slide is already heading where the wider tab stands whole, so a
-  change of width that asks for the same place leaves it to finish.
-- **Only a slide is waited for.** An instant seat stands where it stops as it is sent. The browser may
-  then keep it short of where it was sent, as when the page's font narrows the tabs, so waiting for it
-  could keep a later change of width from seating the tab; the strip does not wait for it.
-- **React's development mode starts every effect twice.** The second start must not take the first
-  start's scroll for the person's, or the counts would never seat the tab on 5173 and 5174, which run
-  in that mode. Only a finger or a sideways wheel makes a scroll the person's, so that cannot happen;
-  a test starts the strip twice.
+### 2.2 F21-1: the files (`public/`, new) and their sources (`brand/`, new)
 
-### 2.3 F20-3: the words (`src/pages/fleet/Drivers.tsx`)
+| File | What it is | Made from |
+|---|---|---|
+| `og-image.png` | 1200 by 630, 101,922 bytes | `brand/og-image.html`, by the command |
+| `apple-touch-icon.png` | 180 by 180, the monogram on the dark ground | `brand/icon.html`, by the command |
+| `icon-192.png`, `icon-512.png` | the manifest's icons, the same drawing | `brand/icon.html`, by the command |
+| `favicon.ico` | 16, 32 and 48, each a PNG with no ground | `brand/icon.html?ground=none`, by the command |
+| `favicon.svg` | the monogram's two paths in the brand's red | written by hand |
+| `site.webmanifest` | the name, the description, the colours and the three icons | written by hand |
+| `robots.txt` | `User-agent: *`, `Allow: /`, with the reason above them | written by hand |
 
-The drivers list's search placeholder, which `SearchInput` also gives as the box's name, reads "Name,
-licence number or email". Its cap stays 50. The Delete records page keeps its own copy of the same
-words, and a test renders both pages and compares them.
+- **The one command:** `node brand/make.cjs`. It opens each source page in Chromium at the picture's
+  size and takes its picture. Chromium comes with Playwright from
+  `/Users/zulf/rw-rent-api/testing-scratch/node_modules`, or from the folder `RWRENT_PLAYWRIGHT`
+  names; this project gained no dependency.
+- **The typefaces** are the sign-in page's own: Poppins 600 for the name, as the wordmark is set, and
+  Michroma for the line. They come from Google's servers, as the app's do, so the command needs the
+  network. It stops, rather than draw the name in another face, if either has not loaded.
+- **`brand/made.json`** holds the fingerprints of the three sources and the five files the command
+  wrote. A test compares them with the repository, so a source changed without the command run
+  again, or a picture changed by hand, fails the suite. Run twice here, the command made the same
+  bytes.
+- **The monogram** is drawn from the same two paths as the sign-in page's logo, and the colours are
+  the dark theme's; tests hold both equal to `AuthLayout.tsx` and `tokens.css`.
+- **Everything of the picture that matters stands in its middle 630 by 630,** which is what a
+  messenger keeps when it cuts a picture square.
+- `README.md` gained a short section on these files and the command.
 
-### 2.4 Tests
+### 2.3 F21-2 and F21-3 (`src/pages/account/AuthLayout.tsx`, `SignIn.tsx`)
 
-**19 new test cases, none changed** (742 before, 761 now). Each new file reads one item:
+- The foot lost its second dot and "Sessions expire after 2 h idle, 12 h absolute".
+- The sign-in page's introduction lost "Your session stays signed in on this browser until it
+  expires."
+- Unchanged, as §21 says: the art's two lines; the Profile page's and the user record's sentence
+  about sessions; the "Session expired" screen.
+
+### 2.4 F21-4 (`outcomes.ts`, `AuthLayout.tsx` and four pages)
+
+- **The mono line is gone from the screens that had one:** "code:
+  registration_confirmation_token_unusable", "code: password_reset_token_unusable" and "HTTP 429 ·
+  retry-after: 60 s".
+- **No page can hand a screen a code any more.** The message screen, `AuthOutcome`, no longer takes
+  a line, and the four link pages no longer pass the API's code to it: the registration's
+  confirmation, the email change, the password reset and the transfer. The line's style is removed.
+- Each screen's title, body, facts and actions are as they were. "Too many attempts" keeps its body.
+- The note under a link's form, `TokenNote`, reads "This link works once. It has been removed from
+  this page's address."
+
+### 2.5 Tests
+
+**25 new test cases, 1 changed on purpose** (761 before, 786 now).
 
 | File | Cases | What they hold |
 |---|---|---|
-| `pages/followup20.fields.test.ts` | 5 | the base rule exactly, in the phone query only; every `<input>`, `<select>` and `<textarea>` in the app's components read from the source, only checkboxes, radios and the photo picker left out, and the prop-typed input's union read too; no other `!important` size anywhere; the four shown values at 16 px on the phone and their old sizes above, their labels unchanged; the app's transparent selects being exactly those |
-| `pages/followup20.strip.test.ts` | 12 | the strip played as the browser holds it: the Delete records page's seven tabs at 402 px, their boxes from their widths and the scroll, the observer fired as the browser fires it. A deep link; the counts widening the tabs; a tab in the middle keeping 22 px; a finger's scroll; a tap and a page-scrolling wheel; a sideways wheel; a click's bold; an instant seat the browser moves as the tabs narrow; a tab already whole; React's double start; stopping; and `RecordTabs` read for its wiring |
-| `pages/followup20.drivers.render.test.ts` | 2 | the drivers list's words, shown and spoken, its cap 50; the Delete records page's Drivers tab rendering the same words |
+| `pages/followup21.preview.test.ts` | 16 | the page's tags read as a robot reads them, each value and each once; the picture's size from its own bytes, equal to the tags', and its ground; the picture's source: the paths, the name's type, the line, the colours; the icon links and the theme colour; the SVG's paths; the `.ico`'s three sizes, each a PNG with no ground; the iPhone's icon; the manifest whole, each icon a file of the size it says; `noindex`; `robots.txt`'s two rules; `public/` holding exactly these eight files; every file the page names existing; the fingerprints of `brand/made.json` |
+| `pages/followup21.public.render.test.ts` | 9 | nine public pages rendered: each foot's two texts and one dot; the version's type and the art's lines; the sign-in introduction; every message screen with its title, facts and actions and no line; the three that had one; a dead link in a person's words on three pages; no page passing a line, read from the sources; the note's words on two forms; what stays |
 
-`RecordTabs`'s effects do not run in a server render, so its wiring is read from its source, as
-Follow-up 16's test reads which pages draw it. The browser measurements in §4.2 are the proof that it
-runs.
+**Changed on purpose:** `pages/account/outcomes.test.ts`, "names the refusal code on the two link
+screens", expected the dead confirmation link's and the dead reset link's line to contain `code:`.
+It is now "carries no technical line on any screen": no screen has such a line, none of their words
+reads like a code, and "Too many attempts" keeps its body.
 
 ## 3. Not implemented or partial
 
-Nothing of §20. Safari's zoom itself could not be measured here (§8, item 2).
+Nothing of §21, with the one change of §7. What a messenger shows could not be seen here (§8, item 2).
 
 ## 4. Verification
 
 ### 4.1 The stack
 
-- **The API:** round 15's, on 5003, pid 55167, started 2026-10-01 07:02:47 from the backend
-  worktree's `bin/Release`, over `rwrent_r15`, as round 15 left it. This run only read through it: the
-  sign-in page's one request, and the drivers searched as Dita and the administrator (§4.2).
+- **The API:** round 16's, on 5003 over `rwrent_r16` (the backend's report §7).
 - **The app:** this run's Vite on 5176 from this worktree, with `VITE_API_BASE_URL=http://localhost:5003`.
-- **The harness:** Follow-up 19's, on 5175, with the app's real pages from this worktree and a
-  stand-in transport that sends nothing anywhere. It gained `?slow=` to hold every count back that
-  long, and a log of every scroll the strip was sent and every size its tabs reported.
+- **The built app:** `vite build` into a scratch folder, served by `vite preview` on 5175.
 - Both ran from launch entries added to the workspace's `.claude/launch.json` for the run and removed
-  after it; the file is as it was.
+  after it; the file is as it was. Both are stopped.
 
-### 4.2 In a browser
+### 4.2 In a browser and by address
 
-**F20-2, Delete records at 402 px, opened straight on Insurance cases:**
+**Each file asked for by its address,** on 5176 and on the built app on 5175, the same on both:
 
-| What | Measured |
-|---|---|
-| The first paint, counts held 6 s | seated at 150 ms without a slide, at the strip's end, 644; the tab 4.7 px inside the edge |
-| The counts arrive, at 6.18 s | in that frame the seven tabs reported their new widths, 171, 171, 121, 100, 108, 84 and 151 px, and the strip moved 644 to 776 without a slide; the tab 4.7 px inside the edge, at the strip's end |
-| The counts in, no frame yet | with the counts laid out and no frame run yet, so before the observer could act, the tab stood 126.8 px past the edge: where it stayed before this fix, as Follow-up 19 measured, 127 |
-| Counts in 30 ms | seated at 644 at 157 ms, then at 776 at 211 ms, both without a slide |
-| The person first, counts held 9 s | a sideways wheel at 4.8 s moved the strip to 344; at 9.17 s the tabs reported their widths and nothing moved the strip; it stayed at 344 |
-| A click on Customers, nobody's scroll | one slide, 766 to 674; in that frame Customers' bold widened it 108 to 110 px and Insurance cases narrowed 151 to 149, and no second scroll followed; Customers ends 22 px inside the left edge |
+| Address | Answered with | The bytes |
+|---|---|---|
+| `/og-image.png` | 200 `image/png`, 101,922 bytes | the file's own |
+| `/favicon.svg` | 200 `image/svg+xml`, 1,037 bytes | the file's own |
+| `/favicon.ico` | 200 `image/x-icon`, 3,305 bytes | the file's own |
+| `/apple-touch-icon.png` | 200 `image/png`, 3,288 bytes | the file's own |
+| `/icon-192.png` | 200 `image/png`, 3,536 bytes | the file's own |
+| `/icon-512.png` | 200 `image/png`, 9,300 bytes | the file's own |
+| `/site.webmanifest` | 200 `application/manifest+json`, 566 bytes | the file's own |
+| `/robots.txt` | 200 `text/plain`, 314 bytes | the file's own |
+| `/no-such-file.png`, `/drivers` | 200 `text/html` | the app's page, as before for an address with no file |
 
-| On the final code, `746d572` | the first seat was sent to 944 under the fallback font; the page's font then narrowed the tabs and the browser held the strip at 645. At the first frame drawn the tabs reported their counted widths and the strip moved 645 to 776 without a slide; the tab 4.7 px inside the edge |
+**The pages on 5176, signed out, against 5003:**
 
-- The browser pane renders only while it is shown. While it was hidden, no frame ran and no observer
-  fired, and a screenshot drew one frame; the last row's frame was such a screenshot.
-- **The person's finger was not seen in a browser.** The pane's clicks arrive as a mouse's, even at
-  a phone's width, so the person's scroll above was a sideways wheel. A finger's scroll is held by
-  the strip's tests with a stand-in strip; §5.2 step 3 asks the reviewer to swipe.
+- **Sign in:** the introduction "Fleet and rental operations for RW-Rent."; the foot "RW-Rent
+  operations platform · v1.0.0"; the art's "Control at every turn." The browser read all 18 tags and
+  4 links of §2.1 from the page, fetched the icons, the manifest, the picture and `robots.txt` with
+  their types, and read the manifest's name and three icons.
+- **`/confirm-registration-email` with a made-up link:** the real API refused it, 400. The screen
+  reads "This confirmation link cannot be used", its body, "Confirmation links are valid for 24 hours
+  and work once.", and its two actions. Nothing on it is in the mono type, and no code is shown.
+- **`/reset-password` and `/accept-administrator-transfer` with a made-up link:** each form's note
+  reads "This link works once. It has been removed from this page's address."
+- **Not looked at in a browser:** the dead reset link's screen and the dead transfer link's, which
+  need a password typed into the form, and "Too many attempts", which needs the API to answer 429.
+  The tests render all three.
 
-**F20-1, at 402 px:**
+### 4.3 The planted breakages: 37 planted, 37 caught
 
-- **The insurance cases list:** the search box and the 5 transparent selects at 16 px; the shown
-  values at 16 px; their labels and "Per page" at 12.5 px.
-- **Register case:** 4 text fields, the time, 7 selects and the text area at 16 px; its 2 checkboxes
-  14 px and the photo picker's input 13 px, as before. The labels at 12.5 px.
-- **At 767 px** all 19 fields of the page are 16 px. **At 768, 1024 and 1512 px** they are as before:
-  13 px in the form, 13.5 px the search, 14 px and 12.5 px the transparent selects, 13 px and 12.5 px
-  the shown values.
-- **The sign-in page on 5176**, signed out against 5003: the email and password fields are 16 px and
-  43 px tall at 402 px, 14 px and 40 px at 1024 px. Its only API request went to
-  `http://localhost:5003/api/me`, which answered 401, as expected.
-
-**F20-3:**
-
-- **The drivers list** in the harness reads "Name, licence number or email", spoken the same, cap 50.
-- **Through 5003**, read-only, as Dita: "ae-118", "LV-AE-118440", "kalnina" and "anete.kalnina" each
-  find Anete Kalnina, LV-AE-118440, alone. As the administrator, the Delete records page's drivers
-  find her by "ae-118" too.
-
-### 4.3 The planted breakages: 32 planted, 32 caught
-
-Each changed one rule in a copy of the commit taken with `git archive`, never the worktree; the whole
-suite and the typecheck ran in the copy; the file was then written back fresh, and the copy ran clean
-at the end. F20-1's and F20-3's ran on `7a9e363`, whose files for them are final, 760 green at the
-end; the strip's sixteen ran again on the final `746d572`, 761 green at the end, and those are the
-results below.
+Each changed one thing in a copy of the commit taken with `git archive`, never the worktree; the
+whole suite and the typecheck ran in the copy; the files were then written back, and the copy ran
+clean at the end, 786 green. A breakage counts as caught only when a test failed.
 
 | # | The breakage | Caught by |
 |---|---|---|
-| A1 | the base rule is gone | the base rule's test; the `!important` test |
-| A2 | the rule without `!important` | the same two |
-| A3 | the rule on every tier | the same two |
-| A4 | the tablet gets it too | the same two |
-| A5 | selects left out | the same two |
-| A6 | text areas left out | the same two |
-| A7 | checkboxes given 16 px too | the same two |
-| A8 | the date fields left out | the same two |
-| A9 | a filter's shown value stays 13 px | the shown values' test |
-| A10 | the page size's shown value as before | the same |
-| A11 | the driver pick's shown value at 15 px | the same |
-| A12 | a field's own class outranks the rule | the `!important` test |
-| A13 | a filter's label grows with its value | the shown values' test |
-| B1 | a change of width does not seat the tab | 6 of the strip's tests |
-| B2 | the second seat slides | the same 6 |
-| B3 | the tabs' widths are not watched | the same 6 |
-| B4 | the person's scroll is ignored | the finger's and the sideways wheel's tests |
-| B5 | a finger's scroll is not the person's | the finger's test |
-| B6 | a finger once down stays on the strip | the tap's test |
-| B7 | every wheel is the person's, the page's scroll too | the tap and page wheel's test |
-| B8 | a sideways wheel is not the person's | the sideways wheel's test |
-| B9 | the bold of a click cuts the slide short | the click's test |
-| B10 | any scroll the app is not heading for is the person's | the same 6, React's double start among them |
-| B11 | a deep link slides | the deep link's, the middle tab's and the double start's tests |
-| B12 | stopped, it still hears the wheel | the stopping test |
-| B13 | the room from the edge is 0 | the deep link's, the middle tab's, the counts' and the double start's tests |
-| B14 | `RecordTabs` never starts the strip | the wiring's test |
-| B15 | `RecordTabs` seats only once | the wiring's test |
-| B16 | an instant seat is waited for as a slide is | the instant seat's test |
-| C1 | the old words back | both of F20-3's tests |
-| C2 | the words leave out the licence | both |
-| C3 | the Delete records page's words drift | the comparing test |
-
-- **One test made stronger:** in the first run B13 was caught, but not by the test written for the
-  room, which read the 22 px from the module it was planted in. That test now reads 22 itself, in its
-  own commit `43a9e79`.
-- **B16** is the line `746d572` changed, put back.
-- B4, B5, B7, B11 and B14 also left a type error, an unused name; each was caught by a failing test
-  besides.
+| P1 | the page has no description | the title and description |
+| P2 | the picture's address is not a whole one | the Open Graph tags; the files named |
+| P3 | `og:url` names the address planned before | the Open Graph tags |
+| P4 | the tags give the picture another width | the Open Graph tags; the picture's size |
+| P5 | the Twitter card is the small one | the Twitter tags |
+| P6 | the site's name is not given | the Open Graph tags |
+| P7 | the preview's sentence is another than the page's | the Open Graph tags |
+| P8 | the picture has no text for it | the Open Graph tags |
+| P9 | the Twitter tags name another picture | the Twitter tags; the files named |
+| P10 | the picture is not 1200 by 630 | the picture's size; the fingerprints |
+| P11 | the picture was changed by hand after the command made it | the picture's test; the fingerprints |
+| P12 | the source's line changed and the picture was not made again | the source's test; the fingerprints |
+| P13 | the source sets the name in another type | the source's test; the fingerprints |
+| P14 | the picture is gone | four tests |
+| P15 | the tab's SVG icon lost a path | the SVG's test |
+| P16 | the page names no `.ico` | the links; the files named |
+| P17 | the iPhone's icon is not 180 by 180 | the iPhone's icon; the fingerprints |
+| P18 | the page names no home-screen icon | the links; the files named |
+| P19 | the theme colour is not the app's dark ground | the links and theme colour |
+| P20 | the manifest names the app "RWRent" | the manifest |
+| P21 | the manifest names an icon that is not there | the manifest |
+| P22 | the page names no manifest | the links; the files named |
+| P23 | the icons' source draws on a white ground | the icons' source; the fingerprints |
+| P24 | the page does not say `noindex` | the `noindex` test |
+| P25 | `robots.txt` refuses every robot | the `robots.txt` test |
+| P26 | the build takes its public files from another folder | the test of `public/` |
+| Q1 | the sessions' sentence is back in the foot | the foot's test |
+| Q2 | the foot loses its version | the foot's two tests |
+| Q3 | the sign-in page speaks of the session again | the introduction's test |
+| Q4 | the art's line is gone | the art's test; the picture's source test |
+| Q5 | a message screen draws a technical line again | four tests |
+| Q6 | "Too many attempts" shows the HTTP status again | the screens' test; the outcomes' test |
+| Q7 | a link page shows the API's code in the screen's body | the link pages' test; the sources' test |
+| Q8 | the note under a link's form speaks of a token again | the note's test |
+| Q9 | "Too many attempts" loses the sentence that the pause is short | the three screens' test; the outcomes' test |
+| Q10 | the Profile page no longer explains sessions | the test of what stays |
+| Q11 | the expired-session screen no longer says why | the same |
 
 ### 4.4 The test suite, and each commit
 
-- `npx vitest run`: **761 passed**, 70 files. `tsc -b --noEmit`: 0 errors.
-- `vite build` into a scratch folder: green, with the chunk-size warning that predates this run.
+- `npx vitest run`: **786 passed**, 72 files. `tsc -b --noEmit`: 0 errors.
+- `vite build` into a scratch folder: green, with the chunk-size warning that predates this run; the
+  eight files stand beside `index.html` in the build.
 - Each commit exported alone with `git archive`, typechecked and tested:
 
 | Commit | Type errors | Tests |
 |---|---|---|
-| `8516839` | 0 | 747 |
-| `b07f5b6` | 0 | 758 |
-| `7a9e363` | 0 | 760 |
-| `43a9e79` | 0 | 760 |
-| `746d572` | 0 | 761 |
+| `be37ced` | 0 | 777 |
+| `c4ac55d` | 0 | 786 |
 
 ### 4.5 The owner's side, untouched
 
-- 5001 is pid 43055 and 5002 pid 42710, as before; neither was called.
-- 5173 is pid 24831 and 5174 pid 58932, as before; neither was opened.
-- `rwrent_v1` and `rwrent_check` were never addressed, and nothing in `RWRentApi-wiring` changed.
+- 5001 is pid 83735 and 5002 pid 83612, as at the start; neither was called.
+- 5173 is pid 24831 and 5174 pid 58932, as at the start; neither was opened.
+- `rwrent_v1` and `rwrent_check` were never addressed.
 
 ### 4.6 End state
 
-- **The API on 5003 is left running**, pid 55167, over `rwrent_r15`, as round 15 left it. This run
-  added only the sessions of its own sign-ins as Dita and the administrator.
-- **Nothing else of this run runs.** The Vite on 5176 and the harness on 5175 are stopped, and nothing
-  listens on either port.
+- **The API on 5003 is left running**, round 16's, over `rwrent_r16` (the backend's report §7).
+- **Nothing else of this run runs.** The Vite on 5176 and the built app on 5175 are stopped.
 
-## 5. For the owner's reviewer: the signed-in steps
+## 5. For the reviewer: how each thing is seen
 
 ### 5.0 Before you start
 
-- **The stack:** the API on 5003 over `rwrent_r15`, round 15's seed and its acceptance's records.
-- **Start Vite on 5176 from this worktree.** The API trusts only that origin:
+- **Start Vite on 5176 from this worktree:**
   `VITE_API_BASE_URL=http://localhost:5003 npm run dev -- --port 5176 --strictPort`
-- **Use a browser profile of its own**, never the owner's. The apps on 5173, 5174 and 5176 share
-  `localhost`'s cookies, so signing in on 5176 in the owner's profile signs the owner out of 5173.
-- **The seeded people**, all with the seed password: the administrator, Arturs Veidenbaums
-  (`sysadmin@rwrent.example`), who may delete records; Dita Smite, Fleet Manager.
+- No sign-in is needed for anything below but §5.2 step 6.
 
-### 5.1 At 1512 px
+### 5.1 F21-1
 
-1. **Sign in as Dita and open Drivers.** The search reads "Name, licence number or email".
-2. **Type `ae-118`.** Anete Kalnina alone, licence LV-AE-118440. Type `kalnina`: the same. Clear it.
-3. **Register case, from Insurance cases.** The fields' text is as before, 13 px; nothing moved.
-   Cancel.
-4. **Sign out, and in as the administrator. Delete records, Drivers.** The search reads the same
-   words; `ae-118` finds Anete Kalnina.
-5. **The strip at this width:** all seven tabs fit, and choosing one changes nothing but the choice.
+1. **The tags.** `curl -s http://localhost:5176/ | grep -E 'description|robots|theme-color|og:|twitter:|rel="(icon|apple-touch-icon|manifest)"'`
+   prints the tags of §2.1; or View Source on any page of the app.
+2. **The picture.** Open `http://localhost:5176/og-image.png`: 1200 by 630, the dark ground, the red
+   monogram, "RW-Rent", "Control at every turn."
+3. **The picture's source and the one command.** Open `brand/og-image.html` in a browser: the same
+   drawing. Then `node brand/make.cjs`, and `git status` shows nothing changed: the same bytes.
+4. **The icons.**
+   - The tab of any page shows the red monogram.
+   - `http://localhost:5176/favicon.svg` and `/favicon.ico` open as the monogram.
+   - `http://localhost:5176/apple-touch-icon.png` is the monogram on the dark ground, 180 by 180.
+   - On an iPhone, once the app is deployed: Share, Add to Home Screen shows that icon and "RW-Rent".
+5. **The manifest.** In the browser's tools, Application, Manifest: the name RW-Rent, the dark
+   colours, three icons, no warning.
+6. **The files answered as themselves.** For each of `og-image.png`, `favicon.svg`, `favicon.ico`,
+   `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest`, `robots.txt`:
+   `curl -sI http://localhost:5176/<file>` answers 200 with the type of §4.2, not `text/html`.
+7. **The same in the build.** `npx vite build --outDir /tmp/rwrent-build` puts the eight files beside
+   `index.html`; `npx vite preview --outDir /tmp/rwrent-build --port 5175` answers them the same way.
+8. **No search listing.** `curl -s http://localhost:5176/robots.txt` allows every robot, and the
+   page's tags hold `robots` `noindex`.
+9. **After deployment, on the live site,** which this run did not touch:
+   - the same `curl -sI` for each file against `https://rw-rent.net/`, where Caddy answers them;
+     look at the manifest's type there;
+   - a link to `https://rw-rent.net` sent in a messenger shows "RW-Rent", the sentence and the
+     picture. A messenger that showed the old preview keeps it for a while: Telegram's `@WebpageBot`,
+     LinkedIn's Post Inspector and Facebook's Sharing Debugger read the page again.
 
-### 5.2 On the phone
+### 5.2 F21-2 to F21-4
 
-At 402 px, in the browser's device mode, with its network throttled to Slow 4G so the counts come
-late:
-
-1. **F20-2, a deep link.** As the administrator, open `http://localhost:5176/delete-records?kind=insurance-cases`
-   and reload. Insurance cases, the last tab, stands whole at the strip's right end before its count
-   arrives, and still whole once every tab shows its count, with no slide.
-2. **The same for Drivers:** `?kind=drivers`. Drivers stands whole, its count beside it.
-3. **The person first.** Reload on Insurance cases and, before the counts arrive, swipe the strip to
-   the right so the first tabs show. When the counts arrive, the strip stays where the finger left it.
-4. **A tap on another tab** slides to it, as before, and it ends whole.
-5. **F20-1.** Tap the search box, a filter, Per page, and in Register case each kind of field. In the
-   inspector each field's computed size is 16 px; the labels, hints and buttons are as before. Signed
-   out, the sign-in page's two fields are 16 px.
-
-**On an iPhone, on the first day the app is reached from one:** tap the drivers list's search, a
-filter, and a field of Register case. The page does not zoom in; before this run it did, and stayed
-zoomed. An iPhone cannot reach `localhost:5176` on the Mac, so this step waits for a reachable address,
-or for Xcode's iOS Simulator on the Mac (§8, item 2).
+1. **Sign in**, `http://localhost:5176/sign-in`: under the heading, "Fleet and rental operations for
+   RW-Rent." and nothing more; at the foot, "RW-Rent operations platform · v1.0.0"; the art's two
+   lines as before.
+2. **Create one, Forgot password?:** the same foot.
+3. **A dead confirmation link**, `http://localhost:5176/confirm-registration-email#anything`: "This
+   confirmation link cannot be used", its body, its fact and two buttons; no grey box with a code.
+4. **A reset link's form**, `http://localhost:5176/reset-password#anything`: the note under the form
+   reads "This link works once. It has been removed from this page's address." Type any address and a
+   password of twelve characters or more and send: "This reset link cannot be used", with no code.
+5. **A transfer link's form**, `http://localhost:5176/accept-administrator-transfer#anything`: the
+   same note.
+6. **Signed in, Profile:** its Sessions panel still says "Sessions end after two hours idle or twelve
+   hours in total."
 
 ## 6. Decisions
 
 Choices this run made where the specification left room, each small to change:
 
-1. **One base rule, naming the fields by kind, with `!important`,** rather than 16 px in each field's
-   own module. It reaches every field there is and every field to come; a test holds that nothing
-   else in the app sets a size with `!important`.
-2. **The values shown over transparent selects are 16 px too.** The rule alone would stop the zoom,
-   since Safari measures the select itself; but those values are the selects' text as a person reads
-   it, which §20 counts as "the filters' selects" at 13 px.
-3. **The strip's behaviour is a plain function, `tabStrip`, the component its one caller,** so its
-   rules can be played in node with a stand-in strip.
-4. **The person's scroll is a finger's or a sideways wheel's.** The strip's scroll events alone cannot
-   tell the person from the app: React's development mode starts the strip twice, and the second start
-   would take the first one's scroll for the person's. Keyboard scrolling of the strip is not counted;
-   a phone has none.
-5. **Once the person has scrolled the strip, a change of width never moves it again** while the page
-   is open. A choice still slides to the chosen tab, as before.
-6. **The observer watches the tabs, not the strip.** A change of the strip's own width, a rotated
-   phone, is not a change of the tabs, and §20 asks for nothing there.
-7. **The Delete records page keeps its own copy of the drivers' words,** untouched; a test compares the
-   two pages' rendered words.
+1. **The picture's composition:** the monogram and the name side by side, a short accent rule, the
+   line under it, all centred, over the sign-in page's monogram pattern fading towards the middle.
+2. **The name is set in Poppins 600,** which is what the sign-in page's wordmark is set in; the line
+   in Michroma, as on that page.
+3. **The tab's icon has no ground**, the red monogram alone, which reads on a light and on a dark
+   tab; the home-screen and manifest icons stand on the dark ground, the monogram 56% of the square,
+   so rounded corners cut none of it.
+4. **`favicon.ico` holds PNGs** at 16, 32 and 48, which every browser that asks for the file reads.
+5. **The manifest** gives the name, the short name, the description, the start address, the two
+   colours and the icons, and no `display`: added to a home screen, the app opens in the browser as
+   it does now.
+6. **The picture's text** for those who cannot see it: "RW-Rent. Control at every turn."
+7. **`brand/made.json`** and its test, so a picture and its source cannot drift apart unnoticed.
+8. **The screen's line was removed, not hidden:** `Outcome` has no `meta`, `AuthOutcome` takes none,
+   and the unused style is gone, so no later page can show a code there by passing one.
 
 ## 7. Deviations
 
-None from §20.
+1. **`robots.txt` refuses no robot.** §21 has it refuse every robot and says a messenger's preview
+   works all the same. The two do not hold together: the robots of X, LinkedIn and Telegram obey
+   `robots.txt`, and Facebook's mostly does, so a refusal of every robot would leave a link sent
+   there without its name, sentence and picture; WhatsApp, iMessage and Slack do not read the file.
+   Asked, the owner decided: "Let every robot in: robots.txt allows all, and the page keeps noindex.
+   A search engine has to be able to read the page to see noindex; one that is refused can still
+   list the bare address. So the preview works in every messenger and no search engine lists the
+   app. Record it in your report as a change to §21; the reviewer corrects the specification
+   afterwards." Built so: `User-agent: *`, `Allow: /`, and `noindex` in the page.
 
 ## 8. Open risks and observations
 
-1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was saved.** Each file was written
-   whole, swapped in at once, after its typecheck and tests ran in a scratch copy, and `tabStrip.ts`
-   before the `RecordTabs.tsx` that imports it.
-   - F20-1 and F20-2 need nothing of an API, and show there as here.
-   - Their APIs run round 14, whose drivers search finds by name and email only. Until the reviewer
-     upgrades them to round 15, their drivers list's search names the licence number before it finds
-     a driver by one.
-2. **Safari was not measured.** This Mac has the command line tools but no Xcode, so no iOS Simulator;
-   the built-in browser pane is Chromium, and Safari on a Mac does not zoom into fields.
-   - Safari on an iPhone zooms when a field whose text is under 16 px is focused. Every field is now 16
-     px on the phone tier, as computed in Chromium; the rule is plain CSS, which Safari reads the same.
-   - §5.2 gives the reviewer the iPhone step for the day the app is reachable from one.
-3. **A field on the phone is a few pixels taller**, 3 px for the sign-in page's; the toolbar's filters
-   keep their 35 px and only their values grow, so a filter with a long value is wider. Whether a
-   toolbar now wraps a filter onto another line where it did not was not compared.
-4. **The user record page has its own strip**, older than the shared one, with no seating of the
-   active tab at all: Account, Roles and Sessions, three short tabs. It is not the shared strip, so §20
-   does not reach it, and it was left as it is; how it stands on a phone was not measured here.
-5. **The two compact strips**, Tasks' and Insurance cases', fit the phone whole and never scroll, so
-   the re-seat finds nothing to move there.
-6. **What the suite does not hold:** that the browser fires the observer when the counts land. The
-   rules are tested with a stand-in strip and the wiring is read from the source; the browser measured
-   the result (§4.2). A finger's scroll was seen only with the stand-in strip; §5.2 step 3 is its look
-   in a browser.
+1. **The owner's apps on 5173 and 5174 hot-reloaded this code as it was saved,** each file swapped
+   in whole after the suite passed in a scratch copy, the new files before the page that names them.
+   Their pages now carry the tags and show the tab's icon; `index.html`'s change reloaded any open
+   page once.
+2. **What a messenger shows was not seen.** A messenger's robot cannot reach this Mac, and the live
+   site carries the old page until the deployment agent deploys this. §5.1 step 9 is the look after
+   that. Messengers keep a preview they have already made for some time.
+3. **The preview is the same for every address of the app.** The tags stand in the one page a robot
+   reads; a link to a driver or a rental previews as RW-Rent, not as that record, which a stranger
+   could not open anyway.
+4. **`noindex` is in the page, not in the files.** A search engine that reads the page lists
+   nothing of it. The picture and the icons carry no such word themselves; a header on them would be
+   Caddy's, the deployment's, if it is ever wanted.
+5. **The theme colour is the dark ground** for everyone, also for a person who chose the light
+   theme: the page names one colour before any script runs.
+6. **The command needs the network and the testing folder's Chromium.** On another machine it needs
+   Playwright from somewhere, named by `RWRENT_PLAYWRIGHT`. The pictures are committed, so nothing
+   but changing a picture needs the command.
+7. **Left for later, as §21 says:** the fonts and the icon font still come from Google's servers.
 
 ## 9. Commits
 
-On `feature/backend-wiring`, after `05662ed`, in this order:
+On `feature/backend-wiring`, after `6eac246`, in this order:
 
-1. **`8516839`** Wiring 51: On a phone every text field, select and text area draws its text at 16 px, so Safari never zooms the page when one is tapped, and a select drawn over its value shows that value at 16 px too.
-   5 files (under `src/`): `pages/fleet/NewAssignment.module.css`; added `pages/followup20.fields.test.ts`; `styles/base.css`; `ui/Filters.module.css`; `ui/Pagination.module.css`.
+1. **`be37ced`** Wiring 53: A link to the app shows its name, a sentence and a picture, the app has its tab icon, home-screen icon, theme colour and manifest, and no search engine lists it: the page's tags, real files in public, and the pictures made from the pages in brand by one command.
+   15 files: `README.md`; `index.html`; added `brand/icon.html`, `brand/made.json`, `brand/make.cjs`, `brand/og-image.html`; added `public/apple-touch-icon.png`, `public/favicon.ico`, `public/favicon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/og-image.png`, `public/robots.txt`, `public/site.webmanifest`; added `src/pages/followup21.preview.test.ts`.
 
-2. **`b07f5b6`** Wiring 51: The tab strip brings its active tab whole into view again whenever the tabs change width, its counts arriving among them, without a slide, unless the person has already scrolled the strip.
-   3 files (under `src/`): added `pages/followup20.strip.test.ts`; `ui/RecordTabs.tsx`; added `ui/tabStrip.ts`.
+2. **`c4ac55d`** Wiring 53: The public pages' foot and the sign-in page's introduction say nothing of sessions, no public message screen shows a technical line, and the note under a link's form speaks of the link.
+   10 files (under `src/pages/`): `account/AcceptAdministratorTransfer.tsx`; `account/Auth.module.css`; `account/AuthLayout.tsx`; `account/ConfirmEmailChange.tsx`; `account/ConfirmRegistrationEmail.tsx`; `account/ResetPassword.tsx`; `account/SignIn.tsx`; `account/outcomes.test.ts`; `account/outcomes.ts`; added `followup21.public.render.test.ts`.
 
-3. **`7a9e363`** Wiring 51: The drivers list's search reads Name, licence number or email, as the API now searches it and as the Delete records page already says.
-   2 files (under `src/`): `pages/fleet/Drivers.tsx`; added `pages/followup20.drivers.render.test.ts`.
-
-4. **`43a9e79`** Wiring 51: The strip's test reads the active tab's room from the edge as 22 px itself, so a strip seated without that room is caught by the test written for it.
-   1 file: `src/pages/followup20.strip.test.ts`.
-
-5. **`746d572`** Wiring 51: The strip waits only for its own slides, so an instant seat the browser moves as the tabs narrow never keeps a later change of width from seating the active tab.
-   2 files (under `src/`): `pages/followup20.strip.test.ts`; `ui/tabStrip.ts`.
-
-6. **This report's commit**, `Wiring 52`: `Context/wiring_report.md`, rewritten.
+3. **This report's commit**, `Wiring 54`: `Context/wiring_report.md`, rewritten.
