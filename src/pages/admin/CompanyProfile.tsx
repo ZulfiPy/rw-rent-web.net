@@ -116,7 +116,7 @@ function DeleteCompany({ company, onClose }: { company: CompanyResponse; onClose
       failure={m.failure}
       info={{
         title: 'This exists for a mistaken creation',
-        body: 'If any user, vehicle, customer, driver or assignment references the Company, the API refuses the delete with a conflict.',
+        body: 'If any user, vehicle, customer, driver or assignment refers to the Company, the delete is refused.',
       }}
       onClose={onClose}
       onSubmit={() => m.submit(undefined)}

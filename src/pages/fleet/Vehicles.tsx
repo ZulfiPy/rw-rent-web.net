@@ -188,7 +188,7 @@ export function Vehicles() {
               value={year}
               options={YEAR_OPTIONS}
               label="Manufacturing year"
-              hint="Exact year; the API accepts 1900 or later."
+              hint="Exact year, 1900 or later."
               onChange={(next) => patch({ year: next })}
             />
           </MoreFiltersRow>

@@ -143,7 +143,7 @@ export function Profile() {
 
           <Panel
             title="Access"
-            description="What the API reports for your account right now."
+            description="Your roles and what they allow, as they are right now."
             actions={<Button label="Show permissions" icon="verified_user" small onClick={() => setDialog({ kind: 'access' })} />}
           >
             <FactGrid columns={4}>
@@ -320,7 +320,7 @@ export function Profile() {
       {dialog?.kind === 'access' ? (
         <Dialog
           title="Your effective access"
-          description="The frontend renders actions from the permissions returned by GET /api/me, not from role names."
+          description="What you can do in the app follows these permissions, not the names of your roles."
           icon="verified_user"
           width={560}
           submitLabel="Close"
@@ -447,7 +447,7 @@ function PasswordDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog
       title="Change password"
-      description="A successful change refreshes your session."
+      description="You stay signed in after the change."
       icon="password"
       width={500}
       submitLabel="Change password"

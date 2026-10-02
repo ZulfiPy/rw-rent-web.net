@@ -280,7 +280,7 @@ function Lifecycle({ user, onClose, kind }: Common & { kind: 'suspend' | 'restor
     >
       <DialogNote icon={suspend ? 'lock_person' : 'lock_open'}>
         {suspend
-          ? 'Signing in stops immediately and every active session ends. The endpoint takes no reason, so none is recorded.'
+          ? 'Signing in stops immediately and every active session ends. No reason is asked for here, so none is recorded.'
           : 'Signing in becomes possible again. Roles are unchanged; sessions are not restored.'}
       </DialogNote>
     </Dialog>
@@ -493,8 +493,8 @@ function SessionRevoke({ user, onClose, session }: Common & { session: SessionRe
       onRefresh={m.refresh}
     >
       <DialogNote icon="link_off">
-        The session ends at once and is recorded as “Revoked by administrator”. The endpoint takes no
-        reason, so the audit entry records none.
+        The session ends at once and is recorded as “Revoked by administrator”. No reason is asked for
+        here, so the audit entry records none.
       </DialogNote>
     </Dialog>
   );

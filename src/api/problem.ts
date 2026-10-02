@@ -51,7 +51,7 @@ export type Failure =
   | { kind: 'unauthorized' }
   | { kind: 'unknown'; message: string };
 
-export const GENERIC_REFUSAL = 'The API refused this change because the record no longer accepts it.';
+export const GENERIC_REFUSAL = 'This change was refused because the record no longer accepts it.';
 export const STALE_MESSAGE = 'This record changed while you had it open.';
 
 const isConcurrency = (code?: string) => !!code && code.endsWith('.concurrency_conflict');

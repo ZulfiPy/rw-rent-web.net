@@ -310,7 +310,7 @@ function CustomerForm({ customer, focus, onClose }: {
 
       <Section title="Driver link" cols={1}>
         {business ? (
-          <Field label="Linked driver" hint="The API rejects a driver link on a business customer.">
+          <Field label="Linked driver" hint="A business customer cannot be linked to a driver.">
             <p className={styles.static}>Not applicable for business customers</p>
           </Field>
         ) : (

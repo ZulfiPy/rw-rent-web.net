@@ -252,7 +252,7 @@ function Activate({ assignment: a, onClose }: Common) {
       <DialogNote icon={open.length ? 'group' : 'group_off'}>
         {open.length
           ? `Currently authorized: ${open.map((z) => (z.authorizationType === AssignmentDriverAuthorizationType.BusinessCustomerDrivers ? 'Company-authorized drivers' : 'a named driver')).join(', ')}. A valid authorization already exists, so none is created here.`
-          : 'No driver is authorized yet. The api refuses activation until this assignment has coverage.'}
+          : 'No driver is authorized yet. Activation is refused until this assignment has coverage.'}
       </DialogNote>
     </Dialog>
   );
@@ -274,7 +274,7 @@ function End({ assignment: a, onClose }: Common) {
       icon="stop_circle"
       tone="mute"
       width={520}
-      description="Closes the assignment. Open driver authorizations are stopped by the backend."
+      description="Closes the assignment. Open driver authorizations are stopped with it."
       submitLabel="End assignment"
       busy={m.busy}
       failure={m.failure}
