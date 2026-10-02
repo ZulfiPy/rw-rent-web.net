@@ -1339,7 +1339,17 @@ row; the owner found nothing to change there.
 
 ## 21. Follow-up 21 — what a stranger sees: the link preview and the public pages
 
-> **Status: SPECIFIED 2026-10-02** at the owner's word, the day the app went online with sample data.
+> **Status: IMPLEMENTED 2026-10-02 and verified by the reviewer** (agent commits `be37ced`, `c4ac55d`,
+> `254640c`, report `Context/wiring_report.md`). Checked on a clean copy of `254640c`: typecheck 0
+> errors, 786 tests green, the build green with every tag in the built page and the eight files in the
+> build; ten breakages of the reviewer's own, all caught; signed out on 5176 over round 16's API on
+> 5003: the foot and the introduction without the sessions' sentences, the tags, each file answered as
+> itself with its own type, a made-up confirmation link refused with no technical line, the note on
+> the link forms, on a phone too; the picture and the icons looked at. One change to this section,
+> decided by the owner during the run: `robots.txt` refuses no robot (F21-1). What a messenger shows
+> is seen only once the deployment agent has put this version online.
+>
+> Specified at the owner's word, the day the app went online with sample data.
 > The owner sent the address to a friend and wants a link to look professional ("the photo of the page,
 > its description, everything we need to provide in metadata"), the sessions' sentence gone from the
 > sign-in page ("it's not needed information"; the version may stay), and whatever else was meant for
@@ -1363,8 +1373,11 @@ row; the owner found nothing to change there.
   - the browser tab's icon (an SVG of the monogram and a PNG or ICO for browsers that want one), the
     iPhone's home-screen icon (180 by 180, on the app's dark ground), the theme colour, and a web
     manifest with the name and the icons;
-  - `robots.txt` refusing every robot, and `noindex` in the page: the app is a private tool and is not
-    listed by search engines; a messenger's preview of a sent link works all the same.
+  - `noindex` in the page, and a `robots.txt` that refuses no robot: the app is a private tool and is
+    not listed by search engines, and a search engine has to read the page to see `noindex`; a
+    refused one may still list the bare address. A messenger's robot reads the page for the preview
+    of a sent link. (First written as "refusing every robot", which X's, LinkedIn's and Telegram's
+    preview robots obey; changed at the owner's word on 2026-10-02, on the agent's question.)
   Every one of these files is a real file of the build, answered as itself, not as the app's page.
 - **F21-2. The public pages' foot reads "RW-Rent operations platform · v1.0.0".** The sentence
   "Sessions expire after 2 h idle, 12 h absolute" goes, with its dot.
