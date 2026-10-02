@@ -80,8 +80,6 @@ export function AuthLayout({ documentTitle, children }: { documentTitle: string;
           <span>RW-Rent operations platform</span>
           <span aria-hidden="true" className={styles.footDot} />
           <span className={styles.footVersion}>v1.0.0</span>
-          <span aria-hidden="true" className={styles.footDot} />
-          <span>Sessions expire after 2 h idle, 12 h absolute</span>
         </div>
       </div>
 
@@ -200,14 +198,13 @@ export function AuthSwitch({ text, label, to }: { text: string; label: string; t
   );
 }
 
-/** The note that says what happened to the token in the address bar. */
+/** The note that says what happened to the link in the address bar, in a person's words (Follow-up 21). */
 export function TokenNote() {
   return (
     <div className={styles.token}>
       <span data-icon aria-hidden="true" className={styles.tokenIcon}>key</span>
       <span className={styles.tokenText}>
-        Single-use token read from the link and removed from this page&rsquo;s address. It is never
-        stored.
+        This link works once. It has been removed from this page&rsquo;s address.
       </span>
     </div>
   );
@@ -225,16 +222,15 @@ const TONE_CLASS: Record<string, string> = {
 
 /**
  * One of the prototype's message screens: the state's glyph, its title and body, the facts it
- * lists, the mono line naming the refusal, and its way onward. `meta` replaces the prototype's
- * fixed code line with the code the API actually returned; `onAction` lets a page that is already
- * on the action's route answer it itself instead of navigating to where it stands.
+ * lists, and its way onward. The prototype's mono line under the body, which named the refusal's
+ * code, is not drawn: a public screen says what happened in a person's words and shows no technical
+ * line (Follow-up 21, F21-4). `onAction` lets a page that is already on the action's route answer it
+ * itself instead of navigating to where it stands.
  */
-export function AuthOutcome({ outcome, meta, onAction }: {
+export function AuthOutcome({ outcome, onAction }: {
   outcome: Outcome;
-  meta?: string | undefined;
   onAction?: (to: string) => boolean;
 }) {
-  const line = meta ?? outcome.meta;
   return (
     <div className={styles.stack} data-gap="22">
       <span data-icon aria-hidden="true" className={`${styles.outcomeIcon} ${TONE_CLASS[outcome.tone] ?? ''}`}>
@@ -253,7 +249,6 @@ export function AuthOutcome({ outcome, meta, onAction }: {
           ))}
         </ul>
       ) : null}
-      {line ? <div className={styles.meta}>{line}</div> : null}
       {outcome.actions.length ? (
         <div className={styles.outcomeActions}>
           {outcome.actions.map((a) => (

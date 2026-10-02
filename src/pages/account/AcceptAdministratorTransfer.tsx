@@ -53,10 +53,7 @@ export function AcceptAdministratorTransfer() {
   if (view.screen === 'dead-link') {
     return (
       <AuthLayout documentTitle="Administrator transfer">
-        <AuthOutcome
-          outcome={OUTCOMES['transfer-bad']}
-          {...(failure.code ? { meta: `code: ${failure.code}` } : {})}
-        />
+        <AuthOutcome outcome={OUTCOMES['transfer-bad']} />
       </AuthLayout>
     );
   }

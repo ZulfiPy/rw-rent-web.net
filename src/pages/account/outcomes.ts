@@ -1,7 +1,9 @@
 /**
  * The prototype's `messageModel()` as data (`Context/prototype/RW-Rent.dc.html`). Every icon,
- * tone, title, body, fact, meta line and action label below is transcribed from that function;
- * the prototype's state changes become the app's routes.
+ * tone, title, body, fact and action label below is transcribed from that function; the
+ * prototype's state changes become the app's routes. Its mono line under a body, which printed a
+ * refusal's code or the HTTP status, is left out: no public screen shows a technical line
+ * (Follow-up 21, F21-4).
  *
  * Two entries have no state of their own in the prototype, which answers a completed reset and an
  * accepted transfer with a toast. The app has no toast surface, so each is rendered as the
@@ -32,8 +34,6 @@ export interface Outcome {
   title: string;
   body: string;
   facts: OutcomeFact[];
-  /** The mono line under the body: the prototype prints the refusal's code there. */
-  meta?: string;
   actions: OutcomeAction[];
 }
 
@@ -91,7 +91,6 @@ export const OUTCOMES: Record<OutcomeName, Outcome> = {
     title: 'This confirmation link cannot be used',
     body: 'The link was already used, has expired, or does not match a registration awaiting confirmation. Nothing has changed on your account.',
     facts: [F('schedule', 'muted', 'Confirmation links are valid for 24 hours and work once.')],
-    meta: 'code: registration_confirmation_token_unusable',
     actions: [
       { label: 'Request a new link', kind: 'primary', icon: 'forward_to_inbox', to: RESEND_ROUTE },
       BACK_TO_SIGN_IN,
@@ -125,7 +124,6 @@ export const OUTCOMES: Record<OutcomeName, Outcome> = {
     title: 'This reset link cannot be used',
     body: 'It may already have been used, expired, or been issued for a different address. Your current password is unchanged.',
     facts: [],
-    meta: 'code: password_reset_token_unusable',
     actions: [
       { label: 'Request a new link', kind: 'primary', icon: 'lock_reset', to: '/reset-password' },
       BACK_TO_SIGN_IN,
@@ -172,7 +170,6 @@ export const OUTCOMES: Record<OutcomeName, Outcome> = {
     title: 'Too many attempts',
     body: 'For security, further attempts from this location are paused for a short time. Nothing is wrong with your account.',
     facts: [],
-    meta: 'HTTP 429 · retry-after: 60 s',
     actions: [SIGN_IN],
   },
 

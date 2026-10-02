@@ -257,16 +257,6 @@
 }
 .fact { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: var(--fg-2); }
 .factIcon { font-size: 16px; margin-top: 1px; flex: none; }
-.meta {
-  padding: 11px 13px;
-  background: var(--inset);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fg-3);
-  word-break: break-all;
-}
 .outcomeActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .action {
   display: flex;

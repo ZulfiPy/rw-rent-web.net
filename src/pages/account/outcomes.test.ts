@@ -53,9 +53,15 @@ describe('the outcome screens', () => {
     }
   });
 
-  it('names the refusal code on the two link screens', () => {
-    expect(OUTCOMES['confirm-bad'].meta).toContain('code:');
-    expect(OUTCOMES['reset-bad'].meta).toContain('code:');
+  it('carries no technical line on any screen (Follow-up 21, F21-4)', () => {
+    for (const name of Object.keys(OUTCOMES) as OutcomeName[]) {
+      const outcome = OUTCOMES[name];
+      expect(Object.keys(outcome).sort(), name).toEqual(['actions', 'body', 'facts', 'icon', 'title', 'tone']);
+      const words = [outcome.title, outcome.body, ...outcome.facts.map((fact) => fact.text)].join(' ');
+      expect(words, name).not.toMatch(/code:|HTTP \d|retry-after|_token_|\b\w+\.\w+_\w+/);
+    }
+    // "Too many attempts" keeps its body, which already says the pause is short.
+    expect(OUTCOMES['rate-limited'].body).toBe('For security, further attempts from this location are paused for a short time. Nothing is wrong with your account.');
   });
 
   it('keeps the prototype’s copy for the screen a registration lands on', () => {

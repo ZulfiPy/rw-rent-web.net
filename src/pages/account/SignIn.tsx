@@ -125,7 +125,7 @@ export function SignIn() {
       <form className={styles.stack} onSubmit={submit} noValidate>
         <AuthHeading
           title="Sign in"
-          body="Fleet and rental operations for RW-Rent. Your session stays signed in on this browser until it expires."
+          body="Fleet and rental operations for RW-Rent."
         />
 
         {empty ? <AuthAlert title={EMPTY_FORM[0]}>{EMPTY_FORM[1]}</AuthAlert> : null}

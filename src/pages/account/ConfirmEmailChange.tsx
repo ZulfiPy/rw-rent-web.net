@@ -64,10 +64,7 @@ export function ConfirmEmailChange() {
 
   return (
     <AuthLayout documentTitle={outcome.title}>
-      <AuthOutcome
-        outcome={outcome}
-        {...(!done && failure?.code ? { meta: `code: ${failure.code}` } : {})}
-      />
+      <AuthOutcome outcome={outcome} />
     </AuthLayout>
   );
 }

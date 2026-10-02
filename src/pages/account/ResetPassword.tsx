@@ -86,7 +86,6 @@ export function ResetPassword() {
       <AuthLayout documentTitle="Reset link">
         <AuthOutcome
           outcome={OUTCOMES['reset-bad']}
-          {...(failure.code ? { meta: `code: ${failure.code}` } : {})}
           onAction={(to) => {
             if (to !== '/reset-password') return false;
             discardToken();

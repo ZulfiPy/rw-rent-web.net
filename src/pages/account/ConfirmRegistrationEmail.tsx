@@ -104,10 +104,7 @@ export function ConfirmRegistrationEmail() {
   if (!token || failure) {
     return (
       <AuthLayout documentTitle="Confirmation link">
-        <AuthOutcome
-          outcome={OUTCOMES['confirm-bad']}
-          {...(failure?.code ? { meta: `code: ${failure.code}` } : {})}
-        />
+        <AuthOutcome outcome={OUTCOMES['confirm-bad']} />
       </AuthLayout>
     );
   }
