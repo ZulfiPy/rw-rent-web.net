@@ -1398,7 +1398,25 @@ Left for later (§4 item 12): the fonts and the icon font come from Google's ser
 
 ## 22. Follow-up 22 — the app speaks to a person, and to an Estonian company
 
-> **Status: SPECIFIED 2026-10-02** at the owner's word, on the live site's Create account page: "placeholder
+> **Status: IMPLEMENTED 2026-10-02 and verified by the reviewer on 2026-10-03** (agent commits `39bf489`,
+> `d2ecee8`, report `69846fe`, `Context/wiring_report.md`). Checked on a clean copy of `69846fe`:
+> typecheck 0 errors, 807 tests green, the build green with the new words in the bundle and none of the
+> old. Every text of the app compared before and after with the reviewer's own reading: exactly the 22
+> of the report's list changed, and nothing else. The reviewer's own list, made before the report was
+> read, holds nothing he missed among the texts with a named word. His words test reads every text
+> with the TypeScript parser, blind to case, and names six exceptions, each by its exact text. Ten
+> breakages of the reviewer's own, all caught, each by the right test. A control showed that the
+> pattern lets the plurals "APIs" and "UUIDs", and "HTTPS", through: Follow-up 23. The four older tests
+> he changed only take the new words. Signed in on 5176 over round 16's API on 5003, as the
+> administrator, Dita and Signe: every page of the menu, the first record of each list and their 25
+> tabs hold no named word; the unreachable screen shown for a cut connection and three kinds of 502, on
+> a phone too; the 14 steps of the report's §5, each dialog read and cancelled; a timeline correction,
+> stopped on its way out, still carried the token. No record of `rwrent_r16` was changed. One change
+> beyond the words, the agent's and kept: the user's Account panel sets its six facts three to a row.
+> Found on the way, for Follow-up 23: a request that never arrives shows the browser's own words, and
+> an answer 502 without words can show an untrue refusal.
+>
+> Specified 2026-10-02 at the owner's word, on the live site's Create account page: "placeholder
 > have to be +372 and what else is needed". The reviewer then read every sentence the app shows for the
 > same kind of leftover: words written for the people who built it. App only; nothing for the backend.
 
@@ -1438,3 +1456,55 @@ Left for later (§4 item 12): the fonts and the icon font come from Google's ser
 - **Stays as it is:** "The record leaves the database" on the Delete records page, which a person
   understands; the security audit's entries and their stored content; error messages that come from
   the API, which round 15 already wrote for a person.
+
+## 23. Follow-up 23 — the words when the server is away, and the last words written for a developer
+
+> **Status: PROPOSED 2026-10-03 by the reviewer, not yet authorised by the owner.** Found while
+> verifying Follow-up 22; the agent's report of Follow-up 22, §8 items 2 and 3, found the same and
+> more. It waits for the owner's own signed-in trial of the live site, so that the owner's findings
+> join it, and it cannot run while the deployment agent works: both commit in the backend's worktree.
+> App only.
+
+- **F23-1. When the server cannot be reached, a person reads one plain sentence.** Seen on the
+  reviewer's copy on 2026-10-03, with the connection cut or the answer replaced:
+  - a request that never arrives: the vehicles list reads "The fleet could not be loaded" and under it
+    "Failed to fetch", Chrome's words; Safari's are "Load failed". The sign-in form's alert reads
+    "Failed to fetch", and so does every dialog and a task's step (`api/problem.ts`,
+    `pages/account/failure.ts`, `pages/tasks/StepAction.tsx`). The sign-in page's own sentence for it,
+    "The service did not answer. Check your connection and try again.", is never used;
+  - an answer 502, 503 or 504 without the API's own words: "Bad Gateway". Given an empty document the
+    list read "This change was refused because the record no longer accepts it.", which is untrue: the
+    page only failed to load. Read in the code, not seen: a first save in that moment reads
+    "Antiforgery token unavailable" (`api/http.ts`);
+  - on the live site, read in `deploy/caddy/Caddyfile` and in the code, not seen on the server: while
+    the API restarts at an update, about 7 seconds, Caddy answers 502 without the permission the
+    browser needs for the app's address, so the app sees a request that never arrived, for anyone who
+    presses a button then, and for any phone with a weak signal. The deployment agent's run after
+    Follow-up 22 makes Caddy hold a request through the restart instead.
+
+  **Wanted:** wherever a request did not arrive, or the answer is a 502, 503 or 504 without the API's
+  own sentence, the person reads "RW-Rent cannot be reached right now. Check your internet connection
+  and try again." A page that only failed to load never says that a change was refused. The browser's
+  words and a status's name never reach a screen.
+- **F23-2. The last sentences written for a developer,** found by the agent's reading (his report of
+  Follow-up 22, §8 item 2) and the reviewer's:
+  - a permission's code name in fourteen "no access" lines, such as "Reading drivers needs
+    Drivers.Read." and "This area needs SystemAdministration.Transfer.";
+  - "Server sessions", a panel's title on the user's page, with "Two-hour idle timeout, twelve-hour
+    absolute lifetime." under it, and "Ends this server session immediately." on the Profile;
+  - "token": "Consuming the single-use token from your link. This takes a moment." on the two checking
+    screens; "Completing the reset needs the account email, the link token and your new password.";
+    "Issues a fresh single-use token and invalidates the previous one." and "Withdraws the pending
+    transfer and invalidates its token." on the administrator's page;
+  - "Starts a new authorization as this one stops, in one request. The stop reason defaults to
+    Replaced.";
+  - the labels "Entity" and "Entity id" on the audit entry.
+
+  **Wanted:** each reworded in the plain way of Follow-up 22, no meaning changed, the report listing
+  each before and after.
+- **F23-3. The words test meets plurals.** Its pattern lets "APIs", "UUIDs" and "HTTPS" through (the
+  reviewer's control, 2026-10-03). **Wanted:** those caught too; the addresses stay the named exception.
+- **F23-4. A question for the owner, with the trial:** a vehicle's, a customer's and a driver's page
+  show the record's long identifier ("Vehicle identifier", such as `1a5c8e30-0002-41a5-…`), a fact
+  read by a developer or by whoever helps someone over the phone. Keep it, or let it go like the token
+  and the version?
